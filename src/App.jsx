@@ -1,0 +1,2538 @@
+import React, { useState, useEffect, useRef, useCallback } from 'react';
+import gsap from 'gsap';
+import './index.css';
+import { getFullCodeTemplate } from './codeTemplates.js';
+import SortSearchVisualizer from './SortSearchVisualizer.jsx';
+import GeneralDSVisualizer from './GeneralDSVisualizer.jsx';
+import GraphVisualizer from './GraphVisualizer.jsx';
+
+// ─── Tree Node ───────────────────────────────────────────────────────────────
+class TreeNode {
+  constructor(value) {
+    this.value = value;
+    this.keys   = value !== undefined ? [value] : [];
+    this.children = [];
+    this.left  = null;
+    this.right = null;
+    this.x = 0; this.y = 0;
+    this.height = 1;
+    this.leaf   = true;
+    this.range  = '';
+    this.sum    = 0;
+    this._color = null;
+    this.bitRep = null;
+    this.index  = null;
+  }
+}
+
+const cloneTree = (node) => {
+  if (!node) return null;
+  const n = new TreeNode(node.value);
+  n.left  = cloneTree(node.left);
+  n.right = cloneTree(node.right);
+  n.x = node.x; n.y = node.y;
+  n.height   = node.height;
+  n.keys     = node.keys     ? [...node.keys]               : [];
+  n.children = node.children ? node.children.map(cloneTree) : [];
+  n.leaf   = node.leaf;
+  n.range  = node.range;
+  n.sum    = node.sum;
+  n._color = node._color;
+  n.bitRep = node.bitRep;
+  n.index  = node.index;
+  return n;
+};
+
+class Frame {
+  constructor(root, logs, highlight, rotation) {
+    this.root      = root ? cloneTree(root) : null;
+    this.logs      = [...logs];
+    this.highlight = highlight;
+    this.rotation  = rotation;
+  }
+}
+
+// ─── B-Tree / B+ Tree Engine ─────────────────────────────────────────────────
+class BTreeEngine {
+  constructor(m, isBPlus = false) {
+    this.m = m;
+    this.isBPlus = isBPlus;
+    this.root = new TreeNode();
+    this.root.leaf = true;
+    this.root.keys = [];
+    this.root.value = undefined;
+  }
+
+  insert(k, logs, recordFrame) {
+    this._insertRecursive(this.root, null, 0, k, logs, recordFrame);
+    if (this.root.keys.length === this.m) {
+      logs.push({ text: `Root full (max ${this.m-1} keys). Splitting root.`, type: 'rotation' });
+      const s = new TreeNode();
+      s.leaf = false; s.keys = []; s.value = undefined;
+      s.children.push(this.root);
+      this.splitChild(s, 0, this.root, logs, recordFrame);
+      this.root = s;
+      recordFrame(null, 'New Root After Split');
+    }
+  }
+
+  _insertRecursive(node, parent, idx, k, logs, recordFrame) {
+    if (node.leaf) {
+      node.keys.push(k);
+      node.keys.sort((a, b) => a - b);
+      logs.push({ text: `Inserted ${k} into leaf.`, type: 'normal' });
+      recordFrame(k, null);
+    } else {
+      let i = 0;
+      while (i < node.keys.length && k > node.keys[i]) i++;
+      logs.push({ text: `Going to child[${i}]`, type: 'normal' });
+      recordFrame(node.keys[i - 1] || k, null);
+      this._insertRecursive(node.children[i], node, i, k, logs, recordFrame);
+      if (node.children[i].keys.length === this.m) {
+        this.splitChild(node, i, node.children[i], logs, recordFrame);
+      }
+    }
+  }
+
+  splitChild(parent, i, child, logs, recordFrame) {
+    const mid = Math.floor(this.m / 2);
+    const z = new TreeNode();
+    z.leaf = child.leaf; z.keys = []; z.value = undefined;
+    if (this.isBPlus && child.leaf) {
+      z.keys = child.keys.splice(mid);
+      const upKey = z.keys[0];
+      parent.keys.splice(i, 0, upKey);
+      parent.children.splice(i + 1, 0, z);
+      logs.push({ text: `B+ leaf split — copy key ${upKey} up`, type: 'normal' });
+    } else {
+      z.keys = child.keys.splice(mid + 1);
+      if (!child.leaf) z.children = child.children.splice(mid + 1);
+      const upKey = child.keys.pop();
+      parent.keys.splice(i, 0, upKey);
+      parent.children.splice(i + 1, 0, z);
+      logs.push({ text: `Split — pushed key ${upKey} up`, type: 'normal' });
+    }
+    recordFrame(null, 'Node Split');
+  }
+}
+
+// ─── Red-Black Tree Engine ────────────────────────────────────────────────────
+class RBEngine {
+  constructor() { this.nodes = []; }
+  insert(val, logs, recordFrame) {
+    this.nodes.push(val);
+    const sorted = [...this.nodes].sort((a,b) => a-b);
+    logs.push({ text: `RB-Tree insert ${val} → rebalancing...`, type: 'normal' });
+    const root = this._buildBalanced(sorted, 1);
+    recordFrame && recordFrame(val, null);
+    return root;
+  }
+  _buildBalanced(arr, depth) {
+    if (!arr.length) return null;
+    const mid = Math.floor(arr.length / 2);
+    const node = new TreeNode(arr[mid]);
+    node._color = depth % 2 === 0 ? 'RED' : 'BLACK';
+    node.left  = this._buildBalanced(arr.slice(0, mid), depth + 1);
+    node.right = this._buildBalanced(arr.slice(mid + 1), depth + 1);
+    return node;
+  }
+}
+
+// ─── AVL / BST helpers ────────────────────────────────────────────────────────
+const getHeight   = n => n ? n.height : 0;
+const updateHeight = n => { if (n) n.height = Math.max(getHeight(n.left), getHeight(n.right)) + 1; };
+const getBalance  = n => n ? getHeight(n.left) - getHeight(n.right) : 0;
+const rightRotate = y => { const x=y.left,T2=x.right; x.right=y; y.left=T2; updateHeight(y); updateHeight(x); return x; };
+const leftRotate  = x => { const y=x.right,T2=y.left; y.left=x; x.right=T2; updateHeight(x); updateHeight(y); return y; };
+
+// ─── Segment Tree builder ─────────────────────────────────────────────────────
+const buildSegmentTree = (arr) => {
+  if (!arr || !arr.length) return null;
+  const build = (l, r) => {
+    const n = new TreeNode();
+    n.range = `[${l}-${r}]`;
+    if (l === r) { n.value = arr[l]; n.sum = arr[l]; return n; }
+    const mid = Math.floor((l + r) / 2);
+    n.left = build(l, mid); n.right = build(mid+1, r);
+    n.sum = n.left.sum + n.right.sum; n.value = n.sum;
+    return n;
+  };
+  return build(0, arr.length - 1);
+};
+
+// ─── THEMES ──────────────────────────────────────────────────────────────────
+const THEMES = {
+  'Cosmic Dark': {
+    '--bg-primary': '#0f172a',
+    '--bg-secondary': '#1e293b',
+    '--accent-primary': '#3b82f6',
+    '--accent-secondary': '#ec4899',
+    '--text-primary': '#f8fafc',
+    '--text-secondary': '#94a3b8',
+    '--glass-bg': 'rgba(30, 41, 59, 0.4)',
+    '--glass-border': 'rgba(255, 255, 255, 0.08)',
+    '--node-fill-1': '#3b82f6',
+    '--node-fill-2': '#8b5cf6',
+    bodyBg: 'radial-gradient(circle at 10% 20%, rgba(59,130,246,0.12), transparent 35%), radial-gradient(circle at 90% 80%, rgba(236,72,153,0.12), transparent 35%)',
+  },
+  'Forest Night': {
+    '--bg-primary': '#0a1a0e',
+    '--bg-secondary': '#132a18',
+    '--accent-primary': '#22c55e',
+    '--accent-secondary': '#84cc16',
+    '--text-primary': '#f0fdf4',
+    '--text-secondary': '#86efac',
+    '--glass-bg': 'rgba(20, 50, 25, 0.4)',
+    '--glass-border': 'rgba(34, 197, 94, 0.12)',
+    '--node-fill-1': '#16a34a',
+    '--node-fill-2': '#15803d',
+    bodyBg: 'radial-gradient(circle at 20% 30%, rgba(34,197,94,0.1), transparent 40%), radial-gradient(circle at 80% 70%, rgba(132,204,22,0.1), transparent 40%)',
+  },
+  'Sunset Blaze': {
+    '--bg-primary': '#1a0a00',
+    '--bg-secondary': '#2d1500',
+    '--accent-primary': '#f97316',
+    '--accent-secondary': '#ef4444',
+    '--text-primary': '#fff7ed',
+    '--text-secondary': '#fdba74',
+    '--glass-bg': 'rgba(45, 21, 0, 0.4)',
+    '--glass-border': 'rgba(249,115,22,0.15)',
+    '--node-fill-1': '#ea580c',
+    '--node-fill-2': '#dc2626',
+    bodyBg: 'radial-gradient(circle at 15% 25%, rgba(249,115,22,0.15), transparent 40%), radial-gradient(circle at 85% 75%, rgba(239,68,68,0.15), transparent 40%)',
+  },
+  'Neon Cyberpunk': {
+    '--bg-primary': '#050510',
+    '--bg-secondary': '#0d0d20',
+    '--accent-primary': '#00e5ff',
+    '--accent-secondary': '#ff00ff',
+    '--text-primary': '#e0e0ff',
+    '--text-secondary': '#a0a0cc',
+    '--glass-bg': 'rgba(10, 10, 35, 0.5)',
+    '--glass-border': 'rgba(0,229,255,0.15)',
+    '--node-fill-1': '#0099bb',
+    '--node-fill-2': '#aa00aa',
+    bodyBg: 'radial-gradient(circle at 20% 20%, rgba(0,229,255,0.1), transparent 40%), radial-gradient(circle at 80% 80%, rgba(255,0,255,0.1), transparent 40%)',
+  },
+  'Arctic Frost': {
+    '--bg-primary': '#f0f9ff',
+    '--bg-secondary': '#e0f2fe',
+    '--accent-primary': '#0284c7',
+    '--accent-secondary': '#0ea5e9',
+    '--text-primary': '#082f49',
+    '--text-secondary': '#0369a1',
+    '--glass-bg': 'rgba(255, 255, 255, 0.65)',
+    '--glass-border': 'rgba(14, 165, 233, 0.25)',
+    '--node-fill-1': '#0284c7',
+    '--node-fill-2': '#0ea5e9',
+    bodyBg: 'radial-gradient(circle at 15% 15%, rgba(14,165,233,0.15), transparent 45%), radial-gradient(circle at 85% 85%, rgba(2,132,199,0.15), transparent 45%)',
+  },
+};
+
+// ─── Enhanced AI ChatBot ──────────────────────────────────────────────────────
+const ChatBot = ({ customCode, codeLang, isChatOpen, setIsChatOpen, chatMessages, setChatMessages }) => {
+  const [chatInput, setChatInput] = useState('');
+  const [isLoading, setIsLoading] = useState(false);
+  const [localApiKey, setLocalApiKey] = useState(localStorage.getItem('gemini_api_key') || '');
+  const [showSettings, setShowSettings] = useState(!localStorage.getItem('gemini_api_key'));
+  const chatEndRef = useRef(null);
+
+  useEffect(() => { chatEndRef.current?.scrollIntoView({ behavior: 'smooth' }); }, [chatMessages, isLoading]);
+
+  const saveKey = () => {
+     localStorage.setItem('gemini_api_key', localApiKey);
+     setShowSettings(false);
+  };
+
+  const handleSend = async () => {
+    if (!chatInput.trim() || isLoading) return;
+    const userMsg = chatInput.trim();
+    setChatInput('');
+    setChatMessages(prev => [...prev, { sender: 'user', text: userMsg }]);
+    setIsLoading(true);
+
+    try {
+      if (!localApiKey) {
+        setChatMessages(prev => [...prev, { sender: 'bot', text: 'I am not connected! Please provide your Gemini API Key in the chat settings ⚙️ above so I can answer anything.' }]);
+        setIsLoading(false);
+        return;
+      }
+
+      const systemPrompt = `You are an expert AI coding assistant embedded in an Algorithm Visualizer Studio.
+You must help the user with ANYTHING they ask. This includes checking errors from the current code, creating a quiz, providing notes on how the code runs, giving real-time examples, explaining why we use certain concepts, or anything else they request. You are a general-purpose, ask-me-anything bot.
+Current context — Language: ${codeLang}. User's code: ${customCode ? customCode.substring(0, 1200) : '(none)'}.
+Be concise but thorough. Use markdown-style formatting for code blocks.`;
+
+      const response = await fetch(`https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash:generateContent?key=${localApiKey}`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          system_instruction: { parts: [{ text: systemPrompt }] },
+          contents: [
+            ...chatMessages.filter(m => m.sender !== 'system' && m.sender !== 'bot' || (m.sender === 'bot' && !m.text.includes('API Key'))).slice(-10).map(m => ({
+              role: m.sender === 'user' ? 'user' : 'model',
+              parts: [{ text: m.text }]
+            })),
+            { role: 'user', parts: [{ text: userMsg }] }
+          ]
+        })
+      });
+
+      const data = await response.json();
+      if (data.error) {
+         setChatMessages(prev => [...prev, { sender: 'bot', text: `API Error: ${data.error.message}\nMake sure your API key is correct.` }]);
+      } else {
+         const botText = data.candidates?.[0]?.content?.parts?.[0]?.text || 'No response received.';
+         setChatMessages(prev => [...prev, { sender: 'bot', text: botText }]);
+      }
+    } catch (err) {
+      setChatMessages(prev => [...prev, { sender: 'bot', text: `Connection error. Could not reach Gemini API.` }]);
+    } finally {
+      setIsLoading(false);
+    }
+  };
+
+  return (
+    <div style={{ position: 'fixed', bottom: '20px', right: '20px', zIndex: 1000, display: 'flex', flexDirection: 'column', alignItems: 'flex-end' }}>
+      {isChatOpen && (
+        <div style={{ width: '360px', height: '500px', background: 'var(--bg-secondary)', border: '1px solid var(--accent-primary)', borderRadius: '16px', marginBottom: '1rem', display: 'flex', flexDirection: 'column', overflow: 'hidden', boxShadow: '0 20px 60px rgba(0,0,0,0.7)' }}>
+          <div style={{ background: 'linear-gradient(135deg, var(--accent-primary), var(--accent-secondary))', padding: '0.85rem 1rem', fontWeight: 700, color: 'white', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+            <span style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+              <span style={{ background: 'rgba(255,255,255,0.2)', borderRadius: '50%', width: '28px', height: '28px', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>🤖</span>
+              AI Coding Assistant
+            </span>
+            <div style={{ display: 'flex', gap: '8px' }}>
+              <button onClick={() => setShowSettings(!showSettings)} style={{ background: 'none', border: 'none', color: 'white', cursor: 'pointer', fontSize: '1.2rem', display: 'flex', alignItems: 'center' }}>⚙️</button>
+              <button onClick={() => setIsChatOpen(false)} style={{ background: 'rgba(255,255,255,0.2)', border: 'none', color: 'white', cursor: 'pointer', width: '26px', height: '26px', borderRadius: '50%', fontSize: '1rem', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>×</button>
+            </div>
+          </div>
+          {showSettings && (
+            <div style={{ background: 'var(--glass-bg)', padding: '1rem', borderBottom: '1px solid var(--glass-border)', display: 'flex', flexDirection: 'column', gap: '8px' }}>
+              <span style={{ fontSize: '0.8rem', color: 'var(--text-secondary)' }}>Enter Gemini API Key to enable AI:</span>
+              <input type="password" value={localApiKey} onChange={e => setLocalApiKey(e.target.value)} placeholder="AIzaSy..." style={{ padding: '0.5rem', borderRadius: '6px', border: '1px solid var(--glass-border)', background: 'rgba(0,0,0,0.3)', color: 'white', fontSize: '0.8rem' }} />
+              <button onClick={saveKey} style={{ background: 'var(--accent-primary)', color: 'white', border: 'none', padding: '0.5rem', borderRadius: '6px', cursor: 'pointer', fontSize: '0.85rem', fontWeight: 'bold' }}>Save Key</button>
+              <a href="https://aistudio.google.com/app/apikey" target="_blank" rel="noreferrer" style={{ fontSize: '0.75rem', color: 'var(--accent-primary)', textDecoration: 'none' }}>Get a free Gemini API key here</a>
+            </div>
+          )}
+          <div style={{ flex: 1, padding: '1rem', overflowY: 'auto', display: 'flex', flexDirection: 'column', gap: '0.7rem', background: 'rgba(0,0,0,0.15)' }}>
+            {chatMessages.map((msg, idx) => (
+              <div key={idx} style={{ display: 'flex', flexDirection: 'column', alignItems: msg.sender === 'user' ? 'flex-end' : 'flex-start' }}>
+                {msg.sender === 'bot' && <div style={{ fontSize: '0.68rem', color: 'var(--text-secondary)', marginBottom: '3px', paddingLeft: '4px' }}>Gemini AI</div>}
+                <div style={{ background: msg.sender === 'user' ? 'linear-gradient(135deg, var(--accent-primary), var(--accent-secondary))' : 'var(--glass-bg)', padding: '0.65rem 0.9rem', borderRadius: msg.sender === 'user' ? '14px 14px 4px 14px' : '14px 14px 14px 4px', fontSize: '0.86rem', border: msg.sender === 'bot' ? '1px solid var(--glass-border)' : 'none', color: 'var(--text-primary)', maxWidth: '90%' }}>
+                  <pre style={{ whiteSpace: 'pre-wrap', fontFamily: 'inherit', margin: 0, lineHeight: 1.55 }}>{msg.text}</pre>
+                </div>
+              </div>
+            ))}
+            {isLoading && (
+              <div style={{ alignSelf: 'flex-start', background: 'var(--glass-bg)', padding: '0.65rem 1rem', borderRadius: '14px 14px 14px 4px', border: '1px solid var(--glass-border)', display: 'flex', gap: '4px', alignItems: 'center' }}>
+                {[0,1,2].map(i => <span key={i} style={{ width: '6px', height: '6px', borderRadius: '50%', background: 'var(--accent-primary)', animation: `bounce 1.2s ease infinite ${i * 0.2}s` }} />)}
+              </div>
+            )}
+            <div ref={chatEndRef} />
+          </div>
+          <div style={{ padding: '0.75rem', borderTop: '1px solid var(--glass-border)', display: 'flex', gap: '0.5rem' }}>
+            <input type="text" value={chatInput} onChange={e => setChatInput(e.target.value)} onKeyDown={e => e.key === 'Enter' && !e.shiftKey && handleSend()} placeholder="Ask anything about code..." disabled={isLoading}
+              style={{ flex: 1, padding: '0.55rem 0.85rem', borderRadius: '8px', border: '1px solid var(--glass-border)', outline: 'none', background: 'rgba(0,0,0,0.3)', color: 'var(--text-primary)', fontSize: '0.88rem' }} />
+            <button onClick={handleSend} disabled={isLoading || !chatInput.trim()} style={{ background: 'linear-gradient(135deg, var(--accent-primary), var(--accent-secondary))', border: 'none', borderRadius: '8px', padding: '0.55rem 1rem', color: 'white', cursor: 'pointer', fontWeight: 700, opacity: (isLoading || !chatInput.trim()) ? 0.5 : 1, transition: 'opacity 0.2s' }}>Send</button>
+          </div>
+        </div>
+      )}
+      <button onClick={() => setIsChatOpen(!isChatOpen)}
+        style={{ width: '60px', height: '60px', borderRadius: '50%', background: 'linear-gradient(135deg, var(--accent-primary), var(--accent-secondary))', border: 'none', color: 'white', fontSize: '1.5rem', cursor: 'pointer', boxShadow: '0 6px 20px rgba(0,0,0,0.4)', display: 'flex', justifyContent: 'center', alignItems: 'center', transition: 'transform 0.3s' }}
+        onMouseOver={e => e.currentTarget.style.transform = 'scale(1.1)'}
+        onMouseOut={e => e.currentTarget.style.transform = 'scale(1)'}
+        title="AI Coding Assistant">💬</button>
+    </div>
+  );
+};
+
+// ─── PythonTutor-Style Debugger ───────────────────────────────────────────────
+const ptLangMap = { 'Java': 'java', 'C++': 'c_cpp', 'Python': '3', 'JS': 'js' };
+const loadingQuotes = [
+  { text: "\"First, solve the problem. Then, write the code.\"", color: "#3b82f6" },
+  { text: "\"Code is like humor. When you have to explain it, it’s bad.\"", color: "#ec4899" },
+  { text: "\"The best error message is the one that never shows up.\"", color: "#10b981" },
+  { text: "\"Simplicity is the soul of efficiency.\"", color: "#8b5cf6" },
+  { text: "\"Make it work, make it right, make it fast.\"", color: "#f59e0b" },
+  { text: "\"Any fool can write code that a computer can understand. Good programmers write code that humans can understand.\"", color: "#06b6d4" },
+  { text: "\"Experience is the name everyone gives to their mistakes.\"", color: "#ef4444" },
+  { text: "\"Sometimes it pays to stay in bed on Monday, rather than spending the rest of the week debugging Monday’s code.\"", color: "#6366f1" },
+  { text: "\"Perfection is achieved not when there is nothing more to add, but rather when there is nothing more to take away.\"", color: "#14b8a6" },
+  { text: "\"In order to understand recursion, one must first understand recursion.\"", color: "#d946ef" },
+  { text: "\"Programming isn't about what you know; it's about what you can figure out.\"", color: "#f43f5e" },
+  { text: "\"Testing can only prove the presence of bugs, not their absence.\"", color: "#84cc16" },
+  { text: "\"Talk is cheap. Show me the code.\"", color: "#2563eb" },
+  { text: "\"Truth can only be found in one place: the code.\"", color: "#9333ea" },
+  { text: "\"Before software can be reusable it first has to be usable.\"", color: "#eab308" }
+];
+
+const LineDebugger = ({ initialCode, lang: initialLang, fontSize, wordWrap, onBack, isChatOpen, setIsChatOpen, chatMessages, setChatMessages }) => {
+  const [isDebugStarted, setIsDebugStarted] = useState(false);
+  const [isIframeLoading, setIsIframeLoading] = useState(false);
+  const [quoteIndex, setQuoteIndex] = useState(() => Math.floor(Math.random() * loadingQuotes.length));
+  const [localCode, setLocalCode] = useState(initialCode || '');
+  const [detectedLang, setDetectedLang] = useState(initialLang);
+  const lineNumbersRef = useRef(null);
+
+  const handleScroll = (e) => {
+    if (lineNumbersRef.current) {
+      lineNumbersRef.current.scrollTop = e.target.scrollTop;
+    }
+  };
+
+  const handleStartDebug = () => {
+    let codeToRun = localCode.trim();
+    if (codeToRun.length === 0) return;
+
+    if (detectedLang === 'Java' && !codeToRun.includes('public class')) {
+      if (codeToRun.includes('public static void main')) {
+        codeToRun = `public class Main {\n${codeToRun}\n}`;
+      } else {
+        codeToRun = `public class Main {\n  public static void main(String[] args) {\n    ${codeToRun.split('\n').join('\n    ')}\n  }\n}`;
+      }
+      setLocalCode(codeToRun);
+    } else if (detectedLang === 'C++' && !codeToRun.includes('main(')) {
+      codeToRun = `#include <iostream>\nusing namespace std;\n\nint main() {\n  ${codeToRun.split('\n').join('\n  ')}\n  return 0;\n}`;
+      setLocalCode(codeToRun);
+    }
+
+    if (encodeURIComponent(codeToRun).length > 5500) {
+      alert("⚠️ Your code is too long for the Line-by-Line visualizer!\n\nPythonTutor has a strict limit of 5,500 bytes. Please remove comments, empty lines, and irrelevant boilerplate.");
+      return;
+    }
+    
+    setIsIframeLoading(true);
+    setIsDebugStarted(true);
+    setTimeout(() => setIsIframeLoading(false), 8000);
+  };
+
+  useEffect(() => {
+    let interval;
+    if (isIframeLoading) interval = setInterval(() => setQuoteIndex(p => (p + 1) % loadingQuotes.length), 4000);
+    return () => clearInterval(interval);
+  }, [isIframeLoading]);
+
+  useEffect(() => {
+    if (localCode.length < 10) return;
+    const code = localCode;
+    if (code.includes('public static void main') || code.includes('System.out.print') || /import\s+java/.test(code) || code.includes('public class ')) setDetectedLang('Java');
+    else if (code.includes('#include') || code.includes('cout <<') || code.includes('std::') || code.includes('using namespace std') || code.includes('int main(')) setDetectedLang('C++');
+    else if ((/def\s+\w+\(/.test(code) || /print\(/.test(code)) && !code.includes(';') && !code.includes('{')) setDetectedLang('Python');
+    else if (code.includes('console.log') || code.includes('document.') || /let\s+\w+/.test(code) || /const\s+\w+/.test(code)) setDetectedLang('JS');
+  }, [localCode]);
+
+  return (
+    <div style={{ height: '100vh', display: 'flex', flexDirection: 'column', overflow: 'hidden', background: 'var(--bg-primary)' }}>
+      <header className="header-glass">
+        <div>
+          <div style={{ display: 'flex', alignItems: 'center', gap: '0.8rem' }}>
+            <h1 className="title-gradient" style={{ fontSize: '1.55rem', margin: 0 }}>🐞 Line-by-Line Debugger</h1>
+            <select value={detectedLang} onChange={(e) => setDetectedLang(e.target.value)} style={{ background: 'rgba(0,0,0,0.15)', border: '1px solid var(--glass-border)', color: 'var(--text-primary)', padding: '4px 8px', borderRadius: '6px', fontSize: '0.85rem', fontWeight: 600, outline: 'none', cursor: 'pointer' }}>
+              <option value="Java">Java</option>
+              <option value="C++">C++</option>
+              <option value="Python">Python</option>
+              <option value="JS">JavaScript</option>
+            </select>
+          </div>
+          <div style={{ fontSize: '0.78rem', color: 'var(--text-secondary)', marginTop: '4px' }}>
+            {isDebugStarted ? 'Interactive Execution Mode' : 'Ready — write code and press Start Debug'}
+          </div>
+        </div>
+        <div className="controls-glass" style={{ gap: '4px', alignItems: 'center' }}>
+          {!isDebugStarted ? (
+            <>
+              <span style={{ fontSize: '0.75rem', color: encodeURIComponent(localCode).length > 5500 ? '#ef4444' : 'var(--text-secondary)', marginRight: '8px' }}>
+                {encodeURIComponent(localCode).length} / 5500 bytes
+              </span>
+              <button className="btn btn-insert" style={{ padding: '0.4rem 1rem' }} onClick={handleStartDebug}>
+                ▶ Start Debug
+              </button>
+            </>
+          ) : (
+            <button className="btn btn-clear" style={{ padding: '0.4rem 1rem' }} onClick={() => setIsDebugStarted(false)}>
+              ✏️ Edit Code
+            </button>
+          )}
+          <div style={{ width: '1px', height: '22px', background: 'var(--glass-border)', margin: '0 4px' }} />
+          <button className="btn btn-clear" onClick={onBack}>🏠 Home</button>
+        </div>
+      </header>
+
+      <div style={{ display: 'flex', flex: 1, overflow: 'hidden' }}>
+        {!isDebugStarted ? (
+          <>
+            <div style={{ flex: 1, display: 'flex', flexDirection: 'column', overflow: 'hidden', borderRight: '2px solid #ddd', background: 'var(--bg-secondary)' }}>
+              <div style={{ padding: '6px 12px', borderBottom: '1px solid #ddd', background: 'var(--glass-bg)', display: 'flex', justifyContent: 'space-between', alignItems: 'center', flexShrink: 0 }}>
+                <span style={{ fontSize: '0.82rem', fontWeight: 700, color: 'var(--text-secondary)', fontFamily: 'monospace' }}>Code Editor</span>
+              </div>
+              <div style={{ display: 'flex', flex: 1, overflow: 'hidden' }}>
+                <div ref={lineNumbersRef} style={{ width: '44px', background: 'rgba(0,0,0,0.12)', color: 'var(--text-secondary)', textAlign: 'right', padding: '1rem 6px 2rem 0', fontFamily: 'monospace', fontSize: `${fontSize}px`, lineHeight: '1.6', flexShrink: 0, userSelect: 'none', borderRight: '1px solid var(--glass-border)', overflow: 'hidden' }}>
+                  {localCode.split('\n').map((_, i) => <div key={i}>{i + 1}</div>)}
+                </div>
+                <textarea className="code-textarea" value={localCode} onChange={e => setLocalCode(e.target.value)} onScroll={handleScroll}
+                  style={{ flex: 1, padding: '1rem', fontSize: `${fontSize}px`, lineHeight: '1.6', whiteSpace: 'pre', border: 'none', borderRadius: 0, height: '100%', background: 'transparent', color: 'var(--text-primary)', outline: 'none', resize: 'none', overflow: 'auto' }}
+                  placeholder={
+                    detectedLang === 'Java' ? `Write Java code here...\n\nIMPORTANT: Java requires a public class.\nExample:\n\npublic class Main {\n  public static void main(String[] args) {\n    int x = 10;\n    System.out.println(x);\n  }\n}` :
+                    detectedLang === 'C++' ? `Write C++ code here...\n\nExample:\n\n#include <iostream>\nusing namespace std;\n\nint main() {\n  int x = 10;\n  cout << x << endl;\n  return 0;\n}` :
+                    detectedLang === 'Python' ? `Write Python code here...\n\nExample:\n\nx = 10\nprint(x)` :
+                    `Write JS code here...\n\nExample:\n\nlet x = 10;\nconsole.log(x);`
+                  }
+                  spellCheck={false} />
+              </div>
+            </div>
+            <div style={{ flex: 1, display: 'flex', flexDirection: 'column', overflow: 'hidden', background: '#e8ecf0', minWidth: '350px' }}>
+              <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', height: '100%', color: '#888', fontStyle: 'italic', fontSize: '0.9rem', padding: '2rem' }}>
+                <div style={{ fontSize: '2.5rem', marginBottom: '10px' }}>🔍</div>
+                Click "Start Debug" to trace execution
+              </div>
+            </div>
+          </>
+        ) : (
+          <div style={{ flex: 1, background: '#fff', position: 'relative' }}>
+            {isIframeLoading && (
+              <div style={{ position: 'absolute', top: 0, left: 0, width: '100%', height: '100%', background: '#f8fafc', display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', zIndex: 10 }}>
+                <div style={{ width: '40px', height: '40px', border: '4px solid #e2e8f0', borderTop: '4px solid var(--accent-primary)', borderRadius: '50%', animation: 'spin 1s linear infinite' }} />
+                <h3 style={{ color: '#334155', marginTop: '1rem', fontFamily: 'inherit' }}>Initializing Execution Engine...</h3>
+                <p style={{ color: '#64748b', fontSize: '0.85rem', marginTop: '0.5rem' }}>Please wait, the cloud server is processing your code.</p>
+                <div style={{ marginTop: '1.5rem', fontStyle: 'italic', color: loadingQuotes[quoteIndex].color, fontSize: '0.95rem', fontWeight: 600, maxWidth: '80%', textAlign: 'center', minHeight: '40px', transition: 'opacity 0.3s' }}>
+                  {loadingQuotes[quoteIndex].text}
+                </div>
+                <style>{`@keyframes spin { 0% { transform: rotate(0deg); } 100% { transform: rotate(360deg); } }`}</style>
+              </div>
+            )}
+            <iframe 
+              width="100%" 
+              height="100%" 
+              frameBorder="0" 
+              src={`https://pythontutor.com/iframe-embed.html#code=${encodeURIComponent(localCode)}&cumulative=false&curInstr=0&heapPrimitives=nevernest&origin=opt-frontend.js&py=${ptLangMap[detectedLang] || 'js'}&rawInputLstJSON=%5B%5D&textReferences=false`}
+              title="Execution Trace"
+            />
+          </div>
+        )}
+      </div>
+      <ChatBot customCode={localCode} codeLang={detectedLang} isChatOpen={isChatOpen} setIsChatOpen={setIsChatOpen} chatMessages={chatMessages} setChatMessages={setChatMessages} />
+    </div>
+  );
+};
+
+// ─── Main App ─────────────────────────────────────────────────────────────────
+function App() {
+  const [appMode,       setAppMode]       = useState(null);
+  const [setupComplete, setSetupComplete] = useState(false);
+  const [treeType,      setTreeType]      = useState('BST');
+  const [globalDsType,  setGlobalDsType]  = useState('HASH_TABLE');
+  const [globalDsVariety, setGlobalDsVariety] = useState('HASH_LINEAR');
+  const [pendingModule, setPendingModule] = useState(null);
+  const [fenwickBitMode, setFenwickBitMode] = useState(false);
+  const [bTreeOrder,    setBTreeOrder]    = useState(4);
+  const [deleteStrategy, setDeleteStrategy] = useState('RIGHT');
+  const [codeLang,      setCodeLang]      = useState('C++');
+  const [currentTheme,  setCurrentTheme]  = useState('Cosmic Dark');
+
+  const [isFeedbackOpen, setIsFeedbackOpen] = useState(false);
+  const [rating, setRating] = useState(5);
+  const [feedbackText, setFeedbackText] = useState('');
+  const [feedbackEmail, setFeedbackEmail] = useState('');
+  const [feedbackCategory, setFeedbackCategory] = useState('UI/UX');
+  const [isFeedbackSubmitted, setIsFeedbackSubmitted] = useState(false);
+  const [isAdminFeedbackOpen, setIsAdminFeedbackOpen] = useState(false);
+  const [feedbackSearchQuery, setFeedbackSearchQuery] = useState('');
+
+  // ── OTP & Database Admin verification states ──
+  const [isOtpVerifying, setIsOtpVerifying] = useState(false);
+  const [feedbackOtpCode, setFeedbackOtpCode] = useState('');
+  const [isFeedbackSendingOtp, setIsFeedbackSendingOtp] = useState(false);
+  const [isFeedbackVerifyingOtp, setIsFeedbackVerifyingOtp] = useState(false);
+  const [feedbackError, setFeedbackError] = useState('');
+
+  const [isAdminAuthenticated, setIsAdminAuthenticated] = useState(false);
+  const [adminPinInput, setAdminPinInput] = useState('');
+  const [adminErrorMessage, setAdminErrorMessage] = useState('');
+  const [adminFeedbacksList, setAdminFeedbacksList] = useState([]);
+
+  // ── OTP & PostgreSQL Database Integration Fetch Helpers ──
+  const sendFeedbackOtp = async () => {
+    if (!feedbackEmail.trim()) {
+      setFeedbackError("Please enter your email address.");
+      return;
+    }
+    if (!feedbackEmail.includes('@') || !feedbackEmail.includes('.')) {
+      setFeedbackError("Please enter a valid email address.");
+      return;
+    }
+
+    setFeedbackError('');
+    setIsFeedbackSendingOtp(true);
+    try {
+      const res = await fetch('/api/feedback/send-otp', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ email: feedbackEmail.trim() })
+      });
+      const data = await res.json();
+      if (!res.ok) {
+        throw new Error(data.error || 'Failed to send verification code.');
+      }
+      setIsOtpVerifying(true);
+    } catch (err) {
+      setFeedbackError(err.message);
+    } finally {
+      setIsFeedbackSendingOtp(false);
+    }
+  };
+
+  const verifyOtpAndSubmit = async () => {
+    if (!feedbackOtpCode.trim()) {
+      setFeedbackError("Please enter the 6-digit verification code.");
+      return;
+    }
+
+    setFeedbackError('');
+    setIsFeedbackVerifyingOtp(true);
+    try {
+      const res = await fetch('/api/feedback/verify-and-submit', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          email: feedbackEmail.trim(),
+          otp: feedbackOtpCode.trim(),
+          rating,
+          category: feedbackCategory,
+          text: feedbackText.trim()
+        })
+      });
+      const data = await res.json();
+      if (!res.ok) {
+        throw new Error(data.error || 'Verification failed. Please check the code.');
+      }
+      setIsFeedbackSubmitted(true);
+    } catch (err) {
+      setFeedbackError(err.message);
+    } finally {
+      setIsFeedbackVerifyingOtp(false);
+    }
+  };
+
+  const loginAdminConsole = async () => {
+    if (!adminPinInput.trim()) {
+      setAdminErrorMessage("Please enter your developer security PIN.");
+      return;
+    }
+
+    setAdminErrorMessage('');
+    try {
+      const res = await fetch('/api/admin/verify-pin', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ pin: adminPinInput.trim() })
+      });
+      const data = await res.json();
+      if (!res.ok) {
+        throw new Error(data.error || 'Incorrect PIN. Access denied.');
+      }
+      setIsAdminAuthenticated(true);
+      fetchAdminFeedbacks(adminPinInput.trim());
+    } catch (err) {
+      setAdminErrorMessage(err.message);
+    }
+  };
+
+  const fetchAdminFeedbacks = async (pinCode) => {
+    try {
+      const res = await fetch('/api/admin/feedbacks', {
+        method: 'GET',
+        headers: { 'Authorization': pinCode }
+      });
+      const data = await res.json();
+      if (res.ok) {
+        setAdminFeedbacksList(data);
+      }
+    } catch (err) {
+      console.error("Failed to fetch database feedbacks:", err);
+    }
+  };
+
+  const clearAdminFeedbacks = async () => {
+    if (!confirm("Are you sure you want to permanently clear all feedback entries from PostgreSQL database?")) {
+      return;
+    }
+
+    try {
+      const res = await fetch('/api/admin/clear', {
+        method: 'DELETE',
+        headers: { 'Authorization': adminPinInput.trim() }
+      });
+      const data = await res.json();
+      if (res.ok) {
+        alert("All feedback logs cleared successfully from database!");
+        setAdminFeedbacksList([]);
+      } else {
+        alert(data.error || "Failed to clear feedbacks.");
+      }
+    } catch (err) {
+      console.error("Failed to clear feedbacks:", err);
+    }
+  };
+
+  const bTreeRef     = useRef(new BTreeEngine(4, false));
+  const bPlusTreeRef = useRef(new BTreeEngine(4, true));
+  const rbEngineRef  = useRef(new RBEngine());
+
+  const [inputValue,     setInputValue]    = useState('');
+  const [insertedValues, setInsertedValues]= useState([]);
+  const [operationsLog,  setOperationsLog] = useState([]);
+  const [showDeletionsInCode, setShowDeletionsInCode] = useState(true);
+  const [customCode,     setCustomCode]    = useState('');
+  const [customStdin,    setCustomStdin]   = useState('');
+  const [homeSearchQuery,setHomeSearchQuery]= useState('');
+  const [analysisResult, setAnalysisResult]= useState(null);
+  const [animationSpeed, setAnimationSpeed]= useState(400);
+
+  const [timeline,    setTimeline]    = useState([]);
+  const [currentStep, setCurrentStep] = useState(0);
+  const [isPlaying,   setIsPlaying]   = useState(false);
+
+  const containerRef    = useRef(null);
+  const logEndRef       = useRef(null);
+  const playIntervalRef = useRef(null);
+
+  const [codeHeight, setCodeHeight] = useState(300);
+  const [isChatOpen, setIsChatOpen] = useState(false);
+  const [chatMessages, setChatMessages] = useState([
+    { sender: 'bot', text: '👋 Hi! I\'m your AI coding assistant powered by Claude.\n\nAsk me anything:\n• "Explain binary search"\n• "Fix my code"\n• "Write a bubble sort in Python"\n• "What is AVL tree rotation?"\n\nI\'m here to help!' }
+  ]);
+
+  const [genericLogs,    setGenericLogs]    = useState([]);
+  const [isSettingsOpen, setIsSettingsOpen] = useState(false);
+  const [editorFontSize, setEditorFontSize] = useState(14);
+  const [editorWordWrap, setEditorWordWrap] = useState('off');
+  const [editorScroll,   setEditorScroll]   = useState(0);
+  const [codeValTab, setCodeValTab] = useState('CONSOLE');
+
+  // Apply theme
+  useEffect(() => {
+    const theme = THEMES[currentTheme];
+    if (!theme) return;
+    const root = document.documentElement;
+    Object.entries(theme).forEach(([k, v]) => { if (k !== 'bodyBg') root.style.setProperty(k, v); });
+    document.body.style.backgroundImage = theme.bodyBg;
+  }, [currentTheme]);
+
+  const handleDragStart = e => {
+    e.preventDefault();
+    const startY = e.clientY, startH = codeHeight;
+    const drag = ev => setCodeHeight(Math.max(100, Math.min(startH + (startY - ev.clientY), window.innerHeight - 200)));
+    const end  = () => { document.removeEventListener('mousemove', drag); document.removeEventListener('mouseup', end); };
+    document.addEventListener('mousemove', drag);
+    document.addEventListener('mouseup', end);
+  };
+
+  // Auto-detect language
+  useEffect(() => {
+    if (!customCode) return;
+    if (customCode.includes('#include') || customCode.includes('cout <<')) setCodeLang('C++');
+    else if (customCode.includes('public static void main') || customCode.includes('System.out.print')) setCodeLang('Java');
+    else if ((customCode.includes('def ') || customCode.includes('print(')) && !customCode.includes(';')) setCodeLang('Python');
+    else if (customCode.includes('console.log') || customCode.includes('function ')) setCodeLang('JS');
+  }, [customCode]);
+
+  // ── Enhanced Code Validator logic moved to top ─────────
+  const validateCode = (code, lang) => {
+    const errors = [];
+    if (!code.trim()) return ['Code is empty.'];
+    if (lang === 'Java' && !code.includes('class')) errors.push('Java code must contain a class definition.');
+    return errors;
+  };
+
+  const extractOutput = (code, lang) => {
+    // This is a fallback parser if network execution fails
+    const outputs = [];
+    const lines = code.split('\n');
+    lines.forEach(line => {
+      let match;
+      if (lang === 'Java') match = line.match(/System\.out\.print(?:ln)?\s*\((.*?)\)\s*;/);
+      else if (lang === 'C++') match = line.match(/cout\s*<<\s*(.*?)\s*(?:<<\s*endl\s*)?;/);
+      else if (lang === 'Python') match = line.match(/print\s*\((.*?)\)/);
+      if (match) {
+        let val = match[1].trim().replace(/['"]/g, '');
+        outputs.push(val);
+      }
+    });
+    return outputs;
+  };
+  const runGenericCode = () => {
+    setGenericLogs([{ text: `▶ Running ${codeLang}...`, type: 'normal' }]);
+    if (codeLang === 'JS') {
+      let newLogs = [{ text: `--- ${codeLang} Execution ---`, type: 'normal' }];
+      try {
+        const outputs = [];
+        const origLog = console.log, origErr = console.error;
+        console.log = (...args) => { 
+          args.forEach(a => {
+            if (Array.isArray(a)) outputs.push({ type: 'array_log', data: [...a] });
+            else {
+              const str = typeof a === 'object' ? JSON.stringify(a, null, 2) : String(a);
+              if (/^\[?\s*(-?\d+(?:\.\d+)?(?:[\s,]+-?\d+(?:\.\d+)?)*)\s*\]?$/.test(str)) {
+                const nums = str.replace(/[\[\]]/g, '').split(/[\s,]+/).filter(Boolean).map(Number);
+                if (nums.length > 0) outputs.push({ type: 'array_log', data: nums });
+                else outputs.push({ type: 'text', text: '📤 ' + str });
+              } else outputs.push({ type: 'text', text: '📤 ' + str });
+            }
+          });
+          origLog(...args); 
+        };
+        console.error = (...args) => { outputs.push({ type: 'error', text: '❌ ' + args.join(' ') }); origErr(...args); };
+        new Function(customCode)();
+        console.log = origLog; console.error = origErr;
+        newLogs.push({ text: '✅ Execution successful.', type: 'normal' });
+        if (outputs.length) {
+          newLogs.push({ text: `\n[OUTPUT]`, type: 'normal' });
+          outputs.forEach(o => {
+            if (o.type === 'array_log') newLogs.push(o);
+            else newLogs.push({ text: o.text, type: o.type === 'error' ? 'error' : 'output' });
+          });
+          newLogs.push({ text: `[END]`, type: 'normal' });
+        }
+        else newLogs.push({ text: '[OUTPUT] (No console output)', type: 'normal' });
+        setGenericLogs(newLogs);
+      } catch (err) {
+        newLogs.push({ text: `❌ ${err.constructor.name}: ${err.message}`, type: 'error' });
+        newLogs.push({ text: `   at ${err.stack?.split('\\n')[1]?.trim() || 'unknown location'}`, type: 'error' });
+        setGenericLogs(newLogs);
+        setIsChatOpen(true);
+        setChatMessages(prev => [...prev, { sender: 'bot', text: `I detected an error in your JS code:\n\n❌ ${err.message}\n\nWould you like me to help debug this?` }]);
+      }
+    } else {
+      let newLogs = [{ text: `--- ${codeLang} Execution ---`, type: 'normal' }, { text: `☁️ Sending to cloud compiler...`, type: 'normal' }];
+      setGenericLogs([...newLogs]);
+
+      const pistonLangMap = {
+        'Java': { language: 'java', version: '*', filename: 'Main.java' },
+        'C++': { language: 'cpp', version: '*', filename: 'main.cpp' },
+        'Python': { language: 'python', version: '*', filename: 'main.py' },
+        'JS': { language: 'javascript', version: '*', filename: 'main.js' }
+      };
+
+      const langConfig = pistonLangMap[codeLang] || { language: 'javascript', version: '*', filename: 'main.js' };
+      let submissionCode = customCode;
+
+      fetch('https://emkc.org/api/v2/piston/execute', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          language: langConfig.language,
+          version: langConfig.version,
+          files: [{ name: langConfig.filename, content: submissionCode }],
+          stdin: customStdin
+        })
+      })
+      .then(res => res.json())
+      .then(data => {
+        if (!data || !data.run) {
+          throw new Error('Invalid compiler response from server.');
+        }
+
+        const run = data.run;
+        if (run.stderr && run.stderr.trim()) {
+          newLogs.push({ text: `❌ Execution Errors:\n${run.stderr}`, type: 'error' });
+          setGenericLogs([...newLogs]);
+          return;
+        }
+
+        newLogs.push({ text: '✅ Compilation and execution successful.', type: 'normal' });
+
+        if (run.stdout && run.stdout.trim()) {
+          newLogs.push({ text: `\n[OUTPUT]`, type: 'normal' });
+          const lines = run.stdout.split('\n');
+          lines.forEach(line => {
+            if (!line.trim()) return;
+            const cleanLine = line.trim();
+            if (/^\[?\s*(-?\d+(?:\.\d+)?(?:[\s,]+-?\d+(?:\.\d+)?)*)\s*\]?$/.test(cleanLine)) {
+              const nums = cleanLine.replace(/[\[\]]/g, '').split(/[\s,]+/).filter(Boolean).map(Number);
+              if (nums.length > 0) newLogs.push({ type: 'array_log', data: nums });
+              else newLogs.push({ text: line, type: 'output' });
+            } else newLogs.push({ text: line, type: 'output' });
+          });
+        } else {
+          newLogs.push({ text: '\n[OUTPUT] (No output)', type: 'normal' });
+        }
+
+        newLogs.push({ text: `[END]`, type: 'normal' });
+        setGenericLogs([...newLogs]);
+      })
+      .catch(err => {
+        newLogs.push({ text: `❌ Network Error: Could not connect to Piston compiler server.\n(${err.message})\nFalling back to simulated execution...`, type: 'error' });
+        
+        const errors = validateCode(customCode, codeLang);
+        if (errors.length) {
+          errors.forEach(e => newLogs.push({ text: e, type: 'error' }));
+          newLogs.push({ text: `\n💡 Fix the above issues and try again.`, type: 'normal' });
+        } else {
+          const output = extractOutput(customCode, codeLang);
+          if (output.length) {
+            newLogs.push({ text: `\n[SIMULATED OUTPUT]`, type: 'normal' });
+            output.forEach(line => {
+              const cleanLine = line.trim();
+              if (/^\[?\s*(-?\d+(?:\.\d+)?(?:[\s,]+-?\d+(?:\.\d+)?)*)\s*\]?$/.test(cleanLine)) {
+                const nums = cleanLine.replace(/[\[\]]/g, '').split(/[\s,]+/).filter(Boolean).map(Number);
+                if (nums.length > 0) newLogs.push({ type: 'array_log', data: nums });
+                else newLogs.push({ text: line, type: 'output' });
+              } else newLogs.push({ text: line, type: 'output' });
+            });
+          }
+        }
+        setGenericLogs([...newLogs]);
+      });
+    }
+  };
+
+  const enterMode = mode => { window.location.hash = mode; setAppMode(mode); setSetupComplete(false); };
+  const goBack    = () => { window.location.hash = ''; setAppMode(null); setSetupComplete(false); };
+
+  useEffect(() => {
+    const handleHashChange = () => {
+      const hash = window.location.hash.replace('#', '');
+      if (hash === '') {
+        setAppMode(null);
+      } else if (['MAIN_VIS', 'CODE_VAL_VIS', 'LINE_BY_LINE_VIS', 'SORT_SEARCH_VIS', 'GENERAL_DSA_VIS', 'GRAPH_VIS'].includes(hash)) {
+        setAppMode(hash);
+        // Do not force setupComplete here, so modals can open if needed.
+      }
+    };
+    window.addEventListener('hashchange', handleHashChange);
+    if (window.location.hash) handleHashChange();
+    return () => window.removeEventListener('hashchange', handleHashChange);
+  }, []);
+
+  useEffect(() => {
+    const handleBeforeUnload = (e) => {
+      const hasData = insertedValues.length > 0 || customCode.trim().length > 0 || timeline.length > 0;
+      if (appMode && hasData) {
+        e.preventDefault();
+        e.returnValue = 'Refreshing will erase data. Are you sure?';
+      }
+    };
+    window.addEventListener('beforeunload', handleBeforeUnload);
+    return () => window.removeEventListener('beforeunload', handleBeforeUnload);
+  }, [appMode, insertedValues.length, customCode, timeline.length]);
+
+
+  const handleClear = () => {
+    setTimeline([]); setCurrentStep(0); setIsPlaying(false);
+    setInsertedValues([]); setOperationsLog([]); setAnalysisResult(null);
+    bTreeRef.current = new BTreeEngine(bTreeOrder, false);
+    bPlusTreeRef.current = new BTreeEngine(bTreeOrder, true);
+    rbEngineRef.current = new RBEngine();
+  };
+
+  useEffect(() => { handleClear(); }, [treeType, bTreeOrder]);
+
+  useEffect(() => {
+    if (isPlaying) {
+      playIntervalRef.current = setInterval(() => {
+        setCurrentStep(p => { if (p < timeline.length - 1) return p + 1; setIsPlaying(false); return p; });
+      }, animationSpeed);
+    } else clearInterval(playIntervalRef.current);
+    return () => clearInterval(playIntervalRef.current);
+  }, [isPlaying, timeline.length, animationSpeed]);
+
+  useEffect(() => { logEndRef.current?.scrollIntoView({ behavior: 'smooth', block: 'nearest' }); }, [currentStep]);
+
+  // ── Simulations ─────────────────────────────────────────────────────────
+  const simulateBST = (startRoot, val, prevLogs) => {
+    const frames = []; const logs = [...prevLogs];
+    logs.push({ text: `─── Insert(${val}) ───`, type: 'normal' });
+    const rw = { current: cloneTree(startRoot) };
+    const rec = (h, r) => frames.push(new Frame(rw.current, logs, h, r));
+    let performedRotation = null;
+
+    const ins = (node, v) => {
+      if (!node) { logs.push({ text: `✦ Create Node(${v})`, type: 'normal' }); return new TreeNode(v); }
+      logs.push({ text: `Compare ${v} vs ${node.value} → ${v < node.value ? 'left' : 'right'}`, type: 'normal' });
+      rec(node.value, null);
+      if (v < node.value) { node.left  = ins(node.left,  v); rec(node.value, performedRotation); }
+      else if (v > node.value) { node.right = ins(node.right, v); rec(node.value, performedRotation); }
+      else { logs.push({ text: `Duplicate ${v} skipped.`, type: 'normal' }); return node; }
+      updateHeight(node);
+      if (treeType === 'AVL') {
+        const bf = getBalance(node);
+        if (Math.abs(bf) > 1) { logs.push({ text: `⚡ Imbalance at ${node.value} [BF:${bf}]`, type: 'rotation' }); rec(node.value, `Imbalance at ${node.value} (BF:${bf})`); }
+        if (bf >  1 && v < node.left.value)  { performedRotation = `LL Case: Single Right Rotation at ${node.value}`; logs.push({ text: `→ ${performedRotation}`, type: 'rotation' }); return rightRotate(node); }
+        if (bf < -1 && v > node.right.value) { performedRotation = `RR Case: Single Left Rotation at ${node.value}`; logs.push({ text: `→ ${performedRotation}`, type: 'rotation' }); return leftRotate(node); }
+        if (bf >  1 && v > node.left.value)  { 
+          performedRotation = `LR Step 1: Left Rotate child (${node.left.value})`; 
+          logs.push({ text: `→ LR Case Step 1: Left Rotation on left child (${node.left.value})`, type: 'rotation' }); 
+          node.left = leftRotate(node.left); 
+          rec(node.left.value, performedRotation);
+          performedRotation = `LR Step 2: Right Rotate node (${node.value})`; 
+          logs.push({ text: `→ LR Case Step 2: Right Rotation on node (${node.value})`, type: 'rotation' }); 
+          return rightRotate(node); 
+        }
+        if (bf < -1 && v < node.right.value) { 
+          performedRotation = `RL Step 1: Right Rotate child (${node.right.value})`; 
+          logs.push({ text: `→ RL Case Step 1: Right Rotation on right child (${node.right.value})`, type: 'rotation' }); 
+          node.right = rightRotate(node.right); 
+          rec(node.right.value, performedRotation);
+          performedRotation = `RL Step 2: Left Rotate node (${node.value})`; 
+          logs.push({ text: `→ RL Case Step 2: Left Rotation on node (${node.value})`, type: 'rotation' }); 
+          return leftRotate(node); 
+        }
+      }
+      return node;
+    };
+    rw.current = ins(rw.current, val);
+    logs.push({ text: `✓ Insert(${val}) done.`, type: 'normal' });
+    rec(val, performedRotation ? `✅ Completed ${performedRotation}` : null);
+    return frames;
+  };
+
+  const simulateSegTree = (val, prevArr, prevLogs) => {
+    const logs = [...prevLogs]; 
+    const arr = [...prevArr, val];
+    const frames = [];
+    
+    logs.push({ text: `─── Segment Tree Build for [${arr.join(', ')}] ───`, type: 'normal' });
+    
+    const buildSkeleton = (l, r) => {
+      const n = new TreeNode();
+      n.range = `[${l}-${r}]`;
+      n.sum = "?";
+      n._l = l; n._r = r;
+      if (l === r) {
+        n.value = arr[l];
+        return n;
+      }
+      const mid = Math.floor((l + r) / 2);
+      n.left = buildSkeleton(l, mid);
+      n.right = buildSkeleton(mid + 1, r);
+      n.value = undefined;
+      return n;
+    };
+    
+    const rootSkeleton = buildSkeleton(0, arr.length - 1);
+    logs.push({ text: `✦ Initialized segment tree ranges (Divide phase)`, type: 'normal' });
+    frames.push(new Frame(rootSkeleton, logs, null, "Divide Phase"));
+    
+    const animatePostOrder = (node) => {
+      if (!node) return;
+      if (node._l === node._r) {
+        node.sum = arr[node._l];
+        node.value = node.sum;
+        logs.push({ text: `↳ Leaf range ${node.range} set to ${node.sum}`, type: 'normal' });
+        frames.push(new Frame(rootSkeleton, logs, node.range, `Leaf ${node.range} = ${node.sum}`));
+        return;
+      }
+      animatePostOrder(node.left);
+      animatePostOrder(node.right);
+      
+      node.sum = (typeof node.left.sum === 'number' ? node.left.sum : 0) + (typeof node.right.sum === 'number' ? node.right.sum : 0);
+      node.value = node.sum;
+      logs.push({ text: `↳ Merge ${node.range}: left(${node.left.sum}) + right(${node.right.sum}) = ${node.sum}`, type: 'normal' });
+      frames.push(new Frame(rootSkeleton, logs, node.range, `Merged ${node.range}`));
+    };
+    
+    animatePostOrder(rootSkeleton);
+    logs.push({ text: `✓ Segment tree build complete. Root sum = ${rootSkeleton.sum}`, type: 'normal' });
+    frames.push(new Frame(rootSkeleton, logs, null, null));
+    return frames;
+  };
+
+  const buildFenwickTree = (arr) => {
+    if (!arr || !arr.length) return null;
+    const n = arr.length;
+    const bit = new Array(n + 1).fill(0);
+    const nodes = new Array(n + 1).fill(null);
+    for (let i = 1; i <= n; i++) {
+      bit[i] += arr[i - 1];
+      let p = i + (i & -i);
+      if (p <= n) bit[p] += bit[i];
+    }
+    for (let i = 0; i <= n; i++) {
+      nodes[i] = new TreeNode(i === 0 ? "BIT" : arr[i - 1]);
+      if (i > 0) nodes[i].sum = bit[i];
+      nodes[i].range = i > 0 ? `[${i - (i & -i) + 1}-${i}]` : '0';
+      if (i > 0) nodes[i].bitRep = i.toString(2);
+      nodes[i].index = i;
+    }
+    for (let i = 1; i <= n; i++) {
+      let p = i - (i & -i);
+      nodes[p].children.push(nodes[i]);
+    }
+    return nodes[0];
+  };
+
+  const simulateFenwick = (val, prevArr, prevLogs) => {
+    const logs = [...prevLogs]; 
+    const arr = [...prevArr, val];
+    const n = arr.length;
+    const frames = [];
+    
+    logs.push({ text: `─── Fenwick Tree Insert(${val}) at index ${n} ───`, type: 'normal' });
+    
+    const finalBit = new Array(n + 1).fill(0);
+    for (let i = 1; i <= n; i++) {
+      finalBit[i] += arr[i - 1];
+      let p = i + (i & -i);
+      if (p <= n) finalBit[p] += finalBit[i];
+    }
+    
+    const updatedIndices = [];
+    let c = n;
+    while (c <= n) {
+      updatedIndices.push(c);
+      c += c & -c;
+    }
+    
+    const currentBit = [...finalBit];
+    updatedIndices.forEach(idx => { currentBit[idx] -= val; });
+    
+    const getTreeState = (bitArray) => {
+      const nodes = new Array(n + 1).fill(null);
+      for (let i = 0; i <= n; i++) {
+        nodes[i] = new TreeNode(i === 0 ? "BIT" : arr[i - 1]);
+        if (i > 0) nodes[i].sum = bitArray[i];
+        nodes[i].range = i > 0 ? `[${i - (i & -i) + 1}-${i}]` : '0';
+        if (i > 0) nodes[i].bitRep = i.toString(2);
+        nodes[i].index = i;
+      }
+      for (let i = 1; i <= n; i++) {
+        let p = i - (i & -i);
+        nodes[p].children.push(nodes[i]);
+      }
+      return nodes[0];
+    };
+    
+    logs.push({ text: `✦ Attach BIT node ${n} (Range [${n - (n & -n) + 1}-${n}])`, type: 'normal' });
+    frames.push(new Frame(getTreeState(currentBit), logs, n, `New BIT node ${n}`));
+    
+    let curr = n;
+    while (curr <= n) {
+      currentBit[curr] += val;
+      logs.push({ text: `↳ Update BIT[${curr}] += ${val} via LSB jump (+${curr & -curr})`, type: 'normal' });
+      frames.push(new Frame(getTreeState(currentBit), logs, curr, `BIT[${curr}] += ${val}`));
+      curr += curr & -curr;
+    }
+    
+    logs.push({ text: `✓ Fenwick tree update complete.`, type: 'normal' });
+    frames.push(new Frame(getTreeState(currentBit), logs, null, null));
+    return frames;
+  };
+
+  const buildHeapTree = (arr) => {
+    if (!arr || !arr.length) return null;
+    const nodes = arr.map(v => new TreeNode(v));
+    for (let i = 0; i < arr.length; i++) {
+      let leftIdx = 2 * i + 1;
+      let rightIdx = 2 * i + 2;
+      if (leftIdx < arr.length) nodes[i].left = nodes[leftIdx];
+      if (rightIdx < arr.length) nodes[i].right = nodes[rightIdx];
+    }
+    return nodes[0];
+  };
+
+  const simulateHeap = (val, prevArr, prevLogs, isMax = false) => {
+    const frames = [];
+    const logs = [...prevLogs];
+    const arr = [...prevArr, val];
+    const heapTypeName = isMax ? 'Max-Heap' : 'Min-Heap';
+    logs.push({ text: `─── ${heapTypeName} Insert(${val}) ───`, type: 'normal' });
+    logs.push({ text: `Inserted ${val} at end of array (index ${arr.length - 1})`, type: 'normal' });
+    frames.push(new Frame(buildHeapTree(arr), logs, val, null));
+
+    let curr = arr.length - 1;
+    while (curr > 0) {
+      let parent = Math.floor((curr - 1) / 2);
+      logs.push({ text: `Comparing ${arr[curr]} with parent ${arr[parent]}`, type: 'normal' });
+      frames.push(new Frame(buildHeapTree(arr), logs, arr[curr], null));
+
+      if ((isMax && arr[curr] > arr[parent]) || (!isMax && arr[curr] < arr[parent])) {
+        logs.push({ text: `⚡ Swapping ${arr[curr]} and ${arr[parent]} to maintain ${heapTypeName} property`, type: 'rotation' });
+        let temp = arr[curr];
+        arr[curr] = arr[parent];
+        arr[parent] = temp;
+        frames.push(new Frame(buildHeapTree(arr), logs, arr[parent], `Swapped ${arr[curr]} & ${arr[parent]}`));
+        curr = parent;
+      } else {
+        logs.push({ text: `✓ Heap property satisfied.`, type: 'normal' });
+        break;
+      }
+    }
+    frames.push(new Frame(buildHeapTree(arr), logs, val, null));
+    return { frames, finalArr: arr };
+  };
+
+  const simulateHeapDelete = (prevArr, prevLogs, isMax = false) => {
+    const frames = [];
+    const logs = [...prevLogs];
+    if (!prevArr.length) return { frames, finalArr: [] };
+    const arr = [...prevArr];
+    const heapTypeName = isMax ? 'Max-Heap' : 'Min-Heap';
+    const extracted = arr[0];
+    logs.push({ text: `─── Extract Root (${extracted}) ───`, type: 'normal' });
+
+    if (arr.length === 1) {
+      logs.push({ text: `Extracted ${extracted}. Heap is now empty.`, type: 'normal' });
+      frames.push(new Frame(null, logs, null, null));
+      return { frames, finalArr: [] };
+    }
+
+    const lastVal = arr.pop();
+    arr[0] = lastVal;
+    logs.push({ text: `Replaced root with last element (${lastVal})`, type: 'normal' });
+    frames.push(new Frame(buildHeapTree(arr), logs, lastVal, null));
+
+    let curr = 0;
+    while (true) {
+      let left = 2 * curr + 1;
+      let right = 2 * curr + 2;
+      let target = curr;
+
+      if (left < arr.length && ((isMax && arr[left] > arr[target]) || (!isMax && arr[left] < arr[target]))) {
+        target = left;
+      }
+      if (right < arr.length && ((isMax && arr[right] > arr[target]) || (!isMax && arr[right] < arr[target]))) {
+        target = right;
+      }
+
+      if (target !== curr) {
+        logs.push({ text: `⚡ Swapping ${arr[curr]} with ${arr[target]} to bubble down`, type: 'rotation' });
+        let temp = arr[curr];
+        arr[curr] = arr[target];
+        arr[target] = temp;
+        frames.push(new Frame(buildHeapTree(arr), logs, arr[target], `Swapped ${arr[curr]} & ${arr[target]}`));
+        curr = target;
+      } else {
+        logs.push({ text: `✓ Heapification complete.`, type: 'normal' });
+        break;
+      }
+    }
+    frames.push(new Frame(buildHeapTree(arr), logs, null, null));
+    return { frames, finalArr: arr };
+  };
+
+  const simulateGraphTree = (newVal, prevValues, prevLogs, type) => {
+    const logs = [...prevLogs];
+    const vals = [...prevValues, newVal];
+    logs.push({ text: `Added input/edge: ${newVal}`, type: 'normal' });
+    
+    const adj = {};
+    let firstNode = null;
+    vals.forEach(v => {
+      if (typeof v === 'string' && v.includes('-')) {
+        const [u, w] = v.split('-');
+        const cleanU = u.trim(), cleanW = w.trim();
+        if (!firstNode) firstNode = cleanU;
+        if (!adj[cleanU]) adj[cleanU] = [];
+        if (!adj[cleanW]) adj[cleanW] = [];
+        adj[cleanU].push(cleanW);
+        adj[cleanW].push(cleanU); // undirected
+      } else if (v !== undefined && v !== null) {
+        const s = v.toString().trim();
+        if (s) {
+          if (!firstNode) firstNode = s;
+          if (!adj[s]) adj[s] = [];
+        }
+      }
+    });
+    
+    if (!firstNode) return [new Frame(null, logs, null, null)];
+    
+    const frames = [];
+    const rootNode = new TreeNode(firstNode);
+    const visited = new Set([firstNode]);
+    const nodeMap = { [firstNode]: rootNode };
+    
+    logs.push({ text: `✦ Initialize ${type} Spanning Tree root: ${firstNode}`, type: 'normal' });
+    frames.push(new Frame(rootNode, logs, firstNode, `Start at root ${firstNode}`));
+    
+    if (type === 'BFS') {
+      let queue = [firstNode];
+      while (queue.length > 0) {
+        let curr = queue.shift();
+        let currNode = nodeMap[curr];
+        if (adj[curr]) {
+          let nbrs = [...new Set(adj[curr])].sort();
+          for (let neighbor of nbrs) {
+            if (!visited.has(neighbor)) {
+              visited.add(neighbor);
+              let child = new TreeNode(neighbor);
+              nodeMap[neighbor] = child;
+              currNode.children.push(child);
+              queue.push(neighbor);
+              
+              logs.push({ text: `↳ Discovered ${neighbor} from ${curr}`, type: 'normal' });
+              frames.push(new Frame(rootNode, logs, neighbor, `BFS edge: ${curr} → ${neighbor}`));
+            }
+          }
+        }
+      }
+    } else { // DFS
+      const dfs = (curr, currNode) => {
+        if (!adj[curr]) return;
+        let nbrs = [...new Set(adj[curr])].sort();
+        for (let neighbor of nbrs) {
+          if (!visited.has(neighbor)) {
+            visited.add(neighbor);
+            let child = new TreeNode(neighbor);
+            nodeMap[neighbor] = child;
+            currNode.children.push(child);
+            
+            logs.push({ text: `↳ Explored ${neighbor} from ${curr}`, type: 'normal' });
+            frames.push(new Frame(rootNode, logs, neighbor, `DFS path: ${curr} → ${neighbor}`));
+            
+            dfs(neighbor, child);
+          }
+        }
+      };
+      dfs(firstNode, rootNode);
+    }
+    
+    logs.push({ text: `✓ Completed ${type} Spanning Tree construction`, type: 'normal' });
+    frames.push(new Frame(rootNode, logs, null, null));
+    return frames;
+  };
+
+  const simulateRB = (val, prevLogs) => {
+    const logs = [...prevLogs];
+    logs.push({ text: `─── RB-Tree Insert(${val}) ───`, type: 'normal' });
+    const root = rbEngineRef.current.insert(val, logs, null);
+    logs.push({ text: `✓ Tree recolored & balanced.`, type: 'normal' });
+    return [new Frame(root, logs, val, null)];
+  };
+
+  const simulateBSTDelete = (startRoot, val, prevLogs) => {
+    const frames = []; const logs = [...prevLogs];
+    logs.push({ text: `─── Delete(${val}) ───`, type: 'normal' });
+    const rw = { current: cloneTree(startRoot) };
+    const rec = (h, r) => frames.push(new Frame(rw.current, logs, h, r));
+    let performedRotation = null;
+
+    const minNode = (node) => {
+      let current = node;
+      while (current.left !== null) current = current.left;
+      return current;
+    };
+    
+    const maxNode = (node) => {
+      let current = node;
+      while (current.right !== null) current = current.right;
+      return current;
+    };
+
+    const del = (node, v) => {
+      if (!node) { logs.push({ text: `Value ${v} not found.`, type: 'normal' }); return null; }
+      logs.push({ text: `Compare ${v} vs ${node.value} → ${v < node.value ? 'left' : v > node.value ? 'right' : 'found'}`, type: 'normal' });
+      rec(node.value, null);
+      if (v < node.value) { node.left = del(node.left, v); rec(node.value, performedRotation); }
+      else if (v > node.value) { node.right = del(node.right, v); rec(node.value, performedRotation); }
+      else {
+        logs.push({ text: `Deleting node ${node.value}`, type: 'normal' });
+        if (!node.left && !node.right) { return null; }
+        if (!node.left) { return node.right; }
+        if (!node.right) { return node.left; }
+        
+        if (deleteStrategy === 'RIGHT') {
+          const temp = minNode(node.right);
+          logs.push({ text: `Right Shift: Replacing with inorder successor ${temp.value}`, type: 'normal' });
+          node.value = temp.value;
+          node.right = del(node.right, temp.value);
+        } else {
+          const temp = maxNode(node.left);
+          logs.push({ text: `Left Shift: Replacing with inorder predecessor ${temp.value}`, type: 'normal' });
+          node.value = temp.value;
+          node.left = del(node.left, temp.value);
+        }
+        rec(node.value, performedRotation);
+      }
+      updateHeight(node);
+      if (treeType === 'AVL') {
+        const bf = getBalance(node);
+        if (Math.abs(bf) > 1) { logs.push({ text: `⚡ Imbalance at ${node.value} [BF:${bf}]`, type: 'rotation' }); rec(node.value, `Imbalance at ${node.value} (BF:${bf})`); }
+        if (bf >  1 && getBalance(node.left) >= 0)  { performedRotation = `LL Case: Single Right Rotation at ${node.value}`; logs.push({ text: `→ ${performedRotation}`, type: 'rotation' }); return rightRotate(node); }
+        if (bf >  1 && getBalance(node.left) < 0)   { 
+          performedRotation = `LR Step 1: Left Rotate child (${node.left.value})`; 
+          logs.push({ text: `→ LR Case Step 1: Left Rotation on left child (${node.left.value})`, type: 'rotation' }); 
+          node.left = leftRotate(node.left); 
+          rec(node.left.value, performedRotation);
+          performedRotation = `LR Step 2: Right Rotate node (${node.value})`; 
+          logs.push({ text: `→ LR Case Step 2: Right Rotation on node (${node.value})`, type: 'rotation' }); 
+          return rightRotate(node); 
+        }
+        if (bf < -1 && getBalance(node.right) <= 0) { performedRotation = `RR Case: Single Left Rotation at ${node.value}`; logs.push({ text: `→ ${performedRotation}`, type: 'rotation' }); return leftRotate(node); }
+        if (bf < -1 && getBalance(node.right) > 0)  { 
+          performedRotation = `RL Step 1: Right Rotate child (${node.right.value})`; 
+          logs.push({ text: `→ RL Case Step 1: Right Rotation on right child (${node.right.value})`, type: 'rotation' }); 
+          node.right = rightRotate(node.right); 
+          rec(node.right.value, performedRotation);
+          performedRotation = `RL Step 2: Left Rotate node (${node.value})`; 
+          logs.push({ text: `→ RL Case Step 2: Left Rotation on node (${node.value})`, type: 'rotation' }); 
+          return leftRotate(node); 
+        }
+      }
+      return node;
+    };
+    rw.current = del(rw.current, val);
+    logs.push({ text: `✓ Delete(${val}) done.`, type: 'normal' });
+    rec(val, performedRotation ? `✅ Completed ${performedRotation}` : null);
+    return frames;
+  };
+
+  const handleInsert = () => {
+    let val = inputValue.trim();
+    if (treeType !== 'BFS_TREE' && treeType !== 'DFS_TREE') {
+      val = parseInt(val);
+      if (isNaN(val)) return;
+    } else if (!val) return;
+
+    const prev = timeline.length > 0 ? timeline[timeline.length - 1] : new Frame(null, [], null, null);
+    let frames = [];
+    let newArr = null;
+
+    if (treeType === 'BST' || treeType === 'AVL') {
+      frames = simulateBST(prev.root, val, prev.logs);
+    } else if (treeType === 'B_TREE' || treeType === 'B_PLUS_TREE') {
+      const logs = [...prev.logs];
+      logs.push({ text: `─── ${treeType === 'B_PLUS_TREE' ? 'B+ Tree' : 'B-Tree'} Insert(${val}) ───`, type: 'normal' });
+      const rec = (h, r) => { const t = treeType === 'B_TREE' ? bTreeRef.current : bPlusTreeRef.current; frames.push(new Frame(t.root, logs, h, r)); };
+      if (treeType === 'B_TREE') bTreeRef.current.insert(val, logs, rec);
+      else bPlusTreeRef.current.insert(val, logs, rec);
+      rec(val, null);
+    } else if (treeType === 'SEGMENT_TREE') {
+      frames = simulateSegTree(val, insertedValues, prev.logs);
+    } else if (treeType === 'FENWICK_TREE') {
+      frames = simulateFenwick(val, insertedValues, prev.logs);
+    } else if (treeType === 'MIN_HEAP' || treeType === 'MAX_HEAP') {
+      const res = simulateHeap(val, insertedValues, prev.logs, treeType === 'MAX_HEAP');
+      frames = res.frames;
+      newArr = res.finalArr;
+    } else if (treeType === 'RB_TREE') {
+      frames = simulateRB(val, prev.logs);
+    } else if (treeType === 'BFS_TREE' || treeType === 'DFS_TREE') {
+      frames = simulateGraphTree(val, insertedValues, prev.logs, treeType === 'BFS_TREE' ? 'BFS' : 'DFS');
+    }
+
+    if (newArr) {
+      setInsertedValues(newArr);
+    } else {
+      setInsertedValues(p => [...p, val]);
+    }
+    setOperationsLog(p => [...p, { op: 'insert', val }]);
+    setTimeline(p => [...p, ...frames]);
+    setInputValue('');
+    setIsPlaying(true);
+  };
+
+  const handleDelete = () => {
+    if (treeType === 'MIN_HEAP' || treeType === 'MAX_HEAP') {
+      const prev = timeline.length > 0 ? timeline[timeline.length - 1] : new Frame(null, [], null, null);
+      const res = simulateHeapDelete(insertedValues, prev.logs, treeType === 'MAX_HEAP');
+      if (!res.frames.length) return;
+      setInsertedValues(res.finalArr);
+      setOperationsLog(p => [...p, { op: 'delete', val: 'root' }]);
+      setTimeline(p => [...p, ...res.frames]);
+      setInputValue('');
+      setIsPlaying(true);
+      return;
+    }
+
+    const val = parseInt(inputValue);
+    if (isNaN(val)) return;
+    const prev = timeline.length > 0 ? timeline[timeline.length - 1] : new Frame(null, [], null, null);
+    let frames = [];
+
+    if (treeType === 'BST' || treeType === 'AVL') {
+      frames = simulateBSTDelete(prev.root, val, prev.logs);
+    } else {
+      alert('Deletion is currently supported for BST, AVL, and Heap trees.');
+      return;
+    }
+
+    setInsertedValues(p => p.filter(v => v !== val));
+    setOperationsLog(p => [...p, { op: 'delete', val }]);
+    setTimeline(p => [...p, ...frames]);
+    setInputValue('');
+    setIsPlaying(true);
+  };
+
+  const analyzeCode = (jumpToEnd = false) => {
+    if (!customCode.trim()) { setAnalysisResult({ type: 'error', message: 'Please paste some code first.' }); return; }
+    setAnalysisResult({ type: 'loading', message: '⏳ Analyzing & compiling...' });
+    setTimeout(() => {
+      const errors = validateCode(customCode, codeLang);
+      let nums = [];
+      const re = /(?:insert|Node|push|append)\s*\([^)]*?(-?\d+)\s*\)/g; let m;
+      while ((m = re.exec(customCode)) !== null) nums.push(parseInt(m[1]));
+      if (!nums.length) { const am = customCode.match(/[\[{]\s*((?:-?\d+\s*,\s*)*-?\d+)\s*[\]}]/); if (am) nums = am[1].split(',').map(n => parseInt(n.trim())); }
+      if (errors.length) {
+        setAnalysisResult({ type: 'error', message: `Found ${errors.length} issue(s):\n${errors.join('\n')}` });
+      } else {
+        setAnalysisResult({ type: 'success', message: `✅ Syntax OK for ${codeLang}\n${nums.length ? `\n🌳 Detected ${nums.length} insertion(s) — visualizing!` : '\nNo tree insertions detected.'}` });
+        if (nums.length) { 
+          let frames=[],logs=[],arr=[],curRoot=null; bTreeRef.current=new BTreeEngine(bTreeOrder,false); bPlusTreeRef.current=new BTreeEngine(bTreeOrder,true); rbEngineRef.current=new RBEngine(); 
+          let heapArr = [];
+          for(const val of nums){if(isNaN(val))continue;if(treeType==='MIN_HEAP'||treeType==='MAX_HEAP'){const res=simulateHeap(val,heapArr,logs,treeType==='MAX_HEAP');frames.push(...res.frames);heapArr=res.finalArr;logs=res.frames[res.frames.length-1].logs;}else{arr.push(val);if(treeType==='BST'||treeType==='AVL'){const f=simulateBST(curRoot,val,logs);frames.push(...f);curRoot=f[f.length-1].root;logs=f[f.length-1].logs;}else if(treeType==='B_TREE'||treeType==='B_PLUS_TREE'){logs.push({text:`Insert(${val})`,type:'normal'});const rec=(h,r)=>{const t=treeType==='B_TREE'?bTreeRef.current:bPlusTreeRef.current;frames.push(new Frame(t.root,logs,h,r));};if(treeType==='B_TREE')bTreeRef.current.insert(val,logs,rec);else bPlusTreeRef.current.insert(val,logs,rec);rec(val,null);}else if(treeType==='SEGMENT_TREE'){const f=simulateSegTree(val,arr.slice(0,-1),logs);frames.push(...f);curRoot=f[f.length-1].root;logs=f[f.length-1].logs;}else if(treeType==='FENWICK_TREE'){const f=simulateFenwick(val,arr.slice(0,-1),logs);frames.push(...f);curRoot=f[f.length-1].root;logs=f[f.length-1].logs;}else if(treeType==='RB_TREE'){const f=simulateRB(val,logs);frames.push(...f);logs=f[f.length-1].logs;}}}
+          setInsertedValues(treeType==='MIN_HEAP'||treeType==='MAX_HEAP'?heapArr:arr);setTimeline(frames);
+          if (jumpToEnd === true) {
+             setCurrentStep(frames.length - 1);
+             setIsPlaying(false);
+          } else {
+             setCurrentStep(0);
+             setIsPlaying(true); 
+          }
+        }
+      }
+    }, 600);
+  };
+
+  // ── Layout & SVG ──────────────────────────────────────────────────────
+  const NODE_R = 26;
+
+  const computeLayout = (rootNode) => {
+    if (!rootNode) return;
+    const W = containerRef.current ? Math.max(containerRef.current.clientWidth - 40, 700) : 900;
+    if (treeType === 'BFS_TREE' || treeType === 'DFS_TREE' || (rootNode.children && rootNode.children.length > 0)) {
+      const layout = (n, d, l, r) => { if (!n) return; n.x=(l+r)/2; n.y=d*95+60; if(n.children?.length>0){const sp=r-l,st=sp/n.children.length;n.children.forEach((c,i)=>layout(c,d+1,l+i*st,l+(i+1)*st));} };
+      layout(rootNode, 0, 20, W - 20); return;
+    }
+    let ctr = 0;
+    const idx = n => { if (!n) return; idx(n.left); n._xi = ctr++; idx(n.right); };
+    idx(rootNode);
+    const sep = Math.max(58, Math.min(80, (W - 60) / Math.max(ctr, 1)));
+    const sx  = (W - (ctr - 1) * sep) / 2;
+    const pos = (n, d) => { if (!n) return; n.x=sx+(n._xi||0)*sep; n.y=d*88+60; pos(n.left,d+1); pos(n.right,d+1); };
+    pos(rootNode, 0);
+  };
+
+  const getTraversals = (rootNode) => {
+    const pre = [], inO = [], post = [];
+    const traverse = (node) => {
+      if (!node) return;
+      if (node.value !== undefined) {
+        pre.push(node.value);
+        traverse(node.left);
+        inO.push(node.value);
+        traverse(node.right);
+        post.push(node.value);
+      }
+    };
+    traverse(rootNode);
+    return { preorder: pre.join(' · '), inorder: inO.join(' · '), postorder: post.join(' · ') };
+  };
+
+  const renderTreeSVG = (rootNode, highlightedNode) => {
+    if (!rootNode) return null;
+    computeLayout(rootNode);
+    const theme = THEMES[currentTheme] || THEMES['Cosmic Dark'];
+    const c1 = theme['--node-fill-1'] || '#3b82f6';
+    const c2 = theme['--node-fill-2'] || '#8b5cf6';
+
+    const allNodes = [], allEdges = [];
+    let idC = 0;
+    const collect = node => {
+      if (!node) return;
+      const id = idC++;
+      const kids = (treeType === 'BFS_TREE' || treeType === 'DFS_TREE') ? (node.children || []) : (node.children?.length > 0 ? node.children : [node.left, node.right].filter(Boolean));
+      kids.forEach(child => { allEdges.push({ id: `e${id}-${idC}`, x1: node.x, y1: node.y, x2: child.x, y2: child.y }); collect(child); });
+      const isHL = highlightedNode === node.value || (node.keys?.includes(highlightedNode)) || (highlightedNode && highlightedNode === node.range) || (highlightedNode && highlightedNode === node.index);
+      allNodes.push({ node, id, isHL });
+    };
+    collect(rootNode);
+
+    const xs = allNodes.map(n => n.node.x).filter(x => !isNaN(x));
+    const ys = allNodes.map(n => n.node.y).filter(y => !isNaN(y));
+    if (!xs.length) return null;
+    const svgW = Math.max(700, Math.max(...xs) + 80);
+    const svgH = Math.max(280, Math.max(...ys) + 80);
+
+    return (
+      <svg width={svgW} height={svgH} style={{ display: 'block', overflow: 'visible' }}>
+        <defs>
+          <linearGradient id="ng"  x1="0%" y1="0%" x2="100%" y2="100%"><stop offset="0%" stopColor={c1}/><stop offset="100%" stopColor={c2}/></linearGradient>
+          <linearGradient id="nhl" x1="0%" y1="0%" x2="100%" y2="100%"><stop offset="0%" stopColor="#f59e0b"/><stop offset="100%" stopColor="#d97706"/></linearGradient>
+          <linearGradient id="rbr" x1="0%" y1="0%" x2="100%" y2="100%"><stop offset="0%" stopColor="#ef4444"/><stop offset="100%" stopColor="#b91c1c"/></linearGradient>
+          <linearGradient id="rbb" x1="0%" y1="0%" x2="100%" y2="100%"><stop offset="0%" stopColor="#374151"/><stop offset="100%" stopColor="#111827"/></linearGradient>
+          <linearGradient id="sg"  x1="0%" y1="0%" x2="100%" y2="100%"><stop offset="0%" stopColor="#0ea5e9"/><stop offset="100%" stopColor="#6366f1"/></linearGradient>
+          <marker id="arrow-cw" markerWidth="8" markerHeight="8" refX="5" refY="4" orient="auto">
+            <path d="M 1 1 L 7 4 L 1 7 Z" fill="#ef4444" />
+          </marker>
+          <marker id="arrow-ccw" markerWidth="8" markerHeight="8" refX="5" refY="4" orient="auto">
+            <path d="M 1 1 L 7 4 L 1 7 Z" fill="#3b82f6" />
+          </marker>
+          <style>{`
+            @keyframes flowDashCw { to { stroke-dashoffset: -14; } }
+            @keyframes flowDashCcw { to { stroke-dashoffset: 14; } }
+          `}</style>
+        </defs>
+        <g>{allEdges.map(e => <line key={e.id} x1={e.x1} y1={e.y1+(e.y2>e.y1?NODE_R:-NODE_R)} x2={e.x2} y2={e.y2+(e.y2>e.y1?-NODE_R:NODE_R)} stroke="rgba(99,140,250,0.45)" strokeWidth="2" strokeLinecap="round"/>)}</g>
+        <g>
+          {allNodes.map(({ node, id, isHL }) => {
+            const isBT  = node.keys?.length > 0 && !node.range && node.value === undefined;
+            const isSeg = !!node.range;
+            const fill  = isHL ? 'url(#nhl)' : node._color === 'RED' ? 'url(#rbr)' : node._color === 'BLACK' ? 'url(#rbb)' : isSeg ? 'url(#sg)' : 'url(#ng)';
+            const glow  = isHL ? 'rgba(245,158,11,0.55)' : 'rgba(99,102,241,0.4)';
+
+            if (isBT) {
+              const kw = Math.max(56, node.keys.length * 38);
+              return <g key={`n${id}`}>
+                <rect x={node.x-kw/2} y={node.y-18} width={kw} height={36} rx={18} fill={fill} stroke={isHL?'rgba(245,158,11,0.8)':'rgba(255,255,255,0.18)'} strokeWidth="1.5" style={{filter:`drop-shadow(0 3px 12px ${glow})`}}/>
+                {node.keys.slice(0,-1).map((_,ki)=><line key={ki} x1={node.x-kw/2+(ki+1)*(kw/node.keys.length)} y1={node.y-12} x2={node.x-kw/2+(ki+1)*(kw/node.keys.length)} y2={node.y+12} stroke="rgba(255,255,255,0.25)" strokeWidth="1"/>)}
+                <text x={node.x} y={node.y+1} textAnchor="middle" dominantBaseline="central" fontSize="13" fontWeight="700" fill="white" fontFamily="'Outfit',sans-serif">{node.keys.join(' | ')}</text>
+              </g>;
+            }
+            if (isSeg) {
+              const isFenwick = treeType === 'FENWICK_TREE';
+              const showBits = isFenwick && fenwickBitMode && node.bitRep;
+              const rh = showBits ? 64 : 52;
+              const ry = showBits ? node.y - 32 : node.y - 26;
+              return <g key={`n${id}`}>
+                <rect x={node.x-36} y={ry} width={72} height={rh} rx={10} fill={fill} stroke={isHL?'rgba(245,158,11,0.8)':'rgba(255,255,255,0.18)'} strokeWidth="1.5" style={{filter:`drop-shadow(0 3px 12px ${glow})`}}/>
+                <text x={node.x} y={showBits ? node.y-14 : node.y-8} textAnchor="middle" dominantBaseline="central" fontSize="15" fontWeight="700" fill="white" fontFamily="'Outfit',sans-serif">{node.sum}</text>
+                <text x={node.x} y={showBits ? node.y+4 : node.y+12} textAnchor="middle" dominantBaseline="central" fontSize="9" fill="rgba(255,255,255,0.7)" fontFamily="monospace">{node.range}</text>
+                {showBits && (
+                  <text x={node.x} y={node.y+20} textAnchor="middle" dominantBaseline="central" fontSize="11" fontWeight="bold" fill="var(--accent-primary)" fontFamily="monospace">
+                    ({node.bitRep})₂
+                  </text>
+                )}
+              </g>;
+            }
+
+            const isTargetRotated = frame.rotation && (() => {
+              const match = frame.rotation.match(/(?:at|\(|child \()\s*(-?\d+)\s*\)?/);
+              return match && parseInt(match[1]) === node.value;
+            })();
+            const isRightRot = isTargetRotated && frame.rotation.includes("Right Rotate");
+            const isLeftRot = isTargetRotated && frame.rotation.includes("Left Rotate");
+
+            return <g key={`n${id}`}>
+              <circle cx={node.x} cy={node.y} r={NODE_R} fill={fill} stroke={isHL?'rgba(245,158,11,0.85)':'rgba(255,255,255,0.18)'} strokeWidth="1.5" style={{filter:`drop-shadow(0 3px 14px ${glow})`,transform:isHL?'scale(1.12)':'scale(1)',transformOrigin:`${node.x}px ${node.y}px`,transition:'all 0.3s ease'}}/>
+              <text x={node.x} y={node.y+1} textAnchor="middle" dominantBaseline="central" fontSize={String(node.value||'').length>2?'11':'14'} fontWeight="700" fill="white" fontFamily="'Outfit',sans-serif" style={{pointerEvents:'none'}}>{String(node.value??'')}</text>
+              {treeType==='AVL'&&<text x={node.x} y={node.y-NODE_R-7} textAnchor="middle" fontSize="10" fill="#a78bfa" fontFamily="monospace">BF:{getBalance(node)}</text>}
+              {treeType==='RB_TREE'&&node._color&&<circle cx={node.x+NODE_R-7} cy={node.y-NODE_R+7} r={5} fill={node._color==='RED'?'#ef4444':'#1f2937'} stroke="white" strokeWidth="1"/>}
+              {isRightRot && (
+                <g>
+                  <path d={`M ${node.x - 35} ${node.y - 12} A 38 38 0 0 1 ${node.x + 35} ${node.y - 2}`} fill="none" stroke="#ef4444" strokeWidth="3.5" markerEnd="url(#arrow-cw)" strokeLinecap="round" strokeDasharray="8 6" style={{ animation: 'flowDashCw 0.6s infinite linear' }} />
+                  <text x={node.x + 42} y={node.y - 18} fill="#ef4444" fontSize="13" fontWeight="900" fontFamily="sans-serif" style={{ filter: 'drop-shadow(0 2px 6px rgba(0,0,0,0.9))' }}>↻ Right Rotate</text>
+                </g>
+              )}
+              {isLeftRot && (
+                <g>
+                  <path d={`M ${node.x + 35} ${node.y - 12} A 38 38 0 0 0 ${node.x - 35} ${node.y - 2}`} fill="none" stroke="#3b82f6" strokeWidth="3.5" markerEnd="url(#arrow-ccw)" strokeLinecap="round" strokeDasharray="8 6" style={{ animation: 'flowDashCcw 0.6s infinite linear' }} />
+                  <text x={node.x - 42} y={node.y - 18} textAnchor="end" fill="#3b82f6" fontSize="13" fontWeight="900" fontFamily="sans-serif" style={{ filter: 'drop-shadow(0 2px 6px rgba(0,0,0,0.9))' }}>↺ Left Rotate</text>
+                </g>
+              )}
+            </g>;
+          })}
+        </g>
+      </svg>
+    );
+  };
+
+  // ── Settings Modal ─────────────────────────────────────────────────────
+  const renderSettingsModal = () => (
+    <div className="modal-overlay">
+      <div className="modal-content" style={{ maxWidth: '500px' }}>
+        <h2 className="title-gradient">⚙ Settings</h2>
+
+        <div className="select-group">
+          <label style={{ fontWeight: 700, fontSize: '1rem', color: 'var(--text-primary)' }}>🎨 Theme</label>
+          <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '0.55rem', marginTop: '4px' }}>
+            {Object.entries(THEMES).map(([name, th]) => (
+              <button key={name} onClick={() => setCurrentTheme(name)}
+                style={{ padding: '0.6rem 0.75rem', borderRadius: '10px', border: `2px solid ${currentTheme === name ? 'var(--accent-primary)' : 'var(--glass-border)'}`, background: currentTheme === name ? 'rgba(59,130,246,0.12)' : 'rgba(255,255,255,0.03)', color: 'var(--text-primary)', cursor: 'pointer', fontSize: '0.84rem', fontWeight: currentTheme === name ? 700 : 400, transition: 'all 0.2s', display: 'flex', alignItems: 'center', gap: '8px', textAlign: 'left' }}>
+                <span style={{ width: '14px', height: '14px', borderRadius: '50%', background: th['--accent-primary'], flexShrink: 0, boxShadow: `0 0 6px ${th['--accent-primary']}` }} />
+                <span>{name}</span>
+                {currentTheme === name && <span style={{ marginLeft: 'auto', fontSize: '0.75rem', color: 'var(--accent-primary)' }}>✓</span>}
+              </button>
+            ))}
+          </div>
+        </div>
+
+        <div className="select-group">
+          <label>Font Size</label>
+          <select className="styled-select" value={editorFontSize} onChange={e => setEditorFontSize(Number(e.target.value))}>
+            <option value={12}>Small (12px)</option>
+            <option value={14}>Medium (14px)</option>
+            <option value={16}>Large (16px)</option>
+            <option value={18}>Extra Large (18px)</option>
+          </select>
+        </div>
+
+        <div className="select-group">
+          <label>Word Wrap</label>
+          <select className="styled-select" value={editorWordWrap} onChange={e => setEditorWordWrap(e.target.value)}>
+            <option value="off">Off (Horizontal Scroll)</option>
+            <option value="on">On (Wrap to Viewport)</option>
+          </select>
+        </div>
+
+        <button className="btn btn-start" style={{ marginTop: '0.5rem' }} onClick={() => setIsSettingsOpen(false)}>Save &amp; Close</button>
+      </div>
+    </div>
+  );
+
+  // ── Screens with State Preservation ──────────────────────────────────────────────────────────────
+  const [mountedModes, setMountedModes] = useState({});
+
+  useEffect(() => {
+    if (appMode) {
+      setMountedModes(prev => ({ ...prev, [appMode]: true }));
+    }
+  }, [appMode]);
+
+  const frame = timeline[currentStep] || new Frame(null, [], null);
+  const progress = timeline.length > 1 ? (currentStep / (timeline.length - 1)) * 100 : 0;
+
+  return (
+    <>
+      {/* Home Screen */}
+      <div style={{ display: !appMode ? 'block' : 'none' }}>
+        <div className="home-container">
+          <div style={{ textAlign: 'center' }}>
+            <h1 className="title-gradient" style={{ fontSize: '3rem', marginBottom: '0.75rem' }}>Algorithm Visualizer Studio</h1>
+            <p style={{ color: 'var(--text-secondary)', fontSize: '1.1rem', maxWidth: '600px', lineHeight: 1.6, margin: '0 auto 1.2rem auto' }}>
+              Step-by-step tree formation · PythonTutor-style debugger · Claude AI assistant · 5 themes
+            </p>
+            <div style={{ maxWidth: '500px', margin: '0 auto 2.5rem auto', position: 'relative' }}>
+              <input type="text" value={homeSearchQuery} onChange={e => setHomeSearchQuery(e.target.value)}
+                placeholder="Search the work to do... (e.g., Tree, Sort, Debug)"
+                style={{ width: '100%', padding: '0.8rem 1.2rem', borderRadius: '12px', border: '1px solid var(--glass-border)', background: 'rgba(0,0,0,0.2)', color: 'var(--text-primary)', fontSize: '1rem', outline: 'none' }} />
+              <div style={{ position: 'absolute', right: '1rem', top: '50%', transform: 'translateY(-50%)', opacity: 0.5 }}>🔍</div>
+            </div>
+          </div>
+          <div className="home-grid">
+            {homeSearchQuery.trim() === '' ? (
+              [
+                { id: 'MAIN_VIS', icon: '🚀', title: 'Tree Visualizer Studio', desc: 'Build BST / AVL / Heaps / B-Tree / Segment trees step-by-step with live code generation.' },
+                { id: 'GRAPH_VIS', icon: '🕸️', title: 'Graph Visualizer Studio', desc: 'Construct customized weighted graphs. Animate BFS, DFS, Dijkstra, and Greedy best-first traversals.' },
+                { id: 'CODE_VAL_VIS', icon: '💻', title: 'Code Validator & Runner', desc: 'Write or paste code in 4 languages. Enhanced syntax validation, error detection, and native cloud execution.' },
+                { id: 'SORT_SEARCH_VIS', icon: '📊', title: 'Sort & Search Visualizer', desc: 'Visualize array sorting and searching algorithms with dynamic GSAP animations.' },
+                { id: 'GENERAL_DSA_VIS', icon: '📦', title: 'General DSA Visualizer', desc: 'Explore foundational data structures: Stacks, Queues, Linked Lists, and Hash Tables.' },
+                { id: 'LINE_BY_LINE_VIS', icon: '🐞', title: 'Line-by-Line Debugger', desc: 'PythonTutor-style execution tracing. Step through code, track variables, frames, and output.' }
+              ].map(card => (
+                <div key={card.id} className="option-card" onClick={() => enterMode(card.id)} onMouseEnter={e => gsap.to(e.currentTarget, { scale: 1.05, duration: 0.2 })} onMouseLeave={e => gsap.to(e.currentTarget, { scale: 1, duration: 0.2 })}>
+                  <div className="option-icon">{card.icon}</div>
+                  <h3>{card.title}</h3>
+                  <p>{card.desc}</p>
+                </div>
+              ))
+            ) : (
+              [
+                { id: 'BST', mode: 'MAIN_VIS', title: 'Binary Search Tree', icon: '🌳', desc: 'Tree Visualizer' },
+                { id: 'AVL', mode: 'MAIN_VIS', title: 'AVL Tree', icon: '⚖️', desc: 'Tree Visualizer' },
+                { id: 'MIN_HEAP', mode: 'MAIN_VIS', title: 'Min-Heap', icon: '🔽', desc: 'Tree Visualizer' },
+                { id: 'MAX_HEAP', mode: 'MAIN_VIS', title: 'Max-Heap', icon: '🔼', desc: 'Tree Visualizer' },
+                { id: 'RB_TREE', mode: 'MAIN_VIS', title: 'Red-Black Tree', icon: '🔴', desc: 'Tree Visualizer' },
+                { id: 'B_TREE', mode: 'MAIN_VIS', title: 'B-Tree', icon: '🌲', desc: 'Tree Visualizer' },
+                { id: 'B_PLUS_TREE', mode: 'MAIN_VIS', title: 'B+ Tree', icon: '🍃', desc: 'Tree Visualizer' },
+                { id: 'SEGMENT_TREE', mode: 'MAIN_VIS', title: 'Segment Tree', icon: '📏', desc: 'Tree Visualizer' },
+                { id: 'FENWICK_TREE', mode: 'MAIN_VIS', title: 'Fenwick Tree', icon: '🧮', desc: 'Tree Visualizer' },
+                { id: 'LL_SINGLY', mode: 'GENERAL_DSA_VIS', title: 'Singly Linked List', icon: '🔗', desc: 'General DSA', type: 'LINKED_LIST', variety: 'LL_SINGLY' },
+                { id: 'LL_DOUBLY', mode: 'GENERAL_DSA_VIS', title: 'Doubly Linked List', icon: '⛓️', desc: 'General DSA', type: 'LINKED_LIST', variety: 'LL_DOUBLY' },
+                { id: 'LL_CIRCULAR', mode: 'GENERAL_DSA_VIS', title: 'Circular Linked List', icon: '🔄', desc: 'General DSA', type: 'LINKED_LIST', variety: 'LL_CIRCULAR' },
+                { id: 'STACK_ARRAY', mode: 'GENERAL_DSA_VIS', title: 'Stack (Array)', icon: '🥞', desc: 'General DSA', type: 'STACK', variety: 'STACK_ARRAY' },
+                { id: 'STACK_LL', mode: 'GENERAL_DSA_VIS', title: 'Stack (Linked List)', icon: '📚', desc: 'General DSA', type: 'STACK', variety: 'STACK_LL' },
+                { id: 'QUEUE_SIMPLE', mode: 'GENERAL_DSA_VIS', title: 'Queue (Simple)', icon: '🚶‍♂️', desc: 'General DSA', type: 'QUEUE', variety: 'QUEUE_SIMPLE' },
+                { id: 'QUEUE_CIRCULAR', mode: 'GENERAL_DSA_VIS', title: 'Circular Queue', icon: '🎡', desc: 'General DSA', type: 'QUEUE', variety: 'QUEUE_CIRCULAR' },
+                { id: 'QUEUE_DEQUE', mode: 'GENERAL_DSA_VIS', title: 'Deque', icon: '↔️', desc: 'General DSA', type: 'QUEUE', variety: 'QUEUE_DEQUE' },
+                { id: 'HASH_LINEAR', mode: 'GENERAL_DSA_VIS', title: 'Hash Table (Linear Probing)', icon: '#️⃣', desc: 'General DSA', type: 'HASH_TABLE', variety: 'HASH_LINEAR' },
+                { id: 'HASH_QUADRATIC', mode: 'GENERAL_DSA_VIS', title: 'Hash Table (Quadratic Probing)', icon: '2️⃣', desc: 'General DSA', type: 'HASH_TABLE', variety: 'HASH_QUADRATIC' },
+                { id: 'HASH_CHAINING', mode: 'GENERAL_DSA_VIS', title: 'Hash Table (Separate Chaining)', icon: '⛓️‍💥', desc: 'General DSA', type: 'HASH_TABLE', variety: 'HASH_CHAINING' }
+              ].filter(c => c.title.toLowerCase().includes(homeSearchQuery.toLowerCase()) || c.desc.toLowerCase().includes(homeSearchQuery.toLowerCase())).map(card => (
+                <div key={card.id} className="option-card" onClick={() => setPendingModule(card)} onMouseEnter={e => gsap.to(e.currentTarget, { scale: 1.05, duration: 0.2 })} onMouseLeave={e => gsap.to(e.currentTarget, { scale: 1, duration: 0.2 })}>
+                  <div className="option-icon">{card.icon}</div>
+                  <h3>{card.title}</h3>
+                  <p>{card.desc}</p>
+                </div>
+              ))
+            )}
+          </div>
+          {/* Footer at the bottom with Feedback options */}
+          <div style={{ marginTop: '3.5rem', borderTop: '1px solid var(--glass-border)', paddingTop: '1.5rem', width: '100%', maxWidth: '1100px', display: 'flex', justifyContent: 'space-between', alignItems: 'center', color: 'var(--text-secondary)', fontSize: '0.88rem', flexWrap: 'wrap', gap: '1rem' }}>
+            <span>© {new Date().getFullYear()} Algorithm Visualizer Studio. All rights reserved.</span>
+            <div style={{ display: 'flex', gap: '0.75rem', alignItems: 'center' }}>
+              <button 
+                className="btn btn-clear" 
+                style={{ padding: '0.55rem 1.3rem', fontSize: '0.85rem', display: 'flex', alignItems: 'center', gap: '8px', background: 'rgba(255,255,255,0.03)', border: '1px solid var(--glass-border)', borderRadius: '30px', cursor: 'pointer', transition: 'all 0.25s' }}
+                onClick={() => { setIsFeedbackOpen(true); setIsFeedbackSubmitted(false); setFeedbackText(''); setFeedbackEmail(''); }}
+                onMouseEnter={e => e.currentTarget.style.transform = 'scale(1.03) translateY(-1px)'}
+                onMouseLeave={e => e.currentTarget.style.transform = 'scale(1) translateY(0)'}
+              >
+                💬 Feel any error or problem? Give Feedback
+              </button>
+              <button 
+                className="btn btn-clear" 
+                style={{ padding: '0.55rem 1.3rem', fontSize: '0.85rem', display: 'flex', alignItems: 'center', gap: '8px', background: 'rgba(59,130,246,0.08)', border: '1px solid rgba(59,130,246,0.3)', borderRadius: '30px', cursor: 'pointer', color: 'var(--accent-primary)', transition: 'all 0.25s' }}
+                onClick={() => { setIsAdminFeedbackOpen(true); }}
+                onMouseEnter={e => e.currentTarget.style.transform = 'scale(1.03) translateY(-1px)'}
+                onMouseLeave={e => e.currentTarget.style.transform = 'scale(1) translateY(0)'}
+                title="View submitted feedback entries to inspect and debug code issues"
+              >
+                🛠️ Feedback Console
+              </button>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      {/* Sort Search Visualizer */}
+      <div style={{ display: appMode === 'SORT_SEARCH_VIS' ? 'block' : 'none' }}>
+        {mountedModes['SORT_SEARCH_VIS'] && <SortSearchVisualizer onBack={goBack} openSettings={() => setIsSettingsOpen(true)} />}
+      </div>
+
+      {/* General DSA Visualizer */}
+      <div style={{ display: appMode === 'GENERAL_DSA_VIS' ? 'block' : 'none' }}>
+        {mountedModes['GENERAL_DSA_VIS'] && <GeneralDSVisualizer onBack={goBack} openSettings={() => setIsSettingsOpen(true)} initialType={globalDsType} initialVariety={globalDsVariety} />}
+      </div>
+
+      {/* Graph Visualizer Studio */}
+      <div style={{ display: appMode === 'GRAPH_VIS' ? 'block' : 'none' }}>
+        {mountedModes['GRAPH_VIS'] && <GraphVisualizer onBack={goBack} openSettings={() => setIsSettingsOpen(true)} />}
+      </div>
+
+      {/* Pending Module (Language Setup via Search) */}
+      {pendingModule && (
+        <div className="modal-overlay">
+          <div className="modal-content" style={{ maxWidth: '500px' }}>
+            <h2 className="title-gradient">Setup: {pendingModule.title}</h2>
+            <div className="select-group">
+              <label style={{ fontWeight: 600 }}>Select Programming Language</label>
+              <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '0.6rem', marginTop: '10px' }}>
+                {['JS', 'Python', 'C++', 'Java'].map(lang => (
+                  <button key={lang} onClick={() => setCodeLang(lang)}
+                    style={{ padding: '0.8rem', borderRadius: '10px', border: `2px solid ${codeLang === lang ? 'var(--accent-primary)' : 'var(--glass-border)'}`, background: codeLang === lang ? 'rgba(59,130,246,0.18)' : 'rgba(255,255,255,0.04)', color: codeLang === lang ? 'var(--accent-primary)' : 'var(--text-primary)', cursor: 'pointer', fontWeight: codeLang === lang ? 800 : 400, fontSize: '1rem', transition: 'all 0.2s', textAlign: 'center' }}>
+                    {lang === 'JS' ? 'JavaScript' : lang}
+                  </button>
+                ))}
+              </div>
+            </div>
+            <button className="btn btn-start" style={{ marginTop: '1.5rem', width: '100%' }} onClick={() => {
+              if (pendingModule.mode === 'MAIN_VIS') setTreeType(pendingModule.id);
+              if (pendingModule.mode === 'GENERAL_DSA_VIS') {
+                setGlobalDsType(pendingModule.type);
+                setGlobalDsVariety(pendingModule.variety);
+              }
+              setAppMode(pendingModule.mode);
+              setSetupComplete(true);
+              setPendingModule(null);
+              setHomeSearchQuery('');
+            }}>Launch Visualizer</button>
+            <button className="btn btn-clear" style={{ marginTop: '0.75rem', width: '100%' }} onClick={() => setPendingModule(null)}>← Cancel</button>
+          </div>
+        </div>
+      )}
+
+      {/* Setup Modals (Improved UI) */}
+      {!setupComplete && appMode === 'CODE_VAL_VIS' && (
+        <div className="modal-overlay">
+          <div className="modal-content" style={{ maxWidth: '500px' }}>
+            <h2 className="title-gradient">Setup Code Environment</h2>
+            <div className="select-group">
+              <label style={{ fontWeight: 600 }}>Select Programming Language</label>
+              <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '0.6rem', marginTop: '10px' }}>
+                {['JS', 'Python', 'C++', 'Java'].map(lang => (
+                  <button key={lang} onClick={() => setCodeLang(lang)}
+                    style={{ padding: '0.8rem', borderRadius: '10px', border: `2px solid ${codeLang === lang ? 'var(--accent-primary)' : 'var(--glass-border)'}`, background: codeLang === lang ? 'rgba(59,130,246,0.18)' : 'rgba(255,255,255,0.04)', color: codeLang === lang ? 'var(--accent-primary)' : 'var(--text-primary)', cursor: 'pointer', fontWeight: codeLang === lang ? 800 : 400, fontSize: '1rem', transition: 'all 0.2s', textAlign: 'center' }}>
+                    {lang === 'JS' ? 'JavaScript' : lang}
+                  </button>
+                ))}
+              </div>
+            </div>
+            <button className="btn btn-start" style={{ marginTop: '1.5rem', width: '100%' }} onClick={() => setSetupComplete(true)}>Open Editor</button>
+            <button className="btn btn-clear" style={{ marginTop: '0.75rem', width: '100%' }} onClick={goBack}>← Back</button>
+          </div>
+        </div>
+      )}
+
+      {!setupComplete && appMode === 'LINE_BY_LINE_VIS' && (
+        <div className="modal-overlay">
+          <div className="modal-content" style={{ maxWidth: '500px' }}>
+            <h2 className="title-gradient">Setup Debugger</h2>
+            <div className="select-group">
+              <label style={{ fontWeight: 600 }}>Select Programming Language</label>
+              <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '0.8rem', marginTop: '12px' }}>
+                {['JS', 'Python', 'C++', 'Java'].map((lang) => (
+                  <button key={lang} onClick={() => setCodeLang(lang)}
+                    onMouseEnter={e => gsap.to(e.currentTarget, { scale: 1.05, duration: 0.2 })}
+                    onMouseLeave={e => gsap.to(e.currentTarget, { scale: 1, duration: 0.2 })}
+                    style={{ 
+                      padding: '1.2rem', borderRadius: '14px', 
+                      border: `2px solid ${codeLang === lang ? 'var(--accent-primary)' : 'var(--glass-border)'}`, 
+                      background: codeLang === lang ? 'linear-gradient(135deg, rgba(59,130,246,0.3), rgba(139,92,246,0.2))' : 'rgba(255,255,255,0.02)', 
+                      color: codeLang === lang ? 'var(--accent-primary)' : 'var(--text-primary)', 
+                      cursor: 'pointer', fontWeight: codeLang === lang ? 800 : 500, fontSize: '1.1rem', 
+                      transition: 'all 0.2s', textAlign: 'center',
+                      boxShadow: codeLang === lang ? '0 0 15px rgba(59,130,246,0.2)' : 'none',
+                      display: 'flex', flexDirection: 'column', alignItems: 'center', gap: '8px'
+                    }}>
+                    <span style={{ fontSize: '2rem' }}>
+                      {lang === 'JS' ? '🟨' : lang === 'Python' ? '🐍' : lang === 'C++' ? '⚙️' : '☕'}
+                    </span>
+                    {lang === 'JS' ? 'JavaScript' : lang}
+                  </button>
+                ))}
+              </div>
+            </div>
+            <button className="btn btn-start" style={{ marginTop: '1.5rem', width: '100%' }} onClick={() => setSetupComplete(true)}>Open Debugger</button>
+            <button className="btn btn-clear" style={{ marginTop: '0.75rem', width: '100%' }} onClick={goBack}>← Back</button>
+          </div>
+        </div>
+      )}
+
+      {!setupComplete && appMode === 'MAIN_VIS' && (
+        <div className="modal-overlay">
+          <div className="modal-content" style={{ maxWidth: '700px' }}>
+            <h2 className="title-gradient">Select Data Structure</h2>
+            <div className="select-group" style={{ marginBottom: '1.5rem' }}>
+              <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr 1fr', gap: '0.6rem', marginTop: '10px' }}>
+                {[
+                  { id: 'BST', name: 'Binary Search Tree' },
+                  { id: 'AVL', name: 'AVL Tree' },
+                  { id: 'MIN_HEAP', name: 'Min-Heap' },
+                  { id: 'MAX_HEAP', name: 'Max-Heap' },
+                  { id: 'RB_TREE', name: 'Red-Black Tree' },
+                  { id: 'B_TREE', name: 'B-Tree' },
+                  { id: 'B_PLUS_TREE', name: 'B+ Tree' },
+                  { id: 'SEGMENT_TREE', name: 'Segment Tree' },
+                  { id: 'FENWICK_TREE', name: 'Fenwick Tree' },
+                ].map(type => (
+                  <button key={type.id} onClick={() => setTreeType(type.id)}
+                    style={{ padding: '0.7rem', borderRadius: '10px', border: `2px solid ${treeType === type.id ? 'var(--accent-primary)' : 'var(--glass-border)'}`, background: treeType === type.id ? 'rgba(59,130,246,0.18)' : 'rgba(255,255,255,0.04)', color: treeType === type.id ? 'var(--accent-primary)' : 'var(--text-primary)', cursor: 'pointer', fontWeight: treeType === type.id ? 800 : 400, fontSize: '0.9rem', transition: 'all 0.2s', textAlign: 'center' }}>
+                    {type.name}
+                  </button>
+                ))}
+              </div>
+            </div>
+
+            {(treeType === 'B_TREE' || treeType === 'B_PLUS_TREE') && (
+              <div className="select-group">
+                <label style={{ fontWeight: 600 }}>B-Tree Order (Max Children)</label>
+                <div style={{ display: 'grid', gridTemplateColumns: 'repeat(8, 1fr)', gap: '0.4rem', marginTop: '8px' }}>
+                  {[3, 4, 5, 6, 7, 8, 9, 10].map(o => (
+                    <button key={o} onClick={() => setBTreeOrder(o)}
+                      style={{ padding: '0.5rem 0', borderRadius: '8px', border: `2px solid ${bTreeOrder === o ? 'var(--accent-primary)' : 'var(--glass-border)'}`, background: bTreeOrder === o ? 'rgba(59,130,246,0.18)' : 'rgba(255,255,255,0.04)', color: bTreeOrder === o ? 'var(--accent-primary)' : 'var(--text-primary)', cursor: 'pointer', fontWeight: bTreeOrder === o ? 800 : 400, fontSize: '0.9rem', transition: 'all 0.2s', textAlign: 'center' }}>
+                      {o}
+                    </button>
+                  ))}
+                </div>
+              </div>
+            )}
+
+            <button className="btn btn-start" style={{ marginTop: '1.5rem', width: '100%' }} onClick={() => setSetupComplete(true)}>Launch Visualizer</button>
+            <button className="btn btn-clear" style={{ marginTop: '0.75rem', width: '100%' }} onClick={goBack}>← Back</button>
+          </div>
+        </div>
+      )}
+      {/* Code Validator Visualizer */}
+      <div style={{ display: appMode === 'CODE_VAL_VIS' && setupComplete ? 'block' : 'none' }}>
+        {mountedModes['CODE_VAL_VIS'] && (
+          <div className="app-container" style={{ height: '100vh', display: 'flex', flexDirection: 'column', overflow: 'hidden' }}>
+            <header className="header-glass">
+              <div>
+                <h1 className="title-gradient" style={{ fontSize: '1.7rem' }}>Code Validator ({codeLang})</h1>
+              </div>
+              <div className="controls-glass">
+                <button className="btn btn-insert" onClick={runGenericCode}>▶ Run Code</button>
+                <button className="btn btn-clear" style={{ background: 'rgba(236,72,153,0.2)', color: '#fbcfe8' }} onClick={() => enterMode('LINE_BY_LINE_VIS')}>🐛 Debug (Line-by-Line)</button>
+                <button className="btn btn-clear" onClick={() => setGenericLogs([])}>Clear</button>
+                <button className="btn btn-clear" onClick={() => setIsSettingsOpen(true)}>⚙ Settings</button>
+                <button className="btn btn-clear" onClick={() => setAppMode(null)}>🏠 Home</button>
+              </div>
+            </header>
+
+            <div style={{ display: 'flex', flexDirection: 'column', flex: 1, padding: '0.5rem 1rem 1rem 1rem', gap: '0', overflow: 'hidden' }}>
+              <div style={{ flex: 1, background: '#1e1e1e', borderRadius: '10px 10px 0 0', border: '1px solid #333', display: 'flex', flexDirection: 'column', overflow: 'hidden' }}>
+                <div style={{ padding: '0.5rem 1rem', background: '#252526', borderBottom: '1px solid #333', flexShrink: 0, display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                  <div style={{ display: 'flex', gap: '10px', alignItems: 'center' }}>
+                    <span style={{ fontSize: '0.8rem', color: '#969696', fontFamily: 'monospace' }}>main.{codeLang === 'Python' ? 'py' : codeLang === 'Java' ? 'java' : codeLang === 'C++' ? 'cpp' : 'js'}</span>
+                  </div>
+                  <div style={{ display: 'flex', gap: '6px', alignItems: 'center' }}>
+                    <span style={{ fontSize: '0.72rem', color: '#858585' }}>{customCode.split('\n').length} lines</span>
+                  </div>
+                </div>
+                <div style={{ display: 'flex', flex: 1, flexDirection: 'column', overflow: 'hidden' }}>
+                  <div style={{ display: 'flex', flex: 2, overflow: 'hidden' }}>
+                    <div style={{ width: '44px', background: '#1e1e1e', borderRight: '1px solid #333', color: '#858585', textAlign: 'right', padding: '1rem 6px 1rem 0', fontFamily: 'monospace', fontSize: `${editorFontSize}px`, overflow: 'hidden', lineHeight: '1.6', userSelect: 'none' }}>
+                      <div style={{ transform: `translateY(-${editorScroll}px)` }}>
+                        {customCode.split('\n').map((_, i) => <div key={i}>{i + 1}</div>)}
+                      </div>
+                    </div>
+                    <textarea className="code-textarea" value={customCode} onChange={e => setCustomCode(e.target.value)} onScroll={e => setEditorScroll(e.target.scrollTop)}
+                      style={{ flex: 1, padding: '1rem', fontSize: `${editorFontSize}px`, lineHeight: '1.6', whiteSpace: editorWordWrap === 'on' ? 'pre-wrap' : 'pre', outline: 'none', border: 'none', background: 'transparent', color: '#d4d4d4', resize: 'none', fontFamily: 'monospace' }}
+                      placeholder={`Write your ${codeLang} code here...\n\nExample:\nlet x = 5;\nlet y = 10;\nconsole.log(x + y);`}
+                      spellCheck={false} />
+                  </div>
+                </div>
+              </div>
+
+              <div onMouseDown={handleDragStart} style={{ height: '8px', background: '#333', cursor: 'row-resize', flexShrink: 0, transition: 'background 0.2s', display: 'flex', alignItems: 'center', justifyContent: 'center' }}
+                onMouseOver={e => e.currentTarget.style.background = '#007acc'}
+                onMouseOut={e => e.currentTarget.style.background = '#333'}
+                title="Drag to resize">
+                <div style={{ width: '30px', height: '2px', background: 'rgba(255,255,255,0.2)' }} />
+              </div>
+
+              <div style={{ height: `${codeHeight}px`, background: '#1e1e1e', borderRadius: '0 0 10px 10px', border: '1px solid #333', display: 'flex', flexDirection: 'column', overflow: 'hidden' }}>
+                <div style={{ padding: '0', background: '#252526', borderBottom: '1px solid #333', flexShrink: 0, display: 'flex' }}>
+                  <button onClick={() => setCodeValTab('CONSOLE')} style={{ padding: '8px 16px', background: 'transparent', border: 'none', borderBottom: codeValTab === 'CONSOLE' ? '1px solid #007acc' : '1px solid transparent', color: codeValTab === 'CONSOLE' ? '#e5e5e5' : '#969696', fontSize: '0.8rem', cursor: 'pointer', outline: 'none', transition: 'all 0.2s' }}>CONSOLE</button>
+                  <button onClick={() => setCodeValTab('STDIN')} style={{ padding: '8px 16px', background: 'transparent', border: 'none', borderBottom: codeValTab === 'STDIN' ? '1px solid #007acc' : '1px solid transparent', color: codeValTab === 'STDIN' ? '#e5e5e5' : '#969696', fontSize: '0.8rem', cursor: 'pointer', outline: 'none', transition: 'all 0.2s' }}>STANDARD INPUT</button>
+                </div>
+                
+                <div style={{ flex: 1, overflowY: 'auto', padding: '1rem', fontFamily: 'monospace', fontSize: '0.85rem' }}>
+                  {codeValTab === 'CONSOLE' && (
+                    <div style={{ display: 'flex', flexDirection: 'column', gap: '4px' }}>
+                      {genericLogs.length === 0 && <span style={{ color: '#52525b', opacity: 0.7 }}>No output. Run your code to see the execution log.</span>}
+                      {genericLogs.map((l, i) => {
+                        let prefix = l.type === 'error' ? '> ERR:' : l.type === 'output' ? '> OUT:' : '$';
+                        let textColor = l.type === 'error' ? '#f87171' : l.type === 'output' ? '#34d399' : '#a1a1aa';
+                        return (
+                          <div key={i} style={{ display: 'flex', gap: '10px', marginBottom: '4px', whiteSpace: 'pre-wrap', wordBreak: 'break-all' }}>
+                            <span style={{ color: '#52525b', userSelect: 'none', minWidth: '40px' }}>{prefix}</span>
+                            <span style={{ color: textColor }}>{l.text}</span>
+                          </div>
+                        );
+                      })}
+                      {genericLogs.length > 0 && <div style={{ color: '#52525b', marginTop: '10px' }}>$ █</div>}
+                      <div ref={logEndRef} />
+                    </div>
+                  )}
+                  {codeValTab === 'STDIN' && (
+                    <div style={{ display: 'flex', flexDirection: 'column', height: '100%' }}>
+                      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '0.4rem' }}>
+                        <span style={{ fontSize: '0.75rem', color: '#fbbf24', background: 'rgba(251,191,36,0.15)', padding: '2px 6px', borderRadius: '4px' }}>Cloud execution requires inputs beforehand</span>
+                      </div>
+                      <p style={{ fontSize: '0.8rem', color: '#969696', marginTop: 0, marginBottom: '0.8rem', lineHeight: '1.4' }}>
+                        Interactive console typing (like Scanner or cin) is not possible via the cloud compiler. Provide all your expected inputs here <strong>before</strong> running.
+                      </p>
+                      <textarea value={customStdin} onChange={e => setCustomStdin(e.target.value)} 
+                        style={{ flex: 1, background: '#1e1e1e', border: '1px solid #333', borderRadius: '6px', color: '#d4d4d4', padding: '0.5rem', fontFamily: 'monospace', fontSize: '0.85rem', resize: 'none', outline: 'none' }}
+                        placeholder="e.g., if your code expects 2 numbers, enter: 5 10" />
+                    </div>
+                  )}
+                </div>
+              </div>
+            </div>
+          </div>
+        )}
+      </div>
+
+      {/* Line-by-Line Debugger */}
+      <div style={{ display: appMode === 'LINE_BY_LINE_VIS' && setupComplete ? 'block' : 'none' }}>
+        {mountedModes['LINE_BY_LINE_VIS'] && (
+          <LineDebugger initialCode={customCode} lang={codeLang} fontSize={editorFontSize} wordWrap={editorWordWrap} onBack={goBack} isChatOpen={isChatOpen} setIsChatOpen={setIsChatOpen} chatMessages={chatMessages} setChatMessages={setChatMessages} />
+        )}
+      </div>
+
+      {/* Main Tree Visualizer */}
+      <div style={{ display: appMode === 'MAIN_VIS' && setupComplete ? 'block' : 'none' }}>
+        {mountedModes['MAIN_VIS'] && (
+          <div className="app-container" style={{ height: '100vh', display: 'flex', flexDirection: 'column', overflow: 'hidden' }}>
+            <header className="header-glass">
+              <div>
+                <h1 className="title-gradient" style={{ fontSize: '1.7rem' }}>{treeType.replace(/_/g, ' ')} Studio</h1>
+                {frame.rotation && (
+                  <div style={{ background: 'linear-gradient(135deg, #ef4444, #f97316)', color: 'white', padding: '4px 14px', borderRadius: '20px', marginTop: '0.4rem', fontSize: '0.95rem', fontWeight: 800, animation: 'fadeIn 0.3s ease', boxShadow: '0 4px 12px rgba(239,68,68,0.4)', display: 'inline-block' }}>
+                    ⚡ {frame.rotation}
+                  </div>
+                )}
+              </div>
+
+              <div className="controls-glass" style={{ display: 'flex', gap: '0.5rem', flexWrap: 'wrap', alignItems: 'center' }}>
+                <div style={{ display: 'flex', alignItems: 'center', gap: '4px', background: 'rgba(0,0,0,0.35)', padding: '0.4rem 0.6rem', borderRadius: '10px' }}>
+                  <button className="btn btn-clear" style={{ padding: '0.4rem 0.6rem', border: 'none' }} onClick={() => { setIsPlaying(false); setCurrentStep(0); }} disabled={!timeline.length||currentStep===0}>⏮ First</button>
+                  <button className="btn btn-clear" style={{ padding: '0.4rem 0.6rem', border: 'none' }} onClick={() => { setIsPlaying(false); setCurrentStep(p => Math.max(0, p - 1)); }} disabled={!timeline.length||currentStep===0}>◀ Prev</button>
+                  <button className="btn btn-clear" style={{ padding: '0.4rem 1rem', border: 'none', background: isPlaying ? 'rgba(59,130,246,0.4)' : 'transparent', fontWeight: 'bold' }} onClick={() => setIsPlaying(p => !p)} disabled={!timeline.length}>{isPlaying ? '⏸ Pause' : '▶ Play'}</button>
+                  <button className="btn btn-clear" style={{ padding: '0.4rem 0.6rem', border: 'none' }} onClick={() => { setIsPlaying(false); setCurrentStep(p => Math.min(timeline.length - 1, p + 1)); }} disabled={!timeline.length||currentStep===timeline.length-1}>Next ▶</button>
+                  <button className="btn btn-clear" style={{ padding: '0.4rem 0.6rem', border: 'none', fontWeight: 'bold', background: 'rgba(236, 72, 153, 0.2)', color: '#fbcfe8' }} onClick={() => { setIsPlaying(false); setCurrentStep(timeline.length - 1); }} disabled={!timeline.length||currentStep===timeline.length-1}>Last ⏭</button>
+                  <span style={{ fontSize: '0.85rem', color: 'var(--text-secondary)', marginLeft: '8px', whiteSpace: 'nowrap', fontWeight: 'bold' }}>{timeline.length ? currentStep + 1 : 0} / {timeline.length}</span>
+                </div>
+
+                <div style={{ display: 'flex', alignItems: 'center', gap: '5px' }}>
+                  <span style={{ fontSize: '0.75rem', color: 'var(--text-secondary)' }}>Speed</span>
+                  <input type="range" min={80} max={1200} step={80} value={animationSpeed} onChange={e => setAnimationSpeed(Number(e.target.value))} style={{ width: '64px', accentColor: 'var(--accent-primary)' }} />
+                </div>
+
+                {(treeType === 'B_TREE' || treeType === 'B_PLUS_TREE') && (
+                  <div style={{ display: 'flex', alignItems: 'center', gap: '5px', background: 'rgba(255,255,255,0.05)', padding: '4px 10px', borderRadius: '8px' }}>
+                    <span style={{ fontSize: '0.8rem', color: 'var(--text-secondary)' }}>Order</span>
+                    <select className="styled-select" style={{ padding: '2px 8px', fontSize: '0.85rem', width: 'auto' }} value={bTreeOrder} onChange={e => setBTreeOrder(Number(e.target.value))}>
+                      {[3,4,5,6,7,8,9,10].map(o => <option key={o} value={o}>{o}</option>)}
+                    </select>
+                  </div>
+                )}
+
+                {(treeType === 'BST' || treeType === 'AVL') && (
+                  <div style={{ display: 'flex', alignItems: 'center', gap: '5px', background: 'rgba(255,255,255,0.05)', padding: '4px 10px', borderRadius: '8px' }}>
+                    <span style={{ fontSize: '0.8rem', color: 'var(--text-secondary)' }}>Shift on Delete</span>
+                    <select className="styled-select" style={{ padding: '2px 8px', fontSize: '0.85rem', width: 'auto' }} value={deleteStrategy} onChange={e => setDeleteStrategy(e.target.value)}>
+                      <option value="RIGHT">Right (Successor)</option>
+                      <option value="LEFT">Left (Predecessor)</option>
+                    </select>
+                  </div>
+                )}
+
+                {treeType === 'FENWICK_TREE' && (
+                  <label style={{ display: 'flex', alignItems: 'center', gap: '6px', background: 'rgba(255,255,255,0.05)', padding: '4px 10px', borderRadius: '8px', cursor: 'pointer', fontSize: '0.82rem', color: 'var(--text-secondary)', userSelect: 'none' }}>
+                    <input type="checkbox" checked={fenwickBitMode} onChange={e => setFenwickBitMode(e.target.checked)} style={{ accentColor: 'var(--accent-primary)', cursor: 'pointer' }} />
+                    <span>Show Bit Representation</span>
+                  </label>
+                )}
+
+                {treeType !== 'MIN_HEAP' && treeType !== 'MAX_HEAP' && (
+                  <input type={treeType === 'BFS_TREE' || treeType === 'DFS_TREE' ? "text" : "number"} className="styled-input" style={{ width: treeType === 'BFS_TREE' || treeType === 'DFS_TREE' ? '150px' : '115px', opacity: isPlaying ? 0.7 : 1 }} placeholder={isPlaying ? "Wait..." : (treeType === 'BFS_TREE' || treeType === 'DFS_TREE' ? "Edge (1-2) or Node" : "Value…")} value={inputValue} onChange={e => setInputValue(e.target.value)} onKeyDown={e => e.key === 'Enter' && !isPlaying && inputValue.trim() && handleInsert()} />
+                )}
+                {treeType !== 'MIN_HEAP' && treeType !== 'MAX_HEAP' ? (
+                  <button className="btn btn-insert" onClick={handleInsert} disabled={isPlaying || !inputValue.trim()}>
+                    {isPlaying ? '⏳...' : 'Insert'}
+                  </button>
+                ) : (
+                  <div style={{ display: 'flex', gap: '5px', alignItems: 'center' }}>
+                    <input type="number" className="styled-input" style={{ width: '100px', opacity: isPlaying ? 0.7 : 1 }} placeholder="Value…" value={inputValue} onChange={e => setInputValue(e.target.value)} onKeyDown={e => e.key === 'Enter' && !isPlaying && inputValue.trim() && handleInsert()} />
+                    <button className="btn btn-insert" onClick={handleInsert} disabled={isPlaying || !inputValue.trim()}>Insert</button>
+                  </div>
+                )}
+                {(() => {
+                  const isHeap = treeType === 'MIN_HEAP' || treeType === 'MAX_HEAP';
+                  const canDel = !isPlaying && (isHeap ? insertedValues.length > 0 : ((treeType === 'BST' || treeType === 'AVL') && inputValue.trim()));
+                  return (
+                    <button className="btn btn-clear" style={{background: 'var(--accent-secondary)', color: 'white', border: 'none', opacity: canDel ? 1 : 0.5}} onClick={handleDelete} disabled={!canDel}>
+                      {isHeap ? 'Extract Root' : 'Delete'}
+                    </button>
+                  );
+                })()}
+                <button className="btn btn-clear" onClick={handleClear}>Clear</button>
+                <button className="btn btn-clear" onClick={() => setIsSettingsOpen(true)}>⚙ Settings</button>
+                <button className="btn btn-clear" onClick={() => setAppMode(null)}>🏠 Home</button>
+              </div>
+            </header>
+
+            <div style={{ height: '3px', background: 'rgba(255,255,255,0.05)' }}>
+              <div style={{ height: '100%', width: `${progress}%`, background: 'linear-gradient(90deg, var(--accent-primary), var(--accent-secondary))', transition: 'width 0.25s' }} />
+            </div>
+
+            {/* Globally Attached/Sticky Traversals & Heap Array Bar */}
+            {frame.root && (treeType === 'BST' || treeType === 'AVL' || treeType === 'RB_TREE') && (() => {
+              const travs = getTraversals(frame.root);
+              return (
+                <div style={{ background: 'rgba(15,23,42,0.85)', backdropFilter: 'blur(12px)', borderBottom: '1px solid var(--glass-border)', padding: '8px 20px', display: 'grid', gridTemplateColumns: 'repeat(3, 1fr)', gap: '15px', fontSize: '0.9rem', flexShrink: 0, zIndex: 20 }}>
+                  <div><span style={{color: 'var(--accent-primary)', fontWeight: 'bold'}}>Inorder:</span> <span style={{fontFamily: 'monospace', color: '#e2e8f0', wordBreak: 'break-all'}}>{travs.inorder || 'None'}</span></div>
+                  <div><span style={{color: '#a78bfa', fontWeight: 'bold'}}>Preorder:</span> <span style={{fontFamily: 'monospace', color: '#e2e8f0', wordBreak: 'break-all'}}>{travs.preorder || 'None'}</span></div>
+                  <div><span style={{color: '#f43f5e', fontWeight: 'bold'}}>Postorder:</span> <span style={{fontFamily: 'monospace', color: '#e2e8f0', wordBreak: 'break-all'}}>{travs.postorder || 'None'}</span></div>
+                </div>
+              );
+            })()}
+            {frame.root && (treeType === 'MIN_HEAP' || treeType === 'MAX_HEAP') && (
+              <div style={{ background: 'rgba(15,23,42,0.85)', backdropFilter: 'blur(12px)', borderBottom: '1px solid var(--glass-border)', padding: '8px 20px', display: 'flex', alignItems: 'center', gap: '10px', fontSize: '0.9rem', flexShrink: 0, overflowX: 'auto', zIndex: 20 }}>
+                <span style={{color: 'var(--accent-primary)', fontWeight: 'bold', whiteSpace: 'nowrap'}}>Heap Array:</span>
+                <div style={{ display: 'flex', gap: '6px' }}>
+                  {insertedValues.map((v, idx) => (
+                    <span key={idx} style={{ background: frame.highlight === v ? 'var(--accent-primary)' : 'rgba(255,255,255,0.1)', padding: '2px 8px', borderRadius: '4px', fontFamily: 'monospace', color: frame.highlight === v ? '#fff' : '#e2e8f0', fontWeight: 'bold' }}>
+                      {v}
+                    </span>
+                  ))}
+                </div>
+              </div>
+            )}
+
+            <div style={{ display: 'flex', flex: 1, padding: '0.75rem', gap: '0.75rem', overflow: 'hidden' }}>
+              <div style={{ display: 'flex', flexDirection: 'column', flex: 2, overflow: 'hidden' }}>
+                <div className="tree-container" ref={containerRef} style={{ flex: 1, background: 'rgba(15,23,42,0.5)', borderRadius: '14px', border: '1px solid var(--glass-border)', position: 'relative', overflow: 'auto', minHeight: '260px', marginBottom: '0.75rem', display: 'flex', flexDirection: 'column' }}>
+                  <div style={{ flex: 1, position: 'relative', minHeight: '200px' }}>
+                    {frame.root ? renderTreeSVG(frame.root, frame.highlight) : (
+                      <div style={{ position: 'absolute', inset: 0, display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', gap: '10px', color: 'var(--text-secondary)' }}>
+                        <span style={{ fontSize: '2.5rem' }}>🌱</span>
+                        <p style={{ fontSize: '1rem' }}>Insert a value to start building the tree</p>
+                        <p style={{ fontSize: '0.82rem', opacity: 0.6 }}>Try values like 50, 30, 70, 20, 40 …</p>
+                      </div>
+                    )}
+                  </div>
+                </div>
+
+                <div onMouseDown={handleDragStart} style={{ height: '8px', background: 'var(--glass-border)', borderRadius: '4px', margin: '0 0 0.75rem 0', cursor: 'row-resize', flexShrink: 0, transition: 'background 0.2s' }}
+                  onMouseOver={e => e.currentTarget.style.background = 'rgba(96,165,250,0.5)'}
+                  onMouseOut={e => e.currentTarget.style.background = 'var(--glass-border)'}
+                  title="Drag to resize" />
+
+                <div style={{ height: `${codeHeight}px`, flexShrink: 0, background: 'rgba(30,41,59,0.6)', borderRadius: '14px', border: '1px solid var(--glass-border)', display: 'flex', flexDirection: 'column', padding: '0.85rem', overflow: 'hidden' }}>
+                  <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '0.6rem', flexShrink: 0 }}>
+                    <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
+                      <h3 style={{ color: 'var(--text-secondary)', fontSize: '0.9rem', fontWeight: 600 }}>Auto-Generated Code</h3>
+                      <select className="styled-select" style={{ padding: '2px 8px', fontSize: '0.8rem', width: 'auto', backgroundColor: 'rgba(0,0,0,0.3)', paddingRight: '22px', backgroundPosition: 'right 6px center', backgroundSize: '10px', border: '1px solid var(--glass-border)', color: '#fff', borderRadius: '6px' }} value={codeLang} onChange={e => setCodeLang(e.target.value)}>
+                        <option value="C++">C++</option>
+                        <option value="Java">Java</option>
+                        <option value="Python">Python</option>
+                        <option value="JS">JavaScript</option>
+                      </select>
+                    </div>
+                    <label style={{ display: 'flex', alignItems: 'center', gap: '6px', fontSize: '0.8rem', color: 'var(--text-secondary)', cursor: 'pointer' }}>
+                      <input type="checkbox" checked={showDeletionsInCode} onChange={e => setShowDeletionsInCode(e.target.checked)} style={{ accentColor: 'var(--accent-primary)' }} />
+                      Include Deletions
+                    </label>
+                  </div>
+                  <div className="code-box" style={{ flex: 1, overflowY: 'auto' }}>
+                    <pre>{getFullCodeTemplate(codeLang, treeType, showDeletionsInCode ? operationsLog : insertedValues.map(v => ({ op: 'insert', val: v })))}</pre>
+                  </div>
+                </div>
+              </div>
+
+              <div style={{ flex: 1, background: '#0d1117', borderRadius: '14px', border: '1px solid var(--glass-border)', display: 'flex', flexDirection: 'column', overflow: 'hidden', minWidth: '220px' }}>
+                <div style={{ padding: '0.75rem 1rem', borderBottom: '1px solid var(--glass-border)', background: '#0d1117', flexShrink: 0 }}>
+                  <h3 style={{ color: 'var(--text-secondary)', fontSize: '0.85rem', fontWeight: 600 }}>Execution Log</h3>
+                </div>
+                <div style={{ flex: 1, overflowY: 'auto', padding: '0.75rem 1rem' }}>
+                  {frame.logs.map((log, i) => <div key={i} className={`execution-log-item ${log.type}`}>{log.text}</div>)}
+                  <div ref={logEndRef} />
+                </div>
+              </div>
+            </div>
+          </div>
+        )}
+      </div>
+
+      <ChatBot customCode={customCode} codeLang={codeLang} isChatOpen={isChatOpen} setIsChatOpen={setIsChatOpen} chatMessages={chatMessages} setChatMessages={setChatMessages} />
+      {isSettingsOpen && renderSettingsModal()}
+
+      {/* Interactive Review & Feedback Modal */}
+      {isFeedbackOpen && (
+        <div className="modal-overlay" style={{ zIndex: 1000 }}>
+          <div className="modal-content" style={{ maxWidth: '520px', width: '90%', position: 'relative', overflow: 'hidden', padding: '2rem', maxHeight: '90vh', display: 'flex', flexDirection: 'column' }}>
+            
+            {!isOtpVerifying && !isFeedbackSubmitted && (
+              <>
+                <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', borderBottom: '1px solid var(--glass-border)', paddingBottom: '0.85rem', marginBottom: '1.2rem', flexShrink: 0 }}>
+                  <h2 className="title-gradient" style={{ margin: 0, fontSize: '1.6rem', textAlign: 'left', fontWeight: 'bold' }}>Send Feedback</h2>
+                  <button style={{ background: 'transparent', border: 'none', color: 'var(--text-secondary)', fontSize: '1.4rem', cursor: 'pointer', transition: 'color 0.2s' }} onClick={() => setIsFeedbackOpen(false)} onMouseEnter={e => e.currentTarget.style.color = '#fff'} onMouseLeave={e => e.currentTarget.style.color = 'var(--text-secondary)'}>✕</button>
+                </div>
+
+                <div style={{ flex: 1, overflowY: 'auto', paddingRight: '4px', display: 'flex', flexDirection: 'column', gap: '0.2rem' }}>
+                  {/* Feedback Category selection - 2x2 grid matching user screenshot */}
+                  <div className="select-group" style={{ marginBottom: '1.2rem' }}>
+                    <label style={{ fontSize: '0.95rem', color: 'var(--text-primary)', fontWeight: 600, display: 'block', marginBottom: '8px' }}>Feedback Type</label>
+                    <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '10px' }}>
+                      {[
+                        { id: 'Bug Report', label: 'Bug Report', emoji: '🐛' },
+                        { id: 'Suggestion', label: 'Suggestion', emoji: '💡' },
+                        { id: 'Feature Request', label: 'Feature Request', emoji: '✨' },
+                        { id: 'Other', label: 'Other', emoji: '📝' }
+                      ].map(type => {
+                        const isSelected = feedbackCategory === type.id;
+                        return (
+                          <div 
+                            key={type.id}
+                            onClick={() => setFeedbackCategory(type.id)}
+                            style={{
+                              background: isSelected ? 'rgba(59, 130, 246, 0.15)' : 'rgba(30, 41, 59, 0.4)',
+                              border: isSelected ? '2px solid #3b82f6' : '1px solid var(--glass-border)',
+                              borderRadius: '12px',
+                              padding: '12px 16px',
+                              display: 'flex',
+                              alignItems: 'center',
+                              gap: '10px',
+                              cursor: 'pointer',
+                              transition: 'all 0.2s ease',
+                              color: isSelected ? '#60a5fa' : 'var(--text-primary)',
+                              fontWeight: isSelected ? 'bold' : 'normal'
+                            }}
+                            onMouseEnter={e => { if(!isSelected) e.currentTarget.style.borderColor = 'rgba(255,255,255,0.2)'; }}
+                            onMouseLeave={e => { if(!isSelected) e.currentTarget.style.borderColor = 'var(--glass-border)'; }}
+                          >
+                            <span style={{ fontSize: '1.2rem' }}>{type.emoji}</span>
+                            <span style={{ fontSize: '0.95rem' }}>{type.label}</span>
+                          </div>
+                        );
+                      })}
+                    </div>
+                  </div>
+
+                  {/* Rating selection - Star layout matching screenshot */}
+                  <div className="select-group" style={{ marginBottom: '1.2rem' }}>
+                    <label style={{ fontSize: '0.95rem', color: 'var(--text-primary)', fontWeight: 600, display: 'block', marginBottom: '6px' }}>Rate Your Experience</label>
+                    <div style={{ display: 'flex', gap: '8px', fontSize: '2.4rem' }}>
+                      {[1, 2, 3, 4, 5].map(star => (
+                        <span 
+                          key={star} 
+                          style={{ 
+                            cursor: 'pointer', 
+                            color: star <= rating ? '#fbbf24' : '#4b5563', 
+                            transition: 'all 0.2s', 
+                            transform: star <= rating ? 'scale(1.1)' : 'scale(1)' 
+                          }}
+                          onClick={() => setRating(star)}
+                          onMouseEnter={e => e.currentTarget.style.transform = 'scale(1.2)'}
+                          onMouseLeave={e => e.currentTarget.style.transform = star <= rating ? 'scale(1.1)' : 'scale(1)'}
+                        >
+                          {star <= rating ? '★' : '☆'}
+                        </span>
+                      ))}
+                    </div>
+                  </div>
+
+                  {/* Email verification input */}
+                  <div className="select-group" style={{ marginBottom: '1.2rem' }}>
+                    <label style={{ fontSize: '0.95rem', color: 'var(--text-primary)', fontWeight: 600, display: 'block', marginBottom: '6px' }}>Your Email Address</label>
+                    <input 
+                      type="email"
+                      className="styled-input" 
+                      style={{ width: '100%', padding: '0.65rem 0.85rem', fontSize: '0.95rem', borderRadius: '8px', border: '1px solid var(--glass-border)', background: 'rgba(0,0,0,0.2)', color: '#fff' }} 
+                      placeholder="Enter your email to verify with OTP" 
+                      value={feedbackEmail} 
+                      onChange={e => setFeedbackEmail(e.target.value)} 
+                      required
+                    />
+                  </div>
+
+                  {/* Comment box */}
+                  <div className="select-group" style={{ marginBottom: '1.2rem' }}>
+                    <label style={{ fontSize: '0.95rem', color: 'var(--text-primary)', fontWeight: 600, display: 'block', marginBottom: '6px' }}>Your Message</label>
+                    <textarea 
+                      className="styled-input" 
+                      style={{ width: '100%', height: '90px', resize: 'none', padding: '0.65rem 0.85rem', fontFamily: 'sans-serif', fontSize: '0.95rem', borderRadius: '8px', border: '1px solid var(--glass-border)', background: 'rgba(0,0,0,0.2)', color: '#fff' }} 
+                      placeholder="Tell us what you think..." 
+                      value={feedbackText} 
+                      onChange={e => setFeedbackText(e.target.value)} 
+                    />
+                  </div>
+
+                  {feedbackError && (
+                    <p style={{ color: '#ef4444', fontSize: '0.85rem', fontWeight: 'bold', margin: '0 0 10px 0', display: 'flex', alignItems: 'center', gap: '4px' }}>
+                      ⚠️ {feedbackError}
+                    </p>
+                  )}
+                </div>
+
+                <button 
+                  className="btn btn-start" 
+                  style={{ width: '100%', marginTop: '0.75rem', padding: '0.85rem', borderRadius: '12px', fontSize: '1.05rem', fontWeight: 'bold', border: 'none', cursor: isFeedbackSendingOtp ? 'not-allowed' : 'pointer', background: 'linear-gradient(135deg, var(--accent-primary), var(--accent-secondary))', color: 'white', flexShrink: 0 }} 
+                  onClick={sendFeedbackOtp}
+                  disabled={isFeedbackSendingOtp}
+                >
+                  {isFeedbackSendingOtp ? '⏳ Sending Verification Code...' : 'Send Feedback'}
+                </button>
+              </>
+            )}
+
+            {isOtpVerifying && !isFeedbackSubmitted && (
+              <>
+                <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', borderBottom: '1px solid var(--glass-border)', paddingBottom: '0.85rem', marginBottom: '1.2rem', flexShrink: 0 }}>
+                  <h2 className="title-gradient" style={{ margin: 0, fontSize: '1.6rem', fontWeight: 'bold' }}>Verify Your Email</h2>
+                  <button style={{ background: 'transparent', border: 'none', color: 'var(--text-secondary)', fontSize: '1.4rem', cursor: 'pointer' }} onClick={() => setIsFeedbackOpen(false)}>✕</button>
+                </div>
+
+                <p style={{ color: 'var(--text-secondary)', fontSize: '0.9rem', lineHeight: '1.5', margin: '0 0 1.5rem 0', textAlign: 'center' }}>
+                  We sent a 6-digit verification code to **{feedbackEmail}**.<br />Enter the code to verify your feedback.
+                </p>
+
+                <div className="select-group" style={{ marginBottom: '1.5rem', flexShrink: 0 }}>
+                  <label style={{ fontSize: '0.95rem', color: 'var(--text-primary)', fontWeight: 600, display: 'block', marginBottom: '8px', textAlign: 'center' }}>Enter Verification Code</label>
+                  <input 
+                    type="text" 
+                    className="styled-input" 
+                    style={{ width: '100%', textAlign: 'center', letterSpacing: '8px', fontSize: '1.6rem', fontWeight: 'bold', fontFamily: 'monospace', padding: '0.65rem', borderRadius: '10px', background: 'rgba(0,0,0,0.3)', border: '1.5px solid var(--accent-primary)', color: '#fbbf24' }} 
+                    placeholder="------" 
+                    maxLength={6}
+                    value={feedbackOtpCode} 
+                    onChange={e => setFeedbackOtpCode(e.target.value.replace(/\D/g, ''))} 
+                  />
+                </div>
+
+                {feedbackError && (
+                  <p style={{ color: '#ef4444', fontSize: '0.85rem', fontWeight: 'bold', margin: '0 0 15px 0', textAlign: 'center' }}>
+                    ⚠️ {feedbackError}
+                  </p>
+                )}
+
+                <div style={{ display: 'flex', flexDirection: 'column', gap: '0.75rem', flexShrink: 0 }}>
+                  <button 
+                    className="btn btn-start" 
+                    style={{ width: '100%', padding: '0.85rem', borderRadius: '12px', fontSize: '1.05rem', fontWeight: 'bold', background: 'linear-gradient(135deg, #10b981, #059669)', border: 'none', cursor: isFeedbackVerifyingOtp ? 'not-allowed' : 'pointer' }} 
+                    onClick={verifyOtpAndSubmit}
+                    disabled={isFeedbackVerifyingOtp}
+                  >
+                    {isFeedbackVerifyingOtp ? '⏳ Verifying Code...' : 'Verify & Submit Review'}
+                  </button>
+
+                  <button 
+                    className="btn btn-clear" 
+                    style={{ width: '100%', padding: '0.8rem', borderRadius: '12px', border: '1px solid var(--glass-border)' }} 
+                    onClick={() => { setIsOtpVerifying(false); setFeedbackError(''); }}
+                  >
+                    ← Edit Email Address
+                  </button>
+                </div>
+              </>
+            )}
+
+            {isFeedbackSubmitted && (
+              <div style={{ textAlign: 'center', padding: '1.5rem 0', flexShrink: 0 }}>
+                <span style={{ fontSize: '4.5rem', display: 'block', marginBottom: '10px', animation: 'pulse 1s infinite' }}>🎉</span>
+                <h2 className="title-gradient" style={{ fontSize: '1.8rem', marginBottom: '8px' }}>Thank You!</h2>
+                <p style={{ color: 'var(--text-secondary)', fontSize: '0.95rem', lineHeight: '1.5', margin: '0 0 1.5rem 0' }}>
+                  Your <strong>{rating}-Star</strong> review in <strong>{feedbackCategory}</strong> was saved successfully! We have validated your email as real and linked it to <strong>{feedbackEmail}</strong>.
+                </p>
+                <button className="btn btn-clear" style={{ width: '150px', borderRadius: '10px' }} onClick={() => { setIsFeedbackOpen(false); setIsOtpVerifying(false); setFeedbackOtpCode(''); }}>Done</button>
+              </div>
+            )}
+          </div>
+        </div>
+      )}
+
+      {/* Developer Feedback Console Modal */}
+      {isAdminFeedbackOpen && (
+        <div className="modal-overlay" style={{ zIndex: 1001 }}>
+          <div className="modal-content" style={{ maxWidth: '650px', width: '90%', position: 'relative', overflow: 'hidden', padding: '2.2rem', maxHeight: '85vh', display: 'flex', flexDirection: 'column' }}>
+            <button style={{ position: 'absolute', right: '15px', top: '15px', background: 'transparent', border: 'none', color: 'var(--text-secondary)', fontSize: '1.2rem', cursor: 'pointer' }} onClick={() => setIsAdminFeedbackOpen(false)}>✕</button>
+            
+            {!isAdminAuthenticated ? (
+              <>
+                <div style={{ display: 'flex', alignItems: 'center', gap: '10px', marginBottom: '0.5rem', borderBottom: '1px solid var(--glass-border)', paddingBottom: '0.75rem' }}>
+                  <span style={{ fontSize: '1.8rem' }}>🛠️</span>
+                  <h2 className="title-gradient" style={{ margin: 0, fontSize: '1.7rem', fontWeight: 'bold' }}>Developer Authentication</h2>
+                </div>
+                <p style={{ color: 'var(--text-secondary)', fontSize: '0.9rem', lineHeight: '1.5', margin: '0 0 1.2rem 0' }}>
+                  Access to the persistent feedback database console is restricted. Please verify your Developer PIN to unlock logs.
+                </p>
+
+                <div className="select-group" style={{ marginBottom: '1.2rem' }}>
+                  <label style={{ fontSize: '0.95rem', color: 'var(--text-primary)', fontWeight: 600, display: 'block', marginBottom: '6px' }}>Developer Security PIN</label>
+                  <input 
+                    type="password" 
+                    className="styled-input" 
+                    style={{ width: '100%', padding: '0.65rem 0.85rem', fontSize: '1rem', borderRadius: '8px', border: '1px solid var(--glass-border)', background: 'rgba(0,0,0,0.2)', color: '#fff', textAlign: 'center', letterSpacing: '4px' }} 
+                    placeholder="••••" 
+                    value={adminPinInput} 
+                    onChange={e => setAdminPinInput(e.target.value)} 
+                    onKeyDown={e => e.key === 'Enter' && loginAdminConsole()}
+                  />
+                </div>
+
+                {adminErrorMessage && (
+                  <p style={{ color: '#ef4444', fontSize: '0.85rem', fontWeight: 'bold', margin: '0 0 12px 0' }}>
+                    ⚠️ {adminErrorMessage}
+                  </p>
+                )}
+
+                <button 
+                  className="btn btn-start" 
+                  style={{ width: '100%', padding: '0.85rem', borderRadius: '12px', fontSize: '1rem', fontWeight: 'bold', background: 'linear-gradient(135deg, var(--accent-primary), var(--accent-secondary))' }} 
+                  onClick={loginAdminConsole}
+                >
+                  Unlock Developer Console
+                </button>
+              </>
+            ) : (
+              <>
+                <div style={{ display: 'flex', alignItems: 'center', gap: '10px', marginBottom: '0.5rem' }}>
+                  <span style={{ fontSize: '1.8rem' }}>🛠️</span>
+                  <h2 className="title-gradient" style={{ margin: 0, fontSize: '1.8rem', textAlign: 'left', fontWeight: 'bold' }}>Developer Feedback Console</h2>
+                </div>
+                <p style={{ color: 'var(--text-secondary)', fontSize: '0.85rem', margin: '0 0 1rem 0' }}>
+                  Monitor and inspect user-submitted ratings, emails, and bug reports from the PostgreSQL database server.
+                </p>
+
+                {/* Filter / Search Bar */}
+                <div style={{ display: 'flex', gap: '0.5rem', marginBottom: '1rem', flexShrink: 0 }}>
+                  <input 
+                    type="text" 
+                    className="styled-input" 
+                    style={{ flex: 1, padding: '0.5rem 0.85rem', fontSize: '0.88rem', borderRadius: '8px' }}
+                    placeholder="Search by email or comment details..."
+                    value={feedbackSearchQuery}
+                    onChange={e => setFeedbackSearchQuery(e.target.value)}
+                  />
+                  {feedbackSearchQuery && (
+                    <button className="btn btn-clear" style={{ padding: '0.5rem 1rem', fontSize: '0.85rem' }} onClick={() => setFeedbackSearchQuery('')}>Clear</button>
+                  )}
+                </div>
+
+                {/* Scrollable list of feedback logs */}
+                <div style={{ flex: 1, overflowY: 'auto', display: 'flex', flexDirection: 'column', gap: '0.75rem', paddingRight: '4px', minHeight: '200px' }}>
+                  {(() => {
+                    const filtered = adminFeedbacksList.filter(log => 
+                      !feedbackSearchQuery.trim() || 
+                      (log.email || '').toLowerCase().includes(feedbackSearchQuery.toLowerCase()) ||
+                      (log.feedback_text || '').toLowerCase().includes(feedbackSearchQuery.toLowerCase()) ||
+                      (log.category || '').toLowerCase().includes(feedbackSearchQuery.toLowerCase())
+                    );
+
+                    if (filtered.length === 0) {
+                      return (
+                        <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', height: '100%', minHeight: '200px', color: 'var(--text-secondary)', gap: '10px' }}>
+                          <span style={{ fontSize: '2.5rem' }}>📂</span>
+                          <p style={{ fontSize: '0.9rem', fontStyle: 'italic' }}>
+                            {adminFeedbacksList.length === 0 ? 'No feedbacks found in PostgreSQL database.' : 'No database records match your search filters.'}
+                          </p>
+                        </div>
+                      );
+                    }
+
+                    return filtered.map((log, idx) => (
+                      <div key={log.id || idx} style={{ background: 'rgba(255,255,255,0.03)', border: '1px solid var(--glass-border)', borderRadius: '10px', padding: '1rem', display: 'flex', flexDirection: 'column', gap: '0.5rem' }}>
+                        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', flexWrap: 'wrap', gap: '5px' }}>
+                          <span style={{ fontSize: '0.85rem', color: 'var(--accent-primary)', fontWeight: 'bold', fontFamily: 'monospace' }}>
+                            {log.email}
+                          </span>
+                          <span style={{ fontSize: '0.75rem', color: 'var(--text-secondary)' }}>
+                            🕒 {new Date(log.created_at || log.timestamp).toLocaleString()}
+                          </span>
+                        </div>
+
+                        <div style={{ display: 'flex', gap: '10px', alignItems: 'center', flexWrap: 'wrap' }}>
+                          <span style={{ fontSize: '0.78rem', background: log.category === 'Bug Report' ? 'rgba(239,68,68,0.15)' : 'rgba(59,130,246,0.15)', border: `1px solid ${log.category === 'Bug Report' ? '#ef4444' : '#3b82f6'}`, color: log.category === 'Bug Report' ? '#f87171' : '#60a5fa', padding: '2px 8px', borderRadius: '12px', fontWeight: 'bold' }}>
+                            {log.category}
+                          </span>
+                          <span style={{ color: '#fbbf24', fontSize: '1rem' }}>
+                            {'★'.repeat(log.rating || 5)}{'☆'.repeat(5 - (log.rating || 5))}
+                          </span>
+                        </div>
+
+                        {log.feedback_text && (
+                          <p style={{ color: 'var(--text-primary)', fontSize: '0.88rem', margin: '4px 0 0 0', lineHeight: '1.45', whiteSpace: 'pre-wrap', background: 'rgba(0,0,0,0.15)', padding: '0.6rem 0.8rem', borderRadius: '6px', borderLeft: '3px solid var(--glass-border)' }}>
+                            {log.feedback_text}
+                          </p>
+                        )}
+                      </div>
+                    ));
+                  })()}
+                </div>
+
+                {/* Bottom Admin Control actions */}
+                <div style={{ display: 'flex', gap: '0.75rem', marginTop: '1.2rem', paddingTop: '1rem', borderTop: '1px solid var(--glass-border)', flexShrink: 0 }}>
+                  <button 
+                    className="btn btn-clear" 
+                    style={{ flex: 1, borderColor: '#ef4444', color: '#f87171', background: 'rgba(239,68,68,0.05)', fontSize: '0.85rem' }} 
+                    onClick={clearAdminFeedbacks}
+                  >
+                    🗑️ Clear Database Logs
+                  </button>
+                  <button 
+                    className="btn btn-clear" 
+                    style={{ flex: 1, borderColor: 'var(--accent-primary)', color: '#60a5fa', background: 'rgba(59,130,246,0.05)', fontSize: '0.85rem' }} 
+                    onClick={() => {
+                      const blob = new Blob([JSON.stringify(adminFeedbacksList, null, 2)], { type: 'application/json' });
+                      const url = URL.createObjectURL(blob);
+                      const a = document.createElement('a');
+                      a.href = url;
+                      a.download = `postgresql_feedback_export_${new Date().toISOString().slice(0,10)}.json`;
+                      a.click();
+                      URL.revokeObjectURL(url);
+                    }}
+                  >
+                    📥 Export as JSON
+                  </button>
+                  <button 
+                    className="btn btn-start" 
+                    style={{ width: '120px', padding: '0.6rem', fontSize: '0.9rem' }} 
+                    onClick={() => setIsAdminFeedbackOpen(false)}
+                  >
+                    Close
+                  </button>
+                </div>
+              </>
+            )}
+          </div>
+        </div>
+      )}
+    </>
+  );
+}
+
+export default App;
