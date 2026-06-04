@@ -736,6 +736,67 @@ function App() {
     else if (customCode.includes('console.log') || customCode.includes('function ')) setCodeLang('JS');
   }, [customCode]);
 
+  // Drag to scroll functionality on tree visualizer container (works with mouse and touch)
+  useEffect(() => {
+    const slider = containerRef.current;
+    if (!slider) return;
+    let isDown = false;
+    let startX, startY;
+    let scrollLeft, scrollTop;
+
+    const handleStart = (e) => {
+      // Don't drag if clicking buttons, select dropdowns, inputs, or interactive tags
+      if (e.target.closest('button') || e.target.closest('select') || e.target.closest('input')) return;
+      isDown = true;
+      slider.style.cursor = 'grabbing';
+      const pageX = e.pageX || (e.touches && e.touches[0].pageX);
+      const pageY = e.pageY || (e.touches && e.touches[0].pageY);
+      startX = pageX - slider.offsetLeft;
+      startY = pageY - slider.offsetTop;
+      scrollLeft = slider.scrollLeft;
+      scrollTop = slider.scrollTop;
+    };
+
+    const handleEnd = () => {
+      isDown = false;
+      slider.style.cursor = 'grab';
+    };
+
+    const handleMove = (e) => {
+      if (!isDown) return;
+      // Only prevent default on touchmove to avoid breaking other controls, and prevent bounce scroll
+      if (e.type === 'touchmove') e.preventDefault();
+      const pageX = e.pageX || (e.touches && e.touches[0].pageX);
+      const pageY = e.pageY || (e.touches && e.touches[0].pageY);
+      const x = pageX - slider.offsetLeft;
+      const y = pageY - slider.offsetTop;
+      const walkX = (x - startX) * 1.5;
+      const walkY = (y - startY) * 1.5;
+      slider.scrollLeft = scrollLeft - walkX;
+      slider.scrollTop = scrollTop - walkY;
+    };
+
+    slider.addEventListener('mousedown', handleStart);
+    slider.addEventListener('mouseleave', handleEnd);
+    slider.addEventListener('mouseup', handleEnd);
+    slider.addEventListener('mousemove', handleMove);
+
+    slider.addEventListener('touchstart', handleStart);
+    slider.addEventListener('touchend', handleEnd);
+    slider.addEventListener('touchmove', handleMove, { passive: false });
+
+    return () => {
+      slider.removeEventListener('mousedown', handleStart);
+      slider.removeEventListener('mouseleave', handleEnd);
+      slider.removeEventListener('mouseup', handleEnd);
+      slider.removeEventListener('mousemove', handleMove);
+
+      slider.removeEventListener('touchstart', handleStart);
+      slider.removeEventListener('touchend', handleEnd);
+      slider.removeEventListener('touchmove', handleMove);
+    };
+  }, [appMode]);
+
   // ── Enhanced Code Validator logic moved to top ─────────
   const validateCode = (code, lang) => {
     const errors = [];
@@ -1688,10 +1749,7 @@ function App() {
       <div style={{ display: !appMode ? 'block' : 'none' }}>
         <div className="home-container">
           <div style={{ textAlign: 'center' }}>
-            <h1 className="title-gradient" style={{ fontSize: '3rem', marginBottom: '0.75rem' }}>Algorithm Visualizer Studio</h1>
-            <p style={{ color: 'var(--text-secondary)', fontSize: '1.1rem', maxWidth: '600px', lineHeight: 1.6, margin: '0 auto 1.2rem auto' }}>
-              Step-by-step tree formation · PythonTutor-style debugger · Claude AI assistant · 5 themes
-            </p>
+            <h1 className="title-gradient" style={{ fontSize: '3rem', marginBottom: '1.5rem' }}>AlgoFlow-Studio</h1>
             <div style={{ maxWidth: '500px', margin: '0 auto 2.5rem auto', position: 'relative' }}>
               <input type="text" value={homeSearchQuery} onChange={e => setHomeSearchQuery(e.target.value)}
                 placeholder="Search the work to do... (e.g., Tree, Sort, Debug)"
@@ -1759,16 +1817,18 @@ function App() {
               >
                 💬 Feel any error or problem? Give Feedback
               </button>
-              <button 
-                className="btn btn-clear" 
-                style={{ padding: '0.55rem 1.3rem', fontSize: '0.85rem', display: 'flex', alignItems: 'center', gap: '8px', background: 'rgba(59,130,246,0.08)', border: '1px solid rgba(59,130,246,0.3)', borderRadius: '30px', cursor: 'pointer', color: 'var(--accent-primary)', transition: 'all 0.25s' }}
-                onClick={() => { setIsAdminFeedbackOpen(true); }}
-                onMouseEnter={e => e.currentTarget.style.transform = 'scale(1.03) translateY(-1px)'}
-                onMouseLeave={e => e.currentTarget.style.transform = 'scale(1) translateY(0)'}
-                title="View submitted feedback entries to inspect and debug code issues"
-              >
-                🛠️ Feedback Console
-              </button>
+              {(new URLSearchParams(window.location.search).get('dev') === 'true' || new URLSearchParams(window.location.search).get('admin') === 'true') && (
+                <button 
+                  className="btn btn-clear" 
+                  style={{ padding: '0.55rem 1.3rem', fontSize: '0.85rem', display: 'flex', alignItems: 'center', gap: '8px', background: 'rgba(59,130,246,0.08)', border: '1px solid rgba(59,130,246,0.3)', borderRadius: '30px', cursor: 'pointer', color: 'var(--accent-primary)', transition: 'all 0.25s' }}
+                  onClick={() => { setIsAdminFeedbackOpen(true); }}
+                  onMouseEnter={e => e.currentTarget.style.transform = 'scale(1.03) translateY(-1px)'}
+                  onMouseLeave={e => e.currentTarget.style.transform = 'scale(1) translateY(0)'}
+                  title="View submitted feedback entries to inspect and debug code issues"
+                >
+                  🛠️ Feedback Console
+                </button>
+              )}
             </div>
           </div>
         </div>

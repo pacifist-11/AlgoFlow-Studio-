@@ -168,6 +168,34 @@ app.post('/api/feedback/verify-and-submit', async (req, res) => {
   try {
     const dbResult = await pool.query(insertQuery, values);
     console.log('💾 Successfully saved user feedback to PostgreSQL database!', dbResult.rows[0]);
+
+    // Send email copy to developer pothalayeswanth11@gmail.com
+    try {
+      const transporter = getTransporter();
+      const mailOptions = {
+        from: `"Algorithm Studio Support" <${process.env.SMTP_USER}>`,
+        to: 'pothalayeswanth11@gmail.com',
+        subject: `📝 New Feedback Received - Rating: ${rating} Stars`,
+        html: `
+          <div style="font-family: Arial, sans-serif; padding: 20px; border: 1px solid #e2e8f0; border-radius: 12px; max-width: 600px; background-color: #f8fafc; color: #1f2937;">
+            <h2 style="color: #3b82f6; margin-top: 0;">New User Feedback Received!</h2>
+            <hr style="border: 0; border-top: 1px solid #e2e8f0; margin-bottom: 20px;" />
+            <p style="margin: 8px 0;"><strong>User Email:</strong> ${cleanEmail}</p>
+            <p style="margin: 8px 0;"><strong>Category:</strong> ${category}</p>
+            <p style="margin: 8px 0;"><strong>Rating:</strong> ${rating} / 5 Stars</p>
+            <div style="margin-top: 20px; padding: 15px; background-color: #ffffff; border-left: 4px solid #3b82f6; border-radius: 4px; box-shadow: 0 1px 3px rgba(0,0,0,0.05);">
+              <p style="margin: 0; font-weight: bold; color: #4b5563; margin-bottom: 8px;">Message:</p>
+              <p style="margin: 0; white-space: pre-wrap; line-height: 1.5;">${text || '<em>(No comment provided)</em>'}</p>
+            </div>
+          </div>
+        `
+      };
+      await transporter.sendMail(mailOptions);
+      console.log('📧 Copy of feedback successfully emailed to pothalayeswanth11@gmail.com');
+    } catch (mailErr) {
+      console.error('❌ Failed to deliver feedback email copy to admin:', mailErr.message);
+    }
+
     res.json({ success: true, feedback: dbResult.rows[0] });
   } catch (dbError) {
     console.error('❌ PostgreSQL Insertion Failure:', dbError.message);

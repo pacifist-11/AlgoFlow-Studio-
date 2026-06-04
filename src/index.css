@@ -28,6 +28,7 @@ body {
     radial-gradient(circle at 10% 20%, rgba(59, 130, 246, 0.12), transparent 35%),
     radial-gradient(circle at 90% 80%, rgba(236, 72, 153, 0.12), transparent 35%);
   background-attachment: fixed;
+  overscroll-behavior: contain;
 }
 
 /* ── Home ── */
@@ -171,6 +172,8 @@ body {
   position: relative;
   overflow: auto;
   min-height: 260px;
+  overscroll-behavior: contain;
+  cursor: grab;
 }
 
 /* SVG node animation */
