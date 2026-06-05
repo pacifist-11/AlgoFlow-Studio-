@@ -752,7 +752,7 @@ function App() {
   const [treeCodeCopied, setTreeCodeCopied] = useState(false);
 
   const [isFeedbackOpen, setIsFeedbackOpen] = useState(false);
-  const [rating, setRating] = useState(5);
+  const [rating, setRating] = useState(0);
   const [feedbackText, setFeedbackText] = useState('');
   const [feedbackEmail, setFeedbackEmail] = useState('');
   const [feedbackCategory, setFeedbackCategory] = useState('UI/UX');
@@ -1197,6 +1197,10 @@ function App() {
   const submitDirectFeedback = async () => {
     const emailTrimmed = feedbackEmail.trim();
     const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+    if (rating === 0) {
+      setFeedbackError("Selecting a star rating is compulsory. Please select a rating (1-5 stars).");
+      return;
+    }
     if (!emailTrimmed) {
       setFeedbackError("Please enter your email address.");
       return;
@@ -1260,6 +1264,10 @@ function App() {
   };
 
   const verifyOtpAndSubmit = async () => {
+    if (rating === 0) {
+      setFeedbackError("Selecting a star rating is compulsory. Please select a rating (1-5 stars).");
+      return;
+    }
     if (!feedbackOtpCode.trim()) {
       setFeedbackError("Please enter the 6-digit verification code.");
       return;
@@ -2636,33 +2644,6 @@ function App() {
               ))
             )}
           </div>
-          {/* Footer at the bottom with Feedback options */}
-          <div style={{ marginTop: '3.5rem', borderTop: '1px solid var(--glass-border)', paddingTop: '1.5rem', width: '100%', maxWidth: '1100px', display: 'flex', justifyContent: 'space-between', alignItems: 'center', color: 'var(--text-secondary)', fontSize: '0.88rem', flexWrap: 'wrap', gap: '1rem' }}>
-            <span>© {new Date().getFullYear()} Algorithm Visualizer Studio. All rights reserved.</span>
-            <div style={{ display: 'flex', gap: '0.75rem', alignItems: 'center' }}>
-              <button 
-                className="btn btn-clear" 
-                style={{ padding: '0.55rem 1.3rem', fontSize: '0.85rem', display: 'flex', alignItems: 'center', gap: '8px', background: 'rgba(255,255,255,0.03)', border: '1px solid var(--glass-border)', borderRadius: '30px', cursor: 'pointer', transition: 'all 0.25s' }}
-                onClick={() => { setIsFeedbackOpen(true); setIsFeedbackSubmitted(false); setFeedbackText(''); setFeedbackEmail(''); }}
-                onMouseEnter={e => e.currentTarget.style.transform = 'scale(1.03) translateY(-1px)'}
-                onMouseLeave={e => e.currentTarget.style.transform = 'scale(1) translateY(0)'}
-              >
-                💬 Feel any error or problem? Give Feedback
-              </button>
-              {(new URLSearchParams(window.location.search).get('dev') === 'true' || new URLSearchParams(window.location.search).get('admin') === 'true') && (
-                <button 
-                  className="btn btn-clear" 
-                  style={{ padding: '0.55rem 1.3rem', fontSize: '0.85rem', display: 'flex', alignItems: 'center', gap: '8px', background: 'rgba(59,130,246,0.08)', border: '1px solid rgba(59,130,246,0.3)', borderRadius: '30px', cursor: 'pointer', color: 'var(--accent-primary)', transition: 'all 0.25s' }}
-                  onClick={() => { setIsAdminFeedbackOpen(true); }}
-                  onMouseEnter={e => e.currentTarget.style.transform = 'scale(1.03) translateY(-1px)'}
-                  onMouseLeave={e => e.currentTarget.style.transform = 'scale(1) translateY(0)'}
-                  title="View submitted feedback entries to inspect and debug code issues"
-                >
-                  🛠️ Feedback Console
-                </button>
-              )}
-            </div>
-          </div>
         </div>
       </div>
 
@@ -3634,6 +3615,36 @@ function App() {
           </div>
         </div>
       )}
+
+      {/* Global Footer with Feedback options */}
+      <div style={{ display: 'flex', justifyContent: 'center', width: '100%', padding: '1.5rem 2rem 2.5rem 2rem', borderTop: '1px solid var(--glass-border)', background: 'var(--bg-primary)', marginTop: !appMode ? '3.5rem' : '1.5rem', position: 'relative', zIndex: 10 }}>
+        <div style={{ width: '100%', maxWidth: '1100px', display: 'flex', justifyContent: 'space-between', alignItems: 'center', color: 'var(--text-secondary)', fontSize: '0.88rem', flexWrap: 'wrap', gap: '1rem' }}>
+          <span>© {new Date().getFullYear()} Algorithm Visualizer Studio. All rights reserved.</span>
+          <div style={{ display: 'flex', gap: '0.75rem', alignItems: 'center' }}>
+            <button 
+              className="btn btn-clear" 
+              style={{ padding: '0.55rem 1.3rem', fontSize: '0.85rem', display: 'flex', alignItems: 'center', gap: '8px', background: 'rgba(255,255,255,0.03)', border: '1px solid var(--glass-border)', borderRadius: '30px', cursor: 'pointer', transition: 'all 0.25s' }}
+              onClick={() => { setIsFeedbackOpen(true); setIsFeedbackSubmitted(false); setRating(0); setFeedbackText(''); setFeedbackEmail(''); }}
+              onMouseEnter={e => e.currentTarget.style.transform = 'scale(1.03) translateY(-1px)'}
+              onMouseLeave={e => e.currentTarget.style.transform = 'scale(1) translateY(0)'}
+            >
+              💬 Feel any error or problem? Give Feedback
+            </button>
+            {(new URLSearchParams(window.location.search).get('dev') === 'true' || new URLSearchParams(window.location.search).get('admin') === 'true') && (
+              <button 
+                className="btn btn-clear" 
+                style={{ padding: '0.55rem 1.3rem', fontSize: '0.85rem', display: 'flex', alignItems: 'center', gap: '8px', background: 'rgba(59,130,246,0.08)', border: '1px solid rgba(59,130,246,0.3)', borderRadius: '30px', cursor: 'pointer', color: 'var(--accent-primary)', transition: 'all 0.25s' }}
+                onClick={() => { setIsAdminFeedbackOpen(true); }}
+                onMouseEnter={e => e.currentTarget.style.transform = 'scale(1.03) translateY(-1px)'}
+                onMouseLeave={e => e.currentTarget.style.transform = 'scale(1) translateY(0)'}
+                title="View submitted feedback entries to inspect and debug code issues"
+              >
+                🛠️ Feedback Console
+              </button>
+            )}
+          </div>
+        </div>
+      </div>
     </>
   );
 }

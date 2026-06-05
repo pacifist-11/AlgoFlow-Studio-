@@ -310,6 +310,11 @@ app.post('/api/feedback/submit-direct', async (req, res) => {
     return res.status(400).json({ error: 'Missing email address.' });
   }
 
+  const ratingInt = parseInt(rating);
+  if (isNaN(ratingInt) || ratingInt < 1 || ratingInt > 5) {
+    return res.status(400).json({ error: 'Selecting a star rating is compulsory.' });
+  }
+
   const cleanEmail = email.toLowerCase().trim();
 
   const insertQuery = `
@@ -317,7 +322,7 @@ app.post('/api/feedback/submit-direct', async (req, res) => {
     VALUES ($1, $2, $3, $4)
     RETURNING *;
   `;
-  const values = [cleanEmail, parseInt(rating) || 5, category || 'UI/UX Design', text || ''];
+  const values = [cleanEmail, ratingInt, category || 'UI/UX Design', text || ''];
 
   try {
     const dbResult = await pool.query(insertQuery, values);
@@ -442,12 +447,17 @@ app.post('/api/feedback/verify-and-submit', async (req, res) => {
   otpStore.delete(cleanEmail);
 
   // Insert feedback into PostgreSQL
+  const ratingInt = parseInt(rating);
+  if (isNaN(ratingInt) || ratingInt < 1 || ratingInt > 5) {
+    return res.status(400).json({ error: 'Selecting a star rating is compulsory.' });
+  }
+
   const insertQuery = `
     INSERT INTO feedbacks (email, rating, category, feedback_text)
     VALUES ($1, $2, $3, $4)
     RETURNING *;
   `;
-  const values = [cleanEmail, parseInt(rating) || 5, category || 'UI/UX Design', text || ''];
+  const values = [cleanEmail, ratingInt, category || 'UI/UX Design', text || ''];
 
   try {
     const dbResult = await pool.query(insertQuery, values);
