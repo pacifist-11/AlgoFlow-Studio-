@@ -31,3 +31,6 @@ services:
         placeholder: "your_smtp_app_password"
       - key: ADMIN_PIN
         value: "1234"
+      - key: GOOGLE_CLIENT_ID
+        sync: false
+        placeholder: "your_google_oauth_client_id"

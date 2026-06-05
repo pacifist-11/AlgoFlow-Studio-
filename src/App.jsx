@@ -797,6 +797,7 @@ function App() {
   const [loginWarning, setLoginWarning] = useState('');
   const [fallbackOtp, setFallbackOtp] = useState('');
   const [isResendingOtp, setIsResendingOtp] = useState(false);
+  const [googleClientId, setGoogleClientId] = useState('');
 
   // ── OTP & Database Admin verification states ──
   const [isOtpVerifying, setIsOtpVerifying] = useState(false);
@@ -915,6 +916,68 @@ function App() {
     }
   }, []);
 
+  // Fetch Google Client ID on mount
+  useEffect(() => {
+    const fetchConfig = async () => {
+      try {
+        const res = await fetch('/api/auth/config');
+        if (res.ok) {
+          const data = await res.json();
+          if (data.googleClientId) {
+            setGoogleClientId(data.googleClientId);
+          }
+        }
+      } catch (err) {
+        console.error("Failed to fetch Google configuration:", err);
+      }
+    };
+    fetchConfig();
+  }, []);
+
+  // Initialize and Render Google Sign-in Button when step 1 and google are available
+  useEffect(() => {
+    let checkInterval;
+    if (loginStep === 1 && googleClientId) {
+      const initButton = () => {
+        if (window.google) {
+          try {
+            window.google.accounts.id.initialize({
+              client_id: googleClientId,
+              callback: handleGoogleLogin,
+            });
+
+            const btnContainer = document.getElementById('google-signin-btn');
+            if (btnContainer) {
+              window.google.accounts.id.renderButton(
+                btnContainer,
+                { 
+                  theme: 'filled_blue', 
+                  size: 'large', 
+                  width: btnContainer.offsetWidth || 380,
+                  text: 'signin_with',
+                  shape: 'rectangular'
+                }
+              );
+            }
+            if (checkInterval) clearInterval(checkInterval);
+          } catch (err) {
+            console.error("Failed to initialize Google login button:", err);
+          }
+        }
+      };
+
+      if (window.google) {
+        initButton();
+      } else {
+        // Poll for window.google to load
+        checkInterval = setInterval(initButton, 100);
+      }
+    }
+    return () => {
+      if (checkInterval) clearInterval(checkInterval);
+    };
+  }, [loginStep, googleClientId]);
+
   // Debounced auto-save effect
   useEffect(() => {
     if (!isLoggedIn || !userEmail) return;
@@ -994,6 +1057,37 @@ function App() {
       }
     } catch (err) {
       setLoginError(err.message);
+    } finally {
+      setLoginLoading(false);
+    }
+  };
+
+  const handleGoogleLogin = async (credentialResponse) => {
+    setLoginError('');
+    setLoginLoading(true);
+    try {
+      const data = await safeFetchJson('/api/auth/google', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ credential: credentialResponse.credential })
+      });
+
+      localStorage.setItem('userEmail', data.email);
+      localStorage.setItem('userRole', data.role);
+      localStorage.setItem('loginTime', Date.now().toString());
+
+      setUserEmail(data.email);
+      setUserRole(data.role);
+      setIsLoggedIn(true);
+
+      if (data.role === 'admin') {
+        setIsAdminAuthenticated(true);
+        setAdminPinInput('Irctc@11');
+      }
+
+      await loadStateFromDatabase(data.email);
+    } catch (err) {
+      setLoginError(err.message || 'Google authentication failed.');
     } finally {
       setLoginLoading(false);
     }
@@ -2428,6 +2522,32 @@ function App() {
               >
                 {loginLoading ? 'Checking...' : 'Next'}
               </button>
+
+              {googleClientId && (
+                <>
+                  <div style={{
+                    display: 'flex',
+                    alignItems: 'center',
+                    margin: '1.5rem 0 1rem 0',
+                    color: 'var(--text-secondary)',
+                    fontSize: '0.82rem'
+                  }}>
+                    <hr style={{ flex: 1, border: 'none', borderTop: '1px solid rgba(255, 255, 255, 0.08)' }} />
+                    <span style={{ padding: '0 10px', textTransform: 'uppercase', letterSpacing: '1px' }}>or</span>
+                    <hr style={{ flex: 1, border: 'none', borderTop: '1px solid rgba(255, 255, 255, 0.08)' }} />
+                  </div>
+
+                  <div 
+                    id="google-signin-btn" 
+                    style={{ 
+                      width: '100%', 
+                      display: 'flex', 
+                      justifyContent: 'center',
+                      minHeight: '40px'
+                    }}
+                  />
+                </>
+              )}
             </>
           )}
 
