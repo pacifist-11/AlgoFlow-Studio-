@@ -3,6 +3,8 @@ import cors from 'cors';
 import pg from 'pg';
 import nodemailer from 'nodemailer';
 import dotenv from 'dotenv';
+import path from 'path';
+import { fileURLToPath } from 'url';
 
 // Load environment variables
 dotenv.config();
@@ -16,13 +18,20 @@ app.use(express.json());
 
 // Initialize PostgreSQL Client Pool
 const { Pool } = pg;
-const pool = new Pool({
-  user: process.env.PGUSER || 'postgres',
-  host: process.env.PGHOST || 'localhost',
-  database: process.env.PGDATABASE || 'AlgoFlow-Studio',
-  password: process.env.PGPASSWORD || 'Irctc@11',
-  port: parseInt(process.env.PGPORT || '5432'),
-});
+const pool = process.env.DATABASE_URL
+  ? new Pool({
+      connectionString: process.env.DATABASE_URL,
+      ssl: {
+        rejectUnauthorized: false,
+      },
+    })
+  : new Pool({
+      user: process.env.PGUSER || 'postgres',
+      host: process.env.PGHOST || 'localhost',
+      database: process.env.PGDATABASE || 'AlgoFlow-Studio',
+      password: process.env.PGPASSWORD || 'Irctc@11',
+      port: parseInt(process.env.PGPORT || '5432'),
+    });
 
 // Cache map for pending OTPs (key: email, value: { otp, expires })
 const otpStore = new Map();
@@ -526,6 +535,21 @@ app.delete('/api/admin/clear', async (req, res) => {
     console.error('❌ Failed to truncate database table:', dbError.message);
     res.status(500).json({ error: 'Failed to delete records from database.', details: dbError.message });
   }
+});
+
+const __filename = fileURLToPath(import.meta.url);
+const __dirname = path.dirname(__filename);
+
+// Serve static assets in production (after building with `npm run build`)
+app.use(express.static(path.join(__dirname, '../dist')));
+
+// Fallback route for Single Page Application (SPA) routing (Express 5 named wildcard syntax)
+app.get('/*splat', (req, res) => {
+  // If the request starts with /api but wasn't handled by routes, return 404
+  if (req.path.startsWith('/api')) {
+    return res.status(404).json({ error: 'API endpoint not found' });
+  }
+  res.sendFile(path.join(__dirname, '../dist/index.html'));
 });
 
 // Start Express server
