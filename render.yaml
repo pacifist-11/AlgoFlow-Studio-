@@ -2,7 +2,6 @@ databases:
   - name: algoflow-studio-db
     plan: free # Free tier database
     databaseName: algoflow_studio
-    user: postgres
 
 services:
   - type: web
@@ -18,10 +17,6 @@ services:
           property: connectionString
       - key: PORT
         value: 10000 # Render's standard web service port
-      - key: PGUSER
-        value: postgres
-      - key: PGDATABASE
-        value: algoflow_studio
       - key: SMTP_HOST
         value: smtp.gmail.com
       - key: SMTP_PORT
