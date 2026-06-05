@@ -1195,12 +1195,14 @@ function App() {
 
   // Submit feedback directly
   const submitDirectFeedback = async () => {
-    if (!feedbackEmail.trim()) {
+    const emailTrimmed = feedbackEmail.trim();
+    const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+    if (!emailTrimmed) {
       setFeedbackError("Please enter your email address.");
       return;
     }
-    if (!feedbackEmail.includes('@') || !feedbackEmail.includes('.')) {
-      setFeedbackError("Please enter a valid email address.");
+    if (!emailRegex.test(emailTrimmed)) {
+      setFeedbackError("Please enter a valid email address (e.g. name@example.com) so we can update you on your feedback.");
       return;
     }
     if (!feedbackText.trim()) {
@@ -3359,12 +3361,15 @@ function App() {
 
                   {/* Email verification input */}
                   <div className="select-group" style={{ marginBottom: '1.2rem' }}>
-                    <label style={{ fontSize: '0.95rem', color: 'var(--text-primary)', fontWeight: 600, display: 'block', marginBottom: '6px' }}>Your Email Address</label>
+                    <label style={{ fontSize: '0.95rem', color: 'var(--text-primary)', fontWeight: 600, display: 'block', marginBottom: '4px' }}>Your Email Address</label>
+                    <p style={{ fontSize: '0.78rem', color: '#60a5fa', margin: '0 0 8px 0', lineHeight: '1.4' }}>
+                      💡 Please give your correct email so we can contact you and notify you once the problem you reported is fixed or the feature is developed!
+                    </p>
                     <input 
                       type="email"
                       className="styled-input" 
                       style={{ width: '100%', padding: '0.65rem 0.85rem', fontSize: '0.95rem', borderRadius: '8px', border: '1px solid var(--glass-border)', background: 'rgba(0,0,0,0.2)', color: '#fff' }} 
-                      placeholder="Enter your email address" 
+                      placeholder="name@example.com" 
                       value={feedbackEmail} 
                       onChange={e => setFeedbackEmail(e.target.value)}
                       required
