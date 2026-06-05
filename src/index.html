@@ -31,10 +31,39 @@
     #preloader .label {
       margin-top: 1.5rem;
       font-family: 'Segoe UI', Arial, sans-serif;
-      font-size: 1rem;
-      color: hsl(223, 90%, 70%);
+      font-size: 1.2rem;
+      font-weight: 600;
+      color: hsl(223, 90%, 90%);
       letter-spacing: 0.05em;
-      animation: pulse 1.5s ease-in-out infinite;
+    }
+    #preloader .sub-label {
+      margin-top: 0.5rem;
+      font-family: 'Segoe UI', Arial, sans-serif;
+      font-size: 0.85rem;
+      color: hsl(223, 60%, 65%);
+      text-align: center;
+      max-width: 80%;
+      line-height: 1.4;
+    }
+    #preloader .quote-box {
+      margin-top: 2rem;
+      max-width: 450px;
+      padding: 1rem 1.5rem;
+      background: rgba(255, 255, 255, 0.03);
+      border-radius: 12px;
+      border: 1px dashed rgba(255, 255, 255, 0.1);
+      text-align: center;
+      font-family: 'Georgia', serif;
+      font-style: italic;
+      color: hsl(223, 50%, 80%);
+      font-size: 0.95rem;
+      line-height: 1.5;
+      min-height: 60px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      opacity: 1;
+      transition: opacity 0.5s ease;
     }
     @keyframes pulse {
       0%, 100% { opacity: 1; }
@@ -100,16 +129,47 @@
         <polyline class="bike__front" points="32.5 2,38.5 19" stroke-dasharray="19 19" />
       </g>
     </svg>
-    <p class="label">Loading AlgoFlow Studio...</p>
+    <p class="label">Starting up backend server...</p>
+    <p class="sub-label">Free hosting sleeps after 15m of inactivity. Please allow 60-90s to wake up in peace & patience. 🙏</p>
+    <div class="quote-box" id="quote-box">
+      <span class="quote-text" id="quote-text">"First, solve the problem. Then, write the code." — John Johnson</span>
+    </div>
   </div>
 
   <div id="root"></div>
   <script type="module" src="/entry.jsx"></script>
   <script>
+    // Quotes Array
+    const quotes = [
+      { text: "First, solve the problem. Then, write the code.", author: "John Johnson" },
+      { text: "Patience is not simply the ability to wait - it's how we behave while we're waiting.", author: "Joyce Meyer" },
+      { text: "Experience is the name everyone gives to their mistakes.", author: "Oscar Wilde" },
+      { text: "The only way to learn a new programming language is by writing programs in it.", author: "Dennis Ritchie" },
+      { text: "Computers are good at following instructions, but not at reading your mind.", author: "Donald Knuth" },
+      { text: "Simplicity is the soul of efficiency.", author: "Austin Freeman" },
+      { text: "Peace is the result of retraining your mind to process life as it is, rather than as you think it should be.", author: "Wayne Dyer" }
+    ];
+
+    let currentQuoteIndex = 0;
+    const quoteBox = document.getElementById('quote-box');
+    const quoteText = document.getElementById('quote-text');
+
+    // Rotate quotes every 7 seconds
+    const quoteInterval = setInterval(() => {
+      quoteBox.style.opacity = 0;
+      setTimeout(() => {
+        currentQuoteIndex = (currentQuoteIndex + 1) % quotes.length;
+        const q = quotes[currentQuoteIndex];
+        quoteText.innerHTML = `"${q.text}" — ${q.author}`;
+        quoteBox.style.opacity = 1;
+      }, 500);
+    }, 7000);
+
     // Hide preloader once React has mounted content into #root
     const observer = new MutationObserver(() => {
       const root = document.getElementById('root');
       if (root && root.children.length > 0) {
+        clearInterval(quoteInterval);
         const preloader = document.getElementById('preloader');
         if (preloader) {
           preloader.classList.add('hidden');
