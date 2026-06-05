@@ -12,6 +12,9 @@ export default defineConfig({
     emptyOutDir: true,
   },
   plugins: [react()],
+  define: {
+    'process.env': {}
+  },
   server: {
     open: true,
     proxy: {
