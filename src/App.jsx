@@ -3537,6 +3537,13 @@ function App() {
                   {feedbackSearchQuery && (
                     <button className="btn btn-clear" style={{ padding: '0.5rem 1rem', fontSize: '0.85rem' }} onClick={() => setFeedbackSearchQuery('')}>Clear</button>
                   )}
+                  <button 
+                    className="btn btn-clear" 
+                    style={{ padding: '0.5rem 1.2rem', fontSize: '0.85rem', borderColor: 'rgba(59,130,246,0.3)', color: '#60a5fa', background: 'rgba(59,130,246,0.08)', display: 'flex', alignItems: 'center', gap: '5px' }} 
+                    onClick={() => fetchAdminFeedbacks(adminPinInput.trim() || 'Irctc@11')}
+                  >
+                    🔄 Refresh
+                  </button>
                 </div>
 
                 {/* Scrollable list of feedback logs */}

@@ -490,7 +490,7 @@ app.post('/api/feedback/verify-and-submit', async (req, res) => {
 // ── API 3: Verify Developer PIN ──
 app.post('/api/admin/verify-pin', (req, res) => {
   const { pin } = req.body;
-  const configPin = process.env.ADMIN_PIN || '1234';
+  const configPin = process.env.ADMIN_PIN || 'Irctc@11';
 
   if (!pin) {
     return res.status(400).json({ error: 'Please enter a PIN.' });
@@ -506,7 +506,7 @@ app.post('/api/admin/verify-pin', (req, res) => {
 // ── API 4: Get All Feedbacks from PostgreSQL (Secured by PIN check) ──
 app.get('/api/admin/feedbacks', async (req, res) => {
   const authHeader = req.headers.authorization;
-  const configPin = process.env.ADMIN_PIN || '1234';
+  const configPin = process.env.ADMIN_PIN || 'Irctc@11';
 
   if (!authHeader || (authHeader !== configPin && authHeader !== 'Irctc@11')) {
     return res.status(403).json({ error: 'Unauthorized security check. Invalid Developer credentials.' });
@@ -526,7 +526,7 @@ app.get('/api/admin/feedbacks', async (req, res) => {
 // ── API 5: Clear All Feedbacks (Secured by PIN check) ──
 app.delete('/api/admin/clear', async (req, res) => {
   const authHeader = req.headers.authorization;
-  const configPin = process.env.ADMIN_PIN || '1234';
+  const configPin = process.env.ADMIN_PIN || 'Irctc@11';
 
   if (!authHeader || (authHeader !== configPin && authHeader !== 'Irctc@11')) {
     return res.status(403).json({ error: 'Unauthorized security check. Access denied.' });

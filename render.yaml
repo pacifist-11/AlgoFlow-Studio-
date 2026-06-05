@@ -30,4 +30,4 @@ services:
         sync: false
         placeholder: "your_smtp_app_password"
       - key: ADMIN_PIN
-        value: "1234"
+        value: "Irctc@11"
