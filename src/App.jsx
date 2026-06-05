@@ -398,80 +398,31 @@ Be concise but thorough. Use markdown-style formatting for code blocks.`;
   return (
     <div style={{ position: 'fixed', bottom: '20px', right: '20px', zIndex: 1000, display: 'flex', flexDirection: 'column', alignItems: 'flex-end' }}>
       {isChatOpen && (
-        <div style={{ width: '360px', height: '520px', background: 'var(--bg-secondary)', border: '1px solid var(--accent-primary)', borderRadius: '16px', marginBottom: '1rem', display: 'flex', flexDirection: 'column', overflow: 'hidden', boxShadow: '0 20px 60px rgba(0,0,0,0.7)' }}>
-          <div style={{ background: 'linear-gradient(135deg, var(--accent-primary), var(--accent-secondary))', padding: '0.85rem 1rem', fontWeight: 700, color: 'white', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-            <span style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
-              <span style={{ background: 'rgba(255,255,255,0.2)', borderRadius: '50%', width: '28px', height: '28px', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>🤖</span>
-              AI Assistant
-            </span>
-            <div style={{ display: 'flex', gap: '8px', alignItems: 'center' }}>
-              <span style={{ fontSize: '0.7rem', padding: '2px 6px', borderRadius: '10px', background: apiKey ? 'rgba(16,185,129,0.3)' : 'rgba(239,68,68,0.3)', color: '#fff', fontWeight: 'bold' }}>
-                {apiKey ? '🟢 Active' : '🔴 Config'}
-              </span>
-              <button onClick={() => setShowSettings(!showSettings)} style={{ background: 'none', border: 'none', color: 'white', cursor: 'pointer', fontSize: '1.2rem', display: 'flex', alignItems: 'center' }}>⚙️</button>
-              <button onClick={() => setIsChatOpen(false)} style={{ background: 'rgba(255,255,255,0.2)', border: 'none', color: 'white', cursor: 'pointer', width: '26px', height: '26px', borderRadius: '50%', fontSize: '1rem', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>×</button>
-            </div>
-          </div>
-          {showSettings && (
-            <div style={{ background: 'var(--glass-bg)', padding: '1rem', borderBottom: '1px solid var(--glass-border)', display: 'flex', flexDirection: 'column', gap: '8px' }}>
-              <span style={{ fontSize: '0.8rem', color: 'var(--text-secondary)' }}>Gemini API Settings:</span>
-              <input type="password" value={apiKey} onChange={e => { setApiKey(e.target.value); localStorage.setItem('gemini_api_key', e.target.value); }} placeholder="Enter API Key (AIzaSy...)" style={{ padding: '0.5rem', borderRadius: '6px', border: '1px solid var(--glass-border)', background: 'rgba(0,0,0,0.3)', color: 'white', fontSize: '0.8rem' }} />
-              <select value={model} onChange={e => { setModel(e.target.value); localStorage.setItem('gemini_model', e.target.value); }} style={{ padding: '0.5rem', borderRadius: '6px', border: '1px solid var(--glass-border)', background: 'rgba(0,0,0,0.3)', color: 'white', fontSize: '0.8rem', outline: 'none', cursor: 'pointer' }}>
-                <option value="gemini-1.5-flash" style={{ background: 'var(--bg-secondary)', color: 'var(--text-primary)' }}>gemini-1.5-flash (Fast)</option>
-                <option value="gemini-1.5-pro" style={{ background: 'var(--bg-secondary)', color: 'var(--text-primary)' }}>gemini-1.5-pro (High intelligence)</option>
-                <option value="gemini-2.0-flash" style={{ background: 'var(--bg-secondary)', color: 'var(--text-primary)' }}>gemini-2.0-flash (Fast & Accurate)</option>
-              </select>
-              <button onClick={() => setShowSettings(false)} style={{ background: 'var(--accent-primary)', color: 'white', border: 'none', padding: '0.5rem', borderRadius: '6px', cursor: 'pointer', fontSize: '0.85rem', fontWeight: 'bold' }}>Close Settings</button>
-              <a href="https://aistudio.google.com/app/apikey" target="_blank" rel="noreferrer" style={{ fontSize: '0.75rem', color: 'var(--accent-primary)', textDecoration: 'none' }}>Get a free Gemini API key here</a>
-            </div>
-          )}
-          <div style={{ flex: 1, padding: '1rem', overflowY: 'auto', display: 'flex', flexDirection: 'column', gap: '0.7rem', background: 'rgba(0,0,0,0.15)' }}>
-            {chatMessages.map((msg, idx) => (
-              <div key={idx} style={{ display: 'flex', flexDirection: 'column', alignItems: msg.sender === 'user' ? 'flex-end' : 'flex-start' }}>
-                {msg.sender === 'bot' && <div style={{ fontSize: '0.68rem', color: 'var(--text-secondary)', marginBottom: '3px', paddingLeft: '4px' }}>Gemini AI</div>}
-                <div style={{ background: msg.sender === 'user' ? 'linear-gradient(135deg, var(--accent-primary), var(--accent-secondary))' : 'var(--glass-bg)', padding: '0.65rem 0.9rem', borderRadius: msg.sender === 'user' ? '14px 14px 4px 14px' : '14px 14px 14px 4px', fontSize: '0.86rem', border: msg.sender === 'bot' ? '1px solid var(--glass-border)' : 'none', color: 'var(--text-primary)', maxWidth: '90%' }}>
-                  <pre style={{ whiteSpace: 'pre-wrap', fontFamily: 'inherit', margin: 0, lineHeight: 1.55 }}>{msg.text}</pre>
-                </div>
-              </div>
-            ))}
-            {isLoading && (
-              <div style={{ alignSelf: 'flex-start', background: 'var(--glass-bg)', padding: '0.65rem 1rem', borderRadius: '14px 14px 14px 4px', border: '1px solid var(--glass-border)', display: 'flex', gap: '4px', alignItems: 'center' }}>
-                {[0,1,2].map(i => <span key={i} style={{ width: '6px', height: '6px', borderRadius: '50%', background: 'var(--accent-primary)', animation: `bounce 1.2s ease infinite ${i * 0.2}s` }} />)}
-              </div>
-            )}
-            <div ref={chatEndRef} />
-          </div>
-
-          {/* Quick Suggestion Chips */}
-          <div style={{ padding: '0.4rem 0.75rem', display: 'flex', gap: '6px', overflowX: 'auto', borderTop: '1px solid var(--glass-border)', background: 'rgba(0,0,0,0.1)', flexShrink: 0, scrollbarWidth: 'none' }}>
-            {[
-              { label: '💡 Explain Code', text: 'Explain the current algorithm and its steps.' },
-              { label: '⚡ Complexity', text: 'What is the time and space complexity of this code?' },
-              { label: '📝 Quiz Me', text: 'Give me a short multiple-choice quiz on this algorithm/data structure.' },
-              { label: '🐛 Find Bugs', text: 'Are there any potential edge cases or bugs in this code?' }
-            ].map(chip => (
-              <button 
-                key={chip.label}
-                onClick={() => handleSend(chip.text)}
-                disabled={isLoading}
-                style={{
-                  background: 'rgba(255,255,255,0.05)', border: '1px solid var(--glass-border)',
-                  color: 'var(--text-secondary)', borderRadius: '12px', padding: '4px 10px',
-                  fontSize: '0.75rem', cursor: 'pointer', whiteSpace: 'nowrap', transition: 'all 0.2s'
-                }}
-                onMouseOver={e => { if (!isLoading) { e.currentTarget.style.background = 'rgba(255,255,255,0.1)'; e.currentTarget.style.color = 'var(--text-primary)'; } }}
-                onMouseOut={e => { if (!isLoading) { e.currentTarget.style.background = 'rgba(255,255,255,0.05)'; e.currentTarget.style.color = 'var(--text-secondary)'; } }}
-              >
-                {chip.label}
-              </button>
-            ))}
-          </div>
-
-          <div style={{ padding: '0.75rem', borderTop: '1px solid var(--glass-border)', display: 'flex', gap: '0.5rem' }}>
-            <input type="text" value={chatInput} onChange={e => setChatInput(e.target.value)} onKeyDown={e => e.key === 'Enter' && !e.shiftKey && handleSend()} placeholder="Ask anything about code..." disabled={isLoading}
-              style={{ flex: 1, padding: '0.55rem 0.85rem', borderRadius: '8px', border: '1px solid var(--glass-border)', outline: 'none', background: 'rgba(0,0,0,0.3)', color: 'var(--text-primary)', fontSize: '0.88rem' }} />
-            <button onClick={handleSend} disabled={isLoading || !chatInput.trim()} style={{ background: 'linear-gradient(135deg, var(--accent-primary), var(--accent-secondary))', border: 'none', borderRadius: '8px', padding: '0.55rem 1rem', color: 'white', cursor: 'pointer', fontWeight: 700, opacity: (isLoading || !chatInput.trim()) ? 0.5 : 1, transition: 'opacity 0.2s' }}>Send</button>
-          </div>
+        <div style={{
+          width: '320px',
+          height: '240px',
+          background: 'var(--bg-secondary)',
+          border: '1px solid var(--accent-primary)',
+          borderRadius: '16px',
+          marginBottom: '1rem',
+          display: 'flex',
+          flexDirection: 'column',
+          justifyContent: 'center',
+          alignItems: 'center',
+          padding: '2rem',
+          boxShadow: '0 20px 60px rgba(0,0,0,0.7)',
+          textAlign: 'center',
+          position: 'relative',
+          backdropFilter: 'blur(10px)',
+          animation: 'fadeIn 0.3s ease'
+        }}>
+          <button onClick={() => setIsChatOpen(false)} style={{ position: 'absolute', top: '12px', right: '12px', background: 'rgba(255,255,255,0.1)', border: 'none', color: 'white', cursor: 'pointer', width: '24px', height: '24px', borderRadius: '50%', fontSize: '0.85rem', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>×</button>
+          <div style={{ fontSize: '3rem', marginBottom: '0.5rem', filter: 'drop-shadow(0 0 10px var(--accent-primary))' }}>🤖</div>
+          <h3 style={{ margin: '0 0 6px 0', color: 'var(--text-primary)', fontSize: '1.25rem', fontWeight: 'bold' }}>AI Assistant</h3>
+          <span style={{ fontSize: '0.75rem', background: 'linear-gradient(135deg, var(--accent-primary), var(--accent-secondary))', color: 'white', padding: '3px 10px', borderRadius: '20px', fontWeight: 'bold', textTransform: 'uppercase', marginBottom: '12px' }}>Coming Soon</span>
+          <p style={{ margin: 0, color: 'var(--text-secondary)', fontSize: '0.82rem', lineHeight: '1.4' }}>
+            We're building a Gemini-powered AI helper to explain code, generate quiz cards, and guide your learning in real-time!
+          </p>
         </div>
       )}
       <button onClick={() => setIsChatOpen(!isChatOpen)}
@@ -637,14 +588,40 @@ const LineDebugger = ({ initialCode, lang: initialLang, fontSize, wordWrap, onBa
         ) : (
           <div style={{ flex: 1, background: '#fff', position: 'relative' }}>
             {isIframeLoading && (
-              <div style={{ position: 'absolute', top: 0, left: 0, width: '100%', height: '100%', background: '#f8fafc', display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', zIndex: 10 }}>
-                <div style={{ width: '40px', height: '40px', border: '4px solid #e2e8f0', borderTop: '4px solid var(--accent-primary)', borderRadius: '50%', animation: 'spin 1s linear infinite' }} />
-                <h3 style={{ color: '#334155', marginTop: '1rem', fontFamily: 'inherit' }}>Initializing Execution Engine...</h3>
-                <p style={{ color: '#64748b', fontSize: '0.85rem', marginTop: '0.5rem' }}>Please wait, the cloud server is processing your code.</p>
+              <div style={{ position: 'absolute', top: 0, left: 0, width: '100%', height: '100%', background: 'var(--bg-primary)', display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', zIndex: 10 }}>
+                <svg className="bike" viewBox="0 0 48 30" width="80px" height="50px" style={{ color: 'var(--accent-primary)' }}>
+                  <g fill="none" stroke="currentColor" strokeLinecap="round" strokeLinejoin="round" strokeWidth="1">
+                    <g transform="translate(9.5,19)">
+                      <circle className="bike__tire" r="9" strokeDasharray="56.549 56.549" />
+                      <g className="bike__spokes-spin" strokeDasharray="31.416 31.416" strokeDashoffset="-23.562">
+                        <circle className="bike__spokes" r="5" />
+                        <circle className="bike__spokes" r="5" transform="rotate(180,0,0)" />
+                      </g>
+                    </g>
+                    <g transform="translate(24,19)">
+                      <g className="bike__pedals-spin" strokeDasharray="25.133 25.133" strokeDashoffset="-21.991" transform="rotate(67.5,0,0)">
+                        <circle className="bike__pedals" r="4" />
+                        <circle className="bike__pedals" r="4" transform="rotate(180,0,0)" />
+                      </g>
+                    </g>
+                    <g transform="translate(38.5,19)">
+                      <circle className="bike__tire" r="9" strokeDasharray="56.549 56.549" />
+                      <g className="bike__spokes-spin" strokeDasharray="31.416 31.416" strokeDashoffset="-23.562">
+                        <circle className="bike__spokes" r="5" />
+                        <circle className="bike__spokes" r="5" transform="rotate(180,0,0)" />
+                      </g>
+                    </g>
+                    <polyline className="bike__seat" points="14 3,18 3" strokeDasharray="5 5" />
+                    <polyline className="bike__body" points="16 3,24 19,9.5 19,18 8,34 7,24 19" strokeDasharray="79 79" />
+                    <path className="bike__handlebars" d="m30,2h6s1,0,1,1-1,1-1,1" strokeDasharray="10 10" />
+                    <polyline className="bike__front" points="32.5 2,38.5 19" strokeDasharray="19 19" />
+                  </g>
+                </svg>
+                <h3 style={{ color: 'var(--text-primary)', marginTop: '1rem', fontFamily: 'inherit' }}>Initializing Execution Engine...</h3>
+                <p style={{ color: 'var(--text-secondary)', fontSize: '0.85rem', marginTop: '0.5rem' }}>Please wait, the cloud server is processing your code.</p>
                 <div style={{ marginTop: '1.5rem', fontStyle: 'italic', color: loadingQuotes[quoteIndex].color, fontSize: '0.95rem', fontWeight: 600, maxWidth: '80%', textAlign: 'center', minHeight: '40px', transition: 'opacity 0.3s' }}>
                   {loadingQuotes[quoteIndex].text}
                 </div>
-                <style>{`@keyframes spin { 0% { transform: rotate(0deg); } 100% { transform: rotate(360deg); } }`}</style>
               </div>
             )}
             <iframe 
@@ -662,10 +639,55 @@ const LineDebugger = ({ initialCode, lang: initialLang, fontSize, wordWrap, onBa
   );
 };
 
+// Fallback-safe Clipboard Copy Helper
+const copyToClipboard = (text) => {
+  const fallbackCopy = (txt) => {
+    const textArea = document.createElement("textarea");
+    textArea.value = txt;
+    textArea.style.position = "fixed";
+    textArea.style.left = "-999999px";
+    textArea.style.top = "-999999px";
+    textArea.style.width = "2em";
+    textArea.style.height = "2em";
+    textArea.style.padding = "0";
+    textArea.style.border = "none";
+    textArea.style.outline = "none";
+    textArea.style.boxShadow = "none";
+    textArea.style.background = "transparent";
+    document.body.appendChild(textArea);
+    textArea.focus();
+    textArea.select();
+    textArea.setSelectionRange(0, 999999);
+    try {
+      const successful = document.execCommand('copy');
+      document.body.removeChild(textArea);
+      if (successful) {
+        return Promise.resolve();
+      } else {
+        return Promise.reject(new Error("execCommand('copy') returned false"));
+      }
+    } catch (err) {
+      document.body.removeChild(textArea);
+      return Promise.reject(err);
+    }
+  };
+
+  if (navigator.clipboard) {
+    return navigator.clipboard.writeText(text).catch((err) => {
+      console.warn("navigator.clipboard failed, falling back to execCommand:", err);
+      return fallbackCopy(text);
+    });
+  } else {
+    return fallbackCopy(text);
+  }
+};
+
+
 // ─── Main App ─────────────────────────────────────────────────────────────────
 function App() {
   const [appMode,       setAppMode]       = useState(null);
   const [setupComplete, setSetupComplete] = useState(false);
+  const [isPageLoading, setIsPageLoading] = useState(false);
   const [treeType,      setTreeType]      = useState('BST');
   const [globalDsType,  setGlobalDsType]  = useState('HASH_TABLE');
   const [globalDsVariety, setGlobalDsVariety] = useState('HASH_LINEAR');
@@ -1046,7 +1068,7 @@ function App() {
         setGenericLogs(newLogs);
       } catch (err) {
         newLogs.push({ text: `❌ ${err.constructor.name}: ${err.message}`, type: 'error' });
-        newLogs.push({ text: `   at ${err.stack?.split('\\n')[1]?.trim() || 'unknown location'}`, type: 'error' });
+        newLogs.push({ text: `   at ${err.stack?.split('\n')[1]?.trim() || 'unknown location'}`, type: 'error' });
         setGenericLogs(newLogs);
         setIsChatOpen(true);
         setChatMessages(prev => [...prev, { sender: 'bot', text: `I detected an error in your JS code:\n\n❌ ${err.message}\n\nWould you like me to help debug this?` }]);
@@ -1135,8 +1157,24 @@ function App() {
     }
   };
 
-  const enterMode = mode => { window.location.hash = mode; setAppMode(mode); setSetupComplete(false); };
-  const goBack    = () => { window.location.hash = ''; setAppMode(null); setSetupComplete(false); };
+  const enterMode = mode => {
+    setIsPageLoading(true);
+    setTimeout(() => {
+      window.location.hash = mode;
+      setAppMode(mode);
+      setSetupComplete(false);
+      setIsPageLoading(false);
+    }, 600);
+  };
+  const goBack    = () => {
+    setIsPageLoading(true);
+    setTimeout(() => {
+      window.location.hash = '';
+      setAppMode(null);
+      setSetupComplete(false);
+      setIsPageLoading(false);
+    }, 600);
+  };
 
   useEffect(() => {
     const handleHashChange = () => {
@@ -1168,10 +1206,11 @@ function App() {
 
   const handleCopyTreeCode = () => {
     const rawCode = getFullCodeTemplate(codeLang, treeType, showDeletionsInCode ? operationsLog : insertedValues.map(v => ({ op: 'insert', val: v })));
-    navigator.clipboard.writeText(rawCode).then(() => {
+    copyToClipboard(rawCode).then(() => {
       setTreeCodeCopied(true);
       setTimeout(() => setTreeCodeCopied(false), 2000);
-    });
+      handleCopyTrigger(rawCode, codeLang);
+    }).catch(err => console.error("Clipboard copy failed:", err));
   };
 
   const handleClear = () => {
@@ -2280,27 +2319,31 @@ function App() {
               </div>
             </div>
             <button className="btn btn-start" style={{ marginTop: '1.5rem', width: '100%' }} onClick={() => {
-              window.location.hash = pendingModule.mode;
-              if (pendingModule.mode === 'MAIN_VIS') setTreeType(pendingModule.id);
-              if (pendingModule.mode === 'GENERAL_DSA_VIS') {
-                setGlobalDsType(pendingModule.type);
-                setGlobalDsVariety(pendingModule.variety);
-              }
-              if (pendingModule.mode === 'SORT_SEARCH_VIS') {
-                setGlobalSortSearchTab(pendingModule.tab);
-                if (pendingModule.tab === 'Sort') {
-                  setGlobalSort(pendingModule.algo);
-                } else {
-                  setGlobalSearch(pendingModule.algo);
+              setIsPageLoading(true);
+              setTimeout(() => {
+                window.location.hash = pendingModule.mode;
+                if (pendingModule.mode === 'MAIN_VIS') setTreeType(pendingModule.id);
+                if (pendingModule.mode === 'GENERAL_DSA_VIS') {
+                  setGlobalDsType(pendingModule.type);
+                  setGlobalDsVariety(pendingModule.variety);
                 }
-              }
-              if (pendingModule.mode === 'GRAPH_VIS') {
-                setGlobalGraphAlgo(pendingModule.algo);
-              }
-              setAppMode(pendingModule.mode);
-              setSetupComplete(true);
-              setPendingModule(null);
-              setHomeSearchQuery('');
+                if (pendingModule.mode === 'SORT_SEARCH_VIS') {
+                  setGlobalSortSearchTab(pendingModule.tab);
+                  if (pendingModule.tab === 'Sort') {
+                    setGlobalSort(pendingModule.algo);
+                  } else {
+                    setGlobalSearch(pendingModule.algo);
+                  }
+                }
+                if (pendingModule.mode === 'GRAPH_VIS') {
+                  setGlobalGraphAlgo(pendingModule.algo);
+                }
+                setAppMode(pendingModule.mode);
+                setSetupComplete(true);
+                setPendingModule(null);
+                setHomeSearchQuery('');
+                setIsPageLoading(false);
+              }, 600);
             }}>Launch Visualizer</button>
             <button className="btn btn-clear" style={{ marginTop: '0.75rem', width: '100%' }} onClick={() => setPendingModule(null)}>← Cancel</button>
           </div>
@@ -2719,8 +2762,11 @@ function App() {
                 className="btn btn-clear"
                 style={{ width: '100%', padding: '0.8rem', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '8px', fontSize: '0.95rem' }}
                 onClick={() => {
-                  navigator.clipboard.writeText(copyModalData.code);
-                  alert("✨ Copied clean code template optimized for online visualizers (like PythonTutor or VisuAlgo)!");
+                  copyToClipboard(copyModalData.code).then(() => {
+                    alert("✨ Copied clean code template optimized for online visualizers (like PythonTutor or VisuAlgo)!");
+                  }).catch(() => {
+                    alert("❌ Failed to copy to clipboard.");
+                  });
                   setCopyModalData(prev => ({ ...prev, isOpen: false }));
                 }}
               >
@@ -2739,8 +2785,11 @@ function App() {
                   } else if (copyModalData.language === 'Python') {
                     eclipseCode = `# Eclipse PyDev Compatibility Code\n# 1. Create a PyDev Project\n# 2. Paste this code in a python module\n\n` + copyModalData.code;
                   }
-                  navigator.clipboard.writeText(eclipseCode);
-                  alert("☕ Formatted code copied to clipboard for Eclipse IDE!");
+                  copyToClipboard(eclipseCode).then(() => {
+                    alert("Formatted code copied to clipboard for Eclipse IDE!");
+                  }).catch(() => {
+                    alert("❌ Failed to copy to clipboard.");
+                  });
                   setCopyModalData(prev => ({ ...prev, isOpen: false }));
                 }}
               >
@@ -2759,8 +2808,11 @@ function App() {
                   } else if (copyModalData.language === 'JS') {
                     vscodeCode = `// VS Code Node.js Compatibility Code\n// Run with: node <filename>.js\n\n` + copyModalData.code;
                   }
-                  navigator.clipboard.writeText(vscodeCode);
-                  alert("💻 Formatted code copied to clipboard for VS Code!");
+                  copyToClipboard(vscodeCode).then(() => {
+                    alert("💻 Formatted code copied to clipboard for VS Code!");
+                  }).catch(() => {
+                    alert("❌ Failed to copy to clipboard.");
+                  });
                   setCopyModalData(prev => ({ ...prev, isOpen: false }));
                 }}
               >
@@ -2768,6 +2820,52 @@ function App() {
               </button>
             </div>
           </div>
+        </div>
+      )}
+      {isPageLoading && (
+        <div style={{
+          position: 'fixed',
+          top: 0,
+          left: 0,
+          width: '100vw',
+          height: '100vh',
+          background: 'var(--bg-primary)',
+          display: 'flex',
+          flexDirection: 'column',
+          alignItems: 'center',
+          justifyContent: 'center',
+          zIndex: 9999,
+          animation: 'fadeIn 0.2s ease-out'
+        }}>
+          <svg className="bike" viewBox="0 0 48 30" width="80px" height="50px" style={{ color: 'var(--accent-primary)' }}>
+            <g fill="none" stroke="currentColor" strokeLinecap="round" strokeLinejoin="round" strokeWidth="1">
+              <g transform="translate(9.5,19)">
+                <circle className="bike__tire" r="9" strokeDasharray="56.549 56.549" />
+                <g className="bike__spokes-spin" strokeDasharray="31.416 31.416" strokeDashoffset="-23.562">
+                  <circle className="bike__spokes" r="5" />
+                  <circle className="bike__spokes" r="5" transform="rotate(180,0,0)" />
+                </g>
+              </g>
+              <g transform="translate(24,19)">
+                <g className="bike__pedals-spin" strokeDasharray="25.133 25.133" strokeDashoffset="-21.991" transform="rotate(67.5,0,0)">
+                  <circle className="bike__pedals" r="4" />
+                  <circle className="bike__pedals" r="4" transform="rotate(180,0,0)" />
+                </g>
+              </g>
+              <g transform="translate(38.5,19)">
+                <circle className="bike__tire" r="9" strokeDasharray="56.549 56.549" />
+                <g className="bike__spokes-spin" strokeDasharray="31.416 31.416" strokeDashoffset="-23.562">
+                  <circle className="bike__spokes" r="5" />
+                  <circle className="bike__spokes" r="5" transform="rotate(180,0,0)" />
+                </g>
+              </g>
+              <polyline className="bike__seat" points="14 3,18 3" strokeDasharray="5 5" />
+              <polyline className="bike__body" points="16 3,24 19,9.5 19,18 8,34 7,24 19" strokeDasharray="79 79" />
+              <path className="bike__handlebars" d="m30,2h6s1,0,1,1-1,1-1,1" strokeDasharray="10 10" />
+              <polyline className="bike__front" points="32.5 2,38.5 19" strokeDasharray="19 19" />
+            </g>
+          </svg>
+          <h3 style={{ color: 'var(--text-primary)', marginTop: '1.5rem', fontFamily: 'inherit', letterSpacing: '1px' }}>Loading Studio...</h3>
         </div>
       )}
 

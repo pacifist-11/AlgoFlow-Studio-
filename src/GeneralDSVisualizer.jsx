@@ -3,6 +3,50 @@ import React, { useState, useEffect, useRef } from 'react';
 import gsap from 'gsap';
 import { getGeneralCodeTemplate } from './codeTemplatesGeneral';
 
+// Fallback-safe Clipboard Copy Helper
+const copyToClipboard = (text) => {
+  const fallbackCopy = (txt) => {
+    const textArea = document.createElement("textarea");
+    textArea.value = txt;
+    textArea.style.position = "fixed";
+    textArea.style.left = "-999999px";
+    textArea.style.top = "-999999px";
+    textArea.style.width = "2em";
+    textArea.style.height = "2em";
+    textArea.style.padding = "0";
+    textArea.style.border = "none";
+    textArea.style.outline = "none";
+    textArea.style.boxShadow = "none";
+    textArea.style.background = "transparent";
+    document.body.appendChild(textArea);
+    textArea.focus();
+    textArea.select();
+    textArea.setSelectionRange(0, 999999);
+    try {
+      const successful = document.execCommand('copy');
+      document.body.removeChild(textArea);
+      if (successful) {
+        return Promise.resolve();
+      } else {
+        return Promise.reject(new Error("execCommand('copy') returned false"));
+      }
+    } catch (err) {
+      document.body.removeChild(textArea);
+      return Promise.reject(err);
+    }
+  };
+
+  if (navigator.clipboard) {
+    return navigator.clipboard.writeText(text).catch((err) => {
+      console.warn("navigator.clipboard failed, falling back to execCommand:", err);
+      return fallbackCopy(text);
+    });
+  } else {
+    return fallbackCopy(text);
+  }
+};
+
+
 const GeneralDSVisualizer = ({ onBack, openSettings, initialType = 'HASH_TABLE', initialVariety = 'HASH_LINEAR', onCopyCode, onCodeChange }) => {
   const [dsType, setDsType] = useState(initialType);
   const [dsVariety, setDsVariety] = useState(initialVariety);
@@ -14,24 +58,28 @@ const GeneralDSVisualizer = ({ onBack, openSettings, initialType = 'HASH_TABLE',
   const [theme, setTheme] = useState('dark');
   
   const [copied, setCopied] = useState(false);
-  const handleCopyCode = () => {
-    navigator.clipboard.writeText(currentCode).then(() => {
-      setCopied(true);
-      setTimeout(() => setCopied(false), 2000);
-      if (onCopyCode) onCopyCode(currentCode, codeLanguage);
-    });
-  };
-
-  useEffect(() => {
-    if (onCodeChange) onCodeChange(currentCode, codeLanguage);
-  }, [currentCode, codeLanguage, onCodeChange]);
   
   // State for the data structures
   const [elements, setElements] = useState([]); 
   const [hashTable, setHashTable] = useState(Array.from({length: tableSize}, () => []));
   const [cqState, setCqState] = useState({ arr: Array(5).fill(null), f: -1, r: -1 });
   const [operationsLog, setOperationsLog] = useState([]);
+
+  // Declare currentCode here so it's initialized before hooks run
   const currentCode = getGeneralCodeTemplate(codeLanguage, dsType, dsVariety, operationsLog);
+
+  const handleCopyCode = () => {
+    copyToClipboard(currentCode).then(() => {
+      setCopied(true);
+      setTimeout(() => setCopied(false), 2000);
+      if (onCopyCode) onCopyCode(currentCode, codeLanguage);
+    }).catch(err => console.error("Clipboard copy failed:", err));
+  };
+
+  useEffect(() => {
+    if (onCodeChange) onCodeChange(currentCode, codeLanguage);
+  }, [currentCode, codeLanguage, onCodeChange]);
+
 
   // Animation timeline state
   const [timeline, setTimeline] = useState([]);
@@ -816,7 +864,7 @@ const GeneralDSVisualizer = ({ onBack, openSettings, initialType = 'HASH_TABLE',
           <div style={{ flex: 1, padding: '1rem 0', overflowY: 'auto', background: 'var(--bg-secondary)' }}>
             <pre style={{ margin: 0, color: 'var(--text-primary)', fontFamily: "'Fira Code', monospace", fontSize: '0.85rem', whiteSpace: 'pre-wrap', lineHeight: '1.6' }}>
               <code>
-                {currentCode.split('\\n').map((line, i) => {
+                {currentCode.split('\n').map((line, i) => {
                   const isMatch = frame.activeLineText && line.includes(frame.activeLineText) && !line.trim().startsWith('//');
                   return (
                     <div key={i} style={{ 

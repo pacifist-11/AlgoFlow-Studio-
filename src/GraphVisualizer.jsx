@@ -475,6 +475,49 @@ g.bfs(${startNode});`;
 }`;
 };
 
+// Fallback-safe Clipboard Copy Helper
+const copyToClipboard = (text) => {
+  const fallbackCopy = (txt) => {
+    const textArea = document.createElement("textarea");
+    textArea.value = txt;
+    textArea.style.position = "fixed";
+    textArea.style.left = "-999999px";
+    textArea.style.top = "-999999px";
+    textArea.style.width = "2em";
+    textArea.style.height = "2em";
+    textArea.style.padding = "0";
+    textArea.style.border = "none";
+    textArea.style.outline = "none";
+    textArea.style.boxShadow = "none";
+    textArea.style.background = "transparent";
+    document.body.appendChild(textArea);
+    textArea.focus();
+    textArea.select();
+    textArea.setSelectionRange(0, 999999);
+    try {
+      const successful = document.execCommand('copy');
+      document.body.removeChild(textArea);
+      if (successful) {
+        return Promise.resolve();
+      } else {
+        return Promise.reject(new Error("execCommand('copy') returned false"));
+      }
+    } catch (err) {
+      document.body.removeChild(textArea);
+      return Promise.reject(err);
+    }
+  };
+
+  if (navigator.clipboard) {
+    return navigator.clipboard.writeText(text).catch((err) => {
+      console.warn("navigator.clipboard failed, falling back to execCommand:", err);
+      return fallbackCopy(text);
+    });
+  } else {
+    return fallbackCopy(text);
+  }
+};
+
 const GraphVisualizer = ({ onBack, openSettings, initialAlgo = 'Dijkstra', onCopyCode, onCodeChange }) => {
   const [nodes, setNodes] = useState([
     { id: 0, label: '0', x: 120, y: 220, dist: Infinity, h: 4 },
@@ -498,6 +541,8 @@ const GraphVisualizer = ({ onBack, openSettings, initialAlgo = 'Dijkstra', onCop
   const [startNode, setStartNode] = useState(0);
   const [targetNode, setTargetNode] = useState(4);
   const [algoMode, setAlgoMode] = useState(initialAlgo);
+  const [nodeToDelete, setNodeToDelete] = useState('');
+  const [edgeToDelete, setEdgeToDelete] = useState('');
 
   // Animation timeline state
   const [timeline, setTimeline] = useState([]);
@@ -512,11 +557,34 @@ const GraphVisualizer = ({ onBack, openSettings, initialAlgo = 'Dijkstra', onCop
   const [copied, setCopied] = useState(false);
   const handleCopyCode = () => {
     const rawCode = getGraphCodeTemplate(codeLang, algoMode, String(startNode), String(targetNode));
-    navigator.clipboard.writeText(rawCode).then(() => {
+    copyToClipboard(rawCode).then(() => {
       setCopied(true);
       setTimeout(() => setCopied(false), 2000);
       if (onCopyCode) onCopyCode(rawCode, codeLang);
-    });
+    }).catch(err => console.error("Clipboard copy failed:", err));
+  };
+
+  const handleDeleteNode = () => {
+    if (nodeToDelete === '') return;
+    const nid = parseInt(nodeToDelete);
+    const updatedNodes = nodes.filter(n => n.id !== nid);
+    setNodes(updatedNodes);
+    setEdges(prev => prev.filter(e => e.from !== nid && e.to !== nid));
+    if (startNode === nid) {
+      setStartNode(updatedNodes.length > 0 ? updatedNodes[0].id : '');
+    }
+    if (targetNode === nid) {
+      setTargetNode(updatedNodes.length > 1 ? updatedNodes[updatedNodes.length - 1].id : (updatedNodes.length > 0 ? updatedNodes[0].id : ''));
+    }
+    setNodeToDelete('');
+    handleResetAnimation();
+  };
+
+  const handleDeleteEdge = () => {
+    if (edgeToDelete === '') return;
+    setEdges(prev => prev.filter(e => e.id !== edgeToDelete));
+    setEdgeToDelete('');
+    handleResetAnimation();
   };
 
   useEffect(() => {
@@ -919,6 +987,7 @@ const GraphVisualizer = ({ onBack, openSettings, initialAlgo = 'Dijkstra', onCop
           placeholder="Node Label" 
           value={nodeLabel} 
           onChange={e => setNodeLabel(e.target.value)} 
+          onKeyDown={e => { if (e.key === 'Enter') handleAddNode(); }}
         />
         <button className="btn btn-insert" style={{ padding: '0.4rem 1rem' }} onClick={handleAddNode}>
           + Node
@@ -956,11 +1025,45 @@ const GraphVisualizer = ({ onBack, openSettings, initialAlgo = 'Dijkstra', onCop
           placeholder="Wt" 
           value={edgeWeight} 
           onChange={e => setEdgeWeight(Math.max(1, parseInt(e.target.value) || 1))} 
+          onKeyDown={e => { if (e.key === 'Enter') handleAddEdge(); }}
           title="Edge Weight"
         />
 
         <button className="btn btn-insert" style={{ padding: '0.4rem 1rem', background: '#8b5cf6' }} onClick={handleAddEdge}>
           + Edge
+        </button>
+
+        <div style={{ width: '1px', height: '22px', background: 'var(--glass-border)' }} />
+
+        {/* Delete controls */}
+        <select 
+          className="styled-select" 
+          style={{ width: '90px', padding: '0.35rem' }} 
+          value={nodeToDelete} 
+          onChange={e => setNodeToDelete(e.target.value)}
+        >
+          <option value="">Node...</option>
+          {nodes.map(n => <option key={n.id} value={n.id}>{n.label}</option>)}
+        </select>
+        <button className="btn btn-clear" style={{ padding: '0.4rem 0.8rem', background: '#ef4444', color: 'white', borderColor: 'transparent' }} onClick={handleDeleteNode}>
+          Delete Node
+        </button>
+
+        <select 
+          className="styled-select" 
+          style={{ width: '110px', padding: '0.35rem' }} 
+          value={edgeToDelete} 
+          onChange={e => setEdgeToDelete(e.target.value)}
+        >
+          <option value="">Edge...</option>
+          {edges.map(e => {
+            const fromLabel = nodes.find(n => n.id === e.from)?.label || String(e.from);
+            const toLabel = nodes.find(n => n.id === e.to)?.label || String(e.to);
+            return <option key={e.id} value={e.id}>{`${fromLabel} ➔ ${toLabel}`}</option>;
+          })}
+        </select>
+        <button className="btn btn-clear" style={{ padding: '0.4rem 0.8rem', background: '#ef4444', color: 'white', borderColor: 'transparent' }} onClick={handleDeleteEdge}>
+          Delete Edge
         </button>
 
         <div style={{ width: '1px', height: '22px', background: 'var(--glass-border)' }} />

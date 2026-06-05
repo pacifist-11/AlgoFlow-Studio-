@@ -3,6 +3,49 @@ import React, { useState, useEffect, useRef } from 'react';
 import gsap from 'gsap';
 import { getSortSearchCode } from './codeTemplatesSort';
 
+// Fallback-safe Clipboard Copy Helper
+const copyToClipboard = (text) => {
+  const fallbackCopy = (txt) => {
+    const textArea = document.createElement("textarea");
+    textArea.value = txt;
+    textArea.style.position = "fixed";
+    textArea.style.left = "-999999px";
+    textArea.style.top = "-999999px";
+    textArea.style.width = "2em";
+    textArea.style.height = "2em";
+    textArea.style.padding = "0";
+    textArea.style.border = "none";
+    textArea.style.outline = "none";
+    textArea.style.boxShadow = "none";
+    textArea.style.background = "transparent";
+    document.body.appendChild(textArea);
+    textArea.focus();
+    textArea.select();
+    textArea.setSelectionRange(0, 999999);
+    try {
+      const successful = document.execCommand('copy');
+      document.body.removeChild(textArea);
+      if (successful) {
+        return Promise.resolve();
+      } else {
+        return Promise.reject(new Error("execCommand('copy') returned false"));
+      }
+    } catch (err) {
+      document.body.removeChild(textArea);
+      return Promise.reject(err);
+    }
+  };
+
+  if (navigator.clipboard) {
+    return navigator.clipboard.writeText(text).catch((err) => {
+      console.warn("navigator.clipboard failed, falling back to execCommand:", err);
+      return fallbackCopy(text);
+    });
+  } else {
+    return fallbackCopy(text);
+  }
+};
+
 const SortSearchVisualizer = ({ onBack, openSettings, initialTab = 'Sort', initialSort = 'Bubble Sort', initialSearch = 'Linear Search', onCopyCode, onCodeChange }) => {
   const [array, setArray] = useState([]);
   const [initialArray, setInitialArray] = useState([]);
@@ -53,11 +96,11 @@ const SortSearchVisualizer = ({ onBack, openSettings, initialTab = 'Sort', initi
   const [copied, setCopied] = useState(false);
   const handleCopyCode = () => {
     const rawCode = getSortSearchCode(currentDisplayedAlgo, codeLang, array, searchValue ? parseInt(searchValue) : undefined);
-    navigator.clipboard.writeText(rawCode).then(() => {
+    copyToClipboard(rawCode).then(() => {
       setCopied(true);
       setTimeout(() => setCopied(false), 2000);
       if (onCopyCode) onCopyCode(rawCode, codeLang);
-    });
+    }).catch(err => console.error("Clipboard copy failed:", err));
   };
 
   useEffect(() => {
