@@ -812,7 +812,22 @@ function App() {
   // Helper for safe API requests to handle connection errors and invalid/empty responses
   const safeFetchJson = async (url, options = {}) => {
     try {
-      const res = await fetch(url, options);
+      let backendUrl = '';
+      if (typeof import.meta !== 'undefined' && import.meta.env && import.meta.env.VITE_BACKEND_URL) {
+        backendUrl = import.meta.env.VITE_BACKEND_URL;
+      } else {
+        try {
+          if (typeof process !== 'undefined' && process.env && process.env.BACKEND_URL) {
+            backendUrl = process.env.BACKEND_URL;
+          }
+        } catch (_) {}
+      }
+
+      const cleanBackend = backendUrl.endsWith('/') ? backendUrl.slice(0, -1) : backendUrl;
+      const cleanUrl = url.startsWith('/') ? url : `/${url}`;
+      const targetUrl = `${cleanBackend}${cleanUrl}`;
+
+      const res = await fetch(targetUrl, options);
       
       const contentType = res.headers.get('content-type');
       const isJson = contentType && contentType.includes('application/json');
