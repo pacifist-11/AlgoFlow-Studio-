@@ -323,7 +323,7 @@ app.post('/api/feedback/submit-direct', async (req, res) => {
     const dbResult = await pool.query(insertQuery, values);
     console.log('💾 Successfully saved direct user feedback to database!', dbResult.rows[0]);
 
-    // Send copy to admin
+    // Send copy to admin (in background, do not await to avoid delaying the user response)
     try {
       const transporter = getTransporter();
       const mailOptions = {
@@ -344,9 +344,11 @@ app.post('/api/feedback/submit-direct', async (req, res) => {
           </div>
         `
       };
-      await transporter.sendMail(mailOptions);
-    } catch (mailErr) {
-      console.error('❌ Failed to send feedback copy to admin:', mailErr.message);
+      transporter.sendMail(mailOptions).catch(mailErr => {
+        console.error('❌ Failed to send feedback copy to admin:', mailErr.message);
+      });
+    } catch (transporterErr) {
+      console.error('❌ Failed to initialize transporter:', transporterErr.message);
     }
 
     res.json({ success: true, feedback: dbResult.rows[0] });
