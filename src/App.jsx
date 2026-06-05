@@ -705,156 +705,6 @@ function App() {
   const [globalSortSearchTab, setGlobalSortSearchTab] = useState('Sort');
   const [globalGraphAlgo, setGlobalGraphAlgo] = useState('Dijkstra');
 
-  const [lastActiveMode, setLastActiveMode] = useState(null);
-  const [lastSetupComplete, setLastSetupComplete] = useState(false);
-  const [isSearchFocused, setIsSearchFocused] = useState(false);
-  const [treeCodeCopied, setTreeCodeCopied] = useState(false);
-
-  const [isFeedbackOpen, setIsFeedbackOpen] = useState(false);
-  const [rating, setRating] = useState(5);
-  const [feedbackText, setFeedbackText] = useState('');
-  const [feedbackEmail, setFeedbackEmail] = useState('');
-  const [feedbackCategory, setFeedbackCategory] = useState('UI/UX');
-  const [isFeedbackSubmitted, setIsFeedbackSubmitted] = useState(false);
-  const [isAdminFeedbackOpen, setIsAdminFeedbackOpen] = useState(false);
-  const [feedbackSearchQuery, setFeedbackSearchQuery] = useState('');
-
-  // ── OTP & Database Admin verification states ──
-  const [isOtpVerifying, setIsOtpVerifying] = useState(false);
-  const [feedbackOtpCode, setFeedbackOtpCode] = useState('');
-  const [isFeedbackSendingOtp, setIsFeedbackSendingOtp] = useState(false);
-  const [isFeedbackVerifyingOtp, setIsFeedbackVerifyingOtp] = useState(false);
-  const [feedbackError, setFeedbackError] = useState('');
-
-  const [isAdminAuthenticated, setIsAdminAuthenticated] = useState(false);
-  const [adminPinInput, setAdminPinInput] = useState('');
-  const [adminErrorMessage, setAdminErrorMessage] = useState('');
-  const [adminFeedbacksList, setAdminFeedbacksList] = useState([]);
-
-  // ── OTP & PostgreSQL Database Integration Fetch Helpers ──
-  const sendFeedbackOtp = async () => {
-    if (!feedbackEmail.trim()) {
-      setFeedbackError("Please enter your email address.");
-      return;
-    }
-    if (!feedbackEmail.includes('@') || !feedbackEmail.includes('.')) {
-      setFeedbackError("Please enter a valid email address.");
-      return;
-    }
-
-    setFeedbackError('');
-    setIsFeedbackSendingOtp(true);
-    try {
-      const res = await fetch('/api/feedback/send-otp', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ email: feedbackEmail.trim() })
-      });
-      const data = await res.json();
-      if (!res.ok) {
-        throw new Error(data.error || 'Failed to send verification code.');
-      }
-      setIsOtpVerifying(true);
-    } catch (err) {
-      setFeedbackError(err.message);
-    } finally {
-      setIsFeedbackSendingOtp(false);
-    }
-  };
-
-  const verifyOtpAndSubmit = async () => {
-    if (!feedbackOtpCode.trim()) {
-      setFeedbackError("Please enter the 6-digit verification code.");
-      return;
-    }
-
-    setFeedbackError('');
-    setIsFeedbackVerifyingOtp(true);
-    try {
-      const res = await fetch('/api/feedback/verify-and-submit', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          email: feedbackEmail.trim(),
-          otp: feedbackOtpCode.trim(),
-          rating,
-          category: feedbackCategory,
-          text: feedbackText.trim()
-        })
-      });
-      const data = await res.json();
-      if (!res.ok) {
-        throw new Error(data.error || 'Verification failed. Please check the code.');
-      }
-      setIsFeedbackSubmitted(true);
-    } catch (err) {
-      setFeedbackError(err.message);
-    } finally {
-      setIsFeedbackVerifyingOtp(false);
-    }
-  };
-
-  const loginAdminConsole = async () => {
-    if (!adminPinInput.trim()) {
-      setAdminErrorMessage("Please enter your developer security PIN.");
-      return;
-    }
-
-    setAdminErrorMessage('');
-    try {
-      const res = await fetch('/api/admin/verify-pin', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ pin: adminPinInput.trim() })
-      });
-      const data = await res.json();
-      if (!res.ok) {
-        throw new Error(data.error || 'Incorrect PIN. Access denied.');
-      }
-      setIsAdminAuthenticated(true);
-      fetchAdminFeedbacks(adminPinInput.trim());
-    } catch (err) {
-      setAdminErrorMessage(err.message);
-    }
-  };
-
-  const fetchAdminFeedbacks = async (pinCode) => {
-    try {
-      const res = await fetch('/api/admin/feedbacks', {
-        method: 'GET',
-        headers: { 'Authorization': pinCode }
-      });
-      const data = await res.json();
-      if (res.ok) {
-        setAdminFeedbacksList(data);
-      }
-    } catch (err) {
-      console.error("Failed to fetch database feedbacks:", err);
-    }
-  };
-
-  const clearAdminFeedbacks = async () => {
-    if (!confirm("Are you sure you want to permanently clear all feedback entries from PostgreSQL database?")) {
-      return;
-    }
-
-    try {
-      const res = await fetch('/api/admin/clear', {
-        method: 'DELETE',
-        headers: { 'Authorization': adminPinInput.trim() }
-      });
-      const data = await res.json();
-      if (res.ok) {
-        alert("All feedback logs cleared successfully from database!");
-        setAdminFeedbacksList([]);
-      } else {
-        alert(data.error || "Failed to clear feedbacks.");
-      }
-    } catch (err) {
-      console.error("Failed to clear feedbacks:", err);
-    }
-  };
-
   const bTreeRef     = useRef(new BTreeEngine(4, false));
   const bPlusTreeRef = useRef(new BTreeEngine(4, true));
   const rbEngineRef  = useRef(new RBEngine());
@@ -895,6 +745,511 @@ function App() {
   const [activeCodeForChat, setActiveCodeForChat] = useState('');
   const [activeLangForChat, setActiveLangForChat] = useState('C++');
   const [themeMode, setThemeMode] = useState('dark');
+
+  const [lastActiveMode, setLastActiveMode] = useState(null);
+  const [lastSetupComplete, setLastSetupComplete] = useState(false);
+  const [isSearchFocused, setIsSearchFocused] = useState(false);
+  const [treeCodeCopied, setTreeCodeCopied] = useState(false);
+
+  const [isFeedbackOpen, setIsFeedbackOpen] = useState(false);
+  const [rating, setRating] = useState(5);
+  const [feedbackText, setFeedbackText] = useState('');
+  const [feedbackEmail, setFeedbackEmail] = useState('');
+  const [feedbackCategory, setFeedbackCategory] = useState('UI/UX');
+  const [isFeedbackSubmitted, setIsFeedbackSubmitted] = useState(false);
+  const [isAdminFeedbackOpen, setIsAdminFeedbackOpen] = useState(false);
+  const [feedbackSearchQuery, setFeedbackSearchQuery] = useState('');
+
+  // ── Authentication, Session and Db State variables ──
+  const [isLoggedIn, setIsLoggedIn] = useState(() => {
+    const savedEmail = localStorage.getItem('userEmail');
+    const savedTime = localStorage.getItem('loginTime');
+    if (savedEmail && savedTime) {
+      if (Date.now() - Number(savedTime) < 3600000) {
+        return true;
+      }
+    }
+    return false;
+  });
+  const [userEmail, setUserEmail] = useState(() => {
+    const savedEmail = localStorage.getItem('userEmail');
+    const savedTime = localStorage.getItem('loginTime');
+    if (savedEmail && savedTime && Date.now() - Number(savedTime) < 3600000) {
+      return savedEmail;
+    }
+    return '';
+  });
+  const [userRole, setUserRole] = useState(() => {
+    const savedRole = localStorage.getItem('userRole');
+    const savedTime = localStorage.getItem('loginTime');
+    if (savedRole && savedTime && Date.now() - Number(savedTime) < 3600000) {
+      return savedRole;
+    }
+    return '';
+  });
+
+  const [loginEmailInput, setLoginEmailInput] = useState('');
+  const [loginStep, setLoginStep] = useState(1); // 1: Email, 2: Password (Admin), 3: OTP (Others)
+  const [loginPasswordInput, setLoginPasswordInput] = useState('');
+  const [loginOtpInput, setLoginOtpInput] = useState('');
+  const [loginLoading, setLoginLoading] = useState(false);
+  const [loginError, setLoginError] = useState('');
+  const [loginWarning, setLoginWarning] = useState('');
+  const [fallbackOtp, setFallbackOtp] = useState('');
+  const [isResendingOtp, setIsResendingOtp] = useState(false);
+
+  // ── OTP & Database Admin verification states ──
+  const [isOtpVerifying, setIsOtpVerifying] = useState(false);
+  const [feedbackOtpCode, setFeedbackOtpCode] = useState('');
+  const [isFeedbackSendingOtp, setIsFeedbackSendingOtp] = useState(false);
+  const [isFeedbackVerifyingOtp, setIsFeedbackVerifyingOtp] = useState(false);
+  const [feedbackError, setFeedbackError] = useState('');
+
+  const [isAdminAuthenticated, setIsAdminAuthenticated] = useState(() => {
+    const savedRole = localStorage.getItem('userRole');
+    const savedTime = localStorage.getItem('loginTime');
+    if (savedRole && savedTime && Date.now() - Number(savedTime) < 3600000) {
+      return savedRole === 'admin';
+    }
+    return false;
+  });
+  const [adminPinInput, setAdminPinInput] = useState(() => {
+    const savedRole = localStorage.getItem('userRole');
+    const savedTime = localStorage.getItem('loginTime');
+    if (savedRole && savedTime && Date.now() - Number(savedTime) < 3600000 && savedRole === 'admin') {
+      return 'Irctc@11';
+    }
+    return '';
+  });
+  const [adminErrorMessage, setAdminErrorMessage] = useState('');
+  const [adminFeedbacksList, setAdminFeedbacksList] = useState([]);
+
+  // Helper for safe API requests to handle connection errors and invalid/empty responses
+  const safeFetchJson = async (url, options = {}) => {
+    try {
+      const res = await fetch(url, options);
+      
+      const contentType = res.headers.get('content-type');
+      const isJson = contentType && contentType.includes('application/json');
+      
+      if (!res.ok) {
+        let errorMsg = `Server returned status ${res.status}`;
+        if (isJson) {
+          try {
+            const errData = await res.json();
+            errorMsg = errData.error || errorMsg;
+          } catch (_) {}
+        } else {
+          try {
+            const text = await res.text();
+            if (text && text.length < 100) errorMsg = text;
+          } catch (_) {}
+        }
+        throw new Error(errorMsg);
+      }
+      
+      if (!isJson) {
+        throw new Error('Server did not return a JSON response.');
+      }
+      
+      try {
+        return await res.json();
+      } catch (err) {
+        throw new Error('Failed to parse response from server.');
+      }
+    } catch (err) {
+      if (err.message && (err.message.startsWith('Server returned') || err.message.startsWith('Server did not') || err.message.startsWith('Failed to parse'))) {
+        throw err;
+      }
+      if (err.message && err.message.includes('Failed to fetch')) {
+        throw new Error('Could not connect to the server. Please ensure the backend is running.');
+      }
+      throw err;
+    }
+  };
+
+  // ── DB State Saver & Loader ──
+  const saveStateToDatabase = async (email, stateData) => {
+    if (!email) return;
+    try {
+      await fetch('/api/user/save-state', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ email, state_data: stateData })
+      });
+    } catch (err) {
+      console.error("Failed to auto-save state to database:", err);
+    }
+  };
+
+  const loadStateFromDatabase = async (email) => {
+    try {
+      const data = await safeFetchJson(`/api/user/load-state?email=${encodeURIComponent(email)}`);
+      if (data && data.success && data.state_data) {
+        const sd = data.state_data;
+        if (sd.appMode !== undefined) setAppMode(sd.appMode);
+        if (sd.treeType !== undefined) setTreeType(sd.treeType);
+        if (sd.insertedValues !== undefined) setInsertedValues(sd.insertedValues);
+        if (sd.operationsLog !== undefined) setOperationsLog(sd.operationsLog);
+        if (sd.customCode !== undefined) setCustomCode(sd.customCode);
+        if (sd.codeLang !== undefined) setCodeLang(sd.codeLang);
+        if (sd.globalDsType !== undefined) setGlobalDsType(sd.globalDsType);
+        if (sd.globalDsVariety !== undefined) setGlobalDsVariety(sd.globalDsVariety);
+        if (sd.globalSort !== undefined) setGlobalSort(sd.globalSort);
+        if (sd.globalSearch !== undefined) setGlobalSearch(sd.globalSearch);
+        if (sd.globalSortSearchTab !== undefined) setGlobalSortSearchTab(sd.globalSortSearchTab);
+        if (sd.globalGraphAlgo !== undefined) setGlobalGraphAlgo(sd.globalGraphAlgo);
+        if (sd.setupComplete !== undefined) setSetupComplete(sd.setupComplete);
+      }
+    } catch (err) {
+      console.error("Failed to load state from database:", err);
+    }
+  };
+
+  // On Mount: load state if already logged in and session is valid
+  useEffect(() => {
+    const savedEmail = localStorage.getItem('userEmail');
+    const savedTime = localStorage.getItem('loginTime');
+    if (savedEmail && savedTime && Date.now() - Number(savedTime) < 3600000) {
+      loadStateFromDatabase(savedEmail);
+    }
+  }, []);
+
+  // Debounced auto-save effect
+  useEffect(() => {
+    if (!isLoggedIn || !userEmail) return;
+    const stateData = {
+      appMode,
+      treeType,
+      insertedValues,
+      operationsLog,
+      customCode,
+      codeLang,
+      globalDsType,
+      globalDsVariety,
+      globalSort,
+      globalSearch,
+      globalSortSearchTab,
+      globalGraphAlgo,
+      setupComplete
+    };
+    
+    const delayDebounce = setTimeout(() => {
+      saveStateToDatabase(userEmail, stateData);
+    }, 1500);
+
+    return () => clearTimeout(delayDebounce);
+  }, [
+    isLoggedIn,
+    userEmail,
+    appMode,
+    treeType,
+    insertedValues,
+    operationsLog,
+    customCode,
+    codeLang,
+    globalDsType,
+    globalDsVariety,
+    globalSort,
+    globalSearch,
+    globalSortSearchTab,
+    globalGraphAlgo,
+    setupComplete
+  ]);
+
+  // Login Handlers
+  const handleCheckEmail = async () => {
+    if (!loginEmailInput.trim()) {
+      setLoginError("Please enter your email address.");
+      return;
+    }
+    if (!loginEmailInput.includes('@') || !loginEmailInput.includes('.')) {
+      setLoginError("Please enter a valid email address.");
+      return;
+    }
+
+    setLoginError('');
+    setLoginWarning('');
+    setFallbackOtp('');
+    setLoginLoading(true);
+
+    try {
+      const data = await safeFetchJson('/api/auth/check-email', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ email: loginEmailInput.trim() })
+      });
+      
+      if (data.warning) {
+        setLoginWarning(data.warning);
+      }
+      if (data.otp) {
+        setFallbackOtp(data.otp);
+      }
+      
+      if (data.action === 'password') {
+        setLoginStep(2);
+      } else {
+        setLoginStep(3);
+      }
+    } catch (err) {
+      setLoginError(err.message);
+    } finally {
+      setLoginLoading(false);
+    }
+  };
+
+  const handleAdminLogin = async () => {
+    if (!loginPasswordInput.trim()) {
+      setLoginError("Please enter the password.");
+      return;
+    }
+
+    setLoginError('');
+    setLoginLoading(true);
+
+    try {
+      const data = await safeFetchJson('/api/auth/login-admin', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          email: loginEmailInput.trim(),
+          password: loginPasswordInput.trim()
+        })
+      });
+
+      localStorage.setItem('userEmail', data.email);
+      localStorage.setItem('userRole', data.role);
+      localStorage.setItem('loginTime', Date.now().toString());
+
+      setUserEmail(data.email);
+      setUserRole(data.role);
+      setIsAdminAuthenticated(true);
+      setAdminPinInput('Irctc@11');
+      setIsLoggedIn(true);
+
+      await loadStateFromDatabase(data.email);
+    } catch (err) {
+      setLoginError(err.message);
+    } finally {
+      setLoginLoading(false);
+    }
+  };
+
+  const handleUserOtpLogin = async () => {
+    if (!loginOtpInput.trim()) {
+      setLoginError("Please enter the 6-digit verification code.");
+      return;
+    }
+
+    setLoginError('');
+    setLoginLoading(true);
+
+    try {
+      const data = await safeFetchJson('/api/auth/verify-otp', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          email: loginEmailInput.trim(),
+          otp: loginOtpInput.trim()
+        })
+      });
+
+      localStorage.setItem('userEmail', data.email);
+      localStorage.setItem('userRole', data.role);
+      localStorage.setItem('loginTime', Date.now().toString());
+
+      setUserEmail(data.email);
+      setUserRole(data.role);
+      setIsLoggedIn(true);
+
+      await loadStateFromDatabase(data.email);
+    } catch (err) {
+      setLoginError(err.message);
+    } finally {
+      setLoginLoading(false);
+    }
+  };
+
+  const handleResendOtp = async () => {
+    setLoginError('');
+    setLoginWarning('');
+    setFallbackOtp('');
+    setIsResendingOtp(true);
+    try {
+      const data = await safeFetchJson('/api/auth/check-email', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ email: loginEmailInput.trim() })
+      });
+      if (data.warning) {
+        setLoginWarning(data.warning);
+      }
+      if (data.otp) {
+        setFallbackOtp(data.otp);
+      }
+      alert('A new verification code has been generated.');
+    } catch (err) {
+      setLoginError(err.message);
+    } finally {
+      setIsResendingOtp(false);
+    }
+  };
+
+  const handleLogout = () => {
+    localStorage.removeItem('userEmail');
+    localStorage.removeItem('userRole');
+    localStorage.removeItem('loginTime');
+    setUserEmail('');
+    setUserRole('');
+    setIsAdminAuthenticated(false);
+    setAdminPinInput('');
+    setIsLoggedIn(false);
+    setAppMode(null);
+    setSetupComplete(false);
+    setLoginStep(1);
+    setLoginEmailInput('');
+    setLoginPasswordInput('');
+    setLoginOtpInput('');
+    setLoginWarning('');
+    setFallbackOtp('');
+  };
+
+  // Submit feedback directly
+  const submitDirectFeedback = async () => {
+    if (!feedbackText.trim()) {
+      setFeedbackError("Please enter some feedback message.");
+      return;
+    }
+
+    setFeedbackError('');
+    setIsFeedbackVerifyingOtp(true);
+
+    try {
+      await safeFetchJson('/api/feedback/submit-direct', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          email: userEmail,
+          rating,
+          category: feedbackCategory,
+          text: feedbackText.trim()
+        })
+      });
+      setIsFeedbackSubmitted(true);
+    } catch (err) {
+      setFeedbackError(err.message);
+    } finally {
+      setIsFeedbackVerifyingOtp(false);
+    }
+  };
+
+  // ── OTP & Database Admin verification states ──
+  const sendFeedbackOtp = async () => {
+    if (!feedbackEmail.trim()) {
+      setFeedbackError("Please enter your email address.");
+      return;
+    }
+    if (!feedbackEmail.includes('@') || !feedbackEmail.includes('.')) {
+      setFeedbackError("Please enter a valid email address.");
+      return;
+    }
+
+    setFeedbackError('');
+    setIsFeedbackSendingOtp(true);
+    try {
+      await safeFetchJson('/api/feedback/send-otp', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ email: feedbackEmail.trim() })
+      });
+      setIsOtpVerifying(true);
+    } catch (err) {
+      setFeedbackError(err.message);
+    } finally {
+      setIsFeedbackSendingOtp(false);
+    }
+  };
+
+  const verifyOtpAndSubmit = async () => {
+    if (!feedbackOtpCode.trim()) {
+      setFeedbackError("Please enter the 6-digit verification code.");
+      return;
+    }
+
+    setFeedbackError('');
+    setIsFeedbackVerifyingOtp(true);
+    try {
+      await safeFetchJson('/api/feedback/verify-and-submit', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          email: feedbackEmail.trim(),
+          otp: feedbackOtpCode.trim(),
+          rating,
+          category: feedbackCategory,
+          text: feedbackText.trim()
+        })
+      });
+      setIsFeedbackSubmitted(true);
+    } catch (err) {
+      setFeedbackError(err.message);
+    } finally {
+      setIsFeedbackVerifyingOtp(false);
+    }
+  };
+
+  const loginAdminConsole = async () => {
+    if (!adminPinInput.trim()) {
+      setAdminErrorMessage("Please enter your developer security PIN.");
+      return;
+    }
+
+    setAdminErrorMessage('');
+    try {
+      await safeFetchJson('/api/admin/verify-pin', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ pin: adminPinInput.trim() })
+      });
+      setIsAdminAuthenticated(true);
+      fetchAdminFeedbacks(adminPinInput.trim());
+    } catch (err) {
+      setAdminErrorMessage(err.message);
+    }
+  };
+
+  const fetchAdminFeedbacks = async (pinCode) => {
+    try {
+      const data = await safeFetchJson('/api/admin/feedbacks', {
+        method: 'GET',
+        headers: { 'Authorization': pinCode }
+      });
+      setAdminFeedbacksList(data);
+    } catch (err) {
+      console.error("Failed to fetch database feedbacks:", err);
+    }
+  };
+
+  const clearAdminFeedbacks = async () => {
+    if (!confirm("Are you sure you want to permanently clear all feedback entries from PostgreSQL database?")) {
+      return;
+    }
+
+    try {
+      await safeFetchJson('/api/admin/clear', {
+        method: 'DELETE',
+        headers: { 'Authorization': adminPinInput.trim() }
+      });
+      alert("All feedback logs cleared successfully from database!");
+      setAdminFeedbacksList([]);
+    } catch (err) {
+      alert(err.message || "Failed to clear feedbacks.");
+      console.error("Failed to clear feedbacks:", err);
+    }
+  };
+
+
 
   const handleCopyTrigger = (code, lang) => {
     setCopyModalData({ isOpen: true, code, language: lang });
@@ -1164,7 +1519,7 @@ function App() {
       setAppMode(mode);
       setSetupComplete(false);
       setIsPageLoading(false);
-    }, 600);
+    }, 3000);
   };
   const goBack    = () => {
     setIsPageLoading(true);
@@ -1173,7 +1528,7 @@ function App() {
       setAppMode(null);
       setSetupComplete(false);
       setIsPageLoading(false);
-    }, 600);
+    }, 3000);
   };
 
   useEffect(() => {
@@ -1928,20 +2283,20 @@ function App() {
     const filteredThemes = Object.entries(THEMES).filter(([_, th]) => th.type === themeMode);
 
     return (
-      <div className="modal-overlay">
-        <div className="modal-content" style={{ maxWidth: '500px' }}>
-          <h2 className="title-gradient">⚙ Settings</h2>
+      <div className="modal-overlay" onClick={() => setIsSettingsOpen(false)}>
+        <div className="modal-content" style={{ maxWidth: '480px', maxHeight: '85vh', overflowY: 'auto', padding: '2rem' }} onClick={e => e.stopPropagation()}>
+          <h2 className="title-gradient" style={{ fontSize: '1.8rem', marginBottom: '0.5rem' }}>⚙ Settings</h2>
 
           <div className="select-group" style={{ marginBottom: '0.6rem' }}>
-            <label style={{ fontWeight: 700, fontSize: '1rem', color: 'var(--text-primary)' }}>🌓 Theme Mode</label>
+            <label style={{ fontWeight: 700, fontSize: '0.95rem', color: 'var(--text-primary)' }}>🌓 Theme Mode</label>
             <div style={{ display: 'flex', gap: '10px', marginTop: '4px' }}>
               <button 
                 onClick={() => setThemeMode('dark')}
                 style={{
-                  flex: 1, padding: '0.6rem', borderRadius: '10px', 
+                  flex: 1, padding: '0.55rem', borderRadius: '10px', 
                   border: `2px solid ${themeMode === 'dark' ? 'var(--accent-primary)' : 'var(--glass-border)'}`,
                   background: themeMode === 'dark' ? 'rgba(59,130,246,0.15)' : 'rgba(255,255,255,0.02)',
-                  color: 'var(--text-primary)', cursor: 'pointer', fontWeight: 700, transition: 'all 0.2s'
+                  color: 'var(--text-primary)', cursor: 'pointer', fontWeight: 700, transition: 'all 0.2s', fontSize: '0.9rem'
                 }}
               >
                 🌙 Dark Mode
@@ -1949,10 +2304,10 @@ function App() {
               <button 
                 onClick={() => setThemeMode('light')}
                 style={{
-                  flex: 1, padding: '0.6rem', borderRadius: '10px', 
+                  flex: 1, padding: '0.55rem', borderRadius: '10px', 
                   border: `2px solid ${themeMode === 'light' ? 'var(--accent-primary)' : 'var(--glass-border)'}`,
                   background: themeMode === 'light' ? 'rgba(59,130,246,0.15)' : 'rgba(255,255,255,0.02)',
-                  color: 'var(--text-primary)', cursor: 'pointer', fontWeight: 700, transition: 'all 0.2s'
+                  color: 'var(--text-primary)', cursor: 'pointer', fontWeight: 700, transition: 'all 0.2s', fontSize: '0.9rem'
                 }}
               >
                 ☀️ Light Mode
@@ -1960,53 +2315,23 @@ function App() {
             </div>
           </div>
 
-          <div className="select-group">
-            <label style={{ fontWeight: 700, fontSize: '1rem', color: 'var(--text-primary)' }}>🎨 Select Theme</label>
-            <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '0.55rem', marginTop: '4px' }}>
+          <div className="select-group" style={{ marginBottom: '0.6rem' }}>
+            <label style={{ fontWeight: 700, fontSize: '0.95rem', color: 'var(--text-primary)' }}>🎨 Select Theme</label>
+            <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '0.5rem', marginTop: '4px' }}>
               {filteredThemes.map(([name, th]) => (
                 <button key={name} onClick={() => setCurrentTheme(name)}
-                  style={{ padding: '0.6rem 0.75rem', borderRadius: '10px', border: `2px solid ${currentTheme === name ? 'var(--accent-primary)' : 'var(--glass-border)'}`, background: currentTheme === name ? 'rgba(59,130,246,0.12)' : 'rgba(255,255,255,0.03)', color: 'var(--text-primary)', cursor: 'pointer', fontSize: '0.84rem', fontWeight: currentTheme === name ? 700 : 400, transition: 'all 0.2s', display: 'flex', alignItems: 'center', gap: '8px', textAlign: 'left' }}>
-                  <span style={{ width: '14px', height: '14px', borderRadius: '50%', background: th['--accent-primary'], flexShrink: 0, boxShadow: `0 0 6px ${th['--accent-primary']}` }} />
+                  style={{ padding: '0.5rem 0.65rem', borderRadius: '10px', border: `2px solid ${currentTheme === name ? 'var(--accent-primary)' : 'var(--glass-border)'}`, background: currentTheme === name ? 'rgba(59,130,246,0.12)' : 'rgba(255,255,255,0.03)', color: 'var(--text-primary)', cursor: 'pointer', fontSize: '0.82rem', fontWeight: currentTheme === name ? 700 : 400, transition: 'all 0.2s', display: 'flex', alignItems: 'center', gap: '6px', textAlign: 'left' }}>
+                  <span style={{ width: '12px', height: '12px', borderRadius: '50%', background: th['--accent-primary'], flexShrink: 0, boxShadow: `0 0 5px ${th['--accent-primary']}` }} />
                   <span>{name}</span>
-                  {currentTheme === name && <span style={{ marginLeft: 'auto', fontSize: '0.75rem', color: 'var(--accent-primary)' }}>✓</span>}
+                  {currentTheme === name && <span style={{ marginLeft: 'auto', fontSize: '0.7rem', color: 'var(--accent-primary)' }}>✓</span>}
                 </button>
               ))}
             </div>
           </div>
 
           <div className="select-group" style={{ marginBottom: '0.6rem' }}>
-            <label style={{ fontWeight: 700, fontSize: '1rem', color: 'var(--text-primary)' }}>🤖 Gemini AI Config</label>
-            <div style={{ display: 'flex', flexDirection: 'column', gap: '8px', marginTop: '4px' }}>
-              <input 
-                type="password" 
-                className="styled-input" 
-                value={globalApiKey} 
-                onChange={e => {
-                  setGlobalApiKey(e.target.value);
-                  localStorage.setItem('gemini_api_key', e.target.value);
-                }} 
-                placeholder="Enter Gemini API Key..." 
-                style={{ fontSize: '0.88rem', padding: '0.6rem 1.0rem' }}
-              />
-              <select 
-                className="styled-select" 
-                value={globalModel} 
-                onChange={e => {
-                  setGlobalModel(e.target.value);
-                  localStorage.setItem('gemini_model', e.target.value);
-                }} 
-                style={{ fontSize: '0.88rem', padding: '0.6rem 1.0rem', paddingRight: '2.5rem' }}
-              >
-                <option value="gemini-1.5-flash">gemini-1.5-flash (Fast, Default)</option>
-                <option value="gemini-1.5-pro">gemini-1.5-pro (High Intellect)</option>
-                <option value="gemini-2.0-flash">gemini-2.0-flash (Fast & Accurate)</option>
-              </select>
-            </div>
-          </div>
-
-          <div className="select-group">
-            <label>Font Size</label>
-            <select className="styled-select" value={editorFontSize} onChange={e => setEditorFontSize(Number(e.target.value))}>
+            <label style={{ fontWeight: 700, fontSize: '0.95rem', color: 'var(--text-primary)' }}>📝 Editor Font Size</label>
+            <select className="styled-select" value={editorFontSize} onChange={e => setEditorFontSize(Number(e.target.value))} style={{ padding: '0.75rem', fontSize: '0.9rem' }}>
               <option value={12}>Small (12px)</option>
               <option value={14}>Medium (14px)</option>
               <option value={16}>Large (16px)</option>
@@ -2014,15 +2339,15 @@ function App() {
             </select>
           </div>
 
-          <div className="select-group">
-            <label>Word Wrap</label>
-            <select className="styled-select" value={editorWordWrap} onChange={e => setEditorWordWrap(e.target.value)}>
+          <div className="select-group" style={{ marginBottom: '0.6rem' }}>
+            <label style={{ fontWeight: 700, fontSize: '0.95rem', color: 'var(--text-primary)' }}>↩ Editor Word Wrap</label>
+            <select className="styled-select" value={editorWordWrap} onChange={e => setEditorWordWrap(e.target.value)} style={{ padding: '0.75rem', fontSize: '0.9rem' }}>
               <option value="off">Off (Horizontal Scroll)</option>
               <option value="on">On (Wrap to Viewport)</option>
             </select>
           </div>
 
-          <button className="btn btn-start" style={{ marginTop: '0.5rem' }} onClick={() => setIsSettingsOpen(false)}>Save &amp; Close</button>
+          <button className="btn btn-start" style={{ marginTop: '0.75rem', padding: '0.75rem' }} onClick={() => setIsSettingsOpen(false)}>Save &amp; Close</button>
         </div>
       </div>
     );
@@ -2047,11 +2372,195 @@ function App() {
   const frame = timeline[currentStep] || new Frame(null, [], null);
   const progress = timeline.length > 1 ? (currentStep / (timeline.length - 1)) * 100 : 0;
 
+  if (!isLoggedIn) {
+    return (
+      <div style={{
+        minHeight: '100vh',
+        display: 'flex',
+        justifyContent: 'center',
+        alignItems: 'center',
+        background: 'var(--bg-primary)',
+        backgroundImage: 'radial-gradient(circle at 10% 20%, rgba(59, 130, 246, 0.15), transparent 35%), radial-gradient(circle at 90% 80%, rgba(236, 72, 153, 0.15), transparent 35%)',
+        padding: '2rem'
+      }}>
+        <div className="modal-content" style={{
+          maxWidth: '460px',
+          width: '100%',
+          padding: '2.5rem',
+          borderRadius: '24px',
+          background: 'rgba(30, 41, 59, 0.6)',
+          backdropFilter: 'blur(16px)',
+          border: '1px solid var(--glass-border)',
+          boxShadow: '0 25px 50px -12px rgba(0,0,0,0.5)',
+          animation: 'fadeIn 0.4s ease-out'
+        }}>
+          <div style={{ textAlign: 'center', marginBottom: '1.5rem' }}>
+            <h1 className="title-gradient" style={{ fontSize: '2.5rem', marginBottom: '0.5rem', fontWeight: 800 }}>AlgoFlow-Studio</h1>
+            <p style={{ color: 'var(--text-secondary)', fontSize: '0.92rem' }}>Algorithm Visualizer & Debugger Suite</p>
+          </div>
+
+          {loginStep === 1 && (
+            <>
+              <div className="select-group" style={{ marginBottom: '1rem' }}>
+                <label style={{ fontSize: '0.95rem', fontWeight: 600, color: 'var(--text-primary)' }}>Email Address</label>
+                <input 
+                  type="email" 
+                  className="styled-input" 
+                  placeholder="name@example.com" 
+                  value={loginEmailInput} 
+                  onChange={e => setLoginEmailInput(e.target.value)}
+                  onKeyDown={e => e.key === 'Enter' && handleCheckEmail()}
+                  style={{ width: '100%', marginTop: '5px' }}
+                />
+              </div>
+
+              {loginError && (
+                <div style={{ color: 'var(--danger)', fontSize: '0.85rem', fontWeight: 'bold', display: 'flex', alignItems: 'center', gap: '5px', marginTop: '5px' }}>
+                  ⚠️ {loginError}
+                </div>
+              )}
+
+              <button 
+                className="btn btn-start" 
+                onClick={handleCheckEmail}
+                disabled={loginLoading}
+                style={{ marginTop: '1rem' }}
+              >
+                {loginLoading ? 'Checking...' : 'Next'}
+              </button>
+            </>
+          )}
+
+          {loginStep === 2 && (
+            <>
+              <div style={{ display: 'flex', alignItems: 'center', gap: '8px', marginBottom: '1rem', background: 'rgba(255,255,255,0.02)', padding: '8px 12px', borderRadius: '8px', border: '1px solid var(--glass-border)' }}>
+                <span style={{ fontSize: '1.2rem' }}>👤</span>
+                <div style={{ textAlign: 'left' }}>
+                  <div style={{ fontSize: '0.75rem', color: 'var(--text-secondary)' }}>Admin Login</div>
+                  <div style={{ fontSize: '0.88rem', fontWeight: 'bold', color: 'var(--accent-primary)' }}>{loginEmailInput}</div>
+                </div>
+              </div>
+
+              <div className="select-group" style={{ marginBottom: '1rem' }}>
+                <label style={{ fontSize: '0.95rem', fontWeight: 600, color: 'var(--text-primary)' }}>Password</label>
+                <input 
+                  type="password" 
+                  className="styled-input" 
+                  placeholder="Enter admin password" 
+                  value={loginPasswordInput} 
+                  onChange={e => setLoginPasswordInput(e.target.value)}
+                  onKeyDown={e => e.key === 'Enter' && handleAdminLogin()}
+                  style={{ width: '100%', marginTop: '5px' }}
+                />
+              </div>
+
+              {loginError && (
+                <div style={{ color: 'var(--danger)', fontSize: '0.85rem', fontWeight: 'bold', display: 'flex', alignItems: 'center', gap: '5px', marginTop: '5px' }}>
+                  ⚠️ {loginError}
+                </div>
+              )}
+
+              <div style={{ display: 'flex', gap: '10px', marginTop: '1rem' }}>
+                <button 
+                  className="btn btn-clear" 
+                  onClick={() => { setLoginStep(1); setLoginPasswordInput(''); setLoginError(''); }}
+                  style={{ flex: 1 }}
+                >
+                  Back
+                </button>
+                <button 
+                  className="btn btn-start" 
+                  onClick={handleAdminLogin}
+                  disabled={loginLoading}
+                  style={{ flex: 2, margin: 0 }}
+                >
+                  {loginLoading ? 'Authenticating...' : 'Sign In'}
+                </button>
+              </div>
+            </>
+          )}
+
+          {loginStep === 3 && (
+            <>
+              <div style={{ display: 'flex', alignItems: 'center', gap: '8px', marginBottom: '1rem', background: 'rgba(255,255,255,0.02)', padding: '8px 12px', borderRadius: '8px', border: '1px solid var(--glass-border)' }}>
+                <span style={{ fontSize: '1.2rem' }}>📧</span>
+                <div style={{ textAlign: 'left' }}>
+                  <div style={{ fontSize: '0.75rem', color: 'var(--text-secondary)' }}>User Email</div>
+                  <div style={{ fontSize: '0.88rem', fontWeight: 'bold', color: 'var(--accent-secondary)' }}>{loginEmailInput}</div>
+                </div>
+              </div>
+
+              <div className="select-group" style={{ marginBottom: '1rem' }}>
+                <label style={{ fontSize: '0.95rem', fontWeight: 600, color: 'var(--text-primary)', textAlign: 'center', display: 'block' }}>Enter Verification Code</label>
+                {loginWarning ? (
+                  <div style={{ background: 'rgba(245,158,11,0.08)', border: '1px solid rgba(245,158,11,0.25)', borderRadius: '12px', padding: '10px 14px', margin: '8px 0', fontSize: '0.8rem', color: '#fbbf24', textAlign: 'left', lineHeight: '1.4' }}>
+                    ⚠️ <strong>SMTP Send Failure</strong><br/>
+                    Email credentials are not configured in <code>.env</code>.<br/>
+                    <strong>Dev OTP Code:</strong> <span style={{ fontSize: '1.05rem', fontWeight: 'bold', color: '#60a5fa', fontFamily: 'monospace', letterSpacing: '1px' }}>{fallbackOtp}</span>
+                  </div>
+                ) : (
+                  <p style={{ fontSize: '0.8rem', color: 'var(--text-secondary)', textAlign: 'center', margin: '4px 0 10px 0' }}>
+                    We sent a 6-digit OTP code to your email.
+                  </p>
+                )}
+                <input 
+                  type="text" 
+                  className="styled-input" 
+                  placeholder="------" 
+                  maxLength={6}
+                  value={loginOtpInput} 
+                  onChange={e => setLoginOtpInput(e.target.value.replace(/\D/g, ''))}
+                  onKeyDown={e => e.key === 'Enter' && handleUserOtpLogin()}
+                  style={{ width: '100%', textAlign: 'center', letterSpacing: '8px', fontSize: '1.5rem', fontWeight: 'bold', fontFamily: 'monospace', color: '#fbbf24', border: '1.5px solid var(--accent-primary)', background: 'rgba(0,0,0,0.3)' }}
+                />
+              </div>
+
+              {loginError && (
+                <div style={{ color: 'var(--danger)', fontSize: '0.85rem', fontWeight: 'bold', display: 'flex', alignItems: 'center', gap: '5px', justifyContent: 'center' }}>
+                  ⚠️ {loginError}
+                </div>
+              )}
+
+              <div style={{ display: 'flex', flexDirection: 'column', gap: '10px', marginTop: '1rem' }}>
+                <div style={{ display: 'flex', gap: '10px' }}>
+                  <button 
+                    className="btn btn-clear" 
+                    onClick={() => { setLoginStep(1); setLoginOtpInput(''); setLoginError(''); }}
+                    style={{ flex: 1 }}
+                  >
+                    Back
+                  </button>
+                  <button 
+                    className="btn btn-start" 
+                    onClick={handleUserOtpLogin}
+                    disabled={loginLoading}
+                    style={{ flex: 2, margin: 0, background: 'linear-gradient(135deg, #10b981, #059669)' }}
+                  >
+                    {loginLoading ? 'Verifying...' : 'Verify & Log In'}
+                  </button>
+                </div>
+
+                <button 
+                  className="btn btn-clear" 
+                  onClick={handleResendOtp}
+                  disabled={isResendingOtp}
+                  style={{ width: '100%', fontSize: '0.82rem', padding: '0.4rem', border: 'none', background: 'transparent', color: 'var(--accent-primary)', textDecoration: 'underline' }}
+                >
+                  {isResendingOtp ? 'Resending...' : 'Resend Code'}
+                </button>
+              </div>
+            </>
+          )}
+        </div>
+      </div>
+    );
+  }
+
   return (
     <>
       {/* Home Screen */}
       <div style={{ display: !appMode ? 'block' : 'none', position: 'relative' }}>
-        <div style={{ position: 'absolute', top: '20px', right: '20px', zIndex: 50 }}>
+        <div style={{ position: 'absolute', top: '20px', right: '20px', zIndex: 50, display: 'flex', gap: '10px' }}>
           <button 
             className="btn btn-clear" 
             onClick={() => setIsSettingsOpen(true)}
@@ -2060,6 +2569,15 @@ function App() {
             onMouseLeave={e => e.currentTarget.style.transform = 'scale(1)'}
           >
             ⚙️ Settings
+          </button>
+          <button 
+            className="btn btn-clear" 
+            onClick={handleLogout}
+            style={{ display: 'flex', alignItems: 'center', gap: '8px', padding: '0.6rem 1.2rem', borderRadius: '12px', background: 'rgba(239,68,68,0.08)', border: '1px solid rgba(239,68,68,0.25)', color: '#f87171', cursor: 'pointer', transition: 'all 0.25s' }}
+            onMouseEnter={e => e.currentTarget.style.transform = 'scale(1.05)'}
+            onMouseLeave={e => e.currentTarget.style.transform = 'scale(1)'}
+          >
+            🚪 Logout
           </button>
         </div>
         <div className="home-container">
@@ -2343,7 +2861,7 @@ function App() {
                 setPendingModule(null);
                 setHomeSearchQuery('');
                 setIsPageLoading(false);
-              }, 600);
+              }, 3000);
             }}>Launch Visualizer</button>
             <button className="btn btn-clear" style={{ marginTop: '0.75rem', width: '100%' }} onClick={() => setPendingModule(null)}>← Cancel</button>
           </div>
@@ -2950,10 +3468,10 @@ function App() {
                     <input 
                       type="email"
                       className="styled-input" 
-                      style={{ width: '100%', padding: '0.65rem 0.85rem', fontSize: '0.95rem', borderRadius: '8px', border: '1px solid var(--glass-border)', background: 'rgba(0,0,0,0.2)', color: '#fff' }} 
+                      style={{ width: '100%', padding: '0.65rem 0.85rem', fontSize: '0.95rem', borderRadius: '8px', border: '1px solid var(--glass-border)', background: 'rgba(0,0,0,0.2)', color: '#fff', opacity: 0.6 }} 
                       placeholder="Enter your email to verify with OTP" 
-                      value={feedbackEmail} 
-                      onChange={e => setFeedbackEmail(e.target.value)} 
+                      value={userEmail} 
+                      disabled={true}
                       required
                     />
                   </div>
@@ -2979,11 +3497,11 @@ function App() {
 
                 <button 
                   className="btn btn-start" 
-                  style={{ width: '100%', marginTop: '0.75rem', padding: '0.85rem', borderRadius: '12px', fontSize: '1.05rem', fontWeight: 'bold', border: 'none', cursor: isFeedbackSendingOtp ? 'not-allowed' : 'pointer', background: 'linear-gradient(135deg, var(--accent-primary), var(--accent-secondary))', color: 'white', flexShrink: 0 }} 
-                  onClick={sendFeedbackOtp}
-                  disabled={isFeedbackSendingOtp}
+                  style={{ width: '100%', marginTop: '0.75rem', padding: '0.85rem', borderRadius: '12px', fontSize: '1.05rem', fontWeight: 'bold', border: 'none', cursor: isFeedbackVerifyingOtp ? 'not-allowed' : 'pointer', background: 'linear-gradient(135deg, var(--accent-primary), var(--accent-secondary))', color: 'white', flexShrink: 0 }} 
+                  onClick={submitDirectFeedback}
+                  disabled={isFeedbackVerifyingOtp}
                 >
-                  {isFeedbackSendingOtp ? '⏳ Sending Verification Code...' : 'Send Feedback'}
+                  {isFeedbackVerifyingOtp ? '⏳ Submitting...' : 'Send Feedback'}
                 </button>
               </>
             )}

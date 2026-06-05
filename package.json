@@ -5,7 +5,7 @@
   "type": "module",
   "scripts": {
     "dev": "vite",
-    "server": "node server.js",
+    "server": "node backend/server.js",
     "build": "vite build",
     "lint": "eslint --config eslint.custom.config.js src",
     "preview": "vite preview"
