@@ -1195,6 +1195,14 @@ function App() {
 
   // Submit feedback directly
   const submitDirectFeedback = async () => {
+    if (!feedbackEmail.trim()) {
+      setFeedbackError("Please enter your email address.");
+      return;
+    }
+    if (!feedbackEmail.includes('@') || !feedbackEmail.includes('.')) {
+      setFeedbackError("Please enter a valid email address.");
+      return;
+    }
     if (!feedbackText.trim()) {
       setFeedbackError("Please enter some feedback message.");
       return;
@@ -1208,7 +1216,7 @@ function App() {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
-          email: userEmail,
+          email: feedbackEmail.trim(),
           rating,
           category: feedbackCategory,
           text: feedbackText.trim()
@@ -3356,7 +3364,7 @@ function App() {
                       type="email"
                       className="styled-input" 
                       style={{ width: '100%', padding: '0.65rem 0.85rem', fontSize: '0.95rem', borderRadius: '8px', border: '1px solid var(--glass-border)', background: 'rgba(0,0,0,0.2)', color: '#fff' }} 
-                      placeholder="Enter your email to verify with OTP" 
+                      placeholder="Enter your email address" 
                       value={feedbackEmail} 
                       onChange={e => setFeedbackEmail(e.target.value)}
                       required
@@ -3384,11 +3392,11 @@ function App() {
 
                 <button 
                   className="btn btn-start" 
-                  style={{ width: '100%', marginTop: '0.75rem', padding: '0.85rem', borderRadius: '12px', fontSize: '1.05rem', fontWeight: 'bold', border: 'none', cursor: isFeedbackSendingOtp ? 'not-allowed' : 'pointer', background: 'linear-gradient(135deg, var(--accent-primary), var(--accent-secondary))', color: 'white', flexShrink: 0 }} 
-                  onClick={sendFeedbackOtp}
-                  disabled={isFeedbackSendingOtp}
+                  style={{ width: '100%', marginTop: '0.75rem', padding: '0.85rem', borderRadius: '12px', fontSize: '1.05rem', fontWeight: 'bold', border: 'none', cursor: isFeedbackVerifyingOtp ? 'not-allowed' : 'pointer', background: 'linear-gradient(135deg, var(--accent-primary), var(--accent-secondary))', color: 'white', flexShrink: 0 }} 
+                  onClick={submitDirectFeedback}
+                  disabled={isFeedbackVerifyingOtp}
                 >
-                  {isFeedbackSendingOtp ? '⏳ Sending OTP...' : 'Send Verification OTP'}
+                  {isFeedbackVerifyingOtp ? '⏳ Submitting...' : 'Submit Feedback'}
                 </button>
               </>
             )}
@@ -3449,7 +3457,7 @@ function App() {
                 <span style={{ fontSize: '4.5rem', display: 'block', marginBottom: '10px', animation: 'pulse 1s infinite' }}>🎉</span>
                 <h2 className="title-gradient" style={{ fontSize: '1.8rem', marginBottom: '8px' }}>Thank You!</h2>
                 <p style={{ color: 'var(--text-secondary)', fontSize: '0.95rem', lineHeight: '1.5', margin: '0 0 1.5rem 0' }}>
-                  Your <strong>{rating}-Star</strong> review in <strong>{feedbackCategory}</strong> was saved successfully! We have validated your email as real and linked it to <strong>{feedbackEmail}</strong>.
+                  Your <strong>{rating}-Star</strong> review in <strong>{feedbackCategory}</strong> was saved successfully! Thank you for helping us improve.
                 </p>
                 <button className="btn btn-clear" style={{ width: '150px', borderRadius: '10px' }} onClick={() => { setIsFeedbackOpen(false); setIsOtpVerifying(false); setFeedbackOtpCode(''); }}>Done</button>
               </div>
