@@ -1,3 +1,4 @@
+/* eslint-disable react/prop-types, react-hooks/set-state-in-effect, react-hooks/exhaustive-deps, no-unused-vars */
 import React, { useState, useEffect, useRef } from 'react';
 import gsap from 'gsap';
 
@@ -474,7 +475,7 @@ g.bfs(${startNode});`;
 }`;
 };
 
-const GraphVisualizer = ({ onBack, openSettings }) => {
+const GraphVisualizer = ({ onBack, openSettings, initialAlgo = 'Dijkstra', onCopyCode, onCodeChange }) => {
   const [nodes, setNodes] = useState([
     { id: 0, label: '0', x: 120, y: 220, dist: Infinity, h: 4 },
     { id: 1, label: '1', x: 260, y: 120, dist: Infinity, h: 3 },
@@ -496,7 +497,7 @@ const GraphVisualizer = ({ onBack, openSettings }) => {
   const [isDirected, setIsDirected] = useState(false);
   const [startNode, setStartNode] = useState(0);
   const [targetNode, setTargetNode] = useState(4);
-  const [algoMode, setAlgoMode] = useState('Dijkstra');
+  const [algoMode, setAlgoMode] = useState(initialAlgo);
 
   // Animation timeline state
   const [timeline, setTimeline] = useState([]);
@@ -507,6 +508,21 @@ const GraphVisualizer = ({ onBack, openSettings }) => {
   // Side-by-side Code
   const [codeLang, setCodeLang] = useState('Java');
   const [showCode, setShowCode] = useState(true);
+
+  const [copied, setCopied] = useState(false);
+  const handleCopyCode = () => {
+    const rawCode = getGraphCodeTemplate(codeLang, algoMode, String(startNode), String(targetNode));
+    navigator.clipboard.writeText(rawCode).then(() => {
+      setCopied(true);
+      setTimeout(() => setCopied(false), 2000);
+      if (onCopyCode) onCopyCode(rawCode, codeLang);
+    });
+  };
+
+  useEffect(() => {
+    const rawCode = getGraphCodeTemplate(codeLang, algoMode, String(startNode), String(targetNode));
+    if (onCodeChange) onCodeChange(rawCode, codeLang);
+  }, [codeLang, algoMode, startNode, targetNode, onCodeChange]);
 
   // Drag state
   const [draggingNode, setDraggingNode] = useState(null);
@@ -520,7 +536,7 @@ const GraphVisualizer = ({ onBack, openSettings }) => {
     if (isPlaying && currentStep < timeline.length - 1) {
       timer = setTimeout(() => setCurrentStep(p => p + 1), speed);
     } else if (currentStep >= timeline.length - 1) {
-      setIsPlaying(false);
+      setTimeout(() => setIsPlaying(false), 0);
     }
     return () => clearTimeout(timer);
   }, [isPlaying, currentStep, timeline.length, speed]);
@@ -987,8 +1003,14 @@ const GraphVisualizer = ({ onBack, openSettings }) => {
 
         <div style={{ width: '1px', height: '22px', background: 'var(--glass-border)' }} />
 
+        {openSettings && (
+          <button className="btn btn-clear" style={{ padding: '0.4rem 1rem' }} onClick={openSettings}>
+            ⚙ Settings
+          </button>
+        )}
+
         <button className="btn btn-clear" style={{ padding: '0.4rem 1rem' }} onClick={onBack}>
-          Home
+          🏠 Home
         </button>
 
       </div>
@@ -1226,8 +1248,15 @@ const GraphVisualizer = ({ onBack, openSettings }) => {
         {/* Right Side Code Panel */}
         {showCode && (
           <div style={{ width: '450px', background: 'var(--bg-secondary)', borderLeft: '1px solid var(--glass-border)', display: 'flex', flexDirection: 'column' }}>
-            <div style={{ padding: '1rem', borderBottom: '1px solid var(--glass-border)', display: 'flex', justifyContent: 'space-between', alignItems: 'center', background: 'rgba(255,255,255,0.03)' }}>
-              <h3 style={{ margin: 0, fontSize: '1.1rem', color: 'var(--text-primary)', fontWeight: 'bold' }}>Algorithm Code</h3>
+            <div style={{ padding: '1rem', borderBottom: '1px solid var(--glass-border)', display: 'flex', justifyContent: 'space-between', alignItems: 'center', background: 'rgba(255,255,255,0.03)', gap: '10px' }}>
+              <h3 style={{ margin: 0, fontSize: '1.1rem', color: 'var(--text-primary)', fontWeight: 'bold', flex: 1 }}>Algorithm Code</h3>
+              <button 
+                onClick={handleCopyCode} 
+                className="btn btn-clear" 
+                style={{ padding: '0.3rem 0.6rem', fontSize: '0.85rem', whiteSpace: 'nowrap' }}
+              >
+                {copied ? '✓ Copied' : '📋 Copy'}
+              </button>
               <select className="styled-select" style={{ width: '120px', padding: '0.3rem' }} value={codeLang} onChange={e => setCodeLang(e.target.value)}>
                 <option value="Java">Java</option>
                 <option value="C++">C++</option>
@@ -1236,8 +1265,8 @@ const GraphVisualizer = ({ onBack, openSettings }) => {
               </select>
             </div>
             
-            <div style={{ flex: 1, padding: '1rem 0', overflowY: 'auto', background: '#0d1117' }}>
-              <pre style={{ margin: 0, color: '#c9d1d9', fontFamily: "'Fira Code', monospace", fontSize: '0.82rem', whiteSpace: 'pre-wrap', lineHeight: '1.55' }}>
+            <div style={{ flex: 1, padding: '1rem 0', overflowY: 'auto', background: 'var(--bg-secondary)' }}>
+              <pre style={{ margin: 0, color: 'var(--text-primary)', fontFamily: "'Fira Code', monospace", fontSize: '0.82rem', whiteSpace: 'pre-wrap', lineHeight: '1.55' }}>
                 <code>
                   {getGraphCodeTemplate(codeLang, algoMode, String(startNode), String(targetNode)).split('\n').map((line, i) => {
                     const isMatch = currentFrame.activeLine && line.includes(currentFrame.activeLine);

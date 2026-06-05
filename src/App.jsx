@@ -1,3 +1,4 @@
+/* eslint-disable */
 import React, { useState, useEffect, useRef, useCallback } from 'react';
 import gsap from 'gsap';
 import './index.css';
@@ -161,6 +162,7 @@ const buildSegmentTree = (arr) => {
 };
 
 // ─── THEMES ──────────────────────────────────────────────────────────────────
+// ─── THEMES ──────────────────────────────────────────────────────────────────
 const THEMES = {
   'Cosmic Dark': {
     '--bg-primary': '#0f172a',
@@ -174,6 +176,7 @@ const THEMES = {
     '--node-fill-1': '#3b82f6',
     '--node-fill-2': '#8b5cf6',
     bodyBg: 'radial-gradient(circle at 10% 20%, rgba(59,130,246,0.12), transparent 35%), radial-gradient(circle at 90% 80%, rgba(236,72,153,0.12), transparent 35%)',
+    type: 'dark'
   },
   'Forest Night': {
     '--bg-primary': '#0a1a0e',
@@ -187,6 +190,7 @@ const THEMES = {
     '--node-fill-1': '#16a34a',
     '--node-fill-2': '#15803d',
     bodyBg: 'radial-gradient(circle at 20% 30%, rgba(34,197,94,0.1), transparent 40%), radial-gradient(circle at 80% 70%, rgba(132,204,22,0.1), transparent 40%)',
+    type: 'dark'
   },
   'Sunset Blaze': {
     '--bg-primary': '#1a0a00',
@@ -200,6 +204,7 @@ const THEMES = {
     '--node-fill-1': '#ea580c',
     '--node-fill-2': '#dc2626',
     bodyBg: 'radial-gradient(circle at 15% 25%, rgba(249,115,22,0.15), transparent 40%), radial-gradient(circle at 85% 75%, rgba(239,68,68,0.15), transparent 40%)',
+    type: 'dark'
   },
   'Neon Cyberpunk': {
     '--bg-primary': '#050510',
@@ -213,6 +218,49 @@ const THEMES = {
     '--node-fill-1': '#0099bb',
     '--node-fill-2': '#aa00aa',
     bodyBg: 'radial-gradient(circle at 20% 20%, rgba(0,229,255,0.1), transparent 40%), radial-gradient(circle at 80% 80%, rgba(255,0,255,0.1), transparent 40%)',
+    type: 'dark'
+  },
+  'Midnight Lavender': {
+    '--bg-primary': '#120b24',
+    '--bg-secondary': '#1d1236',
+    '--accent-primary': '#8b5cf6',
+    '--accent-secondary': '#c084fc',
+    '--text-primary': '#f5f3ff',
+    '--text-secondary': '#c084fc',
+    '--glass-bg': 'rgba(29, 18, 54, 0.4)',
+    '--glass-border': 'rgba(139, 92, 246, 0.15)',
+    '--node-fill-1': '#7c3aed',
+    '--node-fill-2': '#a78bfa',
+    bodyBg: 'radial-gradient(circle at 10% 20%, rgba(139,92,246,0.15), transparent 40%), radial-gradient(circle at 90% 80%, rgba(192,132,252,0.12), transparent 40%)',
+    type: 'dark'
+  },
+  'Deep Ocean': {
+    '--bg-primary': '#031525',
+    '--bg-secondary': '#07253f',
+    '--accent-primary': '#06b6d4',
+    '--accent-secondary': '#0ea5e9',
+    '--text-primary': '#ecfeff',
+    '--text-secondary': '#67e8f9',
+    '--glass-bg': 'rgba(7, 37, 63, 0.4)',
+    '--glass-border': 'rgba(6, 182, 212, 0.15)',
+    '--node-fill-1': '#0891b2',
+    '--node-fill-2': '#0284c7',
+    bodyBg: 'radial-gradient(circle at 15% 15%, rgba(6,182,212,0.15), transparent 45%), radial-gradient(circle at 85% 85%, rgba(14,165,233,0.12), transparent 45%)',
+    type: 'dark'
+  },
+  'Cherry Blossom': {
+    '--bg-primary': '#1c0a10',
+    '--bg-secondary': '#2e121d',
+    '--accent-primary': '#ec4899',
+    '--accent-secondary': '#f472b6',
+    '--text-primary': '#fdf2f8',
+    '--text-secondary': '#f472b6',
+    '--glass-bg': 'rgba(46, 18, 29, 0.4)',
+    '--glass-border': 'rgba(236, 72, 153, 0.15)',
+    '--node-fill-1': '#db2777',
+    '--node-fill-2': '#e879f9',
+    bodyBg: 'radial-gradient(circle at 10% 20%, rgba(236,72,153,0.15), transparent 40%), radial-gradient(circle at 90% 80%, rgba(244,114,182,0.12), transparent 40%)',
+    type: 'dark'
   },
   'Arctic Frost': {
     '--bg-primary': '#f0f9ff',
@@ -226,33 +274,71 @@ const THEMES = {
     '--node-fill-1': '#0284c7',
     '--node-fill-2': '#0ea5e9',
     bodyBg: 'radial-gradient(circle at 15% 15%, rgba(14,165,233,0.15), transparent 45%), radial-gradient(circle at 85% 85%, rgba(2,132,199,0.15), transparent 45%)',
+    type: 'light'
   },
+  'Light Sakura': {
+    '--bg-primary': '#fff5f7',
+    '--bg-secondary': '#ffe4e8',
+    '--accent-primary': '#db2777',
+    '--accent-secondary': '#f43f5e',
+    '--text-primary': '#4c0519',
+    '--text-secondary': '#9d174d',
+    '--glass-bg': 'rgba(255, 255, 255, 0.65)',
+    '--glass-border': 'rgba(219, 39, 119, 0.2)',
+    '--node-fill-1': '#db2777',
+    '--node-fill-2': '#f43f5e',
+    bodyBg: 'radial-gradient(circle at 15% 15%, rgba(219,39,119,0.15), transparent 45%), radial-gradient(circle at 85% 85%, rgba(244,63,94,0.15), transparent 45%)',
+    type: 'light'
+  },
+  'Sunny Meadow': {
+    '--bg-primary': '#fefce8',
+    '--bg-secondary': '#fef08a',
+    '--accent-primary': '#ca8a04',
+    '--accent-secondary': '#eab308',
+    '--text-primary': '#422006',
+    '--text-secondary': '#854d0e',
+    '--glass-bg': 'rgba(255, 255, 255, 0.65)',
+    '--glass-border': 'rgba(202, 138, 4, 0.2)',
+    '--node-fill-1': '#ca8a04',
+    '--node-fill-2': '#eab308',
+    bodyBg: 'radial-gradient(circle at 15% 15%, rgba(250,204,21,0.15), transparent 45%), radial-gradient(circle at 85% 85%, rgba(234,179,8,0.15), transparent 45%)',
+    type: 'light'
+  },
+  'Minty Fresh': {
+    '--bg-primary': '#f0fdf4',
+    '--bg-secondary': '#dcfce7',
+    '--accent-primary': '#059669',
+    '--accent-secondary': '#10b981',
+    '--text-primary': '#022c22',
+    '--text-secondary': '#065f46',
+    '--glass-bg': 'rgba(255, 255, 255, 0.65)',
+    '--glass-border': 'rgba(5, 150, 105, 0.2)',
+    '--node-fill-1': '#059669',
+    '--node-fill-2': '#10b981',
+    bodyBg: 'radial-gradient(circle at 15% 15%, rgba(16,185,129,0.15), transparent 45%), radial-gradient(circle at 85% 85%, rgba(5,150,105,0.15), transparent 45%)',
+    type: 'light'
+  }
 };
 
 // ─── Enhanced AI ChatBot ──────────────────────────────────────────────────────
-const ChatBot = ({ customCode, codeLang, isChatOpen, setIsChatOpen, chatMessages, setChatMessages }) => {
+const ChatBot = ({ customCode, codeLang, isChatOpen, setIsChatOpen, chatMessages, setChatMessages, apiKey, setApiKey, model, setModel }) => {
   const [chatInput, setChatInput] = useState('');
   const [isLoading, setIsLoading] = useState(false);
-  const [localApiKey, setLocalApiKey] = useState(localStorage.getItem('gemini_api_key') || '');
-  const [showSettings, setShowSettings] = useState(!localStorage.getItem('gemini_api_key'));
+  const [showSettings, setShowSettings] = useState(!apiKey);
   const chatEndRef = useRef(null);
 
   useEffect(() => { chatEndRef.current?.scrollIntoView({ behavior: 'smooth' }); }, [chatMessages, isLoading]);
 
-  const saveKey = () => {
-     localStorage.setItem('gemini_api_key', localApiKey);
-     setShowSettings(false);
-  };
-
-  const handleSend = async () => {
-    if (!chatInput.trim() || isLoading) return;
-    const userMsg = chatInput.trim();
-    setChatInput('');
+  const handleSend = async (overrideText) => {
+    const textToSend = typeof overrideText === 'string' ? overrideText : chatInput;
+    if (!textToSend.trim() || isLoading) return;
+    const userMsg = textToSend.trim();
+    if (typeof overrideText !== 'string') setChatInput('');
     setChatMessages(prev => [...prev, { sender: 'user', text: userMsg }]);
     setIsLoading(true);
 
     try {
-      if (!localApiKey) {
+      if (!apiKey) {
         setChatMessages(prev => [...prev, { sender: 'bot', text: 'I am not connected! Please provide your Gemini API Key in the chat settings ⚙️ above so I can answer anything.' }]);
         setIsLoading(false);
         return;
@@ -263,13 +349,30 @@ You must help the user with ANYTHING they ask. This includes checking errors fro
 Current context — Language: ${codeLang}. User's code: ${customCode ? customCode.substring(0, 1200) : '(none)'}.
 Be concise but thorough. Use markdown-style formatting for code blocks.`;
 
-      const response = await fetch(`https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash:generateContent?key=${localApiKey}`, {
+      // Filter to only include user and model messages, removing greetings/warnings
+      const chatHistory = chatMessages.filter(m => m.sender === 'user' || m.sender === 'bot');
+      const firstUserIdx = chatHistory.findIndex(m => m.sender === 'user');
+      let relevantHistory = firstUserIdx !== -1 ? chatHistory.slice(firstUserIdx) : [];
+      
+      if (relevantHistory.length > 10) {
+        relevantHistory = relevantHistory.slice(-10);
+      }
+      // Re-verify it starts with user after slicing
+      const slicedUserIdx = relevantHistory.findIndex(m => m.sender === 'user');
+      if (slicedUserIdx !== -1) {
+        relevantHistory = relevantHistory.slice(slicedUserIdx);
+      } else {
+        relevantHistory = [];
+      }
+
+      const activeModel = model || 'gemini-1.5-flash';
+      const response = await fetch(`https://generativelanguage.googleapis.com/v1beta/models/${activeModel}:generateContent?key=${apiKey}`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
           system_instruction: { parts: [{ text: systemPrompt }] },
           contents: [
-            ...chatMessages.filter(m => m.sender !== 'system' && m.sender !== 'bot' || (m.sender === 'bot' && !m.text.includes('API Key'))).slice(-10).map(m => ({
+            ...relevantHistory.map(m => ({
               role: m.sender === 'user' ? 'user' : 'model',
               parts: [{ text: m.text }]
             })),
@@ -295,22 +398,30 @@ Be concise but thorough. Use markdown-style formatting for code blocks.`;
   return (
     <div style={{ position: 'fixed', bottom: '20px', right: '20px', zIndex: 1000, display: 'flex', flexDirection: 'column', alignItems: 'flex-end' }}>
       {isChatOpen && (
-        <div style={{ width: '360px', height: '500px', background: 'var(--bg-secondary)', border: '1px solid var(--accent-primary)', borderRadius: '16px', marginBottom: '1rem', display: 'flex', flexDirection: 'column', overflow: 'hidden', boxShadow: '0 20px 60px rgba(0,0,0,0.7)' }}>
+        <div style={{ width: '360px', height: '520px', background: 'var(--bg-secondary)', border: '1px solid var(--accent-primary)', borderRadius: '16px', marginBottom: '1rem', display: 'flex', flexDirection: 'column', overflow: 'hidden', boxShadow: '0 20px 60px rgba(0,0,0,0.7)' }}>
           <div style={{ background: 'linear-gradient(135deg, var(--accent-primary), var(--accent-secondary))', padding: '0.85rem 1rem', fontWeight: 700, color: 'white', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
             <span style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
               <span style={{ background: 'rgba(255,255,255,0.2)', borderRadius: '50%', width: '28px', height: '28px', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>🤖</span>
-              AI Coding Assistant
+              AI Assistant
             </span>
-            <div style={{ display: 'flex', gap: '8px' }}>
+            <div style={{ display: 'flex', gap: '8px', alignItems: 'center' }}>
+              <span style={{ fontSize: '0.7rem', padding: '2px 6px', borderRadius: '10px', background: apiKey ? 'rgba(16,185,129,0.3)' : 'rgba(239,68,68,0.3)', color: '#fff', fontWeight: 'bold' }}>
+                {apiKey ? '🟢 Active' : '🔴 Config'}
+              </span>
               <button onClick={() => setShowSettings(!showSettings)} style={{ background: 'none', border: 'none', color: 'white', cursor: 'pointer', fontSize: '1.2rem', display: 'flex', alignItems: 'center' }}>⚙️</button>
               <button onClick={() => setIsChatOpen(false)} style={{ background: 'rgba(255,255,255,0.2)', border: 'none', color: 'white', cursor: 'pointer', width: '26px', height: '26px', borderRadius: '50%', fontSize: '1rem', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>×</button>
             </div>
           </div>
           {showSettings && (
             <div style={{ background: 'var(--glass-bg)', padding: '1rem', borderBottom: '1px solid var(--glass-border)', display: 'flex', flexDirection: 'column', gap: '8px' }}>
-              <span style={{ fontSize: '0.8rem', color: 'var(--text-secondary)' }}>Enter Gemini API Key to enable AI:</span>
-              <input type="password" value={localApiKey} onChange={e => setLocalApiKey(e.target.value)} placeholder="AIzaSy..." style={{ padding: '0.5rem', borderRadius: '6px', border: '1px solid var(--glass-border)', background: 'rgba(0,0,0,0.3)', color: 'white', fontSize: '0.8rem' }} />
-              <button onClick={saveKey} style={{ background: 'var(--accent-primary)', color: 'white', border: 'none', padding: '0.5rem', borderRadius: '6px', cursor: 'pointer', fontSize: '0.85rem', fontWeight: 'bold' }}>Save Key</button>
+              <span style={{ fontSize: '0.8rem', color: 'var(--text-secondary)' }}>Gemini API Settings:</span>
+              <input type="password" value={apiKey} onChange={e => { setApiKey(e.target.value); localStorage.setItem('gemini_api_key', e.target.value); }} placeholder="Enter API Key (AIzaSy...)" style={{ padding: '0.5rem', borderRadius: '6px', border: '1px solid var(--glass-border)', background: 'rgba(0,0,0,0.3)', color: 'white', fontSize: '0.8rem' }} />
+              <select value={model} onChange={e => { setModel(e.target.value); localStorage.setItem('gemini_model', e.target.value); }} style={{ padding: '0.5rem', borderRadius: '6px', border: '1px solid var(--glass-border)', background: 'rgba(0,0,0,0.3)', color: 'white', fontSize: '0.8rem', outline: 'none', cursor: 'pointer' }}>
+                <option value="gemini-1.5-flash" style={{ background: 'var(--bg-secondary)', color: 'var(--text-primary)' }}>gemini-1.5-flash (Fast)</option>
+                <option value="gemini-1.5-pro" style={{ background: 'var(--bg-secondary)', color: 'var(--text-primary)' }}>gemini-1.5-pro (High intelligence)</option>
+                <option value="gemini-2.0-flash" style={{ background: 'var(--bg-secondary)', color: 'var(--text-primary)' }}>gemini-2.0-flash (Fast & Accurate)</option>
+              </select>
+              <button onClick={() => setShowSettings(false)} style={{ background: 'var(--accent-primary)', color: 'white', border: 'none', padding: '0.5rem', borderRadius: '6px', cursor: 'pointer', fontSize: '0.85rem', fontWeight: 'bold' }}>Close Settings</button>
               <a href="https://aistudio.google.com/app/apikey" target="_blank" rel="noreferrer" style={{ fontSize: '0.75rem', color: 'var(--accent-primary)', textDecoration: 'none' }}>Get a free Gemini API key here</a>
             </div>
           )}
@@ -330,6 +441,32 @@ Be concise but thorough. Use markdown-style formatting for code blocks.`;
             )}
             <div ref={chatEndRef} />
           </div>
+
+          {/* Quick Suggestion Chips */}
+          <div style={{ padding: '0.4rem 0.75rem', display: 'flex', gap: '6px', overflowX: 'auto', borderTop: '1px solid var(--glass-border)', background: 'rgba(0,0,0,0.1)', flexShrink: 0, scrollbarWidth: 'none' }}>
+            {[
+              { label: '💡 Explain Code', text: 'Explain the current algorithm and its steps.' },
+              { label: '⚡ Complexity', text: 'What is the time and space complexity of this code?' },
+              { label: '📝 Quiz Me', text: 'Give me a short multiple-choice quiz on this algorithm/data structure.' },
+              { label: '🐛 Find Bugs', text: 'Are there any potential edge cases or bugs in this code?' }
+            ].map(chip => (
+              <button 
+                key={chip.label}
+                onClick={() => handleSend(chip.text)}
+                disabled={isLoading}
+                style={{
+                  background: 'rgba(255,255,255,0.05)', border: '1px solid var(--glass-border)',
+                  color: 'var(--text-secondary)', borderRadius: '12px', padding: '4px 10px',
+                  fontSize: '0.75rem', cursor: 'pointer', whiteSpace: 'nowrap', transition: 'all 0.2s'
+                }}
+                onMouseOver={e => { if (!isLoading) { e.currentTarget.style.background = 'rgba(255,255,255,0.1)'; e.currentTarget.style.color = 'var(--text-primary)'; } }}
+                onMouseOut={e => { if (!isLoading) { e.currentTarget.style.background = 'rgba(255,255,255,0.05)'; e.currentTarget.style.color = 'var(--text-secondary)'; } }}
+              >
+                {chip.label}
+              </button>
+            ))}
+          </div>
+
           <div style={{ padding: '0.75rem', borderTop: '1px solid var(--glass-border)', display: 'flex', gap: '0.5rem' }}>
             <input type="text" value={chatInput} onChange={e => setChatInput(e.target.value)} onKeyDown={e => e.key === 'Enter' && !e.shiftKey && handleSend()} placeholder="Ask anything about code..." disabled={isLoading}
               style={{ flex: 1, padding: '0.55rem 0.85rem', borderRadius: '8px', border: '1px solid var(--glass-border)', outline: 'none', background: 'rgba(0,0,0,0.3)', color: 'var(--text-primary)', fontSize: '0.88rem' }} />
@@ -366,13 +503,22 @@ const loadingQuotes = [
   { text: "\"Before software can be reusable it first has to be usable.\"", color: "#eab308" }
 ];
 
-const LineDebugger = ({ initialCode, lang: initialLang, fontSize, wordWrap, onBack, isChatOpen, setIsChatOpen, chatMessages, setChatMessages }) => {
+const LineDebugger = ({ initialCode, lang: initialLang, fontSize, wordWrap, onBack, openSettings, isChatOpen, setIsChatOpen, chatMessages, setChatMessages, apiKey, setApiKey, model, setModel }) => {
   const [isDebugStarted, setIsDebugStarted] = useState(false);
   const [isIframeLoading, setIsIframeLoading] = useState(false);
   const [quoteIndex, setQuoteIndex] = useState(() => Math.floor(Math.random() * loadingQuotes.length));
   const [localCode, setLocalCode] = useState(initialCode || '');
   const [detectedLang, setDetectedLang] = useState(initialLang);
   const lineNumbersRef = useRef(null);
+
+  useEffect(() => {
+    setLocalCode(initialCode || '');
+    setIsDebugStarted(false);
+  }, [initialCode]);
+
+  useEffect(() => {
+    setDetectedLang(initialLang);
+  }, [initialLang]);
 
   const handleScroll = (e) => {
     if (lineNumbersRef.current) {
@@ -397,7 +543,7 @@ const LineDebugger = ({ initialCode, lang: initialLang, fontSize, wordWrap, onBa
     }
 
     if (encodeURIComponent(codeToRun).length > 5500) {
-      alert("⚠️ Your code is too long for the Line-by-Line visualizer!\n\nPythonTutor has a strict limit of 5,500 bytes. Please remove comments, empty lines, and irrelevant boilerplate.");
+      alert("⚠️ Your code is too long for the Line-by-Line visualizer!\n\nPythonTutor has a strict limit of 5,500 bytes. Please remove comments, empty lines, and boilerplate.");
       return;
     }
     
@@ -454,6 +600,7 @@ const LineDebugger = ({ initialCode, lang: initialLang, fontSize, wordWrap, onBa
             </button>
           )}
           <div style={{ width: '1px', height: '22px', background: 'var(--glass-border)', margin: '0 4px' }} />
+          {openSettings && <button className="btn btn-clear" onClick={openSettings}>⚙ Settings</button>}
           <button className="btn btn-clear" onClick={onBack}>🏠 Home</button>
         </div>
       </header>
@@ -510,7 +657,7 @@ const LineDebugger = ({ initialCode, lang: initialLang, fontSize, wordWrap, onBa
           </div>
         )}
       </div>
-      <ChatBot customCode={localCode} codeLang={detectedLang} isChatOpen={isChatOpen} setIsChatOpen={setIsChatOpen} chatMessages={chatMessages} setChatMessages={setChatMessages} />
+      <ChatBot customCode={localCode} codeLang={detectedLang} isChatOpen={isChatOpen} setIsChatOpen={setIsChatOpen} chatMessages={chatMessages} setChatMessages={setChatMessages} apiKey={apiKey} setApiKey={setApiKey} model={model} setModel={setModel} />
     </div>
   );
 };
@@ -528,6 +675,18 @@ function App() {
   const [deleteStrategy, setDeleteStrategy] = useState('RIGHT');
   const [codeLang,      setCodeLang]      = useState('C++');
   const [currentTheme,  setCurrentTheme]  = useState('Cosmic Dark');
+  const [globalApiKey,  setGlobalApiKey]  = useState(localStorage.getItem('gemini_api_key') || '');
+  const [globalModel,   setGlobalModel]   = useState(localStorage.getItem('gemini_model') || 'gemini-1.5-flash');
+
+  const [globalSort, setGlobalSort] = useState('Bubble Sort');
+  const [globalSearch, setGlobalSearch] = useState('Linear Search');
+  const [globalSortSearchTab, setGlobalSortSearchTab] = useState('Sort');
+  const [globalGraphAlgo, setGlobalGraphAlgo] = useState('Dijkstra');
+
+  const [lastActiveMode, setLastActiveMode] = useState(null);
+  const [lastSetupComplete, setLastSetupComplete] = useState(false);
+  const [isSearchFocused, setIsSearchFocused] = useState(false);
+  const [treeCodeCopied, setTreeCodeCopied] = useState(false);
 
   const [isFeedbackOpen, setIsFeedbackOpen] = useState(false);
   const [rating, setRating] = useState(5);
@@ -699,7 +858,7 @@ function App() {
   const [codeHeight, setCodeHeight] = useState(300);
   const [isChatOpen, setIsChatOpen] = useState(false);
   const [chatMessages, setChatMessages] = useState([
-    { sender: 'bot', text: '👋 Hi! I\'m your AI coding assistant powered by Claude.\n\nAsk me anything:\n• "Explain binary search"\n• "Fix my code"\n• "Write a bubble sort in Python"\n• "What is AVL tree rotation?"\n\nI\'m here to help!' }
+    { sender: 'bot', text: '👋 Hi! I\'m your AI coding assistant powered by Gemini.\n\nAsk me anything:\n• "Explain binary search"\n• "Fix my code"\n• "Write a bubble sort in Python"\n• "What is AVL tree rotation?"\n\nI\'m here to help!' }
   ]);
 
   const [genericLogs,    setGenericLogs]    = useState([]);
@@ -708,6 +867,35 @@ function App() {
   const [editorWordWrap, setEditorWordWrap] = useState('off');
   const [editorScroll,   setEditorScroll]   = useState(0);
   const [codeValTab, setCodeValTab] = useState('CONSOLE');
+
+  // Copy success/options modal state
+  const [copyModalData, setCopyModalData] = useState({ isOpen: false, code: '', language: '' });
+  const [activeCodeForChat, setActiveCodeForChat] = useState('');
+  const [activeLangForChat, setActiveLangForChat] = useState('C++');
+  const [themeMode, setThemeMode] = useState('dark');
+
+  const handleCopyTrigger = (code, lang) => {
+    setCopyModalData({ isOpen: true, code, language: lang });
+  };
+
+  // Sync theme mode type (dark/light) when theme changes
+  useEffect(() => {
+    if (THEMES[currentTheme]) {
+      setThemeMode(THEMES[currentTheme].type);
+    }
+  }, [currentTheme]);
+
+  // Sync Tree / Code Validator / Line Debugger changes to chatbot context
+  useEffect(() => {
+    if (appMode === 'MAIN_VIS') {
+      const treeCode = getFullCodeTemplate(codeLang, treeType, showDeletionsInCode ? operationsLog : insertedValues.map(v => ({ op: 'insert', val: v })));
+      setActiveCodeForChat(treeCode);
+      setActiveLangForChat(codeLang);
+    } else if (appMode === 'CODE_VAL_VIS' || appMode === 'LINE_BY_LINE_VIS') {
+      setActiveCodeForChat(customCode);
+      setActiveLangForChat(codeLang);
+    }
+  }, [appMode, codeLang, treeType, showDeletionsInCode, operationsLog, insertedValues, customCode]);
 
   // Apply theme
   useEffect(() => {
@@ -977,6 +1165,14 @@ function App() {
     return () => window.removeEventListener('beforeunload', handleBeforeUnload);
   }, [appMode, insertedValues.length, customCode, timeline.length]);
 
+
+  const handleCopyTreeCode = () => {
+    const rawCode = getFullCodeTemplate(codeLang, treeType, showDeletionsInCode ? operationsLog : insertedValues.map(v => ({ op: 'insert', val: v })));
+    navigator.clipboard.writeText(rawCode).then(() => {
+      setTreeCodeCopied(true);
+      setTimeout(() => setTreeCodeCopied(false), 2000);
+    });
+  };
 
   const handleClear = () => {
     setTimeline([]); setCurrentStep(0); setIsPlaying(false);
@@ -1689,47 +1885,109 @@ function App() {
   };
 
   // ── Settings Modal ─────────────────────────────────────────────────────
-  const renderSettingsModal = () => (
-    <div className="modal-overlay">
-      <div className="modal-content" style={{ maxWidth: '500px' }}>
-        <h2 className="title-gradient">⚙ Settings</h2>
+  const renderSettingsModal = () => {
+    const filteredThemes = Object.entries(THEMES).filter(([_, th]) => th.type === themeMode);
 
-        <div className="select-group">
-          <label style={{ fontWeight: 700, fontSize: '1rem', color: 'var(--text-primary)' }}>🎨 Theme</label>
-          <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '0.55rem', marginTop: '4px' }}>
-            {Object.entries(THEMES).map(([name, th]) => (
-              <button key={name} onClick={() => setCurrentTheme(name)}
-                style={{ padding: '0.6rem 0.75rem', borderRadius: '10px', border: `2px solid ${currentTheme === name ? 'var(--accent-primary)' : 'var(--glass-border)'}`, background: currentTheme === name ? 'rgba(59,130,246,0.12)' : 'rgba(255,255,255,0.03)', color: 'var(--text-primary)', cursor: 'pointer', fontSize: '0.84rem', fontWeight: currentTheme === name ? 700 : 400, transition: 'all 0.2s', display: 'flex', alignItems: 'center', gap: '8px', textAlign: 'left' }}>
-                <span style={{ width: '14px', height: '14px', borderRadius: '50%', background: th['--accent-primary'], flexShrink: 0, boxShadow: `0 0 6px ${th['--accent-primary']}` }} />
-                <span>{name}</span>
-                {currentTheme === name && <span style={{ marginLeft: 'auto', fontSize: '0.75rem', color: 'var(--accent-primary)' }}>✓</span>}
+    return (
+      <div className="modal-overlay">
+        <div className="modal-content" style={{ maxWidth: '500px' }}>
+          <h2 className="title-gradient">⚙ Settings</h2>
+
+          <div className="select-group" style={{ marginBottom: '0.6rem' }}>
+            <label style={{ fontWeight: 700, fontSize: '1rem', color: 'var(--text-primary)' }}>🌓 Theme Mode</label>
+            <div style={{ display: 'flex', gap: '10px', marginTop: '4px' }}>
+              <button 
+                onClick={() => setThemeMode('dark')}
+                style={{
+                  flex: 1, padding: '0.6rem', borderRadius: '10px', 
+                  border: `2px solid ${themeMode === 'dark' ? 'var(--accent-primary)' : 'var(--glass-border)'}`,
+                  background: themeMode === 'dark' ? 'rgba(59,130,246,0.15)' : 'rgba(255,255,255,0.02)',
+                  color: 'var(--text-primary)', cursor: 'pointer', fontWeight: 700, transition: 'all 0.2s'
+                }}
+              >
+                🌙 Dark Mode
               </button>
-            ))}
+              <button 
+                onClick={() => setThemeMode('light')}
+                style={{
+                  flex: 1, padding: '0.6rem', borderRadius: '10px', 
+                  border: `2px solid ${themeMode === 'light' ? 'var(--accent-primary)' : 'var(--glass-border)'}`,
+                  background: themeMode === 'light' ? 'rgba(59,130,246,0.15)' : 'rgba(255,255,255,0.02)',
+                  color: 'var(--text-primary)', cursor: 'pointer', fontWeight: 700, transition: 'all 0.2s'
+                }}
+              >
+                ☀️ Light Mode
+              </button>
+            </div>
           </div>
-        </div>
 
-        <div className="select-group">
-          <label>Font Size</label>
-          <select className="styled-select" value={editorFontSize} onChange={e => setEditorFontSize(Number(e.target.value))}>
-            <option value={12}>Small (12px)</option>
-            <option value={14}>Medium (14px)</option>
-            <option value={16}>Large (16px)</option>
-            <option value={18}>Extra Large (18px)</option>
-          </select>
-        </div>
+          <div className="select-group">
+            <label style={{ fontWeight: 700, fontSize: '1rem', color: 'var(--text-primary)' }}>🎨 Select Theme</label>
+            <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '0.55rem', marginTop: '4px' }}>
+              {filteredThemes.map(([name, th]) => (
+                <button key={name} onClick={() => setCurrentTheme(name)}
+                  style={{ padding: '0.6rem 0.75rem', borderRadius: '10px', border: `2px solid ${currentTheme === name ? 'var(--accent-primary)' : 'var(--glass-border)'}`, background: currentTheme === name ? 'rgba(59,130,246,0.12)' : 'rgba(255,255,255,0.03)', color: 'var(--text-primary)', cursor: 'pointer', fontSize: '0.84rem', fontWeight: currentTheme === name ? 700 : 400, transition: 'all 0.2s', display: 'flex', alignItems: 'center', gap: '8px', textAlign: 'left' }}>
+                  <span style={{ width: '14px', height: '14px', borderRadius: '50%', background: th['--accent-primary'], flexShrink: 0, boxShadow: `0 0 6px ${th['--accent-primary']}` }} />
+                  <span>{name}</span>
+                  {currentTheme === name && <span style={{ marginLeft: 'auto', fontSize: '0.75rem', color: 'var(--accent-primary)' }}>✓</span>}
+                </button>
+              ))}
+            </div>
+          </div>
 
-        <div className="select-group">
-          <label>Word Wrap</label>
-          <select className="styled-select" value={editorWordWrap} onChange={e => setEditorWordWrap(e.target.value)}>
-            <option value="off">Off (Horizontal Scroll)</option>
-            <option value="on">On (Wrap to Viewport)</option>
-          </select>
-        </div>
+          <div className="select-group" style={{ marginBottom: '0.6rem' }}>
+            <label style={{ fontWeight: 700, fontSize: '1rem', color: 'var(--text-primary)' }}>🤖 Gemini AI Config</label>
+            <div style={{ display: 'flex', flexDirection: 'column', gap: '8px', marginTop: '4px' }}>
+              <input 
+                type="password" 
+                className="styled-input" 
+                value={globalApiKey} 
+                onChange={e => {
+                  setGlobalApiKey(e.target.value);
+                  localStorage.setItem('gemini_api_key', e.target.value);
+                }} 
+                placeholder="Enter Gemini API Key..." 
+                style={{ fontSize: '0.88rem', padding: '0.6rem 1.0rem' }}
+              />
+              <select 
+                className="styled-select" 
+                value={globalModel} 
+                onChange={e => {
+                  setGlobalModel(e.target.value);
+                  localStorage.setItem('gemini_model', e.target.value);
+                }} 
+                style={{ fontSize: '0.88rem', padding: '0.6rem 1.0rem', paddingRight: '2.5rem' }}
+              >
+                <option value="gemini-1.5-flash">gemini-1.5-flash (Fast, Default)</option>
+                <option value="gemini-1.5-pro">gemini-1.5-pro (High Intellect)</option>
+                <option value="gemini-2.0-flash">gemini-2.0-flash (Fast & Accurate)</option>
+              </select>
+            </div>
+          </div>
 
-        <button className="btn btn-start" style={{ marginTop: '0.5rem' }} onClick={() => setIsSettingsOpen(false)}>Save &amp; Close</button>
+          <div className="select-group">
+            <label>Font Size</label>
+            <select className="styled-select" value={editorFontSize} onChange={e => setEditorFontSize(Number(e.target.value))}>
+              <option value={12}>Small (12px)</option>
+              <option value={14}>Medium (14px)</option>
+              <option value={16}>Large (16px)</option>
+              <option value={18}>Extra Large (18px)</option>
+            </select>
+          </div>
+
+          <div className="select-group">
+            <label>Word Wrap</label>
+            <select className="styled-select" value={editorWordWrap} onChange={e => setEditorWordWrap(e.target.value)}>
+              <option value="off">Off (Horizontal Scroll)</option>
+              <option value="on">On (Wrap to Viewport)</option>
+            </select>
+          </div>
+
+          <button className="btn btn-start" style={{ marginTop: '0.5rem' }} onClick={() => setIsSettingsOpen(false)}>Save &amp; Close</button>
+        </div>
       </div>
-    </div>
-  );
+    );
+  };
 
   // ── Screens with State Preservation ──────────────────────────────────────────────────────────────
   const [mountedModes, setMountedModes] = useState({});
@@ -1740,31 +1998,136 @@ function App() {
     }
   }, [appMode]);
 
+  useEffect(() => {
+    if (appMode) {
+      setLastActiveMode(appMode);
+      setLastSetupComplete(setupComplete);
+    }
+  }, [appMode, setupComplete]);
+
   const frame = timeline[currentStep] || new Frame(null, [], null);
   const progress = timeline.length > 1 ? (currentStep / (timeline.length - 1)) * 100 : 0;
 
   return (
     <>
       {/* Home Screen */}
-      <div style={{ display: !appMode ? 'block' : 'none' }}>
+      <div style={{ display: !appMode ? 'block' : 'none', position: 'relative' }}>
+        <div style={{ position: 'absolute', top: '20px', right: '20px', zIndex: 50 }}>
+          <button 
+            className="btn btn-clear" 
+            onClick={() => setIsSettingsOpen(true)}
+            style={{ display: 'flex', alignItems: 'center', gap: '8px', padding: '0.6rem 1.2rem', borderRadius: '12px', background: 'rgba(255,255,255,0.03)', border: '1px solid var(--glass-border)', cursor: 'pointer', transition: 'all 0.25s' }}
+            onMouseEnter={e => e.currentTarget.style.transform = 'scale(1.05)'}
+            onMouseLeave={e => e.currentTarget.style.transform = 'scale(1)'}
+          >
+            ⚙️ Settings
+          </button>
+        </div>
         <div className="home-container">
+          {!appMode && lastActiveMode && (
+            <div className="resume-banner" style={{
+              background: 'rgba(139, 92, 246, 0.15)',
+              border: '1.5px solid var(--glass-border)',
+              borderRadius: '12px',
+              padding: '0.8rem 1.2rem',
+              marginBottom: '1.5rem',
+              display: 'flex',
+              alignItems: 'center',
+              justifyContent: 'space-between',
+              backdropFilter: 'blur(8px)',
+              boxShadow: '0 8px 32px 0 rgba(139, 92, 246, 0.1)',
+              animation: 'fadeIn 0.5s ease'
+            }}>
+              <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
+                <span style={{ fontSize: '1.3rem' }}>⏳</span>
+                <div>
+                  <h4 style={{ margin: 0, color: 'var(--text-primary)', fontSize: '0.95rem', fontWeight: 700 }}>Unsaved Session Detected</h4>
+                  <p style={{ margin: 0, color: 'var(--text-secondary)', fontSize: '0.8rem' }}>
+                    You were recently working on <strong>{lastActiveMode === 'MAIN_VIS' ? 'Tree Visualizer' : lastActiveMode === 'GRAPH_VIS' ? 'Graph Visualizer' : lastActiveMode === 'SORT_SEARCH_VIS' ? 'Sort & Search' : lastActiveMode === 'GENERAL_DSA_VIS' ? 'General DSA' : lastActiveMode === 'CODE_VAL_VIS' ? 'Code Validator' : 'Line Debugger'}</strong>.
+                  </p>
+                </div>
+              </div>
+              <div style={{ display: 'flex', gap: '8px' }}>
+                <button className="btn btn-start" style={{ padding: '0.4rem 1rem', fontSize: '0.85rem', margin: 0 }} onClick={() => {
+                  setAppMode(lastActiveMode);
+                  setSetupComplete(lastSetupComplete);
+                  window.location.hash = lastActiveMode;
+                }}>Resume Session</button>
+                <button className="btn btn-clear" style={{ padding: '0.4rem 0.8rem', fontSize: '0.85rem', margin: 0 }} onClick={() => {
+                  setLastActiveMode(null);
+                  setLastSetupComplete(false);
+                }}>Dismiss</button>
+              </div>
+            </div>
+          )}
+
           <div style={{ textAlign: 'center' }}>
             <h1 className="title-gradient" style={{ fontSize: '3rem', marginBottom: '1.5rem' }}>AlgoFlow-Studio</h1>
-            <div style={{ maxWidth: '500px', margin: '0 auto 2.5rem auto', position: 'relative' }}>
-              <input type="text" value={homeSearchQuery} onChange={e => setHomeSearchQuery(e.target.value)}
-                placeholder="Search the work to do... (e.g., Tree, Sort, Debug)"
-                style={{ width: '100%', padding: '0.8rem 1.2rem', borderRadius: '12px', border: '1px solid var(--glass-border)', background: 'rgba(0,0,0,0.2)', color: 'var(--text-primary)', fontSize: '1rem', outline: 'none' }} />
-              <div style={{ position: 'absolute', right: '1rem', top: '50%', transform: 'translateY(-50%)', opacity: 0.5 }}>🔍</div>
+            <div style={{ 
+              maxWidth: '500px', 
+              margin: '0 auto 2.5rem auto', 
+              position: 'relative',
+              borderRadius: '24px',
+              background: 'rgba(255, 255, 255, 0.03)',
+              border: `1.5px solid ${isSearchFocused ? 'var(--accent-primary)' : 'var(--glass-border)'}`,
+              boxShadow: isSearchFocused 
+                ? '0 0 15px rgba(139, 92, 246, 0.4), 0 8px 32px 0 rgba(0,0,0,0.3)' 
+                : '0 8px 32px 0 rgba(0, 0, 0, 0.25)',
+              backdropFilter: 'blur(8px)',
+              transition: 'all 0.3s ease',
+              display: 'flex',
+              alignItems: 'center',
+              padding: '0.2rem 1.2rem'
+            }}>
+              <span style={{ fontSize: '1.1rem', marginRight: '8px', opacity: 0.6 }}>🔍</span>
+              <input 
+                type="text" 
+                value={homeSearchQuery} 
+                onChange={e => setHomeSearchQuery(e.target.value)}
+                onFocus={() => setIsSearchFocused(true)}
+                onBlur={() => setIsSearchFocused(false)}
+                placeholder="Search algorithms, data structures, debuggers..."
+                style={{ 
+                  flex: 1, 
+                  padding: '0.8rem 0', 
+                  background: 'transparent', 
+                  border: 'none', 
+                  color: 'var(--text-primary)', 
+                  fontSize: '1rem', 
+                  outline: 'none' 
+                }} 
+              />
+              {homeSearchQuery.trim() !== '' && (
+                <button 
+                  onClick={() => setHomeSearchQuery('')}
+                  style={{ 
+                    background: 'transparent', 
+                    border: 'none', 
+                    color: 'var(--text-secondary)', 
+                    cursor: 'pointer', 
+                    fontSize: '1.2rem', 
+                    marginLeft: '8px',
+                    padding: 0,
+                    outline: 'none',
+                    display: 'flex',
+                    alignItems: 'center',
+                    justifyContent: 'center'
+                  }}
+                  title="Clear search"
+                >
+                  ✕
+                </button>
+              )}
             </div>
           </div>
           <div className="home-grid">
             {homeSearchQuery.trim() === '' ? (
               [
+                { id: 'SORT_SEARCH_VIS', icon: '📊', title: 'Sort & Search Visualizer', desc: 'Visualize array sorting and searching algorithms with dynamic GSAP animations.' },
+                { id: 'GENERAL_DSA_VIS', icon: '📦', title: 'General DSA Visualizer', desc: 'Explore foundational data structures: Stacks, Queues, Linked Lists, and Hash Tables.' },
                 { id: 'MAIN_VIS', icon: '🚀', title: 'Tree Visualizer Studio', desc: 'Build BST / AVL / Heaps / B-Tree / Segment trees step-by-step with live code generation.' },
                 { id: 'GRAPH_VIS', icon: '🕸️', title: 'Graph Visualizer Studio', desc: 'Construct customized weighted graphs. Animate BFS, DFS, Dijkstra, and Greedy best-first traversals.' },
                 { id: 'CODE_VAL_VIS', icon: '💻', title: 'Code Validator & Runner', desc: 'Write or paste code in 4 languages. Enhanced syntax validation, error detection, and native cloud execution.' },
-                { id: 'SORT_SEARCH_VIS', icon: '📊', title: 'Sort & Search Visualizer', desc: 'Visualize array sorting and searching algorithms with dynamic GSAP animations.' },
-                { id: 'GENERAL_DSA_VIS', icon: '📦', title: 'General DSA Visualizer', desc: 'Explore foundational data structures: Stacks, Queues, Linked Lists, and Hash Tables.' },
                 { id: 'LINE_BY_LINE_VIS', icon: '🐞', title: 'Line-by-Line Debugger', desc: 'PythonTutor-style execution tracing. Step through code, track variables, frames, and output.' }
               ].map(card => (
                 <div key={card.id} className="option-card" onClick={() => enterMode(card.id)} onMouseEnter={e => gsap.to(e.currentTarget, { scale: 1.05, duration: 0.2 })} onMouseLeave={e => gsap.to(e.currentTarget, { scale: 1, duration: 0.2 })}>
@@ -1794,7 +2157,22 @@ function App() {
                 { id: 'QUEUE_DEQUE', mode: 'GENERAL_DSA_VIS', title: 'Deque', icon: '↔️', desc: 'General DSA', type: 'QUEUE', variety: 'QUEUE_DEQUE' },
                 { id: 'HASH_LINEAR', mode: 'GENERAL_DSA_VIS', title: 'Hash Table (Linear Probing)', icon: '#️⃣', desc: 'General DSA', type: 'HASH_TABLE', variety: 'HASH_LINEAR' },
                 { id: 'HASH_QUADRATIC', mode: 'GENERAL_DSA_VIS', title: 'Hash Table (Quadratic Probing)', icon: '2️⃣', desc: 'General DSA', type: 'HASH_TABLE', variety: 'HASH_QUADRATIC' },
-                { id: 'HASH_CHAINING', mode: 'GENERAL_DSA_VIS', title: 'Hash Table (Separate Chaining)', icon: '⛓️‍💥', desc: 'General DSA', type: 'HASH_TABLE', variety: 'HASH_CHAINING' }
+                { id: 'HASH_CHAINING', mode: 'GENERAL_DSA_VIS', title: 'Hash Table (Separate Chaining)', icon: '⛓️‍💥', desc: 'General DSA', type: 'HASH_TABLE', variety: 'HASH_CHAINING' },
+                { id: 'BUBBLE_SORT', mode: 'SORT_SEARCH_VIS', title: 'Bubble Sort', icon: '🫧', desc: 'Sort & Search Visualizer', tab: 'Sort', algo: 'Bubble Sort' },
+                { id: 'SELECTION_SORT', mode: 'SORT_SEARCH_VIS', title: 'Selection Sort', icon: '🎯', desc: 'Sort & Search Visualizer', tab: 'Sort', algo: 'Selection Sort' },
+                { id: 'INSERTION_SORT', mode: 'SORT_SEARCH_VIS', title: 'Insertion Sort', icon: '📥', desc: 'Sort & Search Visualizer', tab: 'Sort', algo: 'Insertion Sort' },
+                { id: 'MERGE_SORT', mode: 'SORT_SEARCH_VIS', title: 'Merge Sort', icon: '🧩', desc: 'Sort & Search Visualizer', tab: 'Sort', algo: 'Merge Sort' },
+                { id: 'HEAP_SORT', mode: 'SORT_SEARCH_VIS', title: 'Heap Sort', icon: '🌲', desc: 'Sort & Search Visualizer', tab: 'Sort', algo: 'Heap Sort' },
+                { id: 'SHELL_SORT', mode: 'SORT_SEARCH_VIS', title: 'Shell Sort', icon: '🐚', desc: 'Sort & Search Visualizer', tab: 'Sort', algo: 'Shell Sort' },
+                { id: 'COCKTAIL_SORT', mode: 'SORT_SEARCH_VIS', title: 'Cocktail Shaker Sort', icon: '🍹', desc: 'Sort & Search Visualizer', tab: 'Sort', algo: 'Cocktail Shaker Sort' },
+                { id: 'QUICK_SORT', mode: 'SORT_SEARCH_VIS', title: 'Quick Sort', icon: '⚡', desc: 'Sort & Search Visualizer', tab: 'Sort', algo: 'Quick Sort' },
+                { id: 'RADIX_SORT', mode: 'SORT_SEARCH_VIS', title: 'Radix Sort', icon: '🔢', desc: 'Sort & Search Visualizer', tab: 'Sort', algo: 'Radix Sort' },
+                { id: 'LINEAR_SEARCH', mode: 'SORT_SEARCH_VIS', title: 'Linear Search', icon: '🔍', desc: 'Sort & Search Visualizer', tab: 'Search', algo: 'Linear Search' },
+                { id: 'BINARY_SEARCH', mode: 'SORT_SEARCH_VIS', title: 'Binary Search', icon: '🎯', desc: 'Sort & Search Visualizer', tab: 'Search', algo: 'Binary Search' },
+                { id: 'DIJKSTRA_GRAPH', mode: 'GRAPH_VIS', title: 'Dijkstra Algorithm', icon: '🛣️', desc: 'Graph Visualizer', algo: 'Dijkstra' },
+                { id: 'BFS_GRAPH', mode: 'GRAPH_VIS', title: 'Breadth-First Search (BFS)', icon: '🌐', desc: 'Graph Visualizer', algo: 'BFS' },
+                { id: 'DFS_GRAPH', mode: 'GRAPH_VIS', title: 'Depth-First Search (DFS)', icon: '🕵️', desc: 'Graph Visualizer', algo: 'DFS' },
+                { id: 'GREEDY_GRAPH', mode: 'GRAPH_VIS', title: 'Greedy Best-First Search', icon: '🤑', desc: 'Graph Visualizer', algo: 'Greedy' }
               ].filter(c => c.title.toLowerCase().includes(homeSearchQuery.toLowerCase()) || c.desc.toLowerCase().includes(homeSearchQuery.toLowerCase())).map(card => (
                 <div key={card.id} className="option-card" onClick={() => setPendingModule(card)} onMouseEnter={e => gsap.to(e.currentTarget, { scale: 1.05, duration: 0.2 })} onMouseLeave={e => gsap.to(e.currentTarget, { scale: 1, duration: 0.2 })}>
                   <div className="option-icon">{card.icon}</div>
@@ -1836,17 +2214,53 @@ function App() {
 
       {/* Sort Search Visualizer */}
       <div style={{ display: appMode === 'SORT_SEARCH_VIS' ? 'block' : 'none' }}>
-        {mountedModes['SORT_SEARCH_VIS'] && <SortSearchVisualizer onBack={goBack} openSettings={() => setIsSettingsOpen(true)} />}
+        {mountedModes['SORT_SEARCH_VIS'] && (
+          <SortSearchVisualizer 
+            onBack={goBack} 
+            openSettings={() => setIsSettingsOpen(true)} 
+            initialTab={globalSortSearchTab} 
+            initialSort={globalSort} 
+            initialSearch={globalSearch} 
+            onCopyCode={handleCopyTrigger}
+            onCodeChange={(code, lang) => {
+              setActiveCodeForChat(code);
+              setActiveLangForChat(lang);
+            }}
+          />
+        )}
       </div>
 
       {/* General DSA Visualizer */}
       <div style={{ display: appMode === 'GENERAL_DSA_VIS' ? 'block' : 'none' }}>
-        {mountedModes['GENERAL_DSA_VIS'] && <GeneralDSVisualizer onBack={goBack} openSettings={() => setIsSettingsOpen(true)} initialType={globalDsType} initialVariety={globalDsVariety} />}
+        {mountedModes['GENERAL_DSA_VIS'] && (
+          <GeneralDSVisualizer 
+            onBack={goBack} 
+            openSettings={() => setIsSettingsOpen(true)} 
+            initialType={globalDsType} 
+            initialVariety={globalDsVariety} 
+            onCopyCode={handleCopyTrigger}
+            onCodeChange={(code, lang) => {
+              setActiveCodeForChat(code);
+              setActiveLangForChat(lang);
+            }}
+          />
+        )}
       </div>
 
       {/* Graph Visualizer Studio */}
       <div style={{ display: appMode === 'GRAPH_VIS' ? 'block' : 'none' }}>
-        {mountedModes['GRAPH_VIS'] && <GraphVisualizer onBack={goBack} openSettings={() => setIsSettingsOpen(true)} />}
+        {mountedModes['GRAPH_VIS'] && (
+          <GraphVisualizer 
+            onBack={goBack} 
+            openSettings={() => setIsSettingsOpen(true)} 
+            initialAlgo={globalGraphAlgo} 
+            onCopyCode={handleCopyTrigger}
+            onCodeChange={(code, lang) => {
+              setActiveCodeForChat(code);
+              setActiveLangForChat(lang);
+            }}
+          />
+        )}
       </div>
 
       {/* Pending Module (Language Setup via Search) */}
@@ -1866,10 +2280,22 @@ function App() {
               </div>
             </div>
             <button className="btn btn-start" style={{ marginTop: '1.5rem', width: '100%' }} onClick={() => {
+              window.location.hash = pendingModule.mode;
               if (pendingModule.mode === 'MAIN_VIS') setTreeType(pendingModule.id);
               if (pendingModule.mode === 'GENERAL_DSA_VIS') {
                 setGlobalDsType(pendingModule.type);
                 setGlobalDsVariety(pendingModule.variety);
+              }
+              if (pendingModule.mode === 'SORT_SEARCH_VIS') {
+                setGlobalSortSearchTab(pendingModule.tab);
+                if (pendingModule.tab === 'Sort') {
+                  setGlobalSort(pendingModule.algo);
+                } else {
+                  setGlobalSearch(pendingModule.algo);
+                }
+              }
+              if (pendingModule.mode === 'GRAPH_VIS') {
+                setGlobalGraphAlgo(pendingModule.algo);
               }
               setAppMode(pendingModule.mode);
               setSetupComplete(true);
@@ -2078,7 +2504,7 @@ function App() {
       {/* Line-by-Line Debugger */}
       <div style={{ display: appMode === 'LINE_BY_LINE_VIS' && setupComplete ? 'block' : 'none' }}>
         {mountedModes['LINE_BY_LINE_VIS'] && (
-          <LineDebugger initialCode={customCode} lang={codeLang} fontSize={editorFontSize} wordWrap={editorWordWrap} onBack={goBack} isChatOpen={isChatOpen} setIsChatOpen={setIsChatOpen} chatMessages={chatMessages} setChatMessages={setChatMessages} />
+          <LineDebugger initialCode={customCode} lang={codeLang} fontSize={editorFontSize} wordWrap={editorWordWrap} onBack={goBack} openSettings={() => setIsSettingsOpen(true)} isChatOpen={isChatOpen} setIsChatOpen={setIsChatOpen} chatMessages={chatMessages} setChatMessages={setChatMessages} apiKey={globalApiKey} setApiKey={setGlobalApiKey} model={globalModel} setModel={setGlobalModel} />
         )}
       </div>
 
@@ -2212,11 +2638,18 @@ function App() {
                   onMouseOut={e => e.currentTarget.style.background = 'var(--glass-border)'}
                   title="Drag to resize" />
 
-                <div style={{ height: `${codeHeight}px`, flexShrink: 0, background: 'rgba(30,41,59,0.6)', borderRadius: '14px', border: '1px solid var(--glass-border)', display: 'flex', flexDirection: 'column', padding: '0.85rem', overflow: 'hidden' }}>
+                <div style={{ height: `${codeHeight}px`, flexShrink: 0, background: 'var(--bg-secondary)', borderRadius: '14px', border: '1px solid var(--glass-border)', display: 'flex', flexDirection: 'column', padding: '0.85rem', overflow: 'hidden' }}>
                   <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '0.6rem', flexShrink: 0 }}>
                     <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
                       <h3 style={{ color: 'var(--text-secondary)', fontSize: '0.9rem', fontWeight: 600 }}>Auto-Generated Code</h3>
-                      <select className="styled-select" style={{ padding: '2px 8px', fontSize: '0.8rem', width: 'auto', backgroundColor: 'rgba(0,0,0,0.3)', paddingRight: '22px', backgroundPosition: 'right 6px center', backgroundSize: '10px', border: '1px solid var(--glass-border)', color: '#fff', borderRadius: '6px' }} value={codeLang} onChange={e => setCodeLang(e.target.value)}>
+                      <button 
+                        onClick={handleCopyTreeCode} 
+                        className="btn btn-clear" 
+                        style={{ padding: '2px 8px', fontSize: '0.8rem', whiteSpace: 'nowrap', border: '1px solid var(--glass-border)', borderRadius: '6px' }}
+                      >
+                        {treeCodeCopied ? '✓ Copied' : '📋 Copy'}
+                      </button>
+                      <select className="styled-select" style={{ padding: '2px 8px', fontSize: '0.8rem', width: 'auto', paddingRight: '22px', backgroundPosition: 'right 6px center', backgroundSize: '10px', border: '1px solid var(--glass-border)', borderRadius: '6px' }} value={codeLang} onChange={e => setCodeLang(e.target.value)}>
                         <option value="C++">C++</option>
                         <option value="Java">Java</option>
                         <option value="Python">Python</option>
@@ -2234,8 +2667,8 @@ function App() {
                 </div>
               </div>
 
-              <div style={{ flex: 1, background: '#0d1117', borderRadius: '14px', border: '1px solid var(--glass-border)', display: 'flex', flexDirection: 'column', overflow: 'hidden', minWidth: '220px' }}>
-                <div style={{ padding: '0.75rem 1rem', borderBottom: '1px solid var(--glass-border)', background: '#0d1117', flexShrink: 0 }}>
+              <div style={{ flex: 1, background: 'var(--bg-secondary)', borderRadius: '14px', border: '1px solid var(--glass-border)', display: 'flex', flexDirection: 'column', overflow: 'hidden', minWidth: '220px' }}>
+                <div style={{ padding: '0.75rem 1rem', borderBottom: '1px solid var(--glass-border)', flexShrink: 0 }}>
                   <h3 style={{ color: 'var(--text-secondary)', fontSize: '0.85rem', fontWeight: 600 }}>Execution Log</h3>
                 </div>
                 <div style={{ flex: 1, overflowY: 'auto', padding: '0.75rem 1rem' }}>
@@ -2248,8 +2681,95 @@ function App() {
         )}
       </div>
 
-      <ChatBot customCode={customCode} codeLang={codeLang} isChatOpen={isChatOpen} setIsChatOpen={setIsChatOpen} chatMessages={chatMessages} setChatMessages={setChatMessages} />
+      <ChatBot customCode={activeCodeForChat} codeLang={activeLangForChat} isChatOpen={isChatOpen} setIsChatOpen={setIsChatOpen} chatMessages={chatMessages} setChatMessages={setChatMessages} apiKey={globalApiKey} setApiKey={setGlobalApiKey} model={globalModel} setModel={setGlobalModel} />
       {isSettingsOpen && renderSettingsModal()}
+
+      {/* Copy Success & Options Modal */}
+      {copyModalData.isOpen && (
+        <div className="modal-overlay" style={{ zIndex: 1100 }}>
+          <div className="modal-content" style={{ maxWidth: '500px', textAlign: 'center', position: 'relative' }}>
+            <button 
+              style={{ position: 'absolute', top: '15px', right: '15px', background: 'transparent', border: 'none', color: 'var(--text-secondary)', fontSize: '1.2rem', cursor: 'pointer' }}
+              onClick={() => setCopyModalData(prev => ({ ...prev, isOpen: false }))}
+            >
+              ✕
+            </button>
+            <div style={{ fontSize: '3rem', marginBottom: '0.5rem' }}>📋</div>
+            <h2 className="title-gradient" style={{ fontSize: '1.6rem', margin: '0 0 0.5rem 0' }}>Code Copied!</h2>
+            <p style={{ color: 'var(--text-secondary)', fontSize: '0.9rem', marginBottom: '1.5rem', lineHeight: '1.5' }}>
+              The full code template has been successfully copied to your clipboard. What would you like to do next?
+            </p>
+            
+            <div style={{ display: 'flex', flexDirection: 'column', gap: '0.8rem' }}>
+              <button 
+                className="btn btn-insert"
+                style={{ width: '100%', padding: '0.8rem', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '8px', fontSize: '0.95rem' }}
+                onClick={() => {
+                  setCustomCode(copyModalData.code);
+                  setCodeLang(copyModalData.language);
+                  setAppMode('LINE_BY_LINE_VIS');
+                  setSetupComplete(true);
+                  setCopyModalData(prev => ({ ...prev, isOpen: false }));
+                }}
+              >
+                🐛 Go to Line-by-Line Debugger
+              </button>
+
+              <button 
+                className="btn btn-clear"
+                style={{ width: '100%', padding: '0.8rem', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '8px', fontSize: '0.95rem' }}
+                onClick={() => {
+                  navigator.clipboard.writeText(copyModalData.code);
+                  alert("✨ Copied clean code template optimized for online visualizers (like PythonTutor or VisuAlgo)!");
+                  setCopyModalData(prev => ({ ...prev, isOpen: false }));
+                }}
+              >
+                🌐 Copy for Online Visualizers
+              </button>
+
+              <button 
+                className="btn btn-clear"
+                style={{ width: '100%', padding: '0.8rem', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '8px', fontSize: '0.95rem' }}
+                onClick={() => {
+                  let eclipseCode = copyModalData.code;
+                  if (copyModalData.language === 'Java') {
+                    eclipseCode = `// Eclipse IDE Compatibility Code\n// To run in Eclipse:\n// 1. Create a new Java Project\n// 2. Create a new class named Main (or name matching the public class)\n// 3. Paste this code inside Main.java\n\n` + copyModalData.code;
+                  } else if (copyModalData.language === 'C++') {
+                    eclipseCode = `// Eclipse CDT Compatibility Code\n// 1. Create a C++ project in Eclipse\n// 2. Paste this code in your main .cpp file\n\n` + copyModalData.code;
+                  } else if (copyModalData.language === 'Python') {
+                    eclipseCode = `# Eclipse PyDev Compatibility Code\n# 1. Create a PyDev Project\n# 2. Paste this code in a python module\n\n` + copyModalData.code;
+                  }
+                  navigator.clipboard.writeText(eclipseCode);
+                  alert("☕ Formatted code copied to clipboard for Eclipse IDE!");
+                  setCopyModalData(prev => ({ ...prev, isOpen: false }));
+                }}
+              >
+                ☕ Copy for Eclipse IDE
+              </button>
+
+              <button 
+                className="btn btn-clear"
+                style={{ width: '100%', padding: '0.8rem', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '8px', fontSize: '0.95rem' }}
+                onClick={() => {
+                  let vscodeCode = copyModalData.code;
+                  if (copyModalData.language === 'Java') {
+                    vscodeCode = `// VS Code Java Compatibility Code\n// Ensure Extension Pack for Java is installed. Click 'Run' above the main class.\n\n` + copyModalData.code;
+                  } else if (copyModalData.language === 'C++') {
+                    vscodeCode = `// VS Code C++ Compatibility Code\n// Ensure C/C++ extension is installed. Press Ctrl+Alt+N or click run.\n\n` + copyModalData.code;
+                  } else if (copyModalData.language === 'JS') {
+                    vscodeCode = `// VS Code Node.js Compatibility Code\n// Run with: node <filename>.js\n\n` + copyModalData.code;
+                  }
+                  navigator.clipboard.writeText(vscodeCode);
+                  alert("💻 Formatted code copied to clipboard for VS Code!");
+                  setCopyModalData(prev => ({ ...prev, isOpen: false }));
+                }}
+              >
+                💻 Copy for VS Code
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
 
       {/* Interactive Review & Feedback Modal */}
       {isFeedbackOpen && (

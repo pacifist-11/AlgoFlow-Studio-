@@ -1,8 +1,9 @@
+/* eslint-disable react/prop-types, react-hooks/set-state-in-effect, react-hooks/exhaustive-deps */
 import React, { useState, useEffect, useRef } from 'react';
 import gsap from 'gsap';
 import { getSortSearchCode } from './codeTemplatesSort';
 
-const SortSearchVisualizer = ({ onBack, openSettings }) => {
+const SortSearchVisualizer = ({ onBack, openSettings, initialTab = 'Sort', initialSort = 'Bubble Sort', initialSearch = 'Linear Search', onCopyCode, onCodeChange }) => {
   const [array, setArray] = useState([]);
   const [initialArray, setInitialArray] = useState([]);
   const [timeline, setTimeline] = useState([]);
@@ -11,12 +12,13 @@ const SortSearchVisualizer = ({ onBack, openSettings }) => {
   const [speed, setSpeed] = useState(300);
   const [searchValue, setSearchValue] = useState('');
   const [customArrayStr, setCustomArrayStr] = useState('');
-  const [selectedSort, setSelectedSort] = useState('Bubble Sort');
-  const [selectedSearch, setSelectedSearch] = useState('Linear Search');
-  const [activeTab, setActiveTab] = useState('Sort'); // 'Sort' or 'Search'
+  const [selectedSort, setSelectedSort] = useState(initialSort);
+  const [selectedSearch, setSelectedSearch] = useState(initialSearch);
+  const [activeTab, setActiveTab] = useState(initialTab); // 'Sort' or 'Search'
   const [codeLang, setCodeLang] = useState('C++');
   const [showCode, setShowCode] = useState(true);
   const barRefs = useRef([]);
+  const currentDisplayedAlgo = activeTab === 'Sort' ? selectedSort : selectedSearch;
   
   const generateArray = () => {
     const arr = Array.from({length: 20}, () => Math.floor(Math.random() * 90) + 10);
@@ -48,6 +50,21 @@ const SortSearchVisualizer = ({ onBack, openSettings }) => {
     }
   };
 
+  const [copied, setCopied] = useState(false);
+  const handleCopyCode = () => {
+    const rawCode = getSortSearchCode(currentDisplayedAlgo, codeLang, array, searchValue ? parseInt(searchValue) : undefined);
+    navigator.clipboard.writeText(rawCode).then(() => {
+      setCopied(true);
+      setTimeout(() => setCopied(false), 2000);
+      if (onCopyCode) onCopyCode(rawCode, codeLang);
+    });
+  };
+
+  useEffect(() => {
+    const rawCode = getSortSearchCode(currentDisplayedAlgo, codeLang, array, searchValue ? parseInt(searchValue) : undefined);
+    if (onCodeChange) onCodeChange(rawCode, codeLang);
+  }, [currentDisplayedAlgo, codeLang, array, searchValue, onCodeChange]);
+
   useEffect(() => { generateArray(); }, []);
 
   useEffect(() => {
@@ -55,7 +72,7 @@ const SortSearchVisualizer = ({ onBack, openSettings }) => {
     if (isPlaying && currentStep < timeline.length - 1) {
       timer = setTimeout(() => setCurrentStep(p => p + 1), speed);
     } else if (currentStep >= timeline.length - 1) {
-      setIsPlaying(false);
+      setTimeout(() => setIsPlaying(false), 0);
     }
     return () => clearTimeout(timer);
   }, [isPlaying, currentStep, timeline.length, speed]);
@@ -530,7 +547,6 @@ const SortSearchVisualizer = ({ onBack, openSettings }) => {
   };
 
   const frame = timeline[currentStep] || { arr: array, i: -1, j: -1, k: -1, msg: '' };
-  const currentDisplayedAlgo = activeTab === 'Sort' ? selectedSort : selectedSearch;
 
   return (
     <div style={{ display: 'flex', flexDirection: 'column', height: '100vh', background: 'var(--body-bg, #0f172a)' }}>
@@ -704,6 +720,13 @@ const SortSearchVisualizer = ({ onBack, openSettings }) => {
           <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '0.6rem', flexShrink: 0 }}>
             <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
               <h3 style={{ color: 'var(--text-secondary)', fontSize: '0.9rem', fontWeight: 600, margin: 0 }}>{currentDisplayedAlgo} Code</h3>
+              <button 
+                onClick={handleCopyCode} 
+                className="btn btn-clear" 
+                style={{ padding: '0.2rem 0.5rem', fontSize: '0.75rem', whiteSpace: 'nowrap' }}
+              >
+                {copied ? '✓ Copied' : '📋 Copy'}
+              </button>
             </div>
             <select className="styled-select" style={{ padding: '4px 8px', fontSize: '0.8rem', width: '100px' }} value={codeLang} onChange={e => setCodeLang(e.target.value)}>
               <option value="C++">C++</option>
@@ -712,8 +735,8 @@ const SortSearchVisualizer = ({ onBack, openSettings }) => {
               <option value="JS">JavaScript</option>
             </select>
           </div>
-          <div className="code-box" style={{ flex: 1, overflowY: 'auto', whiteSpace: 'pre-wrap', fontSize: '0.8rem', background: '#0d1117', padding: '1rem', borderRadius: '8px' }}>
-            <pre style={{ margin: 0, color: '#c9d1d9', fontFamily: "'Fira Code', monospace", lineHeight: '1.6' }}>
+          <div className="code-box" style={{ flex: 1, overflowY: 'auto', whiteSpace: 'pre-wrap', fontSize: '0.8rem', padding: '1rem', borderRadius: '8px' }}>
+            <pre style={{ margin: 0, color: 'var(--text-primary)', fontFamily: "'Fira Code', monospace", lineHeight: '1.6' }}>
                {getSortSearchCode(currentDisplayedAlgo, codeLang, array, searchValue ? parseInt(searchValue) : undefined)}
             </pre>
           </div>

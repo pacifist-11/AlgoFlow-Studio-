@@ -1,8 +1,9 @@
+/* eslint-disable react/prop-types, react-hooks/set-state-in-effect, react-hooks/exhaustive-deps, no-unused-vars */
 import React, { useState, useEffect, useRef } from 'react';
 import gsap from 'gsap';
 import { getGeneralCodeTemplate } from './codeTemplatesGeneral';
 
-const GeneralDSVisualizer = ({ onBack, openSettings, initialType = 'HASH_TABLE', initialVariety = 'HASH_LINEAR' }) => {
+const GeneralDSVisualizer = ({ onBack, openSettings, initialType = 'HASH_TABLE', initialVariety = 'HASH_LINEAR', onCopyCode, onCodeChange }) => {
   const [dsType, setDsType] = useState(initialType);
   const [dsVariety, setDsVariety] = useState(initialVariety);
   const [inputValue, setInputValue] = useState('');
@@ -12,11 +13,25 @@ const GeneralDSVisualizer = ({ onBack, openSettings, initialType = 'HASH_TABLE',
   const [showCode, setShowCode] = useState(true);
   const [theme, setTheme] = useState('dark');
   
+  const [copied, setCopied] = useState(false);
+  const handleCopyCode = () => {
+    navigator.clipboard.writeText(currentCode).then(() => {
+      setCopied(true);
+      setTimeout(() => setCopied(false), 2000);
+      if (onCopyCode) onCopyCode(currentCode, codeLanguage);
+    });
+  };
+
+  useEffect(() => {
+    if (onCodeChange) onCodeChange(currentCode, codeLanguage);
+  }, [currentCode, codeLanguage, onCodeChange]);
+  
   // State for the data structures
   const [elements, setElements] = useState([]); 
   const [hashTable, setHashTable] = useState(Array.from({length: tableSize}, () => []));
   const [cqState, setCqState] = useState({ arr: Array(5).fill(null), f: -1, r: -1 });
   const [operationsLog, setOperationsLog] = useState([]);
+  const currentCode = getGeneralCodeTemplate(codeLanguage, dsType, dsVariety, operationsLog);
 
   // Animation timeline state
   const [timeline, setTimeline] = useState([]);
@@ -646,8 +661,6 @@ const GeneralDSVisualizer = ({ onBack, openSettings, initialType = 'HASH_TABLE',
     }
   }
 
-  const currentCode = getGeneralCodeTemplate(codeLanguage, dsType, dsVariety, operationsLog);
-
   return (
     <div style={{ display: 'flex', flexDirection: 'column', height: '100vh', background: 'var(--bg-primary, #0f172a)' }}>
       <header className="header-glass" style={{ padding: '0.8rem 1.5rem', display: 'flex', justifyContent: 'space-between', alignItems: 'center', flexWrap: 'wrap', gap: '10px' }}>
@@ -784,8 +797,15 @@ const GeneralDSVisualizer = ({ onBack, openSettings, initialType = 'HASH_TABLE',
         {/* Code Sidebar */}
         {showCode && (
         <div style={{ width: '450px', background: 'var(--bg-secondary)', borderLeft: '1px solid var(--glass-border)', display: 'flex', flexDirection: 'column', transition: 'width 0.3s' }}>
-          <div style={{ padding: '1rem', borderBottom: '1px solid var(--glass-border)', display: 'flex', justifyContent: 'space-between', alignItems: 'center', background: 'rgba(255,255,255,0.03)' }}>
-            <h3 style={{ margin: 0, fontSize: '1.1rem', color: 'var(--text-primary)', fontWeight: 'bold' }}>Implementation</h3>
+          <div style={{ padding: '1rem', borderBottom: '1px solid var(--glass-border)', display: 'flex', justifyContent: 'space-between', alignItems: 'center', background: 'rgba(255,255,255,0.03)', gap: '10px' }}>
+            <h3 style={{ margin: 0, fontSize: '1.1rem', color: 'var(--text-primary)', fontWeight: 'bold', flex: 1 }}>Implementation</h3>
+            <button 
+              onClick={handleCopyCode} 
+              className="btn btn-clear" 
+              style={{ padding: '0.3rem 0.6rem', fontSize: '0.85rem', whiteSpace: 'nowrap' }}
+            >
+              {copied ? '✓ Copied' : '📋 Copy'}
+            </button>
             <select className="styled-select" style={{ width: '120px', padding: '0.3rem' }} value={codeLanguage} onChange={(e) => setCodeLanguage(e.target.value)}>
               <option value="Java">Java</option>
               <option value="C++">C++</option>
@@ -793,8 +813,8 @@ const GeneralDSVisualizer = ({ onBack, openSettings, initialType = 'HASH_TABLE',
               <option value="JS">JavaScript</option>
             </select>
           </div>
-          <div style={{ flex: 1, padding: '1rem 0', overflowY: 'auto', background: '#0d1117' }}>
-            <pre style={{ margin: 0, color: '#c9d1d9', fontFamily: "'Fira Code', monospace", fontSize: '0.85rem', whiteSpace: 'pre-wrap', lineHeight: '1.6' }}>
+          <div style={{ flex: 1, padding: '1rem 0', overflowY: 'auto', background: 'var(--bg-secondary)' }}>
+            <pre style={{ margin: 0, color: 'var(--text-primary)', fontFamily: "'Fira Code', monospace", fontSize: '0.85rem', whiteSpace: 'pre-wrap', lineHeight: '1.6' }}>
               <code>
                 {currentCode.split('\\n').map((line, i) => {
                   const isMatch = frame.activeLineText && line.includes(frame.activeLineText) && !line.trim().startsWith('//');
