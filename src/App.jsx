@@ -761,24 +761,8 @@ function App() {
   const [feedbackSearchQuery, setFeedbackSearchQuery] = useState('');
 
   // ── Authentication, Session and Db State variables ──
-  const [isLoggedIn, setIsLoggedIn] = useState(() => {
-    const savedEmail = localStorage.getItem('userEmail');
-    const savedTime = localStorage.getItem('loginTime');
-    if (savedEmail && savedTime) {
-      if (Date.now() - Number(savedTime) < 3600000) {
-        return true;
-      }
-    }
-    return false;
-  });
-  const [userEmail, setUserEmail] = useState(() => {
-    const savedEmail = localStorage.getItem('userEmail');
-    const savedTime = localStorage.getItem('loginTime');
-    if (savedEmail && savedTime && Date.now() - Number(savedTime) < 3600000) {
-      return savedEmail;
-    }
-    return '';
-  });
+  const [isLoggedIn, setIsLoggedIn] = useState(true);
+  const [userEmail, setUserEmail] = useState('');
   const [userRole, setUserRole] = useState(() => {
     const savedRole = localStorage.getItem('userRole');
     const savedTime = localStorage.getItem('loginTime');
@@ -2466,215 +2450,7 @@ function App() {
   const frame = timeline[currentStep] || new Frame(null, [], null);
   const progress = timeline.length > 1 ? (currentStep / (timeline.length - 1)) * 100 : 0;
 
-  if (!isLoggedIn) {
-    return (
-      <div style={{
-        minHeight: '100vh',
-        display: 'flex',
-        justifyContent: 'center',
-        alignItems: 'center',
-        background: 'var(--bg-primary)',
-        backgroundImage: 'radial-gradient(circle at 10% 20%, rgba(59, 130, 246, 0.15), transparent 35%), radial-gradient(circle at 90% 80%, rgba(236, 72, 153, 0.15), transparent 35%)',
-        padding: '2rem'
-      }}>
-        <div className="modal-content" style={{
-          maxWidth: '460px',
-          width: '100%',
-          padding: '2.5rem',
-          borderRadius: '24px',
-          background: 'rgba(30, 41, 59, 0.6)',
-          backdropFilter: 'blur(16px)',
-          border: '1px solid var(--glass-border)',
-          boxShadow: '0 25px 50px -12px rgba(0,0,0,0.5)',
-          animation: 'fadeIn 0.4s ease-out'
-        }}>
-          <div style={{ textAlign: 'center', marginBottom: '1.5rem' }}>
-            <h1 className="title-gradient" style={{ fontSize: '2.5rem', marginBottom: '0.5rem', fontWeight: 800 }}>AlgoFlow-Studio</h1>
-            <p style={{ color: 'var(--text-secondary)', fontSize: '0.92rem' }}>Algorithm Visualizer & Debugger Suite</p>
-          </div>
 
-          {loginStep === 1 && (
-            <>
-              <div className="select-group" style={{ marginBottom: '1rem' }}>
-                <label style={{ fontSize: '0.95rem', fontWeight: 600, color: 'var(--text-primary)' }}>Email Address</label>
-                <input 
-                  type="email" 
-                  className="styled-input" 
-                  placeholder="name@example.com" 
-                  value={loginEmailInput} 
-                  onChange={e => setLoginEmailInput(e.target.value)}
-                  onKeyDown={e => e.key === 'Enter' && handleCheckEmail()}
-                  style={{ width: '100%', marginTop: '5px' }}
-                />
-              </div>
-
-              {loginError && (
-                <div style={{ color: 'var(--danger)', fontSize: '0.85rem', fontWeight: 'bold', display: 'flex', alignItems: 'center', gap: '5px', marginTop: '5px' }}>
-                  ⚠️ {loginError}
-                </div>
-              )}
-
-              <button 
-                className="btn btn-start" 
-                onClick={handleCheckEmail}
-                disabled={loginLoading}
-                style={{ marginTop: '1rem' }}
-              >
-                {loginLoading ? 'Checking...' : 'Next'}
-              </button>
-
-              {googleClientId && (
-                <>
-                  <div style={{
-                    display: 'flex',
-                    alignItems: 'center',
-                    margin: '1.5rem 0 1rem 0',
-                    color: 'var(--text-secondary)',
-                    fontSize: '0.82rem'
-                  }}>
-                    <hr style={{ flex: 1, border: 'none', borderTop: '1px solid rgba(255, 255, 255, 0.08)' }} />
-                    <span style={{ padding: '0 10px', textTransform: 'uppercase', letterSpacing: '1px' }}>or</span>
-                    <hr style={{ flex: 1, border: 'none', borderTop: '1px solid rgba(255, 255, 255, 0.08)' }} />
-                  </div>
-
-                  <div 
-                    id="google-signin-btn" 
-                    style={{ 
-                      width: '100%', 
-                      display: 'flex', 
-                      justifyContent: 'center',
-                      minHeight: '40px'
-                    }}
-                  />
-                </>
-              )}
-            </>
-          )}
-
-          {loginStep === 2 && (
-            <>
-              <div style={{ display: 'flex', alignItems: 'center', gap: '8px', marginBottom: '1rem', background: 'rgba(255,255,255,0.02)', padding: '8px 12px', borderRadius: '8px', border: '1px solid var(--glass-border)' }}>
-                <span style={{ fontSize: '1.2rem' }}>👤</span>
-                <div style={{ textAlign: 'left' }}>
-                  <div style={{ fontSize: '0.75rem', color: 'var(--text-secondary)' }}>Admin Login</div>
-                  <div style={{ fontSize: '0.88rem', fontWeight: 'bold', color: 'var(--accent-primary)' }}>{loginEmailInput}</div>
-                </div>
-              </div>
-
-              <div className="select-group" style={{ marginBottom: '1rem' }}>
-                <label style={{ fontSize: '0.95rem', fontWeight: 600, color: 'var(--text-primary)' }}>Password</label>
-                <input 
-                  type="password" 
-                  className="styled-input" 
-                  placeholder="Enter admin password" 
-                  value={loginPasswordInput} 
-                  onChange={e => setLoginPasswordInput(e.target.value)}
-                  onKeyDown={e => e.key === 'Enter' && handleAdminLogin()}
-                  style={{ width: '100%', marginTop: '5px' }}
-                />
-              </div>
-
-              {loginError && (
-                <div style={{ color: 'var(--danger)', fontSize: '0.85rem', fontWeight: 'bold', display: 'flex', alignItems: 'center', gap: '5px', marginTop: '5px' }}>
-                  ⚠️ {loginError}
-                </div>
-              )}
-
-              <div style={{ display: 'flex', gap: '10px', marginTop: '1rem' }}>
-                <button 
-                  className="btn btn-clear" 
-                  onClick={() => { setLoginStep(1); setLoginPasswordInput(''); setLoginError(''); }}
-                  style={{ flex: 1 }}
-                >
-                  Back
-                </button>
-                <button 
-                  className="btn btn-start" 
-                  onClick={handleAdminLogin}
-                  disabled={loginLoading}
-                  style={{ flex: 2, margin: 0 }}
-                >
-                  {loginLoading ? 'Authenticating...' : 'Sign In'}
-                </button>
-              </div>
-            </>
-          )}
-
-          {loginStep === 3 && (
-            <>
-              <div style={{ display: 'flex', alignItems: 'center', gap: '8px', marginBottom: '1rem', background: 'rgba(255,255,255,0.02)', padding: '8px 12px', borderRadius: '8px', border: '1px solid var(--glass-border)' }}>
-                <span style={{ fontSize: '1.2rem' }}>📧</span>
-                <div style={{ textAlign: 'left' }}>
-                  <div style={{ fontSize: '0.75rem', color: 'var(--text-secondary)' }}>User Email</div>
-                  <div style={{ fontSize: '0.88rem', fontWeight: 'bold', color: 'var(--accent-secondary)' }}>{loginEmailInput}</div>
-                </div>
-              </div>
-
-              <div className="select-group" style={{ marginBottom: '1rem' }}>
-                <label style={{ fontSize: '0.95rem', fontWeight: 600, color: 'var(--text-primary)', textAlign: 'center', display: 'block' }}>Enter Verification Code</label>
-                {loginWarning ? (
-                  <div style={{ background: 'rgba(245,158,11,0.08)', border: '1px solid rgba(245,158,11,0.25)', borderRadius: '12px', padding: '10px 14px', margin: '8px 0', fontSize: '0.8rem', color: '#fbbf24', textAlign: 'left', lineHeight: '1.4' }}>
-                    ⚠️ <strong>SMTP Send Failure</strong><br/>
-                    Email credentials are not configured in <code>.env</code>.<br/>
-                    <strong>Dev OTP Code:</strong> <span style={{ fontSize: '1.05rem', fontWeight: 'bold', color: '#60a5fa', fontFamily: 'monospace', letterSpacing: '1px' }}>{fallbackOtp}</span>
-                  </div>
-                ) : (
-                  <p style={{ fontSize: '0.8rem', color: 'var(--text-secondary)', textAlign: 'center', margin: '4px 0 10px 0' }}>
-                    We sent a 6-digit OTP code to your email.
-                  </p>
-                )}
-                <input 
-                  type="text" 
-                  className="styled-input" 
-                  placeholder="------" 
-                  maxLength={6}
-                  value={loginOtpInput} 
-                  onChange={e => setLoginOtpInput(e.target.value.replace(/\D/g, ''))}
-                  onKeyDown={e => e.key === 'Enter' && handleUserOtpLogin()}
-                  style={{ width: '100%', textAlign: 'center', letterSpacing: '8px', fontSize: '1.5rem', fontWeight: 'bold', fontFamily: 'monospace', color: '#fbbf24', border: '1.5px solid var(--accent-primary)', background: 'rgba(0,0,0,0.3)' }}
-                />
-              </div>
-
-              {loginError && (
-                <div style={{ color: 'var(--danger)', fontSize: '0.85rem', fontWeight: 'bold', display: 'flex', alignItems: 'center', gap: '5px', justifyContent: 'center' }}>
-                  ⚠️ {loginError}
-                </div>
-              )}
-
-              <div style={{ display: 'flex', flexDirection: 'column', gap: '10px', marginTop: '1rem' }}>
-                <div style={{ display: 'flex', gap: '10px' }}>
-                  <button 
-                    className="btn btn-clear" 
-                    onClick={() => { setLoginStep(1); setLoginOtpInput(''); setLoginError(''); }}
-                    style={{ flex: 1 }}
-                  >
-                    Back
-                  </button>
-                  <button 
-                    className="btn btn-start" 
-                    onClick={handleUserOtpLogin}
-                    disabled={loginLoading}
-                    style={{ flex: 2, margin: 0, background: 'linear-gradient(135deg, #10b981, #059669)' }}
-                  >
-                    {loginLoading ? 'Verifying...' : 'Verify & Log In'}
-                  </button>
-                </div>
-
-                <button 
-                  className="btn btn-clear" 
-                  onClick={handleResendOtp}
-                  disabled={isResendingOtp}
-                  style={{ width: '100%', fontSize: '0.82rem', padding: '0.4rem', border: 'none', background: 'transparent', color: 'var(--accent-primary)', textDecoration: 'underline' }}
-                >
-                  {isResendingOtp ? 'Resending...' : 'Resend Code'}
-                </button>
-              </div>
-            </>
-          )}
-        </div>
-      </div>
-    );
-  }
 
   return (
     <>
@@ -2689,15 +2465,6 @@ function App() {
             onMouseLeave={e => e.currentTarget.style.transform = 'scale(1)'}
           >
             ⚙️ Settings
-          </button>
-          <button 
-            className="btn btn-clear" 
-            onClick={handleLogout}
-            style={{ display: 'flex', alignItems: 'center', gap: '8px', padding: '0.6rem 1.2rem', borderRadius: '12px', background: 'rgba(239,68,68,0.08)', border: '1px solid rgba(239,68,68,0.25)', color: '#f87171', cursor: 'pointer', transition: 'all 0.25s' }}
-            onMouseEnter={e => e.currentTarget.style.transform = 'scale(1.05)'}
-            onMouseLeave={e => e.currentTarget.style.transform = 'scale(1)'}
-          >
-            🚪 Logout
           </button>
         </div>
         <div className="home-container">
@@ -3588,10 +3355,10 @@ function App() {
                     <input 
                       type="email"
                       className="styled-input" 
-                      style={{ width: '100%', padding: '0.65rem 0.85rem', fontSize: '0.95rem', borderRadius: '8px', border: '1px solid var(--glass-border)', background: 'rgba(0,0,0,0.2)', color: '#fff', opacity: 0.6 }} 
+                      style={{ width: '100%', padding: '0.65rem 0.85rem', fontSize: '0.95rem', borderRadius: '8px', border: '1px solid var(--glass-border)', background: 'rgba(0,0,0,0.2)', color: '#fff' }} 
                       placeholder="Enter your email to verify with OTP" 
-                      value={userEmail} 
-                      disabled={true}
+                      value={feedbackEmail} 
+                      onChange={e => setFeedbackEmail(e.target.value)}
                       required
                     />
                   </div>
@@ -3602,7 +3369,7 @@ function App() {
                     <textarea 
                       className="styled-input" 
                       style={{ width: '100%', height: '90px', resize: 'none', padding: '0.65rem 0.85rem', fontFamily: 'sans-serif', fontSize: '0.95rem', borderRadius: '8px', border: '1px solid var(--glass-border)', background: 'rgba(0,0,0,0.2)', color: '#fff' }} 
-                      placeholder="Tell us what you think..." 
+                      placeholder="Tell us what development you want..." 
                       value={feedbackText} 
                       onChange={e => setFeedbackText(e.target.value)} 
                     />
@@ -3617,11 +3384,11 @@ function App() {
 
                 <button 
                   className="btn btn-start" 
-                  style={{ width: '100%', marginTop: '0.75rem', padding: '0.85rem', borderRadius: '12px', fontSize: '1.05rem', fontWeight: 'bold', border: 'none', cursor: isFeedbackVerifyingOtp ? 'not-allowed' : 'pointer', background: 'linear-gradient(135deg, var(--accent-primary), var(--accent-secondary))', color: 'white', flexShrink: 0 }} 
-                  onClick={submitDirectFeedback}
-                  disabled={isFeedbackVerifyingOtp}
+                  style={{ width: '100%', marginTop: '0.75rem', padding: '0.85rem', borderRadius: '12px', fontSize: '1.05rem', fontWeight: 'bold', border: 'none', cursor: isFeedbackSendingOtp ? 'not-allowed' : 'pointer', background: 'linear-gradient(135deg, var(--accent-primary), var(--accent-secondary))', color: 'white', flexShrink: 0 }} 
+                  onClick={sendFeedbackOtp}
+                  disabled={isFeedbackSendingOtp}
                 >
-                  {isFeedbackVerifyingOtp ? '⏳ Submitting...' : 'Send Feedback'}
+                  {isFeedbackSendingOtp ? '⏳ Sending OTP...' : 'Send Verification OTP'}
                 </button>
               </>
             )}

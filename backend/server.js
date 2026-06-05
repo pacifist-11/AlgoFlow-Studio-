@@ -251,54 +251,6 @@ app.post('/api/auth/login-admin', async (req, res) => {
   }
 });
 
-// ── Auth API 4: Google Sign-In ──
-app.get('/api/auth/config', (req, res) => {
-  res.json({ googleClientId: process.env.GOOGLE_CLIENT_ID || '' });
-});
-
-app.post('/api/auth/google', async (req, res) => {
-  const { credential } = req.body;
-  if (!credential) {
-    return res.status(400).json({ error: 'Missing Google credential token.' });
-  }
-
-  try {
-    // Call Google Token Info API to verify and decode the token safely
-    const response = await fetch(`https://oauth2.googleapis.com/tokeninfo?id_token=${credential}`);
-    if (!response.ok) {
-      return res.status(400).json({ error: 'Invalid Google login credentials.' });
-    }
-
-    const payload = await response.json();
-    
-    // Verify client ID if configured
-    const expectedClientId = process.env.GOOGLE_CLIENT_ID;
-    if (expectedClientId && payload.aud !== expectedClientId) {
-      console.warn('Google client ID mismatch during validation');
-      return res.status(400).json({ error: 'Invalid Google client origin.' });
-    }
-
-    const email = payload.email?.toLowerCase().trim();
-    if (!email) {
-      return res.status(400).json({ error: 'Unable to retrieve email from Google login.' });
-    }
-
-    // Check if user is the admin
-    const role = (email === 'pothalayeswanth11@gmail.com') ? 'admin' : 'user';
-
-    // Insert user if they don't exist
-    await pool.query(
-      'INSERT INTO users (email, role) VALUES ($1, $2) ON CONFLICT (email) DO NOTHING',
-      [email, role]
-    );
-
-    res.json({ success: true, email, role });
-  } catch (err) {
-    console.error('❌ Google verification failure:', err.message);
-    res.status(500).json({ error: 'Internal server error during Google validation.', details: err.message });
-  }
-});
-
 // ── User State API 1: Save State ──
 app.post('/api/user/save-state', async (req, res) => {
   const { email, state_data } = req.body;
