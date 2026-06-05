@@ -96,10 +96,15 @@ pool.connect((err, client, release) => {
 
 // Configure Nodemailer transporter based on .env
 const getTransporter = () => {
+  const port = parseInt(process.env.SMTP_PORT || '465');
+  const isSecure = process.env.SMTP_SECURE !== undefined 
+    ? (process.env.SMTP_SECURE === 'true' || process.env.SMTP_SECURE === true)
+    : port === 465;
+
   return nodemailer.createTransport({
     host: process.env.SMTP_HOST || 'smtp.gmail.com',
-    port: parseInt(process.env.SMTP_PORT || '587'),
-    secure: process.env.SMTP_SECURE === 'true',
+    port: port,
+    secure: isSecure,
     auth: {
       user: process.env.SMTP_USER,
       pass: process.env.SMTP_PASS,
