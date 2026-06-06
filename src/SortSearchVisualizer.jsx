@@ -46,7 +46,7 @@ const copyToClipboard = (text) => {
   }
 };
 
-const SortSearchVisualizer = ({ onBack, openSettings, initialTab = 'Sort', initialSort = 'Bubble Sort', initialSearch = 'Linear Search', onCopyCode, onCodeChange }) => {
+const SortSearchVisualizer = ({ onBack, openSettings, initialTab = 'Sort', initialSort = 'Bubble Sort', initialSearch = 'Linear Search', onCopyCode, onCodeChange, fontSize = 14, wordWrap = 'off' }) => {
   const [array, setArray] = useState([]);
   const [initialArray, setInitialArray] = useState([]);
   const [timeline, setTimeline] = useState([]);
@@ -684,7 +684,7 @@ const SortSearchVisualizer = ({ onBack, openSettings, initialTab = 'Sort', initi
           {selectedSort === 'Radix Sort' && frame.buckets && (
             <div style={{ 
               marginTop: '1.2rem', 
-              background: 'rgba(0,0,0,0.2)', 
+              background: 'var(--glass-bg)', 
               borderRadius: '14px', 
               border: '1px solid var(--glass-border)', 
               padding: '1rem',
@@ -740,13 +740,13 @@ const SortSearchVisualizer = ({ onBack, openSettings, initialTab = 'Sort', initi
             </div>
           )}
           
-          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginTop: '1.5rem', background: 'rgba(0,0,0,0.2)', padding: '12px 24px', borderRadius: '16px', border: '1px solid var(--glass-border)', flexShrink: 0 }}>
+          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginTop: '1.5rem', background: 'var(--glass-bg)', padding: '12px 24px', borderRadius: '16px', border: '1px solid var(--glass-border)', flexShrink: 0 }}>
             <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
-              <button className="btn btn-clear" style={{ padding: '0.5rem 1rem', border: 'none', background: 'rgba(255,255,255,0.08)', fontWeight: 'bold' }} onClick={() => { setIsPlaying(false); setCurrentStep(0); }} disabled={!timeline.length||currentStep===0}>⏮ First</button>
-              <button className="btn btn-clear" style={{ padding: '0.5rem 1rem', border: 'none', background: 'rgba(255,255,255,0.08)', fontWeight: 'bold' }} onClick={() => { setIsPlaying(false); setCurrentStep(p => Math.max(0, p - 1)); }} disabled={!timeline.length||currentStep===0}>◀ Prev</button>
+              <button className="btn btn-clear" style={{ padding: '0.5rem 1rem', fontWeight: 'bold' }} onClick={() => { setIsPlaying(false); setCurrentStep(0); }} disabled={!timeline.length||currentStep===0}>⏮ First</button>
+              <button className="btn btn-clear" style={{ padding: '0.5rem 1rem', fontWeight: 'bold' }} onClick={() => { setIsPlaying(false); setCurrentStep(p => Math.max(0, p - 1)); }} disabled={!timeline.length||currentStep===0}>◀ Prev</button>
               <button className="btn btn-clear" style={{ padding: '0.5rem 1.5rem', border: 'none', background: isPlaying ? 'rgba(59,130,246,0.6)' : 'var(--accent-primary)', color: 'white', fontWeight: 'bold', boxShadow: '0 4px 10px rgba(59,130,246,0.4)' }} onClick={() => setIsPlaying(p => !p)} disabled={!timeline.length}>{isPlaying ? '⏸ Pause' : '▶ Play'}</button>
-              <button className="btn btn-clear" style={{ padding: '0.5rem 1rem', border: 'none', background: 'rgba(255,255,255,0.08)', fontWeight: 'bold' }} onClick={() => { setIsPlaying(false); setCurrentStep(p => Math.min(timeline.length - 1, p + 1)); }} disabled={!timeline.length||currentStep===timeline.length-1}>Next ▶</button>
-              <button className="btn btn-clear" style={{ padding: '0.5rem 1rem', border: 'none', background: 'rgba(255,255,255,0.08)', fontWeight: 'bold' }} onClick={() => { setIsPlaying(false); setCurrentStep(timeline.length - 1); }} disabled={!timeline.length||currentStep===timeline.length-1}>Last ⏭</button>
+              <button className="btn btn-clear" style={{ padding: '0.5rem 1rem', fontWeight: 'bold' }} onClick={() => { setIsPlaying(false); setCurrentStep(p => Math.min(timeline.length - 1, p + 1)); }} disabled={!timeline.length||currentStep===timeline.length-1}>Next ▶</button>
+              <button className="btn btn-clear" style={{ padding: '0.5rem 1rem', fontWeight: 'bold' }} onClick={() => { setIsPlaying(false); setCurrentStep(timeline.length - 1); }} disabled={!timeline.length||currentStep===timeline.length-1}>Last ⏭</button>
               <span style={{ fontSize: '1rem', color: 'var(--text-secondary)', marginLeft: '15px', fontWeight: 'bold', fontFamily: 'monospace' }}>Step: {timeline.length ? currentStep + 1 : 0} / {timeline.length}</span>
             </div>
 
@@ -759,7 +759,7 @@ const SortSearchVisualizer = ({ onBack, openSettings, initialTab = 'Sort', initi
 
         {/* Right Column: Code Sidebar */}
         {showCode && (
-        <div style={{ width: '450px', background: 'rgba(30,41,59,0.6)', borderRadius: '14px', border: '1px solid var(--glass-border)', display: 'flex', flexDirection: 'column', padding: '0.85rem', overflow: 'hidden', minWidth: '350px' }}>
+        <div style={{ width: '450px', background: 'var(--glass-bg)', borderRadius: '14px', border: '1px solid var(--glass-border)', display: 'flex', flexDirection: 'column', padding: '0.85rem', overflow: 'hidden', minWidth: '350px' }}>
           <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '0.6rem', flexShrink: 0 }}>
             <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
               <h3 style={{ color: 'var(--text-secondary)', fontSize: '0.9rem', fontWeight: 600, margin: 0 }}>{currentDisplayedAlgo} Code</h3>
@@ -778,8 +778,15 @@ const SortSearchVisualizer = ({ onBack, openSettings, initialTab = 'Sort', initi
               <option value="JS">JavaScript</option>
             </select>
           </div>
-          <div className="code-box" style={{ flex: 1, overflowY: 'auto', whiteSpace: 'pre-wrap', fontSize: '0.8rem', padding: '1rem', borderRadius: '8px' }}>
-            <pre style={{ margin: 0, color: 'var(--text-primary)', fontFamily: "'Fira Code', monospace", lineHeight: '1.6' }}>
+          <div className="code-box" style={{ flex: 1, overflowY: 'auto', padding: '1rem', borderRadius: '8px' }}>
+            <pre style={{ 
+              margin: 0, 
+              color: 'var(--text-primary)', 
+              fontFamily: "'Fira Code', monospace", 
+              lineHeight: '1.6',
+              fontSize: `${fontSize}px`,
+              whiteSpace: wordWrap === 'on' ? 'pre-wrap' : 'pre'
+            }}>
                {getSortSearchCode(currentDisplayedAlgo, codeLang, array, searchValue ? parseInt(searchValue) : undefined)}
             </pre>
           </div>

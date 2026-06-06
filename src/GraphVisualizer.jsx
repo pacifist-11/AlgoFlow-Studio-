@@ -518,7 +518,7 @@ const copyToClipboard = (text) => {
   }
 };
 
-const GraphVisualizer = ({ onBack, openSettings, initialAlgo = 'Dijkstra', onCopyCode, onCodeChange }) => {
+const GraphVisualizer = ({ onBack, openSettings, initialAlgo = 'Dijkstra', onCopyCode, onCodeChange, fontSize = 14, wordWrap = 'off' }) => {
   const [nodes, setNodes] = useState([
     { id: 0, label: '0', x: 120, y: 220, dist: Infinity, h: 4 },
     { id: 1, label: '1', x: 260, y: 120, dist: Infinity, h: 3 },
@@ -1294,7 +1294,7 @@ const GraphVisualizer = ({ onBack, openSettings, initialAlgo = 'Dijkstra', onCop
           </div>
 
           {/* Bottom animation steps & algorithm configuration bar */}
-          <div style={{ display: 'flex', gap: '15px', marginTop: '1.2rem', background: 'rgba(0,0,0,0.2)', padding: '12px 24px', borderRadius: '16px', border: '1px solid var(--glass-border)', alignItems: 'center', flexWrap: 'wrap' }}>
+          <div style={{ display: 'flex', gap: '15px', marginTop: '1.2rem', background: 'var(--glass-bg)', padding: '12px 24px', borderRadius: '16px', border: '1px solid var(--glass-border)', alignItems: 'center', flexWrap: 'wrap' }}>
             
             <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
               <select className="styled-select" style={{ width: '130px', fontWeight: 'bold' }} value={algoMode} onChange={e => { setAlgoMode(e.target.value); handleResetAnimation(); }} disabled={isPlaying}>
@@ -1351,7 +1351,7 @@ const GraphVisualizer = ({ onBack, openSettings, initialAlgo = 'Dijkstra', onCop
         {/* Right Side Code Panel */}
         {showCode && (
           <div style={{ width: '450px', background: 'var(--bg-secondary)', borderLeft: '1px solid var(--glass-border)', display: 'flex', flexDirection: 'column' }}>
-            <div style={{ padding: '1rem', borderBottom: '1px solid var(--glass-border)', display: 'flex', justifyContent: 'space-between', alignItems: 'center', background: 'rgba(255,255,255,0.03)', gap: '10px' }}>
+            <div style={{ padding: '1rem', borderBottom: '1px solid var(--glass-border)', display: 'flex', justifyContent: 'space-between', alignItems: 'center', background: 'var(--glass-bg)', gap: '10px' }}>
               <h3 style={{ margin: 0, fontSize: '1.1rem', color: 'var(--text-primary)', fontWeight: 'bold', flex: 1 }}>Algorithm Code</h3>
               <button 
                 onClick={handleCopyCode} 
@@ -1369,7 +1369,14 @@ const GraphVisualizer = ({ onBack, openSettings, initialAlgo = 'Dijkstra', onCop
             </div>
             
             <div style={{ flex: 1, padding: '1rem 0', overflowY: 'auto', background: 'var(--bg-secondary)' }}>
-              <pre style={{ margin: 0, color: 'var(--text-primary)', fontFamily: "'Fira Code', monospace", fontSize: '0.82rem', whiteSpace: 'pre-wrap', lineHeight: '1.55' }}>
+              <pre style={{ 
+                margin: 0, 
+                color: 'var(--text-primary)', 
+                fontFamily: "'Fira Code', monospace", 
+                fontSize: `${fontSize}px`, 
+                whiteSpace: wordWrap === 'on' ? 'pre-wrap' : 'pre', 
+                lineHeight: '1.55' 
+              }}>
                 <code>
                   {getGraphCodeTemplate(codeLang, algoMode, String(startNode), String(targetNode)).split('\n').map((line, i) => {
                     const isMatch = currentFrame.activeLine && line.includes(currentFrame.activeLine);
@@ -1391,7 +1398,7 @@ const GraphVisualizer = ({ onBack, openSettings, initialAlgo = 'Dijkstra', onCop
               </pre>
             </div>
 
-            <div style={{ padding: '0.8rem', borderTop: '1px solid var(--glass-border)', display: 'flex', justifyContent: 'space-between', background: 'rgba(0,0,0,0.2)' }}>
+            <div style={{ padding: '0.8rem', borderTop: '1px solid var(--glass-border)', display: 'flex', justifyContent: 'space-between', background: 'var(--glass-bg)' }}>
               <button className="btn btn-clear" style={{ width: '100%' }} onClick={() => setShowCode(false)}>💻 Hide Panel</button>
             </div>
           </div>

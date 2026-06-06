@@ -47,7 +47,7 @@ const copyToClipboard = (text) => {
 };
 
 
-const GeneralDSVisualizer = ({ onBack, openSettings, initialType = 'HASH_TABLE', initialVariety = 'HASH_LINEAR', onCopyCode, onCodeChange }) => {
+const GeneralDSVisualizer = ({ onBack, openSettings, initialType = 'HASH_TABLE', initialVariety = 'HASH_LINEAR', onCopyCode, onCodeChange, fontSize = 14, wordWrap = 'off' }) => {
   const [dsType, setDsType] = useState(initialType);
   const [dsVariety, setDsVariety] = useState(initialVariety);
   const [inputValue, setInputValue] = useState('');
@@ -825,13 +825,13 @@ const GeneralDSVisualizer = ({ onBack, openSettings, initialType = 'HASH_TABLE',
             {dsType === 'HASH_TABLE' && renderHashTable(frame)}
           </div>
           
-          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginTop: '1.5rem', background: 'rgba(0,0,0,0.2)', padding: '12px 24px', borderRadius: '16px', border: '1px solid var(--glass-border)' }}>
+          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginTop: '1.5rem', background: 'var(--glass-bg)', padding: '12px 24px', borderRadius: '16px', border: '1px solid var(--glass-border)' }}>
             <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
-              <button className="btn btn-clear" style={{ padding: '0.5rem 1rem', border: 'none', background: 'rgba(255,255,255,0.08)', fontWeight: 'bold' }} onClick={() => { setIsPlaying(false); setCurrentStep(0); }} disabled={!timeline.length||currentStep===0}>⏮ First</button>
-              <button className="btn btn-clear" style={{ padding: '0.5rem 1rem', border: 'none', background: 'rgba(255,255,255,0.08)', fontWeight: 'bold' }} onClick={() => { setIsPlaying(false); setCurrentStep(p => Math.max(0, p - 1)); }} disabled={!timeline.length||currentStep===0}>◀ Prev</button>
+              <button className="btn btn-clear" style={{ padding: '0.5rem 1rem', fontWeight: 'bold' }} onClick={() => { setIsPlaying(false); setCurrentStep(0); }} disabled={!timeline.length||currentStep===0}>⏮ First</button>
+              <button className="btn btn-clear" style={{ padding: '0.5rem 1rem', fontWeight: 'bold' }} onClick={() => { setIsPlaying(false); setCurrentStep(p => Math.max(0, p - 1)); }} disabled={!timeline.length||currentStep===0}>◀ Prev</button>
               <button className="btn btn-clear" style={{ padding: '0.5rem 1.5rem', border: 'none', background: isPlaying ? 'rgba(59,130,246,0.6)' : 'var(--accent-primary)', color: 'white', fontWeight: 'bold', boxShadow: '0 4px 10px rgba(59,130,246,0.4)' }} onClick={() => setIsPlaying(p => !p)} disabled={!timeline.length}>{isPlaying ? '⏸ Pause' : '▶ Play'}</button>
-              <button className="btn btn-clear" style={{ padding: '0.5rem 1rem', border: 'none', background: 'rgba(255,255,255,0.08)', fontWeight: 'bold' }} onClick={() => { setIsPlaying(false); setCurrentStep(p => Math.min(timeline.length - 1, p + 1)); }} disabled={!timeline.length||currentStep===timeline.length-1}>Next ▶</button>
-              <button className="btn btn-clear" style={{ padding: '0.5rem 1rem', border: 'none', background: 'rgba(255,255,255,0.08)', fontWeight: 'bold' }} onClick={() => { setIsPlaying(false); setCurrentStep(timeline.length - 1); }} disabled={!timeline.length||currentStep===timeline.length-1}>Last ⏭</button>
+              <button className="btn btn-clear" style={{ padding: '0.5rem 1rem', fontWeight: 'bold' }} onClick={() => { setIsPlaying(false); setCurrentStep(p => Math.min(timeline.length - 1, p + 1)); }} disabled={!timeline.length||currentStep===timeline.length-1}>Next ▶</button>
+              <button className="btn btn-clear" style={{ padding: '0.5rem 1rem', fontWeight: 'bold' }} onClick={() => { setIsPlaying(false); setCurrentStep(timeline.length - 1); }} disabled={!timeline.length||currentStep===timeline.length-1}>Last ⏭</button>
               <span style={{ fontSize: '1rem', color: 'var(--text-secondary)', marginLeft: '15px', fontWeight: 'bold', fontFamily: 'monospace' }}>Frame: {timeline.length ? currentStep + 1 : 0} / {timeline.length}</span>
             </div>
 
@@ -845,7 +845,7 @@ const GeneralDSVisualizer = ({ onBack, openSettings, initialType = 'HASH_TABLE',
         {/* Code Sidebar */}
         {showCode && (
         <div style={{ width: '450px', background: 'var(--bg-secondary)', borderLeft: '1px solid var(--glass-border)', display: 'flex', flexDirection: 'column', transition: 'width 0.3s' }}>
-          <div style={{ padding: '1rem', borderBottom: '1px solid var(--glass-border)', display: 'flex', justifyContent: 'space-between', alignItems: 'center', background: 'rgba(255,255,255,0.03)', gap: '10px' }}>
+          <div style={{ padding: '1rem', borderBottom: '1px solid var(--glass-border)', display: 'flex', justifyContent: 'space-between', alignItems: 'center', background: 'var(--glass-bg)', gap: '10px' }}>
             <h3 style={{ margin: 0, fontSize: '1.1rem', color: 'var(--text-primary)', fontWeight: 'bold', flex: 1 }}>Implementation</h3>
             <button 
               onClick={handleCopyCode} 
@@ -862,7 +862,14 @@ const GeneralDSVisualizer = ({ onBack, openSettings, initialType = 'HASH_TABLE',
             </select>
           </div>
           <div style={{ flex: 1, padding: '1rem 0', overflowY: 'auto', background: 'var(--bg-secondary)' }}>
-            <pre style={{ margin: 0, color: 'var(--text-primary)', fontFamily: "'Fira Code', monospace", fontSize: '0.85rem', whiteSpace: 'pre-wrap', lineHeight: '1.6' }}>
+            <pre style={{ 
+              margin: 0, 
+              color: 'var(--text-primary)', 
+              fontFamily: "'Fira Code', monospace", 
+              fontSize: `${fontSize}px`, 
+              whiteSpace: wordWrap === 'on' ? 'pre-wrap' : 'pre', 
+              lineHeight: '1.6' 
+            }}>
               <code>
                 {currentCode.split('\n').map((line, i) => {
                   const isMatch = frame.activeLineText && line.includes(frame.activeLineText) && !line.trim().startsWith('//');

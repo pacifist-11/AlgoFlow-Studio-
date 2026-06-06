@@ -175,6 +175,7 @@ const THEMES = {
     '--glass-border': 'rgba(255, 255, 255, 0.08)',
     '--node-fill-1': '#3b82f6',
     '--node-fill-2': '#8b5cf6',
+    '--edge-color': 'rgba(99, 140, 250, 0.55)',
     bodyBg: 'radial-gradient(circle at 10% 20%, rgba(59,130,246,0.12), transparent 35%), radial-gradient(circle at 90% 80%, rgba(236,72,153,0.12), transparent 35%)',
     type: 'dark'
   },
@@ -189,6 +190,7 @@ const THEMES = {
     '--glass-border': 'rgba(34, 197, 94, 0.12)',
     '--node-fill-1': '#16a34a',
     '--node-fill-2': '#15803d',
+    '--edge-color': 'rgba(34, 197, 94, 0.5)',
     bodyBg: 'radial-gradient(circle at 20% 30%, rgba(34,197,94,0.1), transparent 40%), radial-gradient(circle at 80% 70%, rgba(132,204,22,0.1), transparent 40%)',
     type: 'dark'
   },
@@ -203,6 +205,7 @@ const THEMES = {
     '--glass-border': 'rgba(249,115,22,0.15)',
     '--node-fill-1': '#ea580c',
     '--node-fill-2': '#dc2626',
+    '--edge-color': 'rgba(249, 115, 22, 0.5)',
     bodyBg: 'radial-gradient(circle at 15% 25%, rgba(249,115,22,0.15), transparent 40%), radial-gradient(circle at 85% 75%, rgba(239,68,68,0.15), transparent 40%)',
     type: 'dark'
   },
@@ -217,6 +220,7 @@ const THEMES = {
     '--glass-border': 'rgba(0,229,255,0.15)',
     '--node-fill-1': '#0099bb',
     '--node-fill-2': '#aa00aa',
+    '--edge-color': 'rgba(0, 229, 255, 0.5)',
     bodyBg: 'radial-gradient(circle at 20% 20%, rgba(0,229,255,0.1), transparent 40%), radial-gradient(circle at 80% 80%, rgba(255,0,255,0.1), transparent 40%)',
     type: 'dark'
   },
@@ -231,6 +235,7 @@ const THEMES = {
     '--glass-border': 'rgba(139, 92, 246, 0.15)',
     '--node-fill-1': '#7c3aed',
     '--node-fill-2': '#a78bfa',
+    '--edge-color': 'rgba(139, 92, 246, 0.5)',
     bodyBg: 'radial-gradient(circle at 10% 20%, rgba(139,92,246,0.15), transparent 40%), radial-gradient(circle at 90% 80%, rgba(192,132,252,0.12), transparent 40%)',
     type: 'dark'
   },
@@ -245,6 +250,7 @@ const THEMES = {
     '--glass-border': 'rgba(6, 182, 212, 0.15)',
     '--node-fill-1': '#0891b2',
     '--node-fill-2': '#0284c7',
+    '--edge-color': 'rgba(6, 182, 212, 0.5)',
     bodyBg: 'radial-gradient(circle at 15% 15%, rgba(6,182,212,0.15), transparent 45%), radial-gradient(circle at 85% 85%, rgba(14,165,233,0.12), transparent 45%)',
     type: 'dark'
   },
@@ -259,6 +265,7 @@ const THEMES = {
     '--glass-border': 'rgba(236, 72, 153, 0.15)',
     '--node-fill-1': '#db2777',
     '--node-fill-2': '#e879f9',
+    '--edge-color': 'rgba(236, 72, 153, 0.5)',
     bodyBg: 'radial-gradient(circle at 10% 20%, rgba(236,72,153,0.15), transparent 40%), radial-gradient(circle at 90% 80%, rgba(244,114,182,0.12), transparent 40%)',
     type: 'dark'
   },
@@ -273,6 +280,7 @@ const THEMES = {
     '--glass-border': 'rgba(14, 165, 233, 0.25)',
     '--node-fill-1': '#0284c7',
     '--node-fill-2': '#0ea5e9',
+    '--edge-color': 'rgba(2, 132, 199, 0.7)',
     bodyBg: 'radial-gradient(circle at 15% 15%, rgba(14,165,233,0.15), transparent 45%), radial-gradient(circle at 85% 85%, rgba(2,132,199,0.15), transparent 45%)',
     type: 'light'
   },
@@ -287,6 +295,7 @@ const THEMES = {
     '--glass-border': 'rgba(219, 39, 119, 0.2)',
     '--node-fill-1': '#db2777',
     '--node-fill-2': '#f43f5e',
+    '--edge-color': 'rgba(219, 39, 119, 0.7)',
     bodyBg: 'radial-gradient(circle at 15% 15%, rgba(219,39,119,0.15), transparent 45%), radial-gradient(circle at 85% 85%, rgba(244,63,94,0.15), transparent 45%)',
     type: 'light'
   },
@@ -301,6 +310,7 @@ const THEMES = {
     '--glass-border': 'rgba(202, 138, 4, 0.2)',
     '--node-fill-1': '#ca8a04',
     '--node-fill-2': '#eab308',
+    '--edge-color': 'rgba(202, 138, 4, 0.75)',
     bodyBg: 'radial-gradient(circle at 15% 15%, rgba(250,204,21,0.15), transparent 45%), radial-gradient(circle at 85% 85%, rgba(234,179,8,0.15), transparent 45%)',
     type: 'light'
   },
@@ -315,6 +325,7 @@ const THEMES = {
     '--glass-border': 'rgba(5, 150, 105, 0.2)',
     '--node-fill-1': '#059669',
     '--node-fill-2': '#10b981',
+    '--edge-color': 'rgba(5, 150, 105, 0.7)',
     bodyBg: 'radial-gradient(circle at 15% 15%, rgba(16,185,129,0.15), transparent 45%), radial-gradient(circle at 85% 85%, rgba(5,150,105,0.15), transparent 45%)',
     type: 'light'
   }
@@ -524,7 +535,7 @@ const LineDebugger = ({ initialCode, lang: initialLang, fontSize, wordWrap, onBa
         <div>
           <div style={{ display: 'flex', alignItems: 'center', gap: '0.8rem' }}>
             <h1 className="title-gradient" style={{ fontSize: '1.55rem', margin: 0 }}>🐞 Line-by-Line Debugger</h1>
-            <select value={detectedLang} onChange={(e) => setDetectedLang(e.target.value)} style={{ background: 'rgba(0,0,0,0.15)', border: '1px solid var(--glass-border)', color: 'var(--text-primary)', padding: '4px 8px', borderRadius: '6px', fontSize: '0.85rem', fontWeight: 600, outline: 'none', cursor: 'pointer' }}>
+            <select className="styled-select" value={detectedLang} onChange={(e) => setDetectedLang(e.target.value)} style={{ padding: '4px 24px 4px 8px', borderRadius: '6px', fontSize: '0.85rem', fontWeight: 600, outline: 'none', cursor: 'pointer', height: 'auto', width: 'auto', backgroundPosition: 'right 6px center', backgroundSize: '10px' }}>
               <option value="Java">Java</option>
               <option value="C++">C++</option>
               <option value="Python">Python</option>
@@ -568,7 +579,7 @@ const LineDebugger = ({ initialCode, lang: initialLang, fontSize, wordWrap, onBa
                   {localCode.split('\n').map((_, i) => <div key={i}>{i + 1}</div>)}
                 </div>
                 <textarea className="code-textarea" value={localCode} onChange={e => setLocalCode(e.target.value)} onScroll={handleScroll}
-                  style={{ flex: 1, padding: '1rem', fontSize: `${fontSize}px`, lineHeight: '1.6', whiteSpace: 'pre', border: 'none', borderRadius: 0, height: '100%', background: 'transparent', color: 'var(--text-primary)', outline: 'none', resize: 'none', overflow: 'auto' }}
+                  style={{ flex: 1, padding: '1rem', fontSize: `${fontSize}px`, lineHeight: '1.6', whiteSpace: wordWrap === 'on' ? 'pre-wrap' : 'pre', border: 'none', borderRadius: 0, height: '100%', background: 'transparent', color: 'var(--text-primary)', outline: 'none', resize: 'none', overflow: 'auto' }}
                   placeholder={
                     detectedLang === 'Java' ? `Write Java code here...\n\nIMPORTANT: Java requires a public class.\nExample:\n\npublic class Main {\n  public static void main(String[] args) {\n    int x = 10;\n    System.out.println(x);\n  }\n}` :
                     detectedLang === 'C++' ? `Write C++ code here...\n\nExample:\n\n#include <iostream>\nusing namespace std;\n\nint main() {\n  int x = 10;\n  cout << x << endl;\n  return 0;\n}` :
@@ -728,6 +739,7 @@ function App() {
   const playIntervalRef = useRef(null);
 
   const [codeHeight, setCodeHeight] = useState(300);
+  const [logWidth, setLogWidth] = useState(320);
   const [isChatOpen, setIsChatOpen] = useState(false);
   const [chatMessages, setChatMessages] = useState([
     { sender: 'bot', text: '👋 Hi! I\'m your AI coding assistant powered by Gemini.\n\nAsk me anything:\n• "Explain binary search"\n• "Fix my code"\n• "Write a bubble sort in Python"\n• "What is AVL tree rotation?"\n\nI\'m here to help!' }
@@ -1198,6 +1210,70 @@ function App() {
     setFallbackOtp('');
   };
 
+  const checkRestrictedWords = (text) => {
+    if (!text) return false;
+    const clean = text.toLowerCase();
+    
+    // Check direct substring first
+    const badWords = ['puka', 'lanja', 'lanjodaka', 'naaku', 'modda', 'sulli', 'dengai', 'ass', 'fuck', 'bitch'];
+    for (const w of badWords) {
+      if (clean.includes(w)) return true;
+    }
+    
+    // Perform mapping of symbols
+    const replacements = [
+      { from: /@/g, to: 'a' },
+      { from: /€/g, to: 'e' },
+      { from: /3/g, to: 'e' },
+      { from: /1/g, to: 'i' },
+      { from: /!/g, to: 'i' },
+      { from: /\|/g, to: 'i' },
+      { from: /0/g, to: 'o' },
+      { from: /\$/g, to: 's' },
+      { from: /5/g, to: 's' },
+      { from: /7/g, to: 't' },
+      { from: /\+/g, to: 't' },
+      { from: /8/g, to: 'b' }
+    ];
+
+    // Let's create a few variants of normalized text to check
+    let variant1 = clean;
+    let variant2 = clean;
+    
+    // Variant 1: Map symbols to their standard letters
+    replacements.forEach(r => {
+      variant1 = variant1.replace(r.from, r.to);
+    });
+    
+    // Variant 2: Replace @ with u and others
+    replacements.forEach(r => {
+      if (r.from.toString().includes('@')) {
+        variant2 = variant2.replace(r.from, 'u');
+      } else {
+        variant2 = variant2.replace(r.from, r.to);
+      }
+    });
+
+    const checkString = (str) => {
+      // 1. Direct match
+      for (const w of badWords) {
+        if (str.includes(w)) return true;
+      }
+      // 2. Remove all non-alpha characters and match
+      const alphaOnly = str.replace(/[^a-z]/g, '');
+      for (const w of badWords) {
+        if (alphaOnly.includes(w)) return true;
+      }
+      return false;
+    };
+
+    if (checkString(clean) || checkString(variant1) || checkString(variant2)) {
+      return true;
+    }
+    
+    return false;
+  };
+
   // Submit feedback directly
   const submitDirectFeedback = async () => {
     const emailTrimmed = feedbackEmail.trim();
@@ -1216,6 +1292,10 @@ function App() {
     }
     if (!feedbackText.trim()) {
       setFeedbackError("Please enter some feedback message.");
+      return;
+    }
+    if (checkRestrictedWords(feedbackText)) {
+      setFeedbackError("You are using restricted words. Please rectify them and send again.");
       return;
     }
 
@@ -1251,6 +1331,10 @@ function App() {
       setFeedbackError("Please enter a valid email address.");
       return;
     }
+    if (checkRestrictedWords(feedbackText)) {
+      setFeedbackError("You are using restricted words. Please rectify them and send again.");
+      return;
+    }
 
     setFeedbackError('');
     setIsFeedbackSendingOtp(true);
@@ -1275,6 +1359,10 @@ function App() {
     }
     if (!feedbackOtpCode.trim()) {
       setFeedbackError("Please enter the 6-digit verification code.");
+      return;
+    }
+    if (checkRestrictedWords(feedbackText)) {
+      setFeedbackError("You are using restricted words. Please rectify them and send again.");
       return;
     }
 
@@ -1388,6 +1476,15 @@ function App() {
     e.preventDefault();
     const startY = e.clientY, startH = codeHeight;
     const drag = ev => setCodeHeight(Math.max(100, Math.min(startH + (startY - ev.clientY), window.innerHeight - 200)));
+    const end  = () => { document.removeEventListener('mousemove', drag); document.removeEventListener('mouseup', end); };
+    document.addEventListener('mousemove', drag);
+    document.addEventListener('mouseup', end);
+  };
+
+  const handleColDragStart = e => {
+    e.preventDefault();
+    const startX = e.clientX, startW = logWidth;
+    const drag = ev => setLogWidth(Math.max(200, Math.min(startW + (startX - ev.clientX), window.innerWidth - 300)));
     const end  = () => { document.removeEventListener('mousemove', drag); document.removeEventListener('mouseup', end); };
     document.addEventListener('mousemove', drag);
     document.addEventListener('mouseup', end);
@@ -2278,15 +2375,84 @@ function App() {
     const c1 = theme['--node-fill-1'] || '#3b82f6';
     const c2 = theme['--node-fill-2'] || '#8b5cf6';
 
+    const assignStableKeys = (root) => {
+      const keysMap = new Map();
+      const occurrences = {};
+      let idCounter = 0;
+      
+      const traverse = (n) => {
+        if (!n) return;
+        const id = idCounter++;
+        let key = `fallback-${id}`;
+        
+        if (n.keys && n.keys.length > 0) {
+          key = `key-${n.keys.join(',')}`;
+        } else if (n.range) {
+          key = `range-${n.range}`;
+        } else if (n.index !== null && n.index !== undefined) {
+          key = `index-${n.index}`;
+        } else if (n.value !== undefined && n.value !== null) {
+          const valStr = String(n.value);
+          occurrences[valStr] = (occurrences[valStr] || 0) + 1;
+          const count = occurrences[valStr] - 1;
+          key = `val-${valStr}-${count}`;
+        }
+        
+        keysMap.set(n, key);
+        
+        const kids = (treeType === 'BFS_TREE' || treeType === 'DFS_TREE') 
+          ? (n.children || []) 
+          : (n.children?.length > 0 ? n.children : [n.left, n.right].filter(Boolean));
+          
+        kids.forEach(traverse);
+      };
+      
+      traverse(root);
+      return keysMap;
+    };
+
+    const collectPositions = (node) => {
+      const posMap = {};
+      if (!node) return posMap;
+      const keysMap = assignStableKeys(node);
+      keysMap.forEach((key, n) => {
+        posMap[key] = { x: n.x, y: n.y };
+      });
+      return posMap;
+    };
+
+    const transitionArrows = [];
+    if (currentStep > 0 && timeline[currentStep - 1]) {
+      const prevRoot = timeline[currentStep - 1].root;
+      const prevPositions = collectPositions(prevRoot);
+      const currentPositions = collectPositions(rootNode);
+      const seenTransitions = new Set();
+      Object.entries(currentPositions).forEach(([id, newPos]) => {
+        const oldPos = prevPositions[id];
+        if (oldPos && (oldPos.x !== newPos.x || oldPos.y !== newPos.y)) {
+          const key = `${oldPos.x},${oldPos.y}->${newPos.x},${newPos.y}`;
+          if (!seenTransitions.has(key)) {
+            seenTransitions.add(key);
+            transitionArrows.push({ x1: oldPos.x, y1: oldPos.y, x2: newPos.x, y2: newPos.y });
+          }
+        }
+      });
+    }
+
+    const stableKeysMap = assignStableKeys(rootNode);
     const allNodes = [], allEdges = [];
-    let idC = 0;
     const collect = node => {
       if (!node) return;
-      const id = idC++;
+      const currentKey = stableKeysMap.get(node);
       const kids = (treeType === 'BFS_TREE' || treeType === 'DFS_TREE') ? (node.children || []) : (node.children?.length > 0 ? node.children : [node.left, node.right].filter(Boolean));
-      kids.forEach(child => { allEdges.push({ id: `e${id}-${idC}`, x1: node.x, y1: node.y, x2: child.x, y2: child.y }); collect(child); });
+      kids.forEach(child => { 
+        const childKey = stableKeysMap.get(child);
+        const edgeKey = currentKey < childKey ? `e-${currentKey}-${childKey}` : `e-${childKey}-${currentKey}`;
+        allEdges.push({ id: edgeKey, x1: node.x, y1: node.y, x2: child.x, y2: child.y }); 
+        collect(child); 
+      });
       const isHL = highlightedNode === node.value || (node.keys?.includes(highlightedNode)) || (highlightedNode && highlightedNode === node.range) || (highlightedNode && highlightedNode === node.index);
-      allNodes.push({ node, id, isHL });
+      allNodes.push({ node, key: currentKey, isHL });
     };
     collect(rootNode);
 
@@ -2310,14 +2476,66 @@ function App() {
           <marker id="arrow-ccw" markerWidth="8" markerHeight="8" refX="5" refY="4" orient="auto">
             <path d="M 1 1 L 7 4 L 1 7 Z" fill="#3b82f6" />
           </marker>
+          <marker id="transition-arrow" markerWidth="8" markerHeight="8" refX="6" refY="4" orient="auto">
+            <path d="M 1 1 L 7 4 L 1 7 Z" fill="var(--accent-secondary)" />
+          </marker>
           <style>{`
             @keyframes flowDashCw { to { stroke-dashoffset: -14; } }
             @keyframes flowDashCcw { to { stroke-dashoffset: 14; } }
           `}</style>
         </defs>
-        <g>{allEdges.map(e => <line key={e.id} x1={e.x1} y1={e.y1+(e.y2>e.y1?NODE_R:-NODE_R)} x2={e.x2} y2={e.y2+(e.y2>e.y1?-NODE_R:NODE_R)} stroke="rgba(99,140,250,0.45)" strokeWidth="2" strokeLinecap="round"/>)}</g>
+        <g>{allEdges.map(e => {
+          const y1_val = e.y1 + (e.y2 > e.y1 ? NODE_R : -NODE_R);
+          const y2_val = e.y2 + (e.y2 > e.y1 ? -NODE_R : NODE_R);
+          return (
+            <line 
+              key={e.id} 
+              x1={e.x1} 
+              y1={y1_val} 
+              x2={e.x2} 
+              y2={y2_val} 
+              stroke="var(--edge-color, rgba(99,140,250,0.45))" 
+              strokeWidth="2" 
+              strokeLinecap="round" 
+              style={{ 
+                x1: `${e.x1}px`,
+                y1: `${y1_val}px`,
+                x2: `${e.x2}px`,
+                y2: `${y2_val}px`,
+                transition: 'all 0.5s cubic-bezier(0.4, 0, 0.2, 1)' 
+              }}
+            />
+          );
+        })}</g>
+        {/* Curved animated transition arrows for shifting nodes */}
         <g>
-          {allNodes.map(({ node, id, isHL }) => {
+          {transitionArrows.map((arrow, idx) => {
+            const dx = arrow.x2 - arrow.x1;
+            const dy = arrow.y2 - arrow.y1;
+            const len = Math.sqrt(dx * dx + dy * dy);
+            if (len < 5) return null;
+            const rStart = 16;
+            const rEnd = 22;
+            const x1_adj = arrow.x1 + (dx / len) * rStart;
+            const y1_adj = arrow.y1 + (dy / len) * rStart;
+            const x2_adj = arrow.x2 - (dx / len) * rEnd;
+            const y2_adj = arrow.y2 - (dy / len) * rEnd;
+            const px = -dy / len;
+            const py = dx / len;
+            const offset = 22;
+            const cx = (x1_adj + x2_adj) / 2 + px * offset;
+            const cy = (y1_adj + y2_adj) / 2 + py * offset;
+            const pathD = `M ${x1_adj} ${y1_adj} Q ${cx} ${cy} ${x2_adj} ${y2_adj}`;
+            return (
+              <g key={`trans-${idx}`}>
+                <path d={pathD} fill="none" stroke="var(--accent-secondary)" strokeWidth="4" opacity="0.25" strokeLinecap="round" />
+                <path d={pathD} fill="none" stroke="var(--accent-secondary)" strokeWidth="2" strokeLinecap="round" strokeDasharray="6 4" markerEnd="url(#transition-arrow)" style={{ animation: 'flowDashCw 0.8s infinite linear', opacity: 0.85 }} />
+              </g>
+            );
+          })}
+        </g>
+        <g>
+          {allNodes.map(({ node, key, isHL }) => {
             const isBT  = node.keys?.length > 0 && !node.range && node.value === undefined;
             const isSeg = !!node.range;
             const fill  = isHL ? 'url(#nhl)' : node._color === 'RED' ? 'url(#rbr)' : node._color === 'BLACK' ? 'url(#rbb)' : isSeg ? 'url(#sg)' : 'url(#ng)';
@@ -2325,23 +2543,23 @@ function App() {
 
             if (isBT) {
               const kw = Math.max(56, node.keys.length * 38);
-              return <g key={`n${id}`}>
-                <rect x={node.x-kw/2} y={node.y-18} width={kw} height={36} rx={18} fill={fill} stroke={isHL?'rgba(245,158,11,0.8)':'rgba(255,255,255,0.18)'} strokeWidth="1.5" style={{filter:`drop-shadow(0 3px 12px ${glow})`}}/>
-                {node.keys.slice(0,-1).map((_,ki)=><line key={ki} x1={node.x-kw/2+(ki+1)*(kw/node.keys.length)} y1={node.y-12} x2={node.x-kw/2+(ki+1)*(kw/node.keys.length)} y2={node.y+12} stroke="rgba(255,255,255,0.25)" strokeWidth="1"/>)}
-                <text x={node.x} y={node.y+1} textAnchor="middle" dominantBaseline="central" fontSize="13" fontWeight="700" fill="white" fontFamily="'Outfit',sans-serif">{node.keys.join(' | ')}</text>
+              return <g key={key} transform={`translate(${node.x}, ${node.y})`} style={{ transform: `translate(${node.x}px, ${node.y}px)`, transition: 'transform 0.5s cubic-bezier(0.4, 0, 0.2, 1)' }}>
+                <rect x={-kw/2} y={-18} width={kw} height={36} rx={18} fill={fill} stroke={isHL?'rgba(245,158,11,0.8)':'rgba(255,255,255,0.18)'} strokeWidth="1.5" style={{filter:`drop-shadow(0 3px 12px ${glow})`}}/>
+                {node.keys.slice(0,-1).map((_,ki)=><line key={ki} x1={-kw/2+(ki+1)*(kw/node.keys.length)} y1={-12} x2={-kw/2+(ki+1)*(kw/node.keys.length)} y2={12} stroke="rgba(255,255,255,0.25)" strokeWidth="1"/>)}
+                <text x={0} y={1} textAnchor="middle" dominantBaseline="central" fontSize="13" fontWeight="700" fill="white" fontFamily="'Outfit',sans-serif">{node.keys.join(' | ')}</text>
               </g>;
             }
             if (isSeg) {
               const isFenwick = treeType === 'FENWICK_TREE';
               const showBits = isFenwick && fenwickBitMode && node.bitRep;
               const rh = showBits ? 64 : 52;
-              const ry = showBits ? node.y - 32 : node.y - 26;
-              return <g key={`n${id}`}>
-                <rect x={node.x-36} y={ry} width={72} height={rh} rx={10} fill={fill} stroke={isHL?'rgba(245,158,11,0.8)':'rgba(255,255,255,0.18)'} strokeWidth="1.5" style={{filter:`drop-shadow(0 3px 12px ${glow})`}}/>
-                <text x={node.x} y={showBits ? node.y-14 : node.y-8} textAnchor="middle" dominantBaseline="central" fontSize="15" fontWeight="700" fill="white" fontFamily="'Outfit',sans-serif">{node.sum}</text>
-                <text x={node.x} y={showBits ? node.y+4 : node.y+12} textAnchor="middle" dominantBaseline="central" fontSize="9" fill="rgba(255,255,255,0.7)" fontFamily="monospace">{node.range}</text>
+              const ry = showBits ? -32 : -26;
+              return <g key={key} transform={`translate(${node.x}, ${node.y})`} style={{ transform: `translate(${node.x}px, ${node.y}px)`, transition: 'transform 0.5s cubic-bezier(0.4, 0, 0.2, 1)' }}>
+                <rect x={-36} y={ry} width={72} height={rh} rx={10} fill={fill} stroke={isHL?'rgba(245,158,11,0.8)':'rgba(255,255,255,0.18)'} strokeWidth="1.5" style={{filter:`drop-shadow(0 3px 12px ${glow})`}}/>
+                <text x={0} y={showBits ? -14 : -8} textAnchor="middle" dominantBaseline="central" fontSize="15" fontWeight="700" fill="white" fontFamily="'Outfit',sans-serif">{node.sum}</text>
+                <text x={0} y={showBits ? 4 : 12} textAnchor="middle" dominantBaseline="central" fontSize="9" fill="rgba(255,255,255,0.7)" fontFamily="monospace">{node.range}</text>
                 {showBits && (
-                  <text x={node.x} y={node.y+20} textAnchor="middle" dominantBaseline="central" fontSize="11" fontWeight="bold" fill="var(--accent-primary)" fontFamily="monospace">
+                  <text x={0} y={20} textAnchor="middle" dominantBaseline="central" fontSize="11" fontWeight="bold" fill="var(--accent-primary)" fontFamily="monospace">
                     ({node.bitRep})₂
                   </text>
                 )}
@@ -2355,21 +2573,21 @@ function App() {
             const isRightRot = isTargetRotated && frame.rotation.includes("Right Rotate");
             const isLeftRot = isTargetRotated && frame.rotation.includes("Left Rotate");
 
-            return <g key={`n${id}`}>
-              <circle cx={node.x} cy={node.y} r={NODE_R} fill={fill} stroke={isHL?'rgba(245,158,11,0.85)':'rgba(255,255,255,0.18)'} strokeWidth="1.5" style={{filter:`drop-shadow(0 3px 14px ${glow})`,transform:isHL?'scale(1.12)':'scale(1)',transformOrigin:`${node.x}px ${node.y}px`,transition:'all 0.3s ease'}}/>
-              <text x={node.x} y={node.y+1} textAnchor="middle" dominantBaseline="central" fontSize={String(node.value||'').length>2?'11':'14'} fontWeight="700" fill="white" fontFamily="'Outfit',sans-serif" style={{pointerEvents:'none'}}>{String(node.value??'')}</text>
-              {treeType==='AVL'&&<text x={node.x} y={node.y-NODE_R-7} textAnchor="middle" fontSize="10" fill="#a78bfa" fontFamily="monospace">BF:{getBalance(node)}</text>}
-              {treeType==='RB_TREE'&&node._color&&<circle cx={node.x+NODE_R-7} cy={node.y-NODE_R+7} r={5} fill={node._color==='RED'?'#ef4444':'#1f2937'} stroke="white" strokeWidth="1"/>}
+            return <g key={key} transform={`translate(${node.x}, ${node.y})`} style={{ transform: `translate(${node.x}px, ${node.y}px)`, transition: 'transform 0.5s cubic-bezier(0.4, 0, 0.2, 1)' }}>
+              <circle cx={0} cy={0} r={NODE_R} fill={fill} stroke={isHL?'rgba(245,158,11,0.85)':'rgba(255,255,255,0.18)'} strokeWidth="1.5" style={{filter:`drop-shadow(0 3px 14px ${glow})`,transform:isHL?'scale(1.12)':'scale(1)',transformOrigin:'center',transition:'all 0.3s ease'}}/>
+              <text x={0} y={1} textAnchor="middle" dominantBaseline="central" fontSize={String(node.value||'').length>2?'11':'14'} fontWeight="700" fill="white" fontFamily="'Outfit',sans-serif" style={{pointerEvents:'none'}}>{String(node.value??'')}</text>
+              {treeType==='AVL'&&<text x={0} y={-NODE_R-7} textAnchor="middle" fontSize="10" fill="#a78bfa" fontFamily="monospace">BF:{getBalance(node)}</text>}
+              {treeType==='RB_TREE'&&node._color&&<circle cx={NODE_R-7} cy={-NODE_R+7} r={5} fill={node._color==='RED'?'#ef4444':'#1f2937'} stroke="white" strokeWidth="1"/>}
               {isRightRot && (
                 <g>
-                  <path d={`M ${node.x - 35} ${node.y - 12} A 38 38 0 0 1 ${node.x + 35} ${node.y - 2}`} fill="none" stroke="#ef4444" strokeWidth="3.5" markerEnd="url(#arrow-cw)" strokeLinecap="round" strokeDasharray="8 6" style={{ animation: 'flowDashCw 0.6s infinite linear' }} />
-                  <text x={node.x + 42} y={node.y - 18} fill="#ef4444" fontSize="13" fontWeight="900" fontFamily="sans-serif" style={{ filter: 'drop-shadow(0 2px 6px rgba(0,0,0,0.9))' }}>↻ Right Rotate</text>
+                  <path d="M -35 -12 A 38 38 0 0 1 35 -2" fill="none" stroke="#ef4444" strokeWidth="3.5" markerEnd="url(#arrow-cw)" strokeLinecap="round" strokeDasharray="8 6" style={{ animation: 'flowDashCw 0.6s infinite linear' }} />
+                  <text x={42} y={-18} fill="#ef4444" fontSize="13" fontWeight="900" fontFamily="sans-serif" style={{ filter: 'drop-shadow(0 2px 6px rgba(0,0,0,0.9))' }}>↻ Right Rotate</text>
                 </g>
               )}
               {isLeftRot && (
                 <g>
-                  <path d={`M ${node.x + 35} ${node.y - 12} A 38 38 0 0 0 ${node.x - 35} ${node.y - 2}`} fill="none" stroke="#3b82f6" strokeWidth="3.5" markerEnd="url(#arrow-ccw)" strokeLinecap="round" strokeDasharray="8 6" style={{ animation: 'flowDashCcw 0.6s infinite linear' }} />
-                  <text x={node.x - 42} y={node.y - 18} textAnchor="end" fill="#3b82f6" fontSize="13" fontWeight="900" fontFamily="sans-serif" style={{ filter: 'drop-shadow(0 2px 6px rgba(0,0,0,0.9))' }}>↺ Left Rotate</text>
+                  <path d="M 35 -12 A 38 38 0 0 0 -35 -2" fill="none" stroke="#3b82f6" strokeWidth="3.5" markerEnd="url(#arrow-ccw)" strokeLinecap="round" strokeDasharray="8 6" style={{ animation: 'flowDashCcw 0.6s infinite linear' }} />
+                  <text x={-42} y={-18} textAnchor="end" fill="#3b82f6" fontSize="13" fontWeight="900" fontFamily="sans-serif" style={{ filter: 'drop-shadow(0 2px 6px rgba(0,0,0,0.9))' }}>↺ Left Rotate</text>
                 </g>
               )}
             </g>;
@@ -2396,7 +2614,7 @@ function App() {
                 style={{
                   flex: 1, padding: '0.55rem', borderRadius: '10px', 
                   border: `2px solid ${themeMode === 'dark' ? 'var(--accent-primary)' : 'var(--glass-border)'}`,
-                  background: themeMode === 'dark' ? 'rgba(59,130,246,0.15)' : 'rgba(255,255,255,0.02)',
+                  background: themeMode === 'dark' ? 'rgba(59,130,246,0.15)' : 'var(--glass-bg)',
                   color: 'var(--text-primary)', cursor: 'pointer', fontWeight: 700, transition: 'all 0.2s', fontSize: '0.9rem'
                 }}
               >
@@ -2407,7 +2625,7 @@ function App() {
                 style={{
                   flex: 1, padding: '0.55rem', borderRadius: '10px', 
                   border: `2px solid ${themeMode === 'light' ? 'var(--accent-primary)' : 'var(--glass-border)'}`,
-                  background: themeMode === 'light' ? 'rgba(59,130,246,0.15)' : 'rgba(255,255,255,0.02)',
+                  background: themeMode === 'light' ? 'rgba(59,130,246,0.15)' : 'var(--glass-bg)',
                   color: 'var(--text-primary)', cursor: 'pointer', fontWeight: 700, transition: 'all 0.2s', fontSize: '0.9rem'
                 }}
               >
@@ -2421,7 +2639,7 @@ function App() {
             <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '0.5rem', marginTop: '4px' }}>
               {filteredThemes.map(([name, th]) => (
                 <button key={name} onClick={() => setCurrentTheme(name)}
-                  style={{ padding: '0.5rem 0.65rem', borderRadius: '10px', border: `2px solid ${currentTheme === name ? 'var(--accent-primary)' : 'var(--glass-border)'}`, background: currentTheme === name ? 'rgba(59,130,246,0.12)' : 'rgba(255,255,255,0.03)', color: 'var(--text-primary)', cursor: 'pointer', fontSize: '0.82rem', fontWeight: currentTheme === name ? 700 : 400, transition: 'all 0.2s', display: 'flex', alignItems: 'center', gap: '6px', textAlign: 'left' }}>
+                  style={{ padding: '0.5rem 0.65rem', borderRadius: '10px', border: `2px solid ${currentTheme === name ? 'var(--accent-primary)' : 'var(--glass-border)'}`, background: currentTheme === name ? 'rgba(59,130,246,0.12)' : 'var(--glass-bg)', color: 'var(--text-primary)', cursor: 'pointer', fontSize: '0.82rem', fontWeight: currentTheme === name ? 700 : 400, transition: 'all 0.2s', display: 'flex', alignItems: 'center', gap: '6px', textAlign: 'left' }}>
                   <span style={{ width: '12px', height: '12px', borderRadius: '50%', background: th['--accent-primary'], flexShrink: 0, boxShadow: `0 0 5px ${th['--accent-primary']}` }} />
                   <span>{name}</span>
                   {currentTheme === name && <span style={{ marginLeft: 'auto', fontSize: '0.7rem', color: 'var(--accent-primary)' }}>✓</span>}
@@ -2666,6 +2884,8 @@ function App() {
               setActiveCodeForChat(code);
               setActiveLangForChat(lang);
             }}
+            fontSize={editorFontSize}
+            wordWrap={editorWordWrap}
           />
         )}
       </div>
@@ -2683,6 +2903,8 @@ function App() {
               setActiveCodeForChat(code);
               setActiveLangForChat(lang);
             }}
+            fontSize={editorFontSize}
+            wordWrap={editorWordWrap}
           />
         )}
       </div>
@@ -2699,6 +2921,8 @@ function App() {
               setActiveCodeForChat(code);
               setActiveLangForChat(lang);
             }}
+            fontSize={editorFontSize}
+            wordWrap={editorWordWrap}
           />
         )}
       </div>
@@ -3064,7 +3288,7 @@ function App() {
             )}
 
             <div style={{ display: 'flex', flex: 1, padding: '0.75rem', gap: '0.75rem', overflow: 'hidden' }}>
-              <div style={{ display: 'flex', flexDirection: 'column', flex: 2, overflow: 'hidden' }}>
+              <div style={{ display: 'flex', flexDirection: 'column', flex: 1, overflow: 'hidden' }}>
                 <div className="tree-container" ref={containerRef} style={{ flex: 1, background: 'rgba(15,23,42,0.5)', borderRadius: '14px', border: '1px solid var(--glass-border)', position: 'relative', overflow: 'auto', minHeight: '260px', marginBottom: '0.75rem', display: 'flex', flexDirection: 'column' }}>
                   <div style={{ flex: 1, position: 'relative', minHeight: '200px' }}>
                     {frame.root ? renderTreeSVG(frame.root, frame.highlight) : (
@@ -3080,7 +3304,7 @@ function App() {
                 <div onMouseDown={handleDragStart} style={{ height: '8px', background: 'var(--glass-border)', borderRadius: '4px', margin: '0 0 0.75rem 0', cursor: 'row-resize', flexShrink: 0, transition: 'background 0.2s' }}
                   onMouseOver={e => e.currentTarget.style.background = 'rgba(96,165,250,0.5)'}
                   onMouseOut={e => e.currentTarget.style.background = 'var(--glass-border)'}
-                  title="Drag to resize" />
+                  title="Drag to resize height" />
 
                 <div style={{ height: `${codeHeight}px`, flexShrink: 0, background: 'var(--bg-secondary)', borderRadius: '14px', border: '1px solid var(--glass-border)', display: 'flex', flexDirection: 'column', padding: '0.85rem', overflow: 'hidden' }}>
                   <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '0.6rem', flexShrink: 0 }}>
@@ -3111,7 +3335,13 @@ function App() {
                 </div>
               </div>
 
-              <div style={{ flex: 1, background: 'var(--bg-secondary)', borderRadius: '14px', border: '1px solid var(--glass-border)', display: 'flex', flexDirection: 'column', overflow: 'hidden', minWidth: '220px' }}>
+              {/* Vertical Drag Handle for column resizing */}
+              <div onMouseDown={handleColDragStart} style={{ width: '8px', background: 'var(--glass-border)', borderRadius: '4px', cursor: 'col-resize', flexShrink: 0, transition: 'background 0.2s' }}
+                onMouseOver={e => e.currentTarget.style.background = 'rgba(96,165,250,0.5)'}
+                onMouseOut={e => e.currentTarget.style.background = 'var(--glass-border)'}
+                title="Drag to resize columns" />
+
+              <div style={{ width: `${logWidth}px`, flexShrink: 0, background: 'var(--bg-secondary)', borderRadius: '14px', border: '1px solid var(--glass-border)', display: 'flex', flexDirection: 'column', overflow: 'hidden' }}>
                 <div style={{ padding: '0.75rem 1rem', borderBottom: '1px solid var(--glass-border)', flexShrink: 0 }}>
                   <h3 style={{ color: 'var(--text-secondary)', fontSize: '0.85rem', fontWeight: 600 }}>Execution Log</h3>
                 </div>
