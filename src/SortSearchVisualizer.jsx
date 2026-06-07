@@ -89,8 +89,8 @@ const SortSearchVisualizer = ({ onBack, openSettings, initialTab = 'Sort', initi
       const dx = e.clientX - logDragStart.current.x;
       const dy = e.clientY - logDragStart.current.y;
       setLogPosition({
-        x: logPanelStart.current.x + dx,
-        y: logPanelStart.current.y + dy
+        x: Math.max(0, Math.min(window.innerWidth - 100, logPanelStart.current.x + dx)),
+        y: Math.max(0, Math.min(window.innerHeight - 40, logPanelStart.current.y + dy))
       });
     };
     const handleMouseUp = () => {
@@ -117,40 +117,36 @@ const SortSearchVisualizer = ({ onBack, openSettings, initialTab = 'Sort', initi
     setShowLogPanel(true);
     setCompilerLogs([{ text: `▶ Compiling and running ${codeLang} template on cloud...`, type: 'normal' }]);
 
-    const pistonLangMap = {
-      'Java': { language: 'java', version: '*', filename: 'Main.java' },
-      'C++': { language: 'cpp', version: '*', filename: 'main.cpp' },
-      'Python': { language: 'python', version: '*', filename: 'main.py' },
-      'JS': { language: 'javascript', version: '*', filename: 'main.js' }
+    const wandboxLangMap = {
+      'Java': 'openjdk-jdk-21+35',
+      'C++': 'gcc-13.2.0',
+      'Python': 'cpython-3.12.7',
+      'JS': 'nodejs-20.17.0'
     };
 
-    const langConfig = pistonLangMap[codeLang] || { language: 'javascript', version: '*', filename: 'main.js' };
+    const compilerId = wandboxLangMap[codeLang] || 'nodejs-20.17.0';
 
-    fetch('https://emkc.org/api/v2/piston/execute', {
+    fetch('https://wandbox.org/api/compile.json', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({
-        language: langConfig.language,
-        version: langConfig.version,
-        files: [{ name: langConfig.filename, content: rawCode }],
+        compiler: compilerId,
+        code: rawCode,
         stdin: ''
       })
     })
     .then(res => res.json())
     .then(data => {
       setIsCompiling(false);
-      if (!data || !data.run) {
-        throw new Error('Invalid compiler response from server.');
-      }
-      const run = data.run;
       const newLogs = [];
-      if (run.stderr && run.stderr.trim()) {
-        newLogs.push({ text: `❌ Execution Errors:\n${run.stderr}`, type: 'error' });
+      if (data.status !== '0') {
+        const errMsg = data.compiler_error || data.compiler_message || data.program_error || 'Execution failed.';
+        newLogs.push({ text: `❌ Execution/Compilation Errors:\n${errMsg}`, type: 'error' });
       } else {
         newLogs.push({ text: '✅ Compilation and execution successful.', type: 'success' });
-        if (run.stdout && run.stdout.trim()) {
+        if (data.program_output && data.program_output.trim()) {
           newLogs.push({ text: `\n[OUTPUT]`, type: 'normal' });
-          run.stdout.split('\n').forEach(line => {
+          data.program_output.split('\n').forEach(line => {
             if (line.trim()) newLogs.push({ text: line, type: 'output' });
           });
           newLogs.push({ text: `[END]`, type: 'normal' });
@@ -163,7 +159,7 @@ const SortSearchVisualizer = ({ onBack, openSettings, initialTab = 'Sort', initi
     .catch(err => {
       setIsCompiling(false);
       setCompilerLogs([
-        { text: `❌ Network Error: Could not connect to Piston compiler server.`, type: 'error' },
+        { text: `❌ Network Error: Could not connect to Wandbox compiler server.`, type: 'error' },
         { text: `(${err.message})`, type: 'error' }
       ]);
     });
@@ -869,7 +865,7 @@ const SortSearchVisualizer = ({ onBack, openSettings, initialTab = 'Sort', initi
           {showLogPanel && (
             <div
               style={{
-                position: 'absolute',
+                position: 'fixed',
                 left: `${logPosition.x}px`,
                 top: `${logPosition.y}px`,
                 width: '340px',
@@ -990,7 +986,7 @@ const SortSearchVisualizer = ({ onBack, openSettings, initialTab = 'Sort', initi
                   <div style={{ display: 'flex', flexDirection: 'column', gap: '4px' }}>
                     {compilerLogs.length === 0 && (
                       <div style={{ color: 'var(--text-secondary)', fontStyle: 'italic', textAlign: 'center', marginTop: '20px' }}>
-                        Click "▶ Run" in Code Panel to compile code template.
+                        Click &quot;▶ Run&quot; in Code Panel to compile code template.
                       </div>
                     )}
                     {compilerLogs.map((log, idx) => {

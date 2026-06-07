@@ -10,7 +10,7 @@ export const getFullCodeTemplate = (lang, type, operations) => {
       
       if (type === 'SEGMENT_TREE') {
         if (lang === 'C++') {
-          execBlock = `    vector<int> arr = {${finalArr.join(', ')}};\n    SegmentTree st(arr);\n    cout << "Sum [0, ${Math.max(0, finalArr.length-1)}] = " << st.query(0, ${Math.max(0, finalArr.length-1)}) << endl;`;
+          execBlock = `    int arr[] = {${finalArr.join(', ')}};\n    SegmentTree st(arr, ${finalArr.length});\n    cout << "Sum [0, ${Math.max(0, finalArr.length-1)}] = " << st.query(0, ${Math.max(0, finalArr.length-1)}) << endl;`;
         } else if (lang === 'Java') {
           execBlock = `        int[] arr = {${finalArr.join(', ')}};\n        SegmentTree st = new SegmentTree(arr);\n        System.out.println("Sum [0,${Math.max(0, finalArr.length-1)}] = " + st.query(0, ${Math.max(0, finalArr.length-1)}));`;
         } else if (lang === 'Python') {
@@ -20,7 +20,7 @@ export const getFullCodeTemplate = (lang, type, operations) => {
         }
       } else { // FENWICK_TREE
         if (lang === 'C++') {
-          execBlock = `    vector<int> arr = {${finalArr.join(', ')}};\n    FenwickTree ft(arr.size());\n    for(int i=0; i<arr.size(); i++) ft.add(i+1, arr[i]);\n    cout << "Prefix sum up to " << arr.size() << " = " << ft.query(arr.size()) << endl;`;
+          execBlock = `    int arr[] = {${finalArr.join(', ')}};\n    int n = ${finalArr.length};\n    FenwickTree ft(n);\n    for(int i=0; i<n; i++) ft.add(i+1, arr[i]);\n    cout << "Prefix sum up to " << n << " = " << ft.query(n) << endl;`;
         } else if (lang === 'Java') {
           execBlock = `        int[] arr = {${finalArr.join(', ')}};\n        FenwickTree ft = new FenwickTree(arr.length);\n        for(int i=0; i<arr.length; i++) ft.add(i+1, arr[i]);\n        System.out.println("Prefix sum up to " + arr.length + " = " + ft.query(arr.length));`;
         } else if (lang === 'Python') {
@@ -254,15 +254,21 @@ ${execBlock}
 }`;
 
   if (lang === 'C++' && type === 'FENWICK_TREE') return `#include <iostream>
-#include <vector>
 using namespace std;
 
 class FenwickTree {
-    vector<int> bit;
+    int* bit;
+    int size;
 public:
-    FenwickTree(int n) { bit.assign(n + 1, 0); }
+    FenwickTree(int n) {
+        size = n;
+        bit = new int[n + 1]();
+    }
+    ~FenwickTree() {
+        delete[] bit;
+    }
     void add(int idx, int val) {
-        for (; idx < bit.size(); idx += idx & -idx) bit[idx] += val;
+        for (; idx <= size; idx += idx & -idx) bit[idx] += val;
     }
     int query(int idx) {
         int sum = 0;
@@ -479,11 +485,12 @@ ${execBlock}
 }`;
 
   if (lang === 'C++' && type === 'MIN_HEAP') return `#include <iostream>
-#include <vector>
 using namespace std;
 
 class MinHeap {
-    vector<int> heap;
+    int* heap;
+    int capacity;
+    int size;
     void heapifyUp(int i) {
         while (i > 0 && heap[(i - 1) / 2] > heap[i]) {
             swap(heap[i], heap[(i - 1) / 2]);
@@ -491,13 +498,22 @@ class MinHeap {
         }
     }
 public:
-    MinHeap(int cap) {}
+    MinHeap(int cap) {
+        capacity = cap;
+        size = 0;
+        heap = new int[cap];
+    }
+    ~MinHeap() {
+        delete[] heap;
+    }
     void insert(int val) {
-        heap.push_back(val);
-        heapifyUp(heap.size() - 1);
+        if (size < capacity) {
+            heap[size] = val;
+            heapifyUp(size++);
+        }
     }
     void print() {
-        for (int v : heap) cout << v << " "; cout << endl;
+        for (int i = 0; i < size; i++) cout << heap[i] << " "; cout << endl;
     }
 };
 
@@ -508,11 +524,12 @@ ${execBlock}
 }`;
 
   if (lang === 'C++' && type === 'MAX_HEAP') return `#include <iostream>
-#include <vector>
 using namespace std;
 
 class MaxHeap {
-    vector<int> heap;
+    int* heap;
+    int capacity;
+    int size;
     void heapifyUp(int i) {
         while (i > 0 && heap[(i - 1) / 2] < heap[i]) {
             swap(heap[i], heap[(i - 1) / 2]);
@@ -520,13 +537,22 @@ class MaxHeap {
         }
     }
 public:
-    MaxHeap(int cap) {}
+    MaxHeap(int cap) {
+        capacity = cap;
+        size = 0;
+        heap = new int[cap];
+    }
+    ~MaxHeap() {
+        delete[] heap;
+    }
     void insert(int val) {
-        heap.push_back(val);
-        heapifyUp(heap.size() - 1);
+        if (size < capacity) {
+            heap[size] = val;
+            heapifyUp(size++);
+        }
     }
     void print() {
-        for (int v : heap) cout << v << " "; cout << endl;
+        for (int i = 0; i < size; i++) cout << heap[i] << " "; cout << endl;
     }
 };
 
@@ -537,13 +563,12 @@ ${execBlock}
 }`;
 
   if (lang === 'C++' && type === 'SEGMENT_TREE') return `#include <iostream>
-#include <vector>
 using namespace std;
 
 class SegmentTree {
-    vector<int> tree;
+    int* tree;
     int n;
-    void build(const vector<int>& arr, int node, int l, int r) {
+    void build(const int arr[], int node, int l, int r) {
         if (l == r) { tree[node] = arr[l]; return; }
         int mid = (l + r) / 2;
         build(arr, 2*node, l, mid);
@@ -551,9 +576,13 @@ class SegmentTree {
         tree[node] = tree[2*node] + tree[2*node+1];
     }
 public:
-    SegmentTree(const vector<int>& arr) {
-        n = arr.size(); tree.resize(4 * n);
+    SegmentTree(const int arr[], int size) {
+        n = size;
+        tree = new int[4 * n]();
         build(arr, 1, 0, n - 1);
+    }
+    ~SegmentTree() {
+        delete[] tree;
     }
     int query(int node, int l, int r, int ql, int qr) {
         if (qr < l || r < ql) return 0;
