@@ -792,8 +792,8 @@ function App() {
   const logEndRef       = useRef(null);
   const playIntervalRef = useRef(null);
 
-  const [codeHeight, setCodeHeight] = useState(300);
-  const [logWidth, setLogWidth] = useState(320);
+  const [codeHeight, setCodeHeight] = useState(240);
+  const [logWidth, setLogWidth] = useState(380);
   const [isChatOpen, setIsChatOpen] = useState(false);
   const [chatMessages, setChatMessages] = useState([
     { sender: 'bot', text: '👋 Hi! I\'m your AI coding assistant powered by Gemini.\n\nAsk me anything:\n• "Explain binary search"\n• "Fix my code"\n• "Write a bubble sort in Python"\n• "What is AVL tree rotation?"\n\nI\'m here to help!' }
@@ -3574,31 +3574,109 @@ function App() {
                   onMouseOut={e => e.currentTarget.style.background = 'var(--glass-border)'}
                   title="Drag to resize height" />
 
-                <div style={{ height: `${codeHeight}px`, flexShrink: 0, background: 'var(--bg-secondary)', borderRadius: '14px', border: '1px solid var(--glass-border)', display: 'flex', flexDirection: 'column', padding: '0.85rem', overflow: 'hidden' }}>
+                 <div style={{ height: `${codeHeight}px`, flexShrink: 0, background: 'var(--bg-secondary)', borderRadius: '14px', border: '1px solid var(--glass-border)', display: 'flex', flexDirection: 'column', padding: '0.85rem', overflow: 'hidden' }}>
                   <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '0.6rem', flexShrink: 0 }}>
-                    <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
-                      <h3 style={{ color: 'var(--text-secondary)', fontSize: '0.9rem', fontWeight: 600 }}>Auto-Generated Code</h3>
-                      <button 
-                        onClick={handleCopyTreeCode} 
-                        className="btn btn-clear" 
-                        style={{ padding: '2px 8px', fontSize: '0.8rem', whiteSpace: 'nowrap', border: '1px solid var(--glass-border)', borderRadius: '6px' }}
-                      >
-                        {treeCodeCopied ? '✓ Copied' : '📋 Copy'}
-                      </button>
-                      <select className="styled-select" style={{ padding: '2px 8px', fontSize: '0.8rem', width: 'auto', paddingRight: '22px', backgroundPosition: 'right 6px center', backgroundSize: '10px', border: '1px solid var(--glass-border)', borderRadius: '6px' }} value={codeLang} onChange={e => setCodeLang(e.target.value)}>
-                        <option value="C++">C++</option>
-                        <option value="Java">Java</option>
-                        <option value="Python">Python</option>
-                        <option value="JS">JavaScript</option>
-                      </select>
-                    </div>
-                    <label style={{ display: 'flex', alignItems: 'center', gap: '6px', fontSize: '0.8rem', color: 'var(--text-secondary)', cursor: 'pointer' }}>
-                      <input type="checkbox" checked={showDeletionsInCode} onChange={e => setShowDeletionsInCode(e.target.checked)} style={{ accentColor: 'var(--accent-primary)' }} />
-                      Include Deletions
-                    </label>
+                    <h3 style={{ color: 'var(--text-secondary)', fontSize: '0.9rem', fontWeight: 600 }}>Execution Log</h3>
+                    {frame.rotation && (
+                      <span style={{ background: 'linear-gradient(135deg, #ef4444, #f97316)', color: 'white', padding: '2px 10px', borderRadius: '12px', fontSize: '0.75rem', fontWeight: 'bold' }}>
+                        ⚡ {frame.rotation}
+                      </span>
+                    )}
                   </div>
-                  <div className="code-box" style={{ flex: 1, overflowY: 'auto' }}>
-                    <pre>{getFullCodeTemplate(codeLang, treeType, showDeletionsInCode ? operationsLog : insertedValues.map(v => ({ op: 'insert', val: v })))}</pre>
+                  
+                  {/* Dashboard split for best space usage */}
+                  <div style={{ display: 'flex', flex: 1, gap: '1.25rem', overflow: 'hidden' }}>
+                    {/* Left Column: Stats & Operations Details */}
+                    <div style={{ 
+                      width: '260px', 
+                      background: 'rgba(0,0,0,0.18)', 
+                      borderRadius: '10px', 
+                      padding: '0.75rem', 
+                      display: 'flex', 
+                      flexDirection: 'column', 
+                      gap: '10px',
+                      border: '1px solid rgba(255,255,255,0.03)',
+                      flexShrink: 0
+                    }}>
+                      <div style={{ fontSize: '0.78rem', color: 'var(--text-secondary)', textTransform: 'uppercase', fontWeight: 'bold', borderBottom: '1px solid rgba(255,255,255,0.05)', paddingBottom: '4px' }}>
+                        Active State
+                      </div>
+                      
+                      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                        <span style={{ fontSize: '0.82rem', color: 'var(--text-secondary)' }}>Target Value:</span>
+                        <span style={{ 
+                          fontSize: '0.9rem', 
+                          fontWeight: 'bold', 
+                          color: frame.highlight !== undefined && frame.highlight !== null ? '#fbbf24' : 'var(--text-primary)',
+                          background: frame.highlight !== undefined && frame.highlight !== null ? 'rgba(251,191,36,0.15)' : 'rgba(255,255,255,0.04)',
+                          padding: '2px 8px',
+                          borderRadius: '4px'
+                        }}>
+                          {frame.highlight !== undefined && frame.highlight !== null ? String(frame.highlight) : 'None'}
+                        </span>
+                      </div>
+
+                      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                        <span style={{ fontSize: '0.82rem', color: 'var(--text-secondary)' }}>Event / Action:</span>
+                        <span style={{ 
+                          fontSize: '0.8rem', 
+                          fontWeight: 700, 
+                          color: frame.rotation ? '#f43f5e' : '#60a5fa',
+                          maxWidth: '150px',
+                          whiteSpace: 'nowrap',
+                          overflow: 'hidden',
+                          textOverflow: 'ellipsis'
+                        }} title={frame.rotation || 'Normal'}>
+                          {frame.rotation ? '⚡ Rotation/Split' : 'Normal Trace'}
+                        </span>
+                      </div>
+
+                      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                        <span style={{ fontSize: '0.82rem', color: 'var(--text-secondary)' }}>Inserted Nodes:</span>
+                        <span style={{ fontSize: '0.85rem', fontWeight: 'bold' }}>{insertedValues.length}</span>
+                      </div>
+
+                      <div style={{ flex: 1, display: 'flex', flexDirection: 'column', minHeight: 0 }}>
+                        <div style={{ fontSize: '0.72rem', color: 'var(--text-secondary)', marginBottom: '4px' }}>Timeline Nodes History:</div>
+                        <div style={{ 
+                          flex: 1, 
+                          overflowY: 'auto', 
+                          background: 'rgba(0,0,0,0.12)', 
+                          borderRadius: '6px', 
+                          padding: '4px 6px',
+                          fontSize: '0.75rem',
+                          color: 'var(--text-secondary)',
+                          lineHeight: '1.4',
+                          wordBreak: 'break-all'
+                        }}>
+                          {insertedValues.length > 0 ? insertedValues.join(', ') : 'No nodes inserted yet'}
+                        </div>
+                      </div>
+                    </div>
+
+                    {/* Right Column: Scrolling Logs */}
+                    <div style={{ 
+                      flex: 1, 
+                      background: 'rgba(0,0,0,0.15)', 
+                      borderRadius: '10px', 
+                      padding: '0.75rem 1rem', 
+                      overflowY: 'auto',
+                      border: '1px solid rgba(255,255,255,0.03)',
+                      display: 'flex',
+                      flexDirection: 'column'
+                    }}>
+                      <div style={{ fontSize: '0.78rem', color: 'var(--text-secondary)', textTransform: 'uppercase', fontWeight: 'bold', borderBottom: '1px solid rgba(255,255,255,0.05)', paddingBottom: '4px', marginBottom: '8px' }}>
+                        Simulation Steps Log
+                      </div>
+                      <div style={{ flex: 1, overflowY: 'auto' }}>
+                        {frame.logs.map((log, i) => (
+                          <div key={i} className={`execution-log-item ${log.type}`} style={{ padding: '3px 0', fontSize: '0.85rem' }}>
+                            {log.text}
+                          </div>
+                        ))}
+                        <div ref={logEndRef} />
+                      </div>
+                    </div>
                   </div>
                 </div>
               </div>
@@ -3609,13 +3687,46 @@ function App() {
                 onMouseOut={e => e.currentTarget.style.background = 'var(--glass-border)'}
                 title="Drag to resize columns" />
 
-              <div style={{ width: `${logWidth}px`, flexShrink: 0, background: 'var(--bg-secondary)', borderRadius: '14px', border: '1px solid var(--glass-border)', display: 'flex', flexDirection: 'column', overflow: 'hidden' }}>
-                <div style={{ padding: '0.75rem 1rem', borderBottom: '1px solid var(--glass-border)', flexShrink: 0 }}>
-                  <h3 style={{ color: 'var(--text-secondary)', fontSize: '0.85rem', fontWeight: 600 }}>Execution Log</h3>
+              {/* Right Column Sidebar: Auto-Generated Code */}
+              <div style={{ width: `${logWidth}px`, flexShrink: 0, background: 'var(--bg-secondary)', borderRadius: '14px', border: '1px solid var(--glass-border)', display: 'flex', flexDirection: 'column', padding: '0.85rem', overflow: 'hidden' }}>
+                <div style={{ display: 'flex', flexDirection: 'column', gap: '8px', borderBottom: '1px solid var(--glass-border)', paddingBottom: '0.6rem', marginBottom: '0.6rem', flexShrink: 0 }}>
+                  <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                    <h3 style={{ color: 'var(--text-secondary)', fontSize: '0.9rem', fontWeight: 600, margin: 0 }}>Auto-Generated Code</h3>
+                    <button 
+                      onClick={handleCopyTreeCode} 
+                      className="btn btn-clear" 
+                      style={{ padding: '2px 8px', fontSize: '0.78rem', whiteSpace: 'nowrap', border: '1px solid var(--glass-border)', borderRadius: '6px' }}
+                    >
+                      {treeCodeCopied ? '✓ Copied' : '📋 Copy'}
+                    </button>
+                  </div>
+                  
+                  <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', gap: '8px' }}>
+                    <select className="styled-select" style={{ padding: '2px 8px', fontSize: '0.8rem', flex: 1, paddingRight: '22px', backgroundPosition: 'right 6px center', backgroundSize: '10px', border: '1px solid var(--glass-border)', borderRadius: '6px' }} value={codeLang} onChange={e => setCodeLang(e.target.value)}>
+                      <option value="C++">C++</option>
+                      <option value="Java">Java</option>
+                      <option value="Python">Python</option>
+                      <option value="JS">JavaScript</option>
+                    </select>
+                    
+                    <label style={{ display: 'flex', alignItems: 'center', gap: '4px', fontSize: '0.78rem', color: 'var(--text-secondary)', cursor: 'pointer', whiteSpace: 'nowrap' }}>
+                      <input type="checkbox" checked={showDeletionsInCode} onChange={e => setShowDeletionsInCode(e.target.checked)} style={{ accentColor: 'var(--accent-primary)' }} />
+                      <span>Include Deletes</span>
+                    </label>
+                  </div>
                 </div>
-                <div style={{ flex: 1, overflowY: 'auto', padding: '0.75rem 1rem' }}>
-                  {frame.logs.map((log, i) => <div key={i} className={`execution-log-item ${log.type}`}>{log.text}</div>)}
-                  <div ref={logEndRef} />
+                
+                <div className="code-box" style={{ flex: 1, overflowY: 'auto' }}>
+                  <pre style={{ 
+                    margin: 0, 
+                    color: 'var(--text-primary)', 
+                    fontFamily: "'Fira Code', monospace", 
+                    lineHeight: '1.5',
+                    fontSize: '11px',
+                    whiteSpace: 'pre'
+                  }}>
+                    {getFullCodeTemplate(codeLang, treeType, showDeletionsInCode ? operationsLog : insertedValues.map(v => ({ op: 'insert', val: v })))}
+                  </pre>
                 </div>
               </div>
             </div>
