@@ -55,9 +55,10 @@ class Frame {
 
 // ─── B-Tree / B+ Tree Engine ─────────────────────────────────────────────────
 class BTreeEngine {
-  constructor(m, isBPlus = false) {
+  constructor(m, isBPlus = false, splitStrategy = 'MEDIAN') {
     this.m = m;
     this.isBPlus = isBPlus;
+    this.splitStrategy = splitStrategy;
     this.root = new TreeNode();
     this.root.leaf = true;
     this.root.keys = [];
@@ -96,7 +97,14 @@ class BTreeEngine {
   }
 
   splitChild(parent, i, child, logs, recordFrame) {
-    const mid = Math.floor(this.m / 2);
+    let mid = Math.floor(this.m / 2);
+    if (this.splitStrategy === 'LEFT_BIASED') {
+      mid = Math.floor(this.m / 2) - 1;
+    } else if (this.splitStrategy === 'RIGHT_BIASED') {
+      mid = Math.floor(this.m / 2) + (this.m % 2 === 0 ? 0 : 1);
+    }
+    mid = Math.max(1, Math.min(this.m - 2, mid));
+
     const z = new TreeNode();
     z.leaf = child.leaf; z.keys = []; z.value = undefined;
     if (this.isBPlus && child.leaf) {
@@ -145,6 +153,43 @@ const updateHeight = n => { if (n) n.height = Math.max(getHeight(n.left), getHei
 const getBalance  = n => n ? getHeight(n.left) - getHeight(n.right) : 0;
 const rightRotate = y => { const x=y.left,T2=x.right; x.right=y; y.left=T2; updateHeight(y); updateHeight(x); return x; };
 const leftRotate  = x => { const y=x.right,T2=y.left; y.left=x; x.right=T2; updateHeight(x); updateHeight(y); return y; };
+
+// ─── B-Tree / B+ Tree Bounds Calculator ───────────────────────────────────────
+const getBTreeBounds = (m, isBPlus, splitStrategy) => {
+  const standardMinKeys = Math.ceil(m / 2) - 1;
+  const standardMaxKeys = m - 1;
+  const standardMinChildren = Math.ceil(m / 2);
+  const standardMaxChildren = m;
+
+  let mid = Math.floor(m / 2);
+  if (splitStrategy === 'LEFT_BIASED') {
+    mid = Math.floor(m / 2) - 1;
+  } else if (splitStrategy === 'RIGHT_BIASED') {
+    mid = Math.floor(m / 2) + (m % 2 === 0 ? 0 : 1);
+  }
+  mid = Math.max(1, Math.min(m - 2, mid));
+
+  const leftSplitKeys = mid;
+  const rightSplitKeys = m - 1 - mid;
+  const splitMinKeys = Math.min(leftSplitKeys, rightSplitKeys);
+  const splitMaxKeys = Math.max(leftSplitKeys, rightSplitKeys);
+
+  const leftLeafSplitKeys = mid;
+  const rightLeafSplitKeys = m - mid;
+
+  return {
+    standardMinKeys,
+    standardMaxKeys,
+    standardMinChildren,
+    standardMaxChildren,
+    leftSplitKeys,
+    rightSplitKeys,
+    splitMinKeys,
+    splitMaxKeys,
+    leftLeafSplitKeys,
+    rightLeafSplitKeys
+  };
+};
 
 // ─── Segment Tree builder ─────────────────────────────────────────────────────
 const buildSegmentTree = (arr) => {
@@ -706,6 +751,8 @@ function App() {
   const [fenwickBitMode, setFenwickBitMode] = useState(false);
   const [bTreeOrder,    setBTreeOrder]    = useState(4);
   const [deleteStrategy, setDeleteStrategy] = useState('RIGHT');
+  const [splitStrategy,  setSplitStrategy]  = useState('MEDIAN');
+  const [showBoundsInfo,  setShowBoundsInfo]  = useState(false);
   const [codeLang,      setCodeLang]      = useState('C++');
   const [currentTheme,  setCurrentTheme]  = useState('Cosmic Dark');
   const [globalApiKey,  setGlobalApiKey]  = useState(localStorage.getItem('gemini_api_key') || '');
@@ -716,8 +763,8 @@ function App() {
   const [globalSortSearchTab, setGlobalSortSearchTab] = useState('Sort');
   const [globalGraphAlgo, setGlobalGraphAlgo] = useState('Dijkstra');
 
-  const bTreeRef     = useRef(new BTreeEngine(4, false));
-  const bPlusTreeRef = useRef(new BTreeEngine(4, true));
+  const bTreeRef     = useRef(new BTreeEngine(4, false, 'MEDIAN'));
+  const bPlusTreeRef = useRef(new BTreeEngine(4, true, 'MEDIAN'));
   const rbEngineRef  = useRef(new RBEngine());
 
   const [inputValue,     setInputValue]    = useState('');
@@ -733,6 +780,13 @@ function App() {
   const [timeline,    setTimeline]    = useState([]);
   const [currentStep, setCurrentStep] = useState(0);
   const [isPlaying,   setIsPlaying]   = useState(false);
+
+  const prevStepRef = useRef(0);
+  const prevTimelineRef = useRef([]);
+  useEffect(() => {
+    prevStepRef.current = currentStep;
+    prevTimelineRef.current = timeline;
+  }, [currentStep, timeline]);
 
   const containerRef    = useRef(null);
   const logEndRef       = useRef(null);
@@ -871,7 +925,38 @@ function App() {
   };
 
   // ── DB State Saver & Loader ──
+  const applyState = (sd) => {
+    if (sd.appMode !== undefined) setAppMode(sd.appMode);
+    if (sd.treeType !== undefined) setTreeType(sd.treeType);
+    if (sd.insertedValues !== undefined) setInsertedValues(sd.insertedValues);
+    if (sd.operationsLog !== undefined) setOperationsLog(sd.operationsLog);
+    if (sd.customCode !== undefined) setCustomCode(sd.customCode);
+    if (sd.codeLang !== undefined) setCodeLang(sd.codeLang);
+    if (sd.globalDsType !== undefined) setGlobalDsType(sd.globalDsType);
+    if (sd.globalDsVariety !== undefined) setGlobalDsVariety(sd.globalDsVariety);
+    if (sd.globalSort !== undefined) setGlobalSort(sd.globalSort);
+    if (sd.globalSearch !== undefined) setGlobalSearch(sd.globalSearch);
+    if (sd.globalSortSearchTab !== undefined) setGlobalSortSearchTab(sd.globalSortSearchTab);
+    if (sd.globalGraphAlgo !== undefined) setGlobalGraphAlgo(sd.globalGraphAlgo);
+    if (sd.setupComplete !== undefined) setSetupComplete(sd.setupComplete);
+  };
+
+  const loadStateFromLocalStorage = () => {
+    try {
+      const saved = localStorage.getItem('algoflow_local_state');
+      if (saved) {
+        const sd = JSON.parse(saved);
+        applyState(sd);
+      }
+    } catch (err) {
+      console.error("Failed to parse local state:", err);
+    }
+  };
+
+  // ── DB State Saver & Loader ──
   const saveStateToDatabase = async (email, stateData) => {
+    // Always persist locally first so it works offline/statically
+    localStorage.setItem('algoflow_local_state', JSON.stringify(stateData));
     if (!email) return;
     try {
       await fetch('/api/user/save-state', {
@@ -880,7 +965,7 @@ function App() {
         body: JSON.stringify({ email, state_data: stateData })
       });
     } catch (err) {
-      console.error("Failed to auto-save state to database:", err);
+      console.warn("Could not auto-save state to database (running in static mode):", err);
     }
   };
 
@@ -888,28 +973,19 @@ function App() {
     try {
       const data = await safeFetchJson(`/api/user/load-state?email=${encodeURIComponent(email)}`);
       if (data && data.success && data.state_data) {
-        const sd = data.state_data;
-        if (sd.appMode !== undefined) setAppMode(sd.appMode);
-        if (sd.treeType !== undefined) setTreeType(sd.treeType);
-        if (sd.insertedValues !== undefined) setInsertedValues(sd.insertedValues);
-        if (sd.operationsLog !== undefined) setOperationsLog(sd.operationsLog);
-        if (sd.customCode !== undefined) setCustomCode(sd.customCode);
-        if (sd.codeLang !== undefined) setCodeLang(sd.codeLang);
-        if (sd.globalDsType !== undefined) setGlobalDsType(sd.globalDsType);
-        if (sd.globalDsVariety !== undefined) setGlobalDsVariety(sd.globalDsVariety);
-        if (sd.globalSort !== undefined) setGlobalSort(sd.globalSort);
-        if (sd.globalSearch !== undefined) setGlobalSearch(sd.globalSearch);
-        if (sd.globalSortSearchTab !== undefined) setGlobalSortSearchTab(sd.globalSortSearchTab);
-        if (sd.globalGraphAlgo !== undefined) setGlobalGraphAlgo(sd.globalGraphAlgo);
-        if (sd.setupComplete !== undefined) setSetupComplete(sd.setupComplete);
+        applyState(data.state_data);
       }
     } catch (err) {
-      console.error("Failed to load state from database:", err);
+      console.warn("Could not load state from database (running in static mode):", err);
+      // Fallback to local storage if API fails
+      loadStateFromLocalStorage();
     }
   };
 
-  // On Mount: load state if already logged in and session is valid
+  // On Mount: load state
   useEffect(() => {
+    loadStateFromLocalStorage();
+
     const savedEmail = localStorage.getItem('userEmail');
     const savedTime = localStorage.getItem('loginTime');
     if (savedEmail && savedTime && Date.now() - Number(savedTime) < 3600000) {
@@ -929,7 +1005,7 @@ function App() {
           }
         }
       } catch (err) {
-        console.error("Failed to fetch Google configuration:", err);
+        console.warn("Failed to fetch Google configuration (running in static mode):", err);
       }
     };
     fetchConfig();
@@ -1315,7 +1391,20 @@ function App() {
       });
       setIsFeedbackSubmitted(true);
     } catch (err) {
-      setFeedbackError(err.message);
+      console.warn("Feedback database submission failed, saving locally:", err);
+      // Save locally as fallback
+      try {
+        const localFeedbacks = JSON.parse(localStorage.getItem('algoflow_feedbacks') || '[]');
+        localFeedbacks.push({
+          email: feedbackEmail.trim(),
+          rating,
+          category: feedbackCategory,
+          text: feedbackText.trim(),
+          created_at: new Date().toISOString()
+        });
+        localStorage.setItem('algoflow_feedbacks', JSON.stringify(localFeedbacks));
+      } catch (_) {}
+      setIsFeedbackSubmitted(true); // Treat as submitted successfully for UX
     } finally {
       setIsFeedbackVerifyingOtp(false);
     }
@@ -1346,7 +1435,10 @@ function App() {
       });
       setIsOtpVerifying(true);
     } catch (err) {
-      setFeedbackError(err.message);
+      console.warn("Feedback OTP sending failed (running in static mode). Bypassing OTP check.", err);
+      // Fallback: directly submit direct feedback!
+      setIsFeedbackSendingOtp(false);
+      await submitDirectFeedback();
     } finally {
       setIsFeedbackSendingOtp(false);
     }
@@ -1769,12 +1861,99 @@ function App() {
   const handleClear = () => {
     setTimeline([]); setCurrentStep(0); setIsPlaying(false);
     setInsertedValues([]); setOperationsLog([]); setAnalysisResult(null);
-    bTreeRef.current = new BTreeEngine(bTreeOrder, false);
-    bPlusTreeRef.current = new BTreeEngine(bTreeOrder, true);
+    bTreeRef.current = new BTreeEngine(bTreeOrder, false, splitStrategy);
+    bPlusTreeRef.current = new BTreeEngine(bTreeOrder, true, splitStrategy);
     rbEngineRef.current = new RBEngine();
   };
 
-  useEffect(() => { handleClear(); }, [treeType, bTreeOrder]);
+  const prevTreeTypeRef = useRef(treeType);
+
+  const rebuildTimeline = (targetTreeType, targetBTreeOrder, targetSplitStrategy) => {
+    if (insertedValues.length === 0) {
+      setTimeline([]);
+      setCurrentStep(0);
+      setIsPlaying(false);
+      bTreeRef.current = new BTreeEngine(targetBTreeOrder, false, targetSplitStrategy);
+      bPlusTreeRef.current = new BTreeEngine(targetBTreeOrder, true, targetSplitStrategy);
+      rbEngineRef.current = new RBEngine();
+      return;
+    }
+
+    const bTree = new BTreeEngine(targetBTreeOrder, false, targetSplitStrategy);
+    const bPlusTree = new BTreeEngine(targetBTreeOrder, true, targetSplitStrategy);
+    bTreeRef.current = bTree;
+    bPlusTreeRef.current = bPlusTree;
+    rbEngineRef.current = new RBEngine();
+
+    let frames = [];
+    let logs = [];
+    let curRoot = null;
+    let heapArr = [];
+    let segValues = [];
+    let fenValues = [];
+    let graphValues = [];
+
+    for (const val of insertedValues) {
+      if (targetTreeType === 'MIN_HEAP' || targetTreeType === 'MAX_HEAP') {
+        const res = simulateHeap(val, heapArr, logs, targetTreeType === 'MAX_HEAP');
+        frames.push(...res.frames);
+        heapArr = res.finalArr;
+        logs = res.frames[res.frames.length - 1].logs;
+      } else if (targetTreeType === 'BST' || targetTreeType === 'AVL') {
+        const f = simulateBST(curRoot, val, logs);
+        frames.push(...f);
+        curRoot = f[f.length - 1].root;
+        logs = f[f.length - 1].logs;
+      } else if (targetTreeType === 'B_TREE' || targetTreeType === 'B_PLUS_TREE') {
+        logs.push({ text: `─── ${targetTreeType === 'B_PLUS_TREE' ? 'B+ Tree' : 'B-Tree'} Insert(${val}) ───`, type: 'normal' });
+        const rec = (h, r) => {
+          const t = targetTreeType === 'B_TREE' ? bTree : bPlusTree;
+          frames.push(new Frame(t.root, logs, h, r));
+        };
+        if (targetTreeType === 'B_TREE') bTree.insert(val, logs, rec);
+        else bPlusTree.insert(val, logs, rec);
+        rec(val, null);
+      } else if (targetTreeType === 'SEGMENT_TREE') {
+        const f = simulateSegTree(val, segValues, logs);
+        frames.push(...f);
+        curRoot = f[f.length - 1].root;
+        logs = f[f.length - 1].logs;
+        segValues.push(val);
+      } else if (targetTreeType === 'FENWICK_TREE') {
+        const f = simulateFenwick(val, fenValues, logs);
+        frames.push(...f);
+        curRoot = f[f.length - 1].root;
+        logs = f[f.length - 1].logs;
+        fenValues.push(val);
+      } else if (targetTreeType === 'RB_TREE') {
+        const f = simulateRB(val, logs);
+        frames.push(...f);
+        logs = f[f.length - 1].logs;
+      } else if (targetTreeType === 'BFS_TREE' || targetTreeType === 'DFS_TREE') {
+        const f = simulateGraphTree(val, graphValues, logs, targetTreeType === 'BFS_TREE' ? 'BFS' : 'DFS');
+        frames.push(...f);
+        logs = f[f.length - 1].logs;
+        graphValues.push(val);
+      }
+    }
+
+    setTimeline(frames);
+    setCurrentStep(frames.length > 0 ? frames.length - 1 : 0);
+    setIsPlaying(false);
+  };
+
+  useEffect(() => {
+    const isGraph = (t) => t === 'BFS_TREE' || t === 'DFS_TREE';
+    const wasGraph = isGraph(prevTreeTypeRef.current);
+    const nowGraph = isGraph(treeType);
+
+    if (wasGraph !== nowGraph) {
+      handleClear();
+    } else {
+      rebuildTimeline(treeType, bTreeOrder, splitStrategy);
+    }
+    prevTreeTypeRef.current = treeType;
+  }, [treeType, bTreeOrder, splitStrategy]);
 
   useEffect(() => {
     if (isPlaying) {
@@ -2317,7 +2496,7 @@ function App() {
       } else {
         setAnalysisResult({ type: 'success', message: `✅ Syntax OK for ${codeLang}\n${nums.length ? `\n🌳 Detected ${nums.length} insertion(s) — visualizing!` : '\nNo tree insertions detected.'}` });
         if (nums.length) { 
-          let frames=[],logs=[],arr=[],curRoot=null; bTreeRef.current=new BTreeEngine(bTreeOrder,false); bPlusTreeRef.current=new BTreeEngine(bTreeOrder,true); rbEngineRef.current=new RBEngine(); 
+          let frames=[],logs=[],arr=[],curRoot=null; bTreeRef.current=new BTreeEngine(bTreeOrder,false,splitStrategy); bPlusTreeRef.current=new BTreeEngine(bTreeOrder,true,splitStrategy); rbEngineRef.current=new RBEngine(); 
           let heapArr = [];
           for(const val of nums){if(isNaN(val))continue;if(treeType==='MIN_HEAP'||treeType==='MAX_HEAP'){const res=simulateHeap(val,heapArr,logs,treeType==='MAX_HEAP');frames.push(...res.frames);heapArr=res.finalArr;logs=res.frames[res.frames.length-1].logs;}else{arr.push(val);if(treeType==='BST'||treeType==='AVL'){const f=simulateBST(curRoot,val,logs);frames.push(...f);curRoot=f[f.length-1].root;logs=f[f.length-1].logs;}else if(treeType==='B_TREE'||treeType==='B_PLUS_TREE'){logs.push({text:`Insert(${val})`,type:'normal'});const rec=(h,r)=>{const t=treeType==='B_TREE'?bTreeRef.current:bPlusTreeRef.current;frames.push(new Frame(t.root,logs,h,r));};if(treeType==='B_TREE')bTreeRef.current.insert(val,logs,rec);else bPlusTreeRef.current.insert(val,logs,rec);rec(val,null);}else if(treeType==='SEGMENT_TREE'){const f=simulateSegTree(val,arr.slice(0,-1),logs);frames.push(...f);curRoot=f[f.length-1].root;logs=f[f.length-1].logs;}else if(treeType==='FENWICK_TREE'){const f=simulateFenwick(val,arr.slice(0,-1),logs);frames.push(...f);curRoot=f[f.length-1].root;logs=f[f.length-1].logs;}else if(treeType==='RB_TREE'){const f=simulateRB(val,logs);frames.push(...f);logs=f[f.length-1].logs;}}}
           setInsertedValues(treeType==='MIN_HEAP'||treeType==='MAX_HEAP'?heapArr:arr);setTimeline(frames);
@@ -2422,8 +2601,11 @@ function App() {
     };
 
     const transitionArrows = [];
-    if (currentStep > 0 && timeline[currentStep - 1]) {
-      const prevRoot = timeline[currentStep - 1].root;
+    const timelineChanged = prevTimelineRef.current !== timeline;
+    const isConsecutive = Math.abs(currentStep - prevStepRef.current) === 1 && !timelineChanged;
+
+    if (isConsecutive && prevStepRef.current >= 0 && prevStepRef.current < timeline.length && timeline[prevStepRef.current]) {
+      const prevRoot = timeline[prevStepRef.current].root;
       const prevPositions = collectPositions(prevRoot);
       const currentPositions = collectPositions(rootNode);
       const seenTransitions = new Set();
@@ -2843,6 +3025,14 @@ function App() {
                 { id: 'HASH_LINEAR', mode: 'GENERAL_DSA_VIS', title: 'Hash Table (Linear Probing)', icon: '#️⃣', desc: 'General DSA', type: 'HASH_TABLE', variety: 'HASH_LINEAR' },
                 { id: 'HASH_QUADRATIC', mode: 'GENERAL_DSA_VIS', title: 'Hash Table (Quadratic Probing)', icon: '2️⃣', desc: 'General DSA', type: 'HASH_TABLE', variety: 'HASH_QUADRATIC' },
                 { id: 'HASH_CHAINING', mode: 'GENERAL_DSA_VIS', title: 'Hash Table (Separate Chaining)', icon: '⛓️‍💥', desc: 'General DSA', type: 'HASH_TABLE', variety: 'HASH_CHAINING' },
+                { id: 'DIJKSTRA_GRAPH', mode: 'GRAPH_VIS', title: 'Dijkstra Algorithm', icon: '🛣️', desc: 'Graph Visualizer', algo: 'Dijkstra' },
+                { id: 'BFS_GRAPH', mode: 'GRAPH_VIS', title: 'Breadth-First Search (BFS)', icon: '🌐', desc: 'Graph Visualizer', algo: 'BFS' },
+                { id: 'DFS_GRAPH', mode: 'GRAPH_VIS', title: 'Depth-First Search (DFS)', icon: '🕵️', desc: 'Graph Visualizer', algo: 'DFS' },
+                { id: 'GREEDY_GRAPH', mode: 'GRAPH_VIS', title: 'Greedy Best-First Search', icon: '🤑', desc: 'Graph Visualizer', algo: 'Greedy' },
+                { id: 'PRIM_GRAPH', mode: 'GRAPH_VIS', title: "Prim's MST Algorithm", icon: '🌲', desc: 'Graph Visualizer', algo: 'Prim' },
+                { id: 'BELLMAN_GRAPH', mode: 'GRAPH_VIS', title: 'Bellman-Ford Algorithm', icon: '📉', desc: 'Graph Visualizer', algo: 'Bellman-Ford' },
+                { id: 'FLOYD_GRAPH', mode: 'GRAPH_VIS', title: 'Floyd-Warshall Algorithm', icon: '🕸️', desc: 'Graph Visualizer', algo: 'Floyd-Warshall' },
+                { id: 'KAHN_GRAPH', mode: 'GRAPH_VIS', title: "Kahn's Algorithm (Topological Sort)", icon: '📐', desc: 'Graph Visualizer', algo: 'Kahn' },
                 { id: 'BUBBLE_SORT', mode: 'SORT_SEARCH_VIS', title: 'Bubble Sort', icon: '🫧', desc: 'Sort & Search Visualizer', tab: 'Sort', algo: 'Bubble Sort' },
                 { id: 'SELECTION_SORT', mode: 'SORT_SEARCH_VIS', title: 'Selection Sort', icon: '🎯', desc: 'Sort & Search Visualizer', tab: 'Sort', algo: 'Selection Sort' },
                 { id: 'INSERTION_SORT', mode: 'SORT_SEARCH_VIS', title: 'Insertion Sort', icon: '📥', desc: 'Sort & Search Visualizer', tab: 'Sort', algo: 'Insertion Sort' },
@@ -2853,11 +3043,7 @@ function App() {
                 { id: 'QUICK_SORT', mode: 'SORT_SEARCH_VIS', title: 'Quick Sort', icon: '⚡', desc: 'Sort & Search Visualizer', tab: 'Sort', algo: 'Quick Sort' },
                 { id: 'RADIX_SORT', mode: 'SORT_SEARCH_VIS', title: 'Radix Sort', icon: '🔢', desc: 'Sort & Search Visualizer', tab: 'Sort', algo: 'Radix Sort' },
                 { id: 'LINEAR_SEARCH', mode: 'SORT_SEARCH_VIS', title: 'Linear Search', icon: '🔍', desc: 'Sort & Search Visualizer', tab: 'Search', algo: 'Linear Search' },
-                { id: 'BINARY_SEARCH', mode: 'SORT_SEARCH_VIS', title: 'Binary Search', icon: '🎯', desc: 'Sort & Search Visualizer', tab: 'Search', algo: 'Binary Search' },
-                { id: 'DIJKSTRA_GRAPH', mode: 'GRAPH_VIS', title: 'Dijkstra Algorithm', icon: '🛣️', desc: 'Graph Visualizer', algo: 'Dijkstra' },
-                { id: 'BFS_GRAPH', mode: 'GRAPH_VIS', title: 'Breadth-First Search (BFS)', icon: '🌐', desc: 'Graph Visualizer', algo: 'BFS' },
-                { id: 'DFS_GRAPH', mode: 'GRAPH_VIS', title: 'Depth-First Search (DFS)', icon: '🕵️', desc: 'Graph Visualizer', algo: 'DFS' },
-                { id: 'GREEDY_GRAPH', mode: 'GRAPH_VIS', title: 'Greedy Best-First Search', icon: '🤑', desc: 'Graph Visualizer', algo: 'Greedy' }
+                { id: 'BINARY_SEARCH', mode: 'SORT_SEARCH_VIS', title: 'Binary Search', icon: '🎯', desc: 'Sort & Search Visualizer', tab: 'Search', algo: 'Binary Search' }
               ].filter(c => c.title.toLowerCase().includes(homeSearchQuery.toLowerCase()) || c.desc.toLowerCase().includes(homeSearchQuery.toLowerCase())).map(card => (
                 <div key={card.id} className="option-card" onClick={() => setPendingModule(card)} onMouseEnter={e => gsap.to(e.currentTarget, { scale: 1.05, duration: 0.2 })} onMouseLeave={e => gsap.to(e.currentTarget, { scale: 1, duration: 0.2 })}>
                   <div className="option-icon">{card.icon}</div>
@@ -3058,17 +3244,34 @@ function App() {
             </div>
 
             {(treeType === 'B_TREE' || treeType === 'B_PLUS_TREE') && (
-              <div className="select-group">
-                <label style={{ fontWeight: 600 }}>B-Tree Order (Max Children)</label>
-                <div style={{ display: 'grid', gridTemplateColumns: 'repeat(8, 1fr)', gap: '0.4rem', marginTop: '8px' }}>
-                  {[3, 4, 5, 6, 7, 8, 9, 10].map(o => (
-                    <button key={o} onClick={() => setBTreeOrder(o)}
-                      style={{ padding: '0.5rem 0', borderRadius: '8px', border: `2px solid ${bTreeOrder === o ? 'var(--accent-primary)' : 'var(--glass-border)'}`, background: bTreeOrder === o ? 'rgba(59,130,246,0.18)' : 'rgba(255,255,255,0.04)', color: bTreeOrder === o ? 'var(--accent-primary)' : 'var(--text-primary)', cursor: 'pointer', fontWeight: bTreeOrder === o ? 800 : 400, fontSize: '0.9rem', transition: 'all 0.2s', textAlign: 'center' }}>
-                      {o}
-                    </button>
-                  ))}
+              <>
+                <div className="select-group">
+                  <label style={{ fontWeight: 600 }}>B-Tree Order (Max Children)</label>
+                  <div style={{ display: 'grid', gridTemplateColumns: 'repeat(8, 1fr)', gap: '0.4rem', marginTop: '8px' }}>
+                    {[3, 4, 5, 6, 7, 8, 9, 10].map(o => (
+                      <button key={o} onClick={() => setBTreeOrder(o)}
+                        style={{ padding: '0.5rem 0', borderRadius: '8px', border: `2px solid ${bTreeOrder === o ? 'var(--accent-primary)' : 'var(--glass-border)'}`, background: bTreeOrder === o ? 'rgba(59,130,246,0.18)' : 'rgba(255,255,255,0.04)', color: bTreeOrder === o ? 'var(--accent-primary)' : 'var(--text-primary)', cursor: 'pointer', fontWeight: bTreeOrder === o ? 800 : 400, fontSize: '0.9rem', transition: 'all 0.2s', textAlign: 'center' }}>
+                        {o}
+                      </button>
+                    ))}
+                  </div>
                 </div>
-              </div>
+                <div className="select-group" style={{ marginTop: '1.2rem' }}>
+                  <label style={{ fontWeight: 600 }}>Splitting Strategy</label>
+                  <div style={{ display: 'grid', gridTemplateColumns: 'repeat(3, 1fr)', gap: '0.4rem', marginTop: '8px' }}>
+                    {[
+                      { id: 'MEDIAN', name: 'Median' },
+                      { id: 'LEFT_BIASED', name: 'Left-Biased' },
+                      { id: 'RIGHT_BIASED', name: 'Right-Biased' }
+                    ].map(strategy => (
+                      <button key={strategy.id} onClick={() => setSplitStrategy(strategy.id)}
+                        style={{ padding: '0.55rem 0', borderRadius: '8px', border: `2px solid ${splitStrategy === strategy.id ? 'var(--accent-primary)' : 'var(--glass-border)'}`, background: splitStrategy === strategy.id ? 'rgba(59,130,246,0.18)' : 'rgba(255,255,255,0.04)', color: splitStrategy === strategy.id ? 'var(--accent-primary)' : 'var(--text-primary)', cursor: 'pointer', fontWeight: splitStrategy === strategy.id ? 800 : 400, fontSize: '0.85rem', transition: 'all 0.2s', textAlign: 'center' }}>
+                        {strategy.name}
+                      </button>
+                    ))}
+                  </div>
+                </div>
+              </>
             )}
 
             <button className="btn btn-start" style={{ marginTop: '1.5rem', width: '100%' }} onClick={() => setSetupComplete(true)}>Launch Visualizer</button>
@@ -3206,12 +3409,26 @@ function App() {
                 </div>
 
                 {(treeType === 'B_TREE' || treeType === 'B_PLUS_TREE') && (
-                  <div style={{ display: 'flex', alignItems: 'center', gap: '5px', background: 'rgba(255,255,255,0.05)', padding: '4px 10px', borderRadius: '8px' }}>
-                    <span style={{ fontSize: '0.8rem', color: 'var(--text-secondary)' }}>Order</span>
-                    <select className="styled-select" style={{ padding: '2px 8px', fontSize: '0.85rem', width: 'auto' }} value={bTreeOrder} onChange={e => setBTreeOrder(Number(e.target.value))}>
-                      {[3,4,5,6,7,8,9,10].map(o => <option key={o} value={o}>{o}</option>)}
-                    </select>
-                  </div>
+                  <>
+                    <div style={{ display: 'flex', alignItems: 'center', gap: '5px', background: 'rgba(255,255,255,0.05)', padding: '4px 10px', borderRadius: '8px' }}>
+                      <span style={{ fontSize: '0.8rem', color: 'var(--text-secondary)' }}>Order</span>
+                      <select className="styled-select" style={{ padding: '2px 8px', fontSize: '0.85rem', width: 'auto' }} value={bTreeOrder} onChange={e => setBTreeOrder(Number(e.target.value))}>
+                        {[3,4,5,6,7,8,9,10].map(o => <option key={o} value={o}>{o}</option>)}
+                      </select>
+                    </div>
+                    <div style={{ display: 'flex', alignItems: 'center', gap: '5px', background: 'rgba(255,255,255,0.05)', padding: '4px 10px', borderRadius: '8px' }}>
+                      <span style={{ fontSize: '0.8rem', color: 'var(--text-secondary)' }}>Split</span>
+                      <select className="styled-select" style={{ padding: '2px 8px', fontSize: '0.85rem', width: 'auto' }} value={splitStrategy} onChange={e => setSplitStrategy(e.target.value)}>
+                        <option value="MEDIAN">Median</option>
+                        <option value="LEFT_BIASED">Left-Biased</option>
+                        <option value="RIGHT_BIASED">Right-Biased</option>
+                      </select>
+                    </div>
+                    <label style={{ display: 'flex', alignItems: 'center', gap: '6px', background: 'rgba(255,255,255,0.05)', padding: '4px 10px', borderRadius: '8px', cursor: 'pointer', fontSize: '0.82rem', color: 'var(--text-secondary)', userSelect: 'none' }}>
+                      <input type="checkbox" checked={showBoundsInfo} onChange={e => setShowBoundsInfo(e.target.checked)} style={{ accentColor: 'var(--accent-primary)', cursor: 'pointer' }} />
+                      <span>Node Bounds</span>
+                    </label>
+                  </>
                 )}
 
                 {(treeType === 'BST' || treeType === 'AVL') && (
@@ -3298,6 +3515,57 @@ function App() {
                         <p style={{ fontSize: '0.82rem', opacity: 0.6 }}>Try values like 50, 30, 70, 20, 40 …</p>
                       </div>
                     )}
+
+                    {showBoundsInfo && (treeType === 'B_TREE' || treeType === 'B_PLUS_TREE') && (() => {
+                      const bounds = getBTreeBounds(bTreeOrder, treeType === 'B_PLUS_TREE', splitStrategy);
+                      return (
+                        <div style={{
+                          position: 'absolute',
+                          top: '12px',
+                          right: '12px',
+                          zIndex: 10,
+                          background: 'rgba(15, 23, 42, 0.85)',
+                          backdropFilter: 'blur(12px)',
+                          border: '1px solid var(--glass-border)',
+                          borderRadius: '12px',
+                          padding: '12px',
+                          width: '240px',
+                          fontSize: '0.82rem',
+                          color: 'var(--text-primary)',
+                          boxShadow: '0 8px 32px rgba(0, 0, 0, 0.4)',
+                          animation: 'fadeIn 0.2s ease-out',
+                          pointerEvents: 'auto'
+                        }}>
+                          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '8px', borderBottom: '1px solid rgba(255,255,255,0.08)', paddingBottom: '6px' }}>
+                            <span style={{ fontWeight: 'bold', color: 'var(--accent-primary)' }}>📊 {treeType === 'B_TREE' ? 'B-Tree' : 'B+ Tree'} (M={bTreeOrder})</span>
+                            <button onClick={() => setShowBoundsInfo(false)} style={{ background: 'none', border: 'none', color: 'var(--text-secondary)', cursor: 'pointer', fontSize: '1rem', padding: '0 4px', lineHeight: 1 }}>×</button>
+                          </div>
+                          <div style={{ display: 'flex', flexDirection: 'column', gap: '6px' }}>
+                            <div style={{ display: 'flex', justifyContent: 'space-between' }}>
+                              <span style={{ color: 'var(--text-secondary)' }}>Keys per Node:</span>
+                              <span style={{ fontWeight: 'bold' }}>{bounds.standardMinKeys} to {bounds.standardMaxKeys}</span>
+                            </div>
+                            <div style={{ display: 'flex', justifyContent: 'space-between' }}>
+                              <span style={{ color: 'var(--text-secondary)' }}>Children per Node:</span>
+                              <span style={{ fontWeight: 'bold' }}>{bounds.standardMinChildren} to {bounds.standardMaxChildren}</span>
+                            </div>
+                            <div style={{ borderTop: '1px solid rgba(255,255,255,0.08)', marginTop: '4px', paddingTop: '6px' }}>
+                              <span style={{ fontSize: '0.75rem', color: 'var(--accent-secondary)', fontWeight: 'bold', display: 'block', marginBottom: '4px' }}>Split Sizes ({splitStrategy.replace('_', ' ')}):</span>
+                              <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: '0.78rem' }}>
+                                <span style={{ color: 'var(--text-secondary)' }}>Internal Node Split:</span>
+                                <span style={{ fontFamily: 'monospace' }}>{bounds.leftSplitKeys} ← [up] → {bounds.rightSplitKeys}</span>
+                              </div>
+                              {treeType === 'B_PLUS_TREE' && (
+                                <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: '0.78rem', marginTop: '2px' }}>
+                                  <span style={{ color: 'var(--text-secondary)' }}>Leaf Node Split:</span>
+                                  <span style={{ fontFamily: 'monospace' }}>{bounds.leftLeafSplitKeys} ← [copy] → {bounds.rightLeafSplitKeys}</span>
+                                </div>
+                              )}
+                            </div>
+                          </div>
+                        </div>
+                      );
+                    })()}
                   </div>
                 </div>
 

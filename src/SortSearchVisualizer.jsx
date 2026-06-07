@@ -60,6 +60,115 @@ const SortSearchVisualizer = ({ onBack, openSettings, initialTab = 'Sort', initi
   const [activeTab, setActiveTab] = useState(initialTab); // 'Sort' or 'Search'
   const [codeLang, setCodeLang] = useState('C++');
   const [showCode, setShowCode] = useState(true);
+
+  // Draggable execution log states
+  const [showLogPanel, setShowLogPanel] = useState(true);
+  const [logPosition, setLogPosition] = useState({ x: 20, y: 120 });
+  const [logActiveTab, setLogActiveTab] = useState('simulation');
+  const [compilerLogs, setCompilerLogs] = useState([]);
+  const [isCompiling, setIsCompiling] = useState(false);
+  const [isDraggingLog, setIsDraggingLog] = useState(false);
+
+  const logDragStart = useRef({ x: 0, y: 0 });
+  const logPanelStart = useRef({ x: 0, y: 0 });
+  const logContainerRef = useRef(null);
+
+  const handleLogMouseDown = (e) => {
+    const handle = e.target.closest('.log-drag-handle');
+    if (handle) {
+      setIsDraggingLog(true);
+      logDragStart.current = { x: e.clientX, y: e.clientY };
+      logPanelStart.current = { x: logPosition.x, y: logPosition.y };
+      e.preventDefault();
+    }
+  };
+
+  useEffect(() => {
+    if (!isDraggingLog) return;
+    const handleMouseMove = (e) => {
+      const dx = e.clientX - logDragStart.current.x;
+      const dy = e.clientY - logDragStart.current.y;
+      setLogPosition({
+        x: logPanelStart.current.x + dx,
+        y: logPanelStart.current.y + dy
+      });
+    };
+    const handleMouseUp = () => {
+      setIsDraggingLog(false);
+    };
+    window.addEventListener('mousemove', handleMouseMove);
+    window.addEventListener('mouseup', handleMouseUp);
+    return () => {
+      window.removeEventListener('mousemove', handleMouseMove);
+      window.removeEventListener('mouseup', handleMouseUp);
+    };
+  }, [isDraggingLog]);
+
+  useEffect(() => {
+    if (logContainerRef.current) {
+      logContainerRef.current.scrollTop = logContainerRef.current.scrollHeight;
+    }
+  }, [currentStep, showLogPanel, timeline, compilerLogs, logActiveTab]);
+
+  const runOnlineCompiler = () => {
+    const rawCode = getSortSearchCode(currentDisplayedAlgo, codeLang, array, searchValue ? parseInt(searchValue) : undefined);
+    setIsCompiling(true);
+    setLogActiveTab('compiler');
+    setShowLogPanel(true);
+    setCompilerLogs([{ text: `▶ Compiling and running ${codeLang} template on cloud...`, type: 'normal' }]);
+
+    const pistonLangMap = {
+      'Java': { language: 'java', version: '*', filename: 'Main.java' },
+      'C++': { language: 'cpp', version: '*', filename: 'main.cpp' },
+      'Python': { language: 'python', version: '*', filename: 'main.py' },
+      'JS': { language: 'javascript', version: '*', filename: 'main.js' }
+    };
+
+    const langConfig = pistonLangMap[codeLang] || { language: 'javascript', version: '*', filename: 'main.js' };
+
+    fetch('https://emkc.org/api/v2/piston/execute', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        language: langConfig.language,
+        version: langConfig.version,
+        files: [{ name: langConfig.filename, content: rawCode }],
+        stdin: ''
+      })
+    })
+    .then(res => res.json())
+    .then(data => {
+      setIsCompiling(false);
+      if (!data || !data.run) {
+        throw new Error('Invalid compiler response from server.');
+      }
+      const run = data.run;
+      const newLogs = [];
+      if (run.stderr && run.stderr.trim()) {
+        newLogs.push({ text: `❌ Execution Errors:\n${run.stderr}`, type: 'error' });
+      } else {
+        newLogs.push({ text: '✅ Compilation and execution successful.', type: 'success' });
+        if (run.stdout && run.stdout.trim()) {
+          newLogs.push({ text: `\n[OUTPUT]`, type: 'normal' });
+          run.stdout.split('\n').forEach(line => {
+            if (line.trim()) newLogs.push({ text: line, type: 'output' });
+          });
+          newLogs.push({ text: `[END]`, type: 'normal' });
+        } else {
+          newLogs.push({ text: '\n[OUTPUT] (No output)', type: 'normal' });
+        }
+      }
+      setCompilerLogs(newLogs);
+    })
+    .catch(err => {
+      setIsCompiling(false);
+      setCompilerLogs([
+        { text: `❌ Network Error: Could not connect to Piston compiler server.`, type: 'error' },
+        { text: `(${err.message})`, type: 'error' }
+      ]);
+    });
+  };
+
   const barRefs = useRef([]);
   const currentDisplayedAlgo = activeTab === 'Sort' ? selectedSort : selectedSearch;
   
@@ -637,6 +746,7 @@ const SortSearchVisualizer = ({ onBack, openSettings, initialTab = 'Sort', initi
           )}
 
           <div style={{ width: '1px', height: '22px', background: 'var(--glass-border)', margin: '0 4px' }} />
+          <button className="btn btn-clear" onClick={() => setShowLogPanel(!showLogPanel)}>{showLogPanel ? '📋 Hide Log' : '📋 Show Log'}</button>
           <button className="btn btn-clear" onClick={() => setShowCode(!showCode)}>{showCode ? '💻 Hide Code' : '💻 Show Code'}</button>
           {openSettings && <button className="btn btn-clear" onClick={openSettings}>⚙ Settings</button>}
           <button className="btn btn-clear" onClick={onBack}>🏠 Home</button>
@@ -646,7 +756,7 @@ const SortSearchVisualizer = ({ onBack, openSettings, initialTab = 'Sort', initi
       <div style={{ flex: 1, display: 'flex', padding: '1.5rem', gap: '1.5rem', overflow: 'hidden' }}>
         
         {/* Left Column: Visualizer */}
-        <div style={{ flex: 1, display: 'flex', flexDirection: 'column', overflow: 'hidden' }}>
+        <div style={{ flex: 1, display: 'flex', flexDirection: 'column', overflow: 'hidden', position: 'relative' }}>
           <div style={{ textAlign: 'center', marginBottom: '1.2rem', height: '40px', display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0 }}>
              <span style={{ fontSize: '1.4rem', color: 'var(--text-primary)', fontWeight: 'bold', background: 'rgba(255,255,255,0.05)', padding: '6px 20px', borderRadius: '20px', border: '1px solid var(--glass-border)', boxShadow: '0 4px 15px rgba(0,0,0,0.2)' }}>
                {frame.msg || 'Select a sort or search algorithm'}
@@ -755,6 +865,150 @@ const SortSearchVisualizer = ({ onBack, openSettings, initialTab = 'Sort', initi
               <input type="range" min={50} max={1000} step={50} value={1050 - speed} onChange={e => setSpeed(1050 - Number(e.target.value))} style={{ width: '200px', accentColor: 'var(--accent-primary)' }}/>
             </div>
           </div>
+
+          {showLogPanel && (
+            <div
+              style={{
+                position: 'absolute',
+                left: `${logPosition.x}px`,
+                top: `${logPosition.y}px`,
+                width: '340px',
+                maxHeight: '260px',
+                background: 'rgba(15, 23, 42, 0.9)',
+                backdropFilter: 'blur(12px)',
+                border: '1px solid var(--glass-border)',
+                borderRadius: '12px',
+                boxShadow: '0 15px 30px rgba(0,0,0,0.5)',
+                display: 'flex',
+                flexDirection: 'column',
+                zIndex: 99,
+                overflow: 'hidden'
+              }}
+            >
+              {/* Drag Handle Header */}
+              <div
+                className="log-drag-handle"
+                onMouseDown={handleLogMouseDown}
+                style={{
+                  padding: '8px 12px',
+                  background: 'rgba(255, 255, 255, 0.04)',
+                  borderBottom: '1px solid var(--glass-border)',
+                  cursor: 'move',
+                  display: 'flex',
+                  justifyContent: 'space-between',
+                  alignItems: 'center',
+                  userSelect: 'none',
+                  flexShrink: 0
+                }}
+              >
+                <span style={{ fontWeight: 600, fontSize: '0.85rem', color: 'var(--text-primary)', display: 'flex', alignItems: 'center', gap: '6px' }}>
+                  📋 Execution Log
+                </span>
+                <button
+                  onClick={() => setShowLogPanel(false)}
+                  style={{
+                    background: 'transparent',
+                    border: 'none',
+                    color: 'var(--text-secondary)',
+                    cursor: 'pointer',
+                    fontSize: '1.1rem',
+                    padding: '0 4px',
+                    lineHeight: 1
+                  }}
+                  title="Hide Log"
+                >
+                  ×
+                </button>
+              </div>
+              {/* Tabs */}
+              <div style={{ display: 'flex', borderBottom: '1px solid var(--glass-border)', background: 'rgba(0,0,0,0.2)', flexShrink: 0 }}>
+                <button
+                  onClick={() => setLogActiveTab('simulation')}
+                  style={{
+                    flex: 1,
+                    padding: '6px 12px',
+                    background: 'transparent',
+                    border: 'none',
+                    borderBottom: logActiveTab === 'simulation' ? '2px solid var(--accent-primary)' : '2px solid transparent',
+                    color: logActiveTab === 'simulation' ? 'var(--text-primary)' : 'var(--text-secondary)',
+                    fontSize: '0.8rem',
+                    fontWeight: logActiveTab === 'simulation' ? 'bold' : 'normal',
+                    cursor: 'pointer',
+                    outline: 'none'
+                  }}
+                >
+                  Simulation
+                </button>
+                <button
+                  onClick={() => setLogActiveTab('compiler')}
+                  style={{
+                    flex: 1,
+                    padding: '6px 12px',
+                    background: 'transparent',
+                    border: 'none',
+                    borderBottom: logActiveTab === 'compiler' ? '2px solid var(--accent-primary)' : '2px solid transparent',
+                    color: logActiveTab === 'compiler' ? 'var(--text-primary)' : 'var(--text-secondary)',
+                    fontSize: '0.8rem',
+                    fontWeight: logActiveTab === 'compiler' ? 'bold' : 'normal',
+                    cursor: 'pointer',
+                    outline: 'none'
+                  }}
+                >
+                  Compiler
+                </button>
+              </div>
+              {/* Log list container */}
+              <div
+                ref={logContainerRef}
+                style={{
+                  padding: '10px 12px',
+                  overflowY: 'auto',
+                  flex: 1,
+                  fontFamily: 'monospace',
+                  fontSize: '0.82rem'
+                }}
+              >
+                {logActiveTab === 'simulation' ? (
+                  <div style={{ display: 'flex', flexDirection: 'column', gap: '5px' }}>
+                    {timeline.length === 0 && (
+                      <div style={{ color: 'var(--text-secondary)', fontStyle: 'italic', textAlign: 'center', marginTop: '20px' }}>
+                        No simulation logs yet. Run algorithm to start.
+                      </div>
+                    )}
+                    {timeline.slice(0, currentStep + 1).map((frame, idx) => (
+                      <div key={idx} style={{ display: 'flex', gap: '6px', lineHeight: '1.4' }}>
+                        <span style={{ color: 'var(--text-secondary)', userSelect: 'none', minWidth: '15px' }}>
+                          {idx === currentStep ? '➔' : `${idx + 1}.`}
+                        </span>
+                        <span style={{ color: idx === currentStep ? '#fbbf24' : 'var(--text-primary)' }}>
+                          {frame.msg}
+                        </span>
+                      </div>
+                    ))}
+                  </div>
+                ) : (
+                  <div style={{ display: 'flex', flexDirection: 'column', gap: '4px' }}>
+                    {compilerLogs.length === 0 && (
+                      <div style={{ color: 'var(--text-secondary)', fontStyle: 'italic', textAlign: 'center', marginTop: '20px' }}>
+                        Click "▶ Run" in Code Panel to compile code template.
+                      </div>
+                    )}
+                    {compilerLogs.map((log, idx) => {
+                      let textColor = 'var(--text-primary)';
+                      if (log.type === 'error') textColor = '#f87171';
+                      else if (log.type === 'output') textColor = '#34d399';
+                      else if (log.type === 'success') textColor = '#60a5fa';
+                      return (
+                        <div key={idx} style={{ color: textColor, whiteSpace: 'pre-wrap', wordBreak: 'break-all', marginBottom: '2px' }}>
+                          {log.text}
+                        </div>
+                      );
+                    })}
+                  </div>
+                )}
+              </div>
+            </div>
+          )}
         </div>
 
         {/* Right Column: Code Sidebar */}
@@ -763,6 +1017,14 @@ const SortSearchVisualizer = ({ onBack, openSettings, initialTab = 'Sort', initi
           <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '0.6rem', flexShrink: 0 }}>
             <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
               <h3 style={{ color: 'var(--text-secondary)', fontSize: '0.9rem', fontWeight: 600, margin: 0 }}>{currentDisplayedAlgo} Code</h3>
+              <button 
+                onClick={runOnlineCompiler} 
+                className="btn btn-insert" 
+                disabled={isCompiling}
+                style={{ padding: '0.2rem 0.5rem', fontSize: '0.75rem', whiteSpace: 'nowrap' }}
+              >
+                {isCompiling ? '⏳...' : '▶ Run'}
+              </button>
               <button 
                 onClick={handleCopyCode} 
                 className="btn btn-clear" 
