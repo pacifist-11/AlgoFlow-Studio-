@@ -2046,6 +2046,20 @@ const GraphVisualizer = ({ onBack, openSettings, initialAlgo = 'Dijkstra', onCop
           📋 Log
         </button>
 
+        <button 
+          className="btn btn-clear" 
+          style={{ 
+            background: showCode ? 'rgba(59,130,246,0.2)' : 'rgba(255,255,255,0.03)', 
+            border: `1.5px solid ${showCode ? 'var(--accent-primary)' : 'var(--glass-border)'}`,
+            color: showCode ? 'var(--accent-primary)' : 'var(--text-primary)',
+            fontWeight: 800,
+            padding: '0.4rem 1.1rem'
+          }} 
+          onClick={() => setShowCode(!showCode)}
+        >
+          💻 Code
+        </button>
+
         <div style={{ width: '1px', height: '22px', background: 'var(--glass-border)' }} />
 
         {/* Action controls */}

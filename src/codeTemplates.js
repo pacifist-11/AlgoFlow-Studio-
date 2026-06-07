@@ -162,17 +162,94 @@ struct Node {
 
 class RBTree {
     Node* root = nullptr;
-    void fixInsert(Node* z) { /* rotation & recolor logic */ }
+    void rotateLeft(Node*& root, Node*& x) {
+        Node* y = x->right;
+        x->right = y->left;
+        if (x->right) x->right->parent = x;
+        y->parent = x->parent;
+        if (!x->parent) root = y;
+        else if (x == x->parent->left) x->parent->left = y;
+        else x->parent->right = y;
+        y->left = x;
+        x->parent = y;
+    }
+    void rotateRight(Node*& root, Node*& y) {
+        Node* x = y->left;
+        y->left = x->right;
+        if (y->left) y->left->parent = y;
+        x->parent = y->parent;
+        if (!y->parent) root = x;
+        else if (y == y->parent->left) y->parent->left = x;
+        else y->parent->right = x;
+        x->right = y;
+        y->parent = x;
+    }
+    void fixInsert(Node* z) {
+        while (z != root && z->parent->color == RED) {
+            if (z->parent == z->parent->parent->left) {
+                Node* y = z->parent->parent->right;
+                if (y && y->color == RED) {
+                    z->parent->color = BLACK;
+                    y->color = BLACK;
+                    z->parent->parent->color = RED;
+                    z = z->parent->parent;
+                } else {
+                    if (z == z->parent->right) {
+                        z = z->parent;
+                        rotateLeft(root, z);
+                    }
+                    z->parent->color = BLACK;
+                    z->parent->parent->color = RED;
+                    rotateRight(root, z->parent->parent);
+                }
+            } else {
+                Node* y = z->parent->parent->left;
+                if (y && y->color == RED) {
+                    z->parent->color = BLACK;
+                    y->color = BLACK;
+                    z->parent->parent->color = RED;
+                    z = z->parent->parent;
+                } else {
+                    if (z == z->parent->left) {
+                        z = z->parent;
+                        rotateRight(root, z);
+                    }
+                    z->parent->color = BLACK;
+                    z->parent->parent->color = RED;
+                    rotateLeft(root, z->parent->parent);
+                }
+            }
+        }
+        root->color = BLACK;
+    }
 public:
     void insert(int key) {
         Node* z = new Node(key);
-        // BST insert + fix
+        Node* y = nullptr;
+        Node* x = root;
+        while (x) {
+            y = x;
+            if (z->key < x->key) x = x->left;
+            else x = x->right;
+        }
+        z->parent = y;
+        if (!y) root = z;
+        else if (z->key < y->key) y->left = z;
+        else y->right = z;
         fixInsert(z);
     }
+    void inorder(Node* n) {
+        if (!n) return;
+        inorder(n->left);
+        cout << n->key << (n->color == RED ? "(R) " : "(B) ");
+        inorder(n->right);
+    }
+    void print() { inorder(root); cout << endl; }
 };
 
 int main() {
 ${execBlock}
+    t.print();
     return 0;
 }`;
 
@@ -279,28 +356,112 @@ ${execBlock}
 
   if (lang === 'C++' && type === 'B_PLUS_TREE') return `#include <iostream>
 #include <vector>
+#include <algorithm>
 using namespace std;
 
 class BPlusNode {
 public:
+    bool isLeaf;
     vector<int> keys;
     vector<BPlusNode*> ptrs;
     BPlusNode* next = nullptr;
-    bool isLeaf;
-    int order;
-    BPlusNode(int order, bool isLeaf) : order(order), isLeaf(isLeaf) {}
+    BPlusNode(bool isLeaf) : isLeaf(isLeaf) {}
 };
 
 class BPlusTree {
     BPlusNode* root;
     int order;
-public:
-    BPlusTree(int order) : order(order), root(new BPlusNode(order, true)) {}
-    void insert(int key) {
-        // Full insertion involves root splitting and linking leaf nodes
-        // Simplified stub for space constraints:
-        root->keys.push_back(key);
+
+    void insertInternal(int key, BPlusNode* parent, BPlusNode* child) {
+        if (parent->keys.size() < order - 1) {
+            auto it = upper_bound(parent->keys.begin(), parent->keys.end(), key);
+            int idx = it - parent->keys.begin();
+            parent->keys.insert(it, key);
+            parent->ptrs.insert(parent->ptrs.begin() + idx + 1, child);
+        } else {
+            vector<int> tempKeys = parent->keys;
+            vector<BPlusNode*> tempPtrs = parent->ptrs;
+            auto it = upper_bound(tempKeys.begin(), tempKeys.end(), key);
+            int idx = it - tempKeys.begin();
+            tempKeys.insert(it, key);
+            tempPtrs.insert(tempPtrs.begin() + idx + 1, child);
+
+            BPlusNode* newInternal = new BPlusNode(false);
+            int mid = tempKeys.size() / 2;
+            int splitKey = tempKeys[mid];
+
+            parent->keys.assign(tempKeys.begin(), tempKeys.begin() + mid);
+            parent->ptrs.assign(tempPtrs.begin(), tempPtrs.begin() + mid + 1);
+
+            newInternal->keys.assign(tempKeys.begin() + mid + 1, tempKeys.end());
+            newInternal->ptrs.assign(tempPtrs.begin() + mid + 1, tempPtrs.end());
+
+            if (parent == root) {
+                BPlusNode* newRoot = new BPlusNode(false);
+                newRoot->keys.push_back(splitKey);
+                newRoot->ptrs.push_back(parent);
+                newRoot->ptrs.push_back(newInternal);
+                root = newRoot;
+            } else {
+                insertInternal(splitKey, findParent(root, parent), newInternal);
+            }
+        }
     }
+
+    BPlusNode* findParent(BPlusNode* curr, BPlusNode* child) {
+        if (curr->isLeaf || curr->ptrs[0]->isLeaf) return nullptr;
+        for (int i = 0; i < curr->ptrs.size(); i++) {
+            if (curr->ptrs[i] == child) return curr;
+            BPlusNode* p = findParent(curr->ptrs[i], child);
+            if (p) return p;
+        }
+        return nullptr;
+    }
+
+public:
+    BPlusTree(int order) : order(order), root(new BPlusNode(true)) {}
+
+    void insert(int key) {
+        BPlusNode* cursor = root;
+        BPlusNode* parent = nullptr;
+        while (!cursor->isLeaf) {
+            parent = cursor;
+            int i = 0;
+            while (i < cursor->keys.size() && key >= cursor->keys[i]) i++;
+            cursor = cursor->ptrs[i];
+        }
+
+        if (cursor->keys.size() < order - 1) {
+            auto it = upper_bound(cursor->keys.begin(), cursor->keys.end(), key);
+            cursor->keys.insert(it, key);
+        } else {
+            vector<int> temp = cursor->keys;
+            auto it = upper_bound(temp.begin(), temp.end(), key);
+            temp.insert(it, key);
+
+            BPlusNode* newLeaf = new BPlusNode(true);
+            int mid = (temp.size() + 1) / 2;
+
+            cursor->keys.assign(temp.begin(), temp.begin() + mid);
+            newLeaf->keys.assign(temp.begin() + mid, temp.end());
+
+            newLeaf->next = cursor->next;
+            cursor->next = newLeaf;
+
+            int splitKey = newLeaf->keys[0];
+
+            if (cursor == root) {
+                BPlusNode* newRoot = new BPlusNode(false);
+                newRoot->keys.push_back(splitKey);
+                newRoot->ptrs.push_back(cursor);
+                newRoot->ptrs.push_back(newLeaf);
+                root = newRoot;
+            } else {
+                insertInternal(splitKey, parent, newLeaf);
+            }
+        }
+    }
+
     void traverse() {
         BPlusNode* cursor = root;
         while (!cursor->isLeaf) cursor = cursor->ptrs[0];
@@ -479,8 +640,97 @@ class Node {
 
 class RBTree {
     Node root;
+
+    private void rotateLeft(Node x) {
+        Node y = x.right;
+        x.right = y.left;
+        if (y.left != null) y.left.parent = x;
+        y.parent = x.parent;
+        if (x.parent == null) root = y;
+        else if (x == x.parent.left) x.parent.left = y;
+        else x.parent.right = y;
+        y.left = x;
+        x.parent = y;
+    }
+
+    private void rotateRight(Node y) {
+        Node x = y.left;
+        y.left = x.right;
+        if (x.right != null) x.right.parent = y;
+        x.parent = y.parent;
+        if (y.parent == null) root = x;
+        else if (y == y.parent.left) y.parent.left = x;
+        else y.parent.right = x;
+        x.right = y;
+        y.parent = x;
+    }
+
     void insert(int key) {
-        // Implementation for RB Tree insertion
+        Node z = new Node(key);
+        Node y = null;
+        Node x = root;
+        while (x != null) {
+            y = x;
+            if (z.key < x.key) x = x.left;
+            else x = x.right;
+        }
+        z.parent = y;
+        if (y == null) root = z;
+        else if (z.key < y.key) y.left = z;
+        else y.right = z;
+
+        fixInsert(z);
+    }
+
+    private void fixInsert(Node z) {
+        while (z != root && z.parent.color == Color.RED) {
+            if (z.parent == z.parent.parent.left) {
+                Node y = z.parent.parent.right;
+                if (y != null && y.color == Color.RED) {
+                    z.parent.color = Color.BLACK;
+                    y.color = Color.BLACK;
+                    z.parent.parent.color = Color.RED;
+                    z = z.parent.parent;
+                } else {
+                    if (z == z.parent.right) {
+                        z = z.parent;
+                        rotateLeft(z);
+                    }
+                    z.parent.color = Color.BLACK;
+                    z.parent.parent.color = Color.RED;
+                    rotateRight(z.parent.parent);
+                }
+            } else {
+                Node y = z.parent.parent.left;
+                if (y != null && y.color == Color.RED) {
+                    z.parent.color = Color.BLACK;
+                    y.color = Color.BLACK;
+                    z.parent.parent.color = Color.RED;
+                    z = z.parent.parent;
+                } else {
+                    if (z == z.parent.left) {
+                        z = z.parent;
+                        rotateRight(z);
+                    }
+                    z.parent.color = Color.BLACK;
+                    z.parent.parent.color = Color.RED;
+                    rotateLeft(z.parent.parent);
+                }
+            }
+        }
+        root.color = Color.BLACK;
+    }
+
+    void inorder(Node n) {
+        if (n == null) return;
+        inorder(n.left);
+        System.out.print(n.key + (n.color == Color.RED ? "(R) " : "(B) "));
+        inorder(n.right);
+    }
+
+    void print() {
+        inorder(root);
+        System.out.println();
     }
 }
 
@@ -621,11 +871,124 @@ ${execBlock}
     }
 }`;
 
-  if (lang === 'Java' && type === 'B_PLUS_TREE') return `class BPlusTree {
+  if (lang === 'Java' && type === 'B_PLUS_TREE') return `import java.util.ArrayList;
+import java.util.Collections;
+
+class BPlusNode {
+    boolean isLeaf;
+    ArrayList<Integer> keys = new ArrayList<>();
+    ArrayList<BPlusNode> ptrs = new ArrayList<>();
+    BPlusNode next;
+    BPlusNode(boolean isLeaf) { this.isLeaf = isLeaf; }
+}
+
+class BPlusTree {
+    BPlusNode root;
     int order;
-    BPlusTree(int order) { this.order = order; }
-    void insert(int key) { /* Full B+ Tree insertion logic */ }
-    void traverse() { /* Leaf traversal logic */ }
+
+    BPlusTree(int order) {
+        this.order = order;
+        this.root = new BPlusNode(true);
+    }
+
+    private void insertInternal(int key, BPlusNode parent, BPlusNode child) {
+        if (parent.keys.size() < order - 1) {
+            int idx = Collections.binarySearch(parent.keys, key);
+            if (idx < 0) idx = -(idx + 1);
+            parent.keys.add(idx, key);
+            parent.ptrs.add(idx + 1, child);
+        } else {
+            ArrayList<Integer> tempKeys = new ArrayList<>(parent.keys);
+            ArrayList<BPlusNode> tempPtrs = new ArrayList<>(parent.ptrs);
+            int idx = Collections.binarySearch(tempKeys, key);
+            if (idx < 0) idx = -(idx + 1);
+            tempKeys.add(idx, key);
+            tempPtrs.add(idx + 1, child);
+
+            BPlusNode newInternal = new BPlusNode(false);
+            int mid = tempKeys.size() / 2;
+            int splitKey = tempKeys.get(mid);
+
+            parent.keys = new ArrayList<>(tempKeys.subList(0, mid));
+            parent.ptrs = new ArrayList<>(tempPtrs.subList(0, mid + 1));
+
+            newInternal.keys = new ArrayList<>(tempKeys.subList(mid + 1, tempKeys.size()));
+            newInternal.ptrs = new ArrayList<>(tempPtrs.subList(mid + 1, tempPtrs.size()));
+
+            if (parent == root) {
+                BPlusNode newRoot = new BPlusNode(false);
+                newRoot.keys.add(splitKey);
+                newRoot.ptrs.add(parent);
+                newRoot.ptrs.add(newInternal);
+                root = newRoot;
+            } else {
+                insertInternal(splitKey, findParent(root, parent), newInternal);
+            }
+        }
+    }
+
+    private BPlusNode findParent(BPlusNode curr, BPlusNode child) {
+        if (curr.isLeaf || curr.ptrs.get(0).isLeaf) return null;
+        for (int i = 0; i < curr.ptrs.size(); i++) {
+            if (curr.ptrs.get(i) == child) return curr;
+            BPlusNode p = findParent(curr.ptrs.get(i), child);
+            if (p != null) return p;
+        }
+        return null;
+    }
+
+    void insert(int key) {
+        BPlusNode cursor = root;
+        BPlusNode parent = null;
+        while (!cursor.isLeaf) {
+            parent = cursor;
+            int i = 0;
+            while (i < cursor.keys.size() && key >= cursor.keys.get(i)) i++;
+            cursor = cursor.ptrs.get(i);
+        }
+
+        if (cursor.keys.size() < order - 1) {
+            int idx = Collections.binarySearch(cursor.keys, key);
+            if (idx < 0) idx = -(idx + 1);
+            cursor.keys.add(idx, key);
+        } else {
+            ArrayList<Integer> temp = new ArrayList<>(cursor.keys);
+            int idx = Collections.binarySearch(temp, key);
+            if (idx < 0) idx = -(idx + 1);
+            temp.add(idx, key);
+
+            BPlusNode newLeaf = new BPlusNode(true);
+            int mid = (temp.size() + 1) / 2;
+
+            cursor.keys = new ArrayList<>(temp.subList(0, mid));
+            newLeaf.keys = new ArrayList<>(temp.subList(mid, temp.size()));
+
+            newLeaf.next = cursor.next;
+            cursor.next = newLeaf;
+
+            int splitKey = newLeaf.keys.get(0);
+
+            if (cursor == root) {
+                BPlusNode newRoot = new BPlusNode(false);
+                newRoot.keys.add(splitKey);
+                newRoot.ptrs.add(cursor);
+                newRoot.ptrs.add(newLeaf);
+                root = newRoot;
+            } else {
+                insertInternal(splitKey, parent, newLeaf);
+            }
+        }
+    }
+
+    void traverse() {
+        BPlusNode cursor = root;
+        while (!cursor.isLeaf) cursor = cursor.ptrs.get(0);
+        while (cursor != null) {
+            for (int k : cursor.keys) System.out.print(k + " ");
+            cursor = cursor.next;
+        }
+        System.out.println();
+    }
 }
 
 public class Main {
@@ -748,14 +1111,113 @@ ${execBlock}`;
 if __name__ == '__main__':
 ${execBlock}`;
 
-  if (lang === 'Python' && type === 'RB_TREE') return `class RBTree:
+  if (lang === 'Python' && type === 'RB_TREE') return `class Node:
+    def __init__(self, key):
+        self.key = key
+        self.color = "RED"
+        self.left = None
+        self.right = None
+        self.parent = None
+
+class RBTree:
     def __init__(self):
         self.root = None
+
+    def _left_rotate(self, x):
+        y = x.right
+        x.right = y.left
+        if y.left is not None:
+            y.left.parent = x
+        y.parent = x.parent
+        if x.parent is None:
+            self.root = y
+        elif x == x.parent.left:
+            x.parent.left = y
+        else:
+            x.parent.right = y
+        y.left = x
+        x.parent = y
+
+    def _right_rotate(self, y):
+        x = y.left
+        y.left = x.right
+        if x.right is not None:
+            x.right.parent = y
+        x.parent = y.parent
+        if y.parent is None:
+            self.root = x
+        elif y == y.parent.left:
+            y.parent.left = x
+        else:
+            y.parent.right = x
+        x.right = y
+        y.parent = x
+
     def insert(self, key):
-        pass # Implementation for RB Tree
+        z = Node(key)
+        y = None
+        x = self.root
+        while x is not None:
+            y = x
+            if z.key < x.key:
+                x = x.left
+            else:
+                x = x.right
+        z.parent = y
+        if y is None:
+            self.root = z
+        elif z.key < y.key:
+            y.left = z
+        else:
+            y.right = z
+        self._fix_insert(z)
+
+    def _fix_insert(self, z):
+        while z != self.root and z.parent.color == "RED":
+            if z.parent == z.parent.parent.left:
+                y = z.parent.parent.right
+                if y is not None and y.color == "RED":
+                    z.parent.color = "BLACK"
+                    y.color = "BLACK"
+                    z.parent.parent.color = "RED"
+                    z = z.parent.parent
+                else:
+                    if z == z.parent.right:
+                        z = z.parent
+                        self._left_rotate(z)
+                    z.parent.color = "BLACK"
+                    z.parent.parent.color = "RED"
+                    self._right_rotate(z.parent.parent)
+            else:
+                y = z.parent.parent.left
+                if y is not None and y.color == "RED":
+                    z.parent.color = "BLACK"
+                    y.color = "BLACK"
+                    z.parent.parent.color = "RED"
+                    z = z.parent.parent
+                else:
+                    if z == z.parent.left:
+                        z = z.parent
+                        self._right_rotate(z)
+                    z.parent.color = "BLACK"
+                    z.parent.parent.color = "RED"
+                    self._left_rotate(z.parent.parent)
+        self.root.color = "BLACK"
+
+    def _inorder(self, node):
+        if node is not None:
+            self._inorder(node.left)
+            print(f"{node.key}({'R' if node.color == 'RED' else 'B'})", end=" ")
+            self._inorder(node.right)
+
+    def print_tree(self):
+        self._inorder(self.root)
+        print()
 
 if __name__ == '__main__':
-${execBlock}`;
+    tree = RBTree()
+${execBlock}
+    tree.print_tree()`;
 
   if (lang === 'Python' && type === 'MIN_HEAP') return `class MinHeap:
     def __init__(self):
@@ -857,13 +1319,115 @@ class BTree:
 if __name__ == '__main__':
 ${execBlock}`;
 
-  if (lang === 'Python' && type === 'B_PLUS_TREE') return `class BPlusTree:
+  if (lang === 'Python' && type === 'B_PLUS_TREE') return `class BPlusNode:
+    def __init__(self, is_leaf):
+        self.is_leaf = is_leaf
+        self.keys = []
+        self.ptrs = []
+        self.next = None
+
+class BPlusTree:
     def __init__(self, order):
         self.order = order
+        self.root = BPlusNode(True)
+
+    def _find_parent(self, curr, child):
+        if curr.is_leaf or curr.ptrs[0].is_leaf:
+            return None
+        for i, p in enumerate(curr.ptrs):
+            if p == child:
+                return curr
+            parent = self._find_parent(p, child)
+            if parent is not None:
+                return parent
+        return None
+
+    def _insert_internal(self, key, parent, child):
+        if len(parent.keys) < self.order - 1:
+            idx = 0
+            while idx < len(parent.keys) and key >= parent.keys[idx]:
+                idx += 1
+            parent.keys.insert(idx, key)
+            parent.ptrs.insert(idx + 1, child)
+        else:
+            temp_keys = list(parent.keys)
+            temp_ptrs = list(parent.ptrs)
+            idx = 0
+            while idx < len(temp_keys) and key >= temp_keys[idx]:
+                idx += 1
+            temp_keys.insert(idx, key)
+            temp_ptrs.insert(idx + 1, child)
+
+            new_internal = BPlusNode(False)
+            mid = len(temp_keys) // 2
+            split_key = temp_keys[mid]
+
+            parent.keys = temp_keys[:mid]
+            parent.ptrs = temp_ptrs[:mid + 1]
+
+            new_internal.keys = temp_keys[mid + 1:]
+            new_internal.ptrs = temp_ptrs[mid + 1:]
+
+            if parent == self.root:
+                new_root = BPlusNode(False)
+                new_root.keys.append(split_key)
+                new_root.ptrs.append(parent)
+                new_root.ptrs.append(new_internal)
+                self.root = new_root
+            else:
+                self._insert_internal(split_key, self._find_parent(self.root, parent), new_internal)
+
     def insert(self, key):
-        pass # Full B+ Tree implementation
+        cursor = self.root
+        parent = None
+        while not cursor.is_leaf:
+            parent = cursor
+            i = 0
+            while i < len(cursor.keys) and key >= cursor.keys[i]:
+                i += 1
+            cursor = cursor.ptrs[i]
+
+        if len(cursor.keys) < self.order - 1:
+            idx = 0
+            while idx < len(cursor.keys) and key >= cursor.keys[idx]:
+                idx += 1
+            cursor.keys.insert(idx, key)
+        else:
+            temp = list(cursor.keys)
+            idx = 0
+            while idx < len(temp) and key >= temp[idx]:
+                idx += 1
+            temp.insert(idx, key)
+
+            new_leaf = BPlusNode(True)
+            mid = (len(temp) + 1) // 2
+
+            cursor.keys = temp[:mid]
+            new_leaf.keys = temp[mid:]
+
+            new_leaf.next = cursor.next
+            cursor.next = new_leaf
+
+            split_key = new_leaf.keys[0]
+
+            if cursor == self.root:
+                new_root = BPlusNode(False)
+                new_root.keys.append(split_key)
+                new_root.ptrs.append(cursor)
+                new_root.ptrs.append(new_leaf)
+                self.root = new_root
+            else:
+                self._insert_internal(split_key, parent, new_leaf)
+
     def traverse(self):
-        pass
+        cursor = self.root
+        while not cursor.is_leaf:
+            cursor = cursor.ptrs[0]
+        while cursor is not None:
+            for k in cursor.keys:
+                print(k, end=" ")
+            cursor = cursor.next
+        print()
 
 if __name__ == '__main__':
 ${execBlock}`;
