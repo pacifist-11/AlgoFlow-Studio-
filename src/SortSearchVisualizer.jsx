@@ -47,7 +47,7 @@ const copyToClipboard = (text) => {
   }
 };
 
-const SortSearchVisualizer = ({ onBack, openSettings, initialTab = 'Sort', initialSort = 'Bubble Sort', initialSearch = 'Linear Search', onCopyCode, onCodeChange, fontSize = 14, wordWrap = 'off' }) => {
+const SortSearchVisualizer = ({ onBack, openSettings, initialTab = 'Sort', initialSort = 'Bubble Sort', initialSearch = 'Linear Search', onCopyCode, onCodeChange, fontSize = 14, wordWrap = 'off', onShowUpcomingFeatures }) => {
   const [array, setArray] = useState([]);
   const [initialArray, setInitialArray] = useState([]);
   const [timeline, setTimeline] = useState([]);
@@ -1162,8 +1162,8 @@ const SortSearchVisualizer = ({ onBack, openSettings, initialTab = 'Sort', initi
               <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
                 <h3 style={{ color: 'var(--text-secondary)', fontSize: '0.9rem', fontWeight: 600, margin: 0 }}>{currentDisplayedAlgo} Code</h3>
                 <button 
-                  onClick={() => setIsRunnerOpen(true)}
-                  className="btn btn-clear" 
+                  onClick={() => onShowUpcomingFeatures ? onShowUpcomingFeatures() : setIsRunnerOpen(true)}
+                  className="btn btn-clear"  
                   style={{ padding: '0.2rem 0.5rem', fontSize: '0.75rem', whiteSpace: 'nowrap', display: 'inline-flex', alignItems: 'center', background: 'rgba(16,185,129,0.2)', color: '#34d399', border: '1px solid rgba(16,185,129,0.3)' }}
                 >
                   ▶ Run Code

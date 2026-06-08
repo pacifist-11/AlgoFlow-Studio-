@@ -48,7 +48,7 @@ const copyToClipboard = (text) => {
 };
 
 
-const GeneralDSVisualizer = ({ onBack, openSettings, initialType = 'HASH_TABLE', initialVariety = 'HASH_LINEAR', onCopyCode, onCodeChange, fontSize = 14, wordWrap = 'off' }) => {
+const GeneralDSVisualizer = ({ onBack, openSettings, initialType = 'HASH_TABLE', initialVariety = 'HASH_LINEAR', onCopyCode, onCodeChange, fontSize = 14, wordWrap = 'off', onShowUpcomingFeatures }) => {
   const [dsType, setDsType] = useState(initialType);
   const [dsVariety, setDsVariety] = useState(initialVariety);
   const [inputValue, setInputValue] = useState('');
@@ -1253,8 +1253,8 @@ const GeneralDSVisualizer = ({ onBack, openSettings, initialType = 'HASH_TABLE',
               <h3 style={{ margin: 0, fontSize: '1.1rem', color: 'var(--text-primary)', fontWeight: 'bold', flex: 1 }}>Implementation</h3>
               <div style={{ display: 'flex', gap: '6px' }}>
                 <button 
-                  onClick={() => setIsRunnerOpen(true)}
-                  className="btn btn-clear" 
+                  onClick={() => onShowUpcomingFeatures ? onShowUpcomingFeatures() : setIsRunnerOpen(true)}
+                  className="btn btn-clear"  
                   style={{ padding: '0.3rem 0.6rem', fontSize: '0.85rem', whiteSpace: 'nowrap', display: 'inline-flex', alignItems: 'center', background: 'rgba(16,185,129,0.2)', color: '#34d399', border: '1px solid rgba(16,185,129,0.3)' }}
                 >
                   ▶ Run Code

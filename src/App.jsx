@@ -378,7 +378,7 @@ const THEMES = {
 };
 
 // ─── Enhanced AI ChatBot ──────────────────────────────────────────────────────
-const ChatBot = ({ customCode, codeLang, isChatOpen, setIsChatOpen, chatMessages, setChatMessages, apiKey, setApiKey, model, setModel }) => {
+const ChatBot = ({ customCode, codeLang, isChatOpen, setIsChatOpen, chatMessages, setChatMessages, apiKey, setApiKey, model, setModel, onShowUpcomingFeatures }) => {
   const [chatInput, setChatInput] = useState('');
   const [isLoading, setIsLoading] = useState(false);
   const [showSettings, setShowSettings] = useState(!apiKey);
@@ -482,7 +482,7 @@ Be concise but thorough. Use markdown-style formatting for code blocks.`;
           </p>
         </div>
       )}
-      <button onClick={() => setIsChatOpen(!isChatOpen)}
+      <button onClick={() => onShowUpcomingFeatures ? onShowUpcomingFeatures() : setIsChatOpen(!isChatOpen)}
         style={{ width: '60px', height: '60px', borderRadius: '50%', background: 'linear-gradient(135deg, var(--accent-primary), var(--accent-secondary))', border: 'none', color: 'white', fontSize: '1.5rem', cursor: 'pointer', boxShadow: '0 6px 20px rgba(0,0,0,0.4)', display: 'flex', justifyContent: 'center', alignItems: 'center', transition: 'transform 0.3s' }}
         onMouseOver={e => e.currentTarget.style.transform = 'scale(1.1)'}
         onMouseOut={e => e.currentTarget.style.transform = 'scale(1)'}
@@ -511,7 +511,7 @@ const loadingQuotes = [
   { text: "\"Before software can be reusable it first has to be usable.\"", color: "#eab308" }
 ];
 
-const LineDebugger = ({ initialCode, lang: initialLang, fontSize, wordWrap, onBack, openSettings, isChatOpen, setIsChatOpen, chatMessages, setChatMessages, apiKey, setApiKey, model, setModel }) => {
+const LineDebugger = ({ initialCode, lang: initialLang, fontSize, wordWrap, onBack, openSettings, isChatOpen, setIsChatOpen, chatMessages, setChatMessages, apiKey, setApiKey, model, setModel, onShowUpcomingFeatures }) => {
   const [isDebugStarted, setIsDebugStarted] = useState(false);
   const [isIframeLoading, setIsIframeLoading] = useState(false);
   const [quoteIndex, setQuoteIndex] = useState(() => Math.floor(Math.random() * loadingQuotes.length));
@@ -691,7 +691,7 @@ const LineDebugger = ({ initialCode, lang: initialLang, fontSize, wordWrap, onBa
           </div>
         )}
       </div>
-      <ChatBot customCode={localCode} codeLang={detectedLang} isChatOpen={isChatOpen} setIsChatOpen={setIsChatOpen} chatMessages={chatMessages} setChatMessages={setChatMessages} apiKey={apiKey} setApiKey={setApiKey} model={model} setModel={setModel} />
+      <ChatBot customCode={localCode} codeLang={detectedLang} isChatOpen={isChatOpen} setIsChatOpen={setIsChatOpen} chatMessages={chatMessages} setChatMessages={setChatMessages} apiKey={apiKey} setApiKey={setApiKey} model={model} setModel={setModel} onShowUpcomingFeatures={onShowUpcomingFeatures} />
     </div>
   );
 };
@@ -3082,7 +3082,13 @@ function App() {
                 { id: 'CODE_VAL_VIS', icon: '💻', title: 'Code Validator & Runner', desc: 'Write or paste code in 4 languages. Enhanced syntax validation, error detection, and native cloud execution.' },
                 { id: 'LINE_BY_LINE_VIS', icon: '🐞', title: 'Line-by-Line Debugger', desc: 'PythonTutor-style execution tracing. Step through code, track variables, frames, and output.' }
               ].map(card => (
-                <div key={card.id} className="option-card" onClick={() => enterMode(card.id)} onMouseEnter={e => gsap.to(e.currentTarget, { scale: 1.05, duration: 0.2 })} onMouseLeave={e => gsap.to(e.currentTarget, { scale: 1, duration: 0.2 })}>
+                <div key={card.id} className="option-card" onClick={() => {
+                  if (card.id === 'CODE_VAL_VIS') {
+                    setIsUpcomingOpen(true);
+                  } else {
+                    enterMode(card.id);
+                  }
+                }} onMouseEnter={e => gsap.to(e.currentTarget, { scale: 1.05, duration: 0.2 })} onMouseLeave={e => gsap.to(e.currentTarget, { scale: 1, duration: 0.2 })}>
                   <div className="option-icon">{card.icon}</div>
                   <h3>{card.title}</h3>
                   <p>{card.desc}</p>
@@ -3157,6 +3163,7 @@ function App() {
             }}
             fontSize={editorFontSize}
             wordWrap={editorWordWrap}
+            onShowUpcomingFeatures={() => setIsUpcomingOpen(true)}
           />
         )}
       </div>
@@ -3176,6 +3183,7 @@ function App() {
             }}
             fontSize={editorFontSize}
             wordWrap={editorWordWrap}
+            onShowUpcomingFeatures={() => setIsUpcomingOpen(true)}
           />
         )}
       </div>
@@ -3194,6 +3202,7 @@ function App() {
             }}
             fontSize={editorFontSize}
             wordWrap={editorWordWrap}
+            onShowUpcomingFeatures={() => setIsUpcomingOpen(true)}
           />
         )}
       </div>
@@ -3375,9 +3384,7 @@ function App() {
               <div className="controls-glass">
                 <button 
                   onClick={() => {
-                    setRunnerCode(customCode);
-                    setRunnerLang(codeLang);
-                    setIsRunnerOpen(true);
+                    setIsUpcomingOpen(true);
                   }}
                   className="btn btn-clear" 
                   style={{ background: 'rgba(16,185,129,0.2)', color: '#34d399', display: 'inline-flex', alignItems: 'center' }}
@@ -3422,7 +3429,7 @@ function App() {
       {/* Line-by-Line Debugger */}
       <div style={{ display: appMode === 'LINE_BY_LINE_VIS' && setupComplete ? 'block' : 'none' }}>
         {mountedModes['LINE_BY_LINE_VIS'] && (
-          <LineDebugger initialCode={customCode} lang={codeLang} fontSize={editorFontSize} wordWrap={editorWordWrap} onBack={goBack} openSettings={() => setIsSettingsOpen(true)} isChatOpen={isChatOpen} setIsChatOpen={setIsChatOpen} chatMessages={chatMessages} setChatMessages={setChatMessages} apiKey={globalApiKey} setApiKey={setGlobalApiKey} model={globalModel} setModel={setGlobalModel} />
+          <LineDebugger initialCode={customCode} lang={codeLang} fontSize={editorFontSize} wordWrap={editorWordWrap} onBack={goBack} openSettings={() => setIsSettingsOpen(true)} isChatOpen={isChatOpen} setIsChatOpen={setIsChatOpen} chatMessages={chatMessages} setChatMessages={setChatMessages} apiKey={globalApiKey} setApiKey={setGlobalApiKey} model={globalModel} setModel={setGlobalModel} onShowUpcomingFeatures={() => setIsUpcomingOpen(true)} />
         )}
       </div>
 
@@ -3830,10 +3837,7 @@ function App() {
                         <div style={{ display: 'flex', gap: '6px' }}>
                           <button 
                             onClick={() => {
-                              const rawCode = getFullCodeTemplate(codeLang, treeType, showDeletionsInCode ? operationsLog : insertedValues.map(v => ({ op: 'insert', val: v })));
-                              setRunnerCode(rawCode);
-                              setRunnerLang(codeLang);
-                              setIsRunnerOpen(true);
+                              setIsUpcomingOpen(true);
                             }}
                             className="btn btn-clear" 
                             style={{ padding: '2px 8px', fontSize: '0.78rem', whiteSpace: 'nowrap', display: 'inline-flex', alignItems: 'center', background: 'rgba(16,185,129,0.2)', color: '#34d399', border: '1px solid rgba(16,185,129,0.3)', borderRadius: '6px' }}
@@ -3885,7 +3889,7 @@ function App() {
         )}
       </div>
 
-      <ChatBot customCode={activeCodeForChat} codeLang={activeLangForChat} isChatOpen={isChatOpen} setIsChatOpen={setIsChatOpen} chatMessages={chatMessages} setChatMessages={setChatMessages} apiKey={globalApiKey} setApiKey={setGlobalApiKey} model={globalModel} setModel={setGlobalModel} />
+      <ChatBot customCode={activeCodeForChat} codeLang={activeLangForChat} isChatOpen={isChatOpen} setIsChatOpen={setIsChatOpen} chatMessages={chatMessages} setChatMessages={setChatMessages} apiKey={globalApiKey} setApiKey={setGlobalApiKey} model={globalModel} setModel={setGlobalModel} onShowUpcomingFeatures={() => setIsUpcomingOpen(true)} />
       {isSettingsOpen && renderSettingsModal()}
       {isUpcomingOpen && renderUpcomingFeaturesModal()}
 

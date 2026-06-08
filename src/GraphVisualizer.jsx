@@ -1008,7 +1008,7 @@ const copyToClipboard = (text) => {
   }
 };
 
-const GraphVisualizer = ({ onBack, openSettings, initialAlgo = 'Dijkstra', onCopyCode, onCodeChange, fontSize = 14, wordWrap = 'off' }) => {
+const GraphVisualizer = ({ onBack, openSettings, initialAlgo = 'Dijkstra', onCopyCode, onCodeChange, fontSize = 14, wordWrap = 'off', onShowUpcomingFeatures }) => {
   const [nodes, setNodes] = useState([
     { id: 0, label: '0', x: 120, y: 220, dist: Infinity, h: 4 },
     { id: 1, label: '1', x: 260, y: 120, dist: Infinity, h: 3 },
@@ -2615,8 +2615,8 @@ const GraphVisualizer = ({ onBack, openSettings, initialAlgo = 'Dijkstra', onCop
               <h3 style={{ margin: 0, fontSize: '1.1rem', color: 'var(--text-primary)', fontWeight: 'bold', flex: 1 }}>Algorithm Code</h3>
               <div style={{ display: 'flex', gap: '6px' }}>
                 <button 
-                  onClick={() => setIsRunnerOpen(true)}
-                  className="btn btn-clear" 
+                  onClick={() => onShowUpcomingFeatures ? onShowUpcomingFeatures() : setIsRunnerOpen(true)}
+                  className="btn btn-clear"  
                   style={{ padding: '0.3rem 0.6rem', fontSize: '0.85rem', whiteSpace: 'nowrap', display: 'inline-flex', alignItems: 'center', background: 'rgba(16,185,129,0.2)', color: '#34d399', border: '1px solid rgba(16,185,129,0.3)' }}
                 >
                   ▶ Run Code
