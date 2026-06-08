@@ -2,6 +2,7 @@
 import React, { useState, useEffect, useRef } from 'react';
 import gsap from 'gsap';
 import { getGeneralCodeTemplate } from './codeTemplatesGeneral';
+import CodeRunnerModal from './CodeRunnerModal.jsx';
 
 // Fallback-safe Clipboard Copy Helper
 const copyToClipboard = (text) => {
@@ -57,6 +58,7 @@ const GeneralDSVisualizer = ({ onBack, openSettings, initialType = 'HASH_TABLE',
   const [showCode, setShowCode] = useState(true);
   const [theme, setTheme] = useState('dark');
   const [copied, setCopied] = useState(false);
+  const [isRunnerOpen, setIsRunnerOpen] = useState(false);
 
   // Draggable execution log states
   const [showLogPanel, setShowLogPanel] = useState(true);
@@ -64,6 +66,7 @@ const GeneralDSVisualizer = ({ onBack, openSettings, initialType = 'HASH_TABLE',
   const [isDraggingLog, setIsDraggingLog] = useState(false);
   const [logSize, setLogSize] = useState({ width: 580, height: 300 });
   const [activeStateWidth, setActiveStateWidth] = useState(240);
+  const [codeWidth, setCodeWidth] = useState(450);
 
   const logDragStart = useRef({ x: 0, y: 0 });
   const logPanelStart = useRef({ x: 0, y: 0 });
@@ -108,6 +111,15 @@ const GeneralDSVisualizer = ({ onBack, openSettings, initialType = 'HASH_TABLE',
     document.addEventListener('mouseup', end);
   };
 
+  const handleColDragStart = e => {
+    e.preventDefault();
+    const startX = e.clientX, startW = codeWidth;
+    const drag = ev => setCodeWidth(Math.max(200, Math.min(startW + (startX - ev.clientX), window.innerWidth - 300)));
+    const end  = () => { document.removeEventListener('mousemove', drag); document.removeEventListener('mouseup', end); };
+    document.addEventListener('mousemove', drag);
+    document.addEventListener('mouseup', end);
+  };
+
   const handleLogMouseDown = (e) => {
     const handle = e.target.closest('.log-drag-handle');
     if (handle) {
@@ -124,8 +136,8 @@ const GeneralDSVisualizer = ({ onBack, openSettings, initialType = 'HASH_TABLE',
       const dx = e.clientX - logDragStart.current.x;
       const dy = e.clientY - logDragStart.current.y;
       setLogPosition({
-        x: Math.max(0, Math.min(window.innerWidth - 100, logPanelStart.current.x + dx)),
-        y: Math.max(0, Math.min(window.innerHeight - 40, logPanelStart.current.y + dy))
+        x: Math.max(0, Math.min(window.innerWidth - logSize.width, logPanelStart.current.x + dx)),
+        y: Math.max(0, Math.min(window.innerHeight - logSize.height, logPanelStart.current.y + dy))
       });
     };
     const handleMouseUp = () => {
@@ -1022,66 +1034,76 @@ const GeneralDSVisualizer = ({ onBack, openSettings, initialType = 'HASH_TABLE',
                                <span style={{ fontStyle: 'italic' }}>Empty</span>
                              )}
                            </div>
+                            <div style={{ borderTop: '1px solid rgba(255,255,255,0.06)', paddingTop: '6px', marginTop: '4px' }}>
+                              <div style={{ fontSize: '0.72rem', textTransform: 'uppercase', fontWeight: 'bold', marginBottom: '4px', color: 'var(--accent-secondary)' }}>Trace Variables</div>
+                              
+                              {dsType === 'HASH_TABLE' ? (
+                                <div style={{ display: 'flex', flexDirection: 'column', gap: '4px' }}>
+                                  {frame.activeBucket !== undefined && frame.activeBucket !== -1 && (
+                                    <div style={{ display: 'flex', justifyContent: 'space-between' }}>
+                                      <span>Target Slot:</span>
+                                      <span style={{ color: '#fbbf24', fontWeight: 'bold', fontFamily: 'monospace' }}>
+                                        {frame.activeBucket}
+                                      </span>
+                                    </div>
+                                  )}
+                                  {frame.activeNode !== undefined && frame.activeNode !== -1 && (
+                                    <div style={{ display: 'flex', justifyContent: 'space-between' }}>
+                                      <span>Chain Node Index:</span>
+                                      <span style={{ color: 'var(--text-primary)', fontFamily: 'monospace' }}>{frame.activeNode}</span>
+                                    </div>
+                                  )}
+                                  {(frame.activeBucket === undefined || frame.activeBucket === -1) && (
+                                    <div style={{ color: 'var(--text-secondary)', fontStyle: 'italic', fontSize: '0.8rem' }}>No active slot</div>
+                                  )}
+                                </div>
+                              ) : dsVariety === 'QUEUE_CIRCULAR' ? (
+                                <div style={{ display: 'flex', flexDirection: 'column', gap: '4px' }}>
+                                  <div style={{ display: 'flex', justifyContent: 'space-between' }}>
+                                    <span>Front Index:</span>
+                                    <span style={{ color: '#fbbf24', fontWeight: 'bold', fontFamily: 'monospace' }}>
+                                      {frame.cq && frame.cq.f !== -1 ? frame.cq.f : 'N/A'}
+                                    </span>
+                                  </div>
+                                  <div style={{ display: 'flex', justifyContent: 'space-between' }}>
+                                    <span>Rear Index:</span>
+                                    <span style={{ color: '#60a5fa', fontWeight: 'bold', fontFamily: 'monospace' }}>
+                                      {frame.cq && frame.cq.r !== -1 ? frame.cq.r : 'N/A'}
+                                    </span>
+                                  </div>
+                                </div>
+                              ) : (
+                                <div style={{ display: 'flex', flexDirection: 'column', gap: '4px' }}>
+                                  {frame.activeIdx !== undefined && frame.activeIdx !== -1 ? (
+                                    <>
+                                      <div style={{ display: 'flex', justifyContent: 'space-between' }}>
+                                        <span>Active Val:</span>
+                                        <span style={{ color: '#fbbf24', fontWeight: 'bold' }}>
+                                          {frame.arr ? (frame.arr[frame.activeIdx] ?? 'N/A') : 'N/A'}
+                                        </span>
+                                      </div>
+                                      <div style={{ display: 'flex', justifyContent: 'space-between' }}>
+                                        <span>Active Index:</span>
+                                        <span style={{ color: 'var(--text-primary)', fontFamily: 'monospace' }}>
+                                          {frame.activeIdx}
+                                        </span>
+                                      </div>
+                                    </>
+                                  ) : (
+                                    <div style={{ color: 'var(--text-secondary)', fontStyle: 'italic', fontSize: '0.8rem' }}>No active pointer</div>
+                                  )}
+                                </div>
+                              )}
 
-                           <div style={{ borderTop: '1px solid rgba(255,255,255,0.06)', paddingTop: '6px', marginTop: '4px' }}>
-                             <div style={{ fontSize: '0.72rem', textTransform: 'uppercase', fontWeight: 'bold', marginBottom: '4px', color: 'var(--accent-secondary)' }}>Trace Variables</div>
-                             
-                             {dsType === 'HASH_TABLE' ? (
-                               <div style={{ display: 'flex', flexDirection: 'column', gap: '4px' }}>
-                                 <div style={{ display: 'flex', justifyContent: 'space-between' }}>
-                                   <span>Target Slot:</span>
-                                   <span style={{ color: '#fbbf24', fontWeight: 'bold', fontFamily: 'monospace' }}>
-                                     {frame.activeBucket !== undefined && frame.activeBucket !== -1 ? frame.activeBucket : 'N/A'}
-                                   </span>
-                                 </div>
-                                 {frame.activeNode !== undefined && frame.activeNode !== -1 && (
-                                   <div style={{ display: 'flex', justifyContent: 'space-between' }}>
-                                     <span>Chain Node Index:</span>
-                                     <span style={{ color: 'var(--text-primary)', fontFamily: 'monospace' }}>{frame.activeNode}</span>
-                                   </div>
-                                 )}
-                               </div>
-                             ) : dsVariety === 'CIRCULAR_QUEUE' ? (
-                               <div style={{ display: 'flex', flexDirection: 'column', gap: '4px' }}>
-                                 <div style={{ display: 'flex', justifyContent: 'space-between' }}>
-                                   <span>Front Index:</span>
-                                   <span style={{ color: '#fbbf24', fontWeight: 'bold', fontFamily: 'monospace' }}>
-                                     {frame.cq ? frame.cq.f : 'N/A'}
-                                   </span>
-                                 </div>
-                                 <div style={{ display: 'flex', justifyContent: 'space-between' }}>
-                                   <span>Rear Index:</span>
-                                   <span style={{ color: '#60a5fa', fontWeight: 'bold', fontFamily: 'monospace' }}>
-                                     {frame.cq ? frame.cq.r : 'N/A'}
-                                   </span>
-                                 </div>
-                               </div>
-                             ) : (
-                               <div style={{ display: 'flex', flexDirection: 'column', gap: '4px' }}>
-                                 <div style={{ display: 'flex', justifyContent: 'space-between' }}>
-                                   <span>Active Val:</span>
-                                   <span style={{ color: '#fbbf24', fontWeight: 'bold' }}>
-                                     {frame.activeIdx !== undefined && frame.activeIdx !== -1 && frame.arr ? (frame.arr[frame.activeIdx] ?? 'N/A') : 'N/A'}
-                                   </span>
-                                 </div>
-                                 <div style={{ display: 'flex', justifyContent: 'space-between' }}>
-                                   <span>Active Index:</span>
-                                   <span style={{ color: 'var(--text-primary)', fontFamily: 'monospace' }}>
-                                     {frame.activeIdx !== undefined && frame.activeIdx !== -1 ? frame.activeIdx : 'N/A'}
-                                   </span>
-                                 </div>
-                               </div>
-                             )}
-
-                             {frame.activeLineText && (
-                               <div style={{ marginTop: '8px' }}>
-                                 <div style={{ fontSize: '0.65rem', color: 'var(--text-secondary)' }}>Snippet:</div>
-                                 <div style={{ fontSize: '0.72rem', color: '#60a5fa', fontFamily: 'monospace', background: 'rgba(0,0,0,0.2)', padding: '2px 4px', borderRadius: '4px', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }} title={frame.activeLineText}>
-                                   {frame.activeLineText}
-                                 </div>
-                               </div>
-                             )}
-                           </div>
+                              {frame.activeLineText && (
+                                <div style={{ marginTop: '8px' }}>
+                                  <div style={{ fontSize: '0.65rem', color: 'var(--text-secondary)' }}>Snippet:</div>
+                                  <div style={{ fontSize: '0.72rem', color: '#60a5fa', fontFamily: 'monospace', background: 'rgba(0,0,0,0.2)', padding: '2px 4px', borderRadius: '4px', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }} title={frame.activeLineText}>
+                                    {frame.activeLineText}
+                                  </div>
+                                </div>
+                              )}
+                            </div>
                          </>
                        );
                      })()}
@@ -1176,16 +1198,32 @@ const GeneralDSVisualizer = ({ onBack, openSettings, initialType = 'HASH_TABLE',
 
         {/* Code Sidebar */}
         {showCode && (
-        <div style={{ width: '450px', background: 'var(--bg-secondary)', borderLeft: '1px solid var(--glass-border)', display: 'flex', flexDirection: 'column', transition: 'width 0.3s' }}>
-          <div style={{ padding: '1rem', borderBottom: '1px solid var(--glass-border)', display: 'flex', justifyContent: 'space-between', alignItems: 'center', background: 'var(--glass-bg)', gap: '10px' }}>
-            <h3 style={{ margin: 0, fontSize: '1.1rem', color: 'var(--text-primary)', fontWeight: 'bold', flex: 1 }}>Implementation</h3>
-            <button 
-              onClick={handleCopyCode} 
-              className="btn btn-clear" 
-              style={{ padding: '0.3rem 0.6rem', fontSize: '0.85rem', whiteSpace: 'nowrap' }}
-            >
-              {copied ? '✓ Copied' : '📋 Copy'}
-            </button>
+        <>
+          {/* Vertical Drag Handle for column resizing */}
+          <div onMouseDown={handleColDragStart} style={{ width: '8px', background: 'var(--glass-border)', borderRadius: '4px', cursor: 'col-resize', flexShrink: 0, transition: 'background 0.2s' }}
+            onMouseOver={e => e.currentTarget.style.background = 'rgba(96,165,250,0.5)'}
+            onMouseOut={e => e.currentTarget.style.background = 'var(--glass-border)'}
+            title="Drag to resize columns" />
+
+          <div style={{ width: `${codeWidth}px`, background: 'var(--bg-secondary)', borderLeft: '1px solid var(--glass-border)', display: 'flex', flexDirection: 'column', overflow: 'hidden', minWidth: '200px' }}>
+            <div style={{ padding: '1rem', borderBottom: '1px solid var(--glass-border)', display: 'flex', justifyContent: 'space-between', alignItems: 'center', background: 'var(--glass-bg)', gap: '10px' }}>
+              <h3 style={{ margin: 0, fontSize: '1.1rem', color: 'var(--text-primary)', fontWeight: 'bold', flex: 1 }}>Implementation</h3>
+              <div style={{ display: 'flex', gap: '6px' }}>
+                <button 
+                  onClick={() => setIsRunnerOpen(true)}
+                  className="btn btn-clear" 
+                  style={{ padding: '0.3rem 0.6rem', fontSize: '0.85rem', whiteSpace: 'nowrap', display: 'inline-flex', alignItems: 'center', background: 'rgba(16,185,129,0.2)', color: '#34d399', border: '1px solid rgba(16,185,129,0.3)' }}
+                >
+                  ▶ Run Code
+                </button>
+              <button 
+                onClick={handleCopyCode} 
+                className="btn btn-clear" 
+                style={{ padding: '0.3rem 0.6rem', fontSize: '0.85rem', whiteSpace: 'nowrap' }}
+              >
+                {copied ? '✓ Copied' : '📋 Copy'}
+              </button>
+            </div>
             <select className="styled-select" style={{ width: '120px', padding: '0.3rem' }} value={codeLanguage} onChange={(e) => setCodeLanguage(e.target.value)}>
               <option value="Java">Java</option>
               <option value="C++">C++</option>
@@ -1224,8 +1262,15 @@ const GeneralDSVisualizer = ({ onBack, openSettings, initialType = 'HASH_TABLE',
             </pre>
           </div>
         </div>
+        </>
         )}
       </div>
+      <CodeRunnerModal
+        isOpen={isRunnerOpen}
+        onClose={() => setIsRunnerOpen(false)}
+        code={currentCode}
+        language={codeLanguage}
+      />
     </div>
   );
 };

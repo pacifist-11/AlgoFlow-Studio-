@@ -1,6 +1,7 @@
 /* eslint-disable react/prop-types, react-hooks/set-state-in-effect, react-hooks/exhaustive-deps, no-unused-vars */
 import React, { useState, useEffect, useRef } from 'react';
 import gsap from 'gsap';
+import CodeRunnerModal from './CodeRunnerModal.jsx';
 
 // Multilingual Code Templates for Graph Algorithms
 const getGraphCodeTemplate = (lang, algo, startNode = '0', endNode = '4') => {
@@ -1039,6 +1040,7 @@ const GraphVisualizer = ({ onBack, openSettings, initialAlgo = 'Dijkstra', onCop
   const [isDraggingLog, setIsDraggingLog] = useState(false);
   const [logSize, setLogSize] = useState({ width: 580, height: 300 });
   const [activeStateWidth, setActiveStateWidth] = useState(240);
+  const [codeWidth, setCodeWidth] = useState(450);
 
   const logDragStart = useRef({ x: 0, y: 0 });
   const logPanelStart = useRef({ x: 0, y: 0 });
@@ -1083,6 +1085,15 @@ const GraphVisualizer = ({ onBack, openSettings, initialAlgo = 'Dijkstra', onCop
     document.addEventListener('mouseup', end);
   };
 
+  const handleColDragStart = e => {
+    e.preventDefault();
+    const startX = e.clientX, startW = codeWidth;
+    const drag = ev => setCodeWidth(Math.max(200, Math.min(startW + (startX - ev.clientX), window.innerWidth - 300)));
+    const end  = () => { document.removeEventListener('mousemove', drag); document.removeEventListener('mouseup', end); };
+    document.addEventListener('mousemove', drag);
+    document.addEventListener('mouseup', end);
+  };
+
   const handleLogMouseDown = (e) => {
     const handle = e.target.closest('.log-drag-handle');
     if (handle) {
@@ -1099,8 +1110,8 @@ const GraphVisualizer = ({ onBack, openSettings, initialAlgo = 'Dijkstra', onCop
       const dx = e.clientX - logDragStart.current.x;
       const dy = e.clientY - logDragStart.current.y;
       setLogPosition({
-        x: Math.max(0, Math.min(window.innerWidth - 100, logPanelStart.current.x + dx)),
-        y: Math.max(0, Math.min(window.innerHeight - 40, logPanelStart.current.y + dy))
+        x: Math.max(0, Math.min(window.innerWidth - logSize.width, logPanelStart.current.x + dx)),
+        y: Math.max(0, Math.min(window.innerHeight - logSize.height, logPanelStart.current.y + dy))
       });
     };
     const handleMouseUp = () => {
@@ -1133,6 +1144,7 @@ const GraphVisualizer = ({ onBack, openSettings, initialAlgo = 'Dijkstra', onCop
   const [showCode, setShowCode] = useState(true);
 
   const [copied, setCopied] = useState(false);
+  const [isRunnerOpen, setIsRunnerOpen] = useState(false);
   const handleCopyCode = () => {
     const rawCode = getGraphCodeTemplate(codeLang, algoMode, String(startNode), String(targetNode));
     copyToClipboard(rawCode).then(() => {
@@ -2363,7 +2375,7 @@ const GraphVisualizer = ({ onBack, openSettings, initialAlgo = 'Dijkstra', onCop
                            <div>
                              <span style={{ color: 'var(--text-secondary)' }}>Active Node: </span>
                              <span style={{ color: '#fbbf24', fontWeight: 'bold' }}>
-                               {frame.active !== undefined && frame.active !== null ? `Node ${frame.active}` : 'None'}
+                               {frame.active !== undefined && frame.active !== null && frame.active !== -1 ? `Node ${nodes.find(n => n.id === frame.active)?.label || frame.active}` : 'None'}
                              </span>
                            </div>
 
@@ -2394,12 +2406,14 @@ const GraphVisualizer = ({ onBack, openSettings, initialAlgo = 'Dijkstra', onCop
                            <div style={{ borderTop: '1px solid rgba(255,255,255,0.06)', paddingTop: '6px', marginTop: '4px' }}>
                              <div style={{ fontSize: '0.72rem', textTransform: 'uppercase', fontWeight: 'bold', marginBottom: '4px', color: 'var(--accent-secondary)' }}>Trace Variables</div>
                              <div style={{ display: 'flex', flexDirection: 'column', gap: '4px' }}>
-                               <div style={{ display: 'flex', justifyContent: 'space-between' }}>
-                                 <span>Active Edge:</span>
-                                 <span style={{ color: 'var(--text-primary)', fontFamily: 'monospace' }}>
-                                   {frame.activeEdge ? frame.activeEdge : 'None'}
-                                 </span>
-                               </div>
+                               {frame.activeEdge && (
+                                 <div style={{ display: 'flex', justifyContent: 'space-between' }}>
+                                   <span>Active Edge:</span>
+                                   <span style={{ color: 'var(--text-primary)', fontFamily: 'monospace' }}>
+                                     {frame.activeEdge}
+                                   </span>
+                                 </div>
+                               )}
                                {frame.activeLine && (
                                  <div style={{ marginTop: '8px' }}>
                                    <div style={{ fontSize: '0.65rem', color: 'var(--text-secondary)' }}>Snippet:</div>
@@ -2546,16 +2560,32 @@ const GraphVisualizer = ({ onBack, openSettings, initialAlgo = 'Dijkstra', onCop
 
         {/* Right Side Code Panel */}
         {showCode && (
-          <div style={{ width: '450px', background: 'var(--bg-secondary)', borderLeft: '1px solid var(--glass-border)', display: 'flex', flexDirection: 'column' }}>
+        <>
+          {/* Vertical Drag Handle for column resizing */}
+          <div onMouseDown={handleColDragStart} style={{ width: '8px', background: 'var(--glass-border)', borderRadius: '4px', cursor: 'col-resize', flexShrink: 0, transition: 'background 0.2s' }}
+            onMouseOver={e => e.currentTarget.style.background = 'rgba(96,165,250,0.5)'}
+            onMouseOut={e => e.currentTarget.style.background = 'var(--glass-border)'}
+            title="Drag to resize columns" />
+
+          <div style={{ width: `${codeWidth}px`, background: 'var(--bg-secondary)', borderLeft: '1px solid var(--glass-border)', display: 'flex', flexDirection: 'column', overflow: 'hidden', minWidth: '200px' }}>
             <div style={{ padding: '1rem', borderBottom: '1px solid var(--glass-border)', display: 'flex', justifyContent: 'space-between', alignItems: 'center', background: 'var(--glass-bg)', gap: '10px' }}>
               <h3 style={{ margin: 0, fontSize: '1.1rem', color: 'var(--text-primary)', fontWeight: 'bold', flex: 1 }}>Algorithm Code</h3>
-              <button 
-                onClick={handleCopyCode} 
-                className="btn btn-clear" 
-                style={{ padding: '0.3rem 0.6rem', fontSize: '0.85rem', whiteSpace: 'nowrap' }}
-              >
-                {copied ? '✓ Copied' : '📋 Copy'}
-              </button>
+              <div style={{ display: 'flex', gap: '6px' }}>
+                <button 
+                  onClick={() => setIsRunnerOpen(true)}
+                  className="btn btn-clear" 
+                  style={{ padding: '0.3rem 0.6rem', fontSize: '0.85rem', whiteSpace: 'nowrap', display: 'inline-flex', alignItems: 'center', background: 'rgba(16,185,129,0.2)', color: '#34d399', border: '1px solid rgba(16,185,129,0.3)' }}
+                >
+                  ▶ Run Code
+                </button>
+                <button 
+                  onClick={handleCopyCode} 
+                  className="btn btn-clear" 
+                  style={{ padding: '0.3rem 0.6rem', fontSize: '0.85rem', whiteSpace: 'nowrap' }}
+                >
+                  {copied ? '✓ Copied' : '📋 Copy'}
+                </button>
+              </div>
               <select className="styled-select" style={{ width: '120px', padding: '0.3rem' }} value={codeLang} onChange={e => setCodeLang(e.target.value)}>
                 <option value="Java">Java</option>
                 <option value="C++">C++</option>
@@ -2598,6 +2628,7 @@ const GraphVisualizer = ({ onBack, openSettings, initialAlgo = 'Dijkstra', onCop
               <button className="btn btn-clear" style={{ width: '100%' }} onClick={() => setShowCode(false)}>💻 Hide Panel</button>
             </div>
           </div>
+        </>
         )}
 
       </div>
@@ -2613,6 +2644,12 @@ const GraphVisualizer = ({ onBack, openSettings, initialAlgo = 'Dijkstra', onCop
         </button>
       )}
 
+      <CodeRunnerModal
+        isOpen={isRunnerOpen}
+        onClose={() => setIsRunnerOpen(false)}
+        code={getGraphCodeTemplate(codeLang, algoMode, String(startNode), String(targetNode))}
+        language={codeLang}
+      />
     </div>
   );
 };

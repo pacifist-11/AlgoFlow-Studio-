@@ -2,6 +2,7 @@
 import React, { useState, useEffect, useRef } from 'react';
 import gsap from 'gsap';
 import { getSortSearchCode } from './codeTemplatesSort';
+import CodeRunnerModal from './CodeRunnerModal.jsx';
 
 // Fallback-safe Clipboard Copy Helper
 const copyToClipboard = (text) => {
@@ -60,14 +61,15 @@ const SortSearchVisualizer = ({ onBack, openSettings, initialTab = 'Sort', initi
   const [activeTab, setActiveTab] = useState(initialTab); // 'Sort' or 'Search'
   const [codeLang, setCodeLang] = useState('C++');
   const [showCode, setShowCode] = useState(true);
+  const [isRunnerOpen, setIsRunnerOpen] = useState(false);
 
   // Draggable execution log states
   const [showLogPanel, setShowLogPanel] = useState(true);
   const [logPosition, setLogPosition] = useState({ x: 20, y: 120 });
-  const [logActiveTab, setLogActiveTab] = useState('simulation');
-  const [compilerLogs, setCompilerLogs] = useState([]);
-  const [isCompiling, setIsCompiling] = useState(false);
   const [isDraggingLog, setIsDraggingLog] = useState(false);
+  const [logSize, setLogSize] = useState({ width: 580, height: 300 });
+  const [activeStateWidth, setActiveStateWidth] = useState(240);
+  const [codeWidth, setCodeWidth] = useState(450);
 
   const logDragStart = useRef({ x: 0, y: 0 });
   const logPanelStart = useRef({ x: 0, y: 0 });
@@ -83,14 +85,62 @@ const SortSearchVisualizer = ({ onBack, openSettings, initialTab = 'Sort', initi
     }
   };
 
+  const handleResizeMouseDown = (e) => {
+    e.preventDefault();
+    e.stopPropagation();
+    const startX = e.clientX;
+    const startY = e.clientY;
+    const startWidth = logSize.width;
+    const startHeight = logSize.height;
+
+    const handleMouseMove = (moveEvent) => {
+      const newWidth = Math.max(340, startWidth + (moveEvent.clientX - startX));
+      const newHeight = Math.max(180, startHeight + (moveEvent.clientY - startY));
+      setLogSize({ width: newWidth, height: newHeight });
+    };
+
+    const handleMouseUp = () => {
+      document.removeEventListener('mousemove', handleMouseMove);
+      document.removeEventListener('mouseup', handleMouseUp);
+    };
+
+    document.addEventListener('mousemove', handleMouseMove);
+    document.addEventListener('mouseup', handleMouseUp);
+  };
+
+  const handleActiveStateColDragStart = (e) => {
+    e.preventDefault();
+    const startX = e.clientX;
+    const startWidth = activeStateWidth;
+    const drag = (moveEvent) => {
+      const newWidth = Math.max(120, Math.min(logSize.width - 120, startWidth + (moveEvent.clientX - startX)));
+      setActiveStateWidth(newWidth);
+    };
+    const end = () => {
+      document.removeEventListener('mousemove', drag);
+      document.removeEventListener('mouseup', end);
+    };
+    document.addEventListener('mousemove', drag);
+    document.addEventListener('mouseup', end);
+  };
+
+  const handleColDragStart = e => {
+    e.preventDefault();
+    const startX = e.clientX, startW = codeWidth;
+    const drag = ev => setCodeWidth(Math.max(200, Math.min(startW + (startX - ev.clientX), window.innerWidth - 300)));
+    const end  = () => { document.removeEventListener('mousemove', drag); document.removeEventListener('mouseup', end); };
+    document.addEventListener('mousemove', drag);
+    document.addEventListener('mouseup', end);
+  };
+
   useEffect(() => {
     if (!isDraggingLog) return;
     const handleMouseMove = (e) => {
       const dx = e.clientX - logDragStart.current.x;
       const dy = e.clientY - logDragStart.current.y;
       setLogPosition({
-        x: Math.max(0, Math.min(window.innerWidth - 100, logPanelStart.current.x + dx)),
-        y: Math.max(0, Math.min(window.innerHeight - 40, logPanelStart.current.y + dy))
+        x: Math.max(0, Math.min(window.innerWidth - logSize.width, logPanelStart.current.x + dx)),
+        y: Math.max(0, Math.min(window.innerHeight - logSize.height, logPanelStart.current.y + dy))
       });
     };
     const handleMouseUp = () => {
@@ -108,62 +158,9 @@ const SortSearchVisualizer = ({ onBack, openSettings, initialTab = 'Sort', initi
     if (logContainerRef.current) {
       logContainerRef.current.scrollTop = logContainerRef.current.scrollHeight;
     }
-  }, [currentStep, showLogPanel, timeline, compilerLogs, logActiveTab]);
+  }, [currentStep, showLogPanel, timeline]);
 
-  const runOnlineCompiler = () => {
-    const rawCode = getSortSearchCode(currentDisplayedAlgo, codeLang, array, searchValue ? parseInt(searchValue) : undefined);
-    setIsCompiling(true);
-    setLogActiveTab('compiler');
-    setShowLogPanel(true);
-    setCompilerLogs([{ text: `▶ Compiling and running ${codeLang} template on cloud...`, type: 'normal' }]);
 
-    const wandboxLangMap = {
-      'Java': 'openjdk-jdk-21+35',
-      'C++': 'gcc-13.2.0',
-      'Python': 'cpython-3.12.7',
-      'JS': 'nodejs-20.17.0'
-    };
-
-    const compilerId = wandboxLangMap[codeLang] || 'nodejs-20.17.0';
-
-    fetch('https://wandbox.org/api/compile.json', {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({
-        compiler: compilerId,
-        code: rawCode,
-        stdin: ''
-      })
-    })
-    .then(res => res.json())
-    .then(data => {
-      setIsCompiling(false);
-      const newLogs = [];
-      if (data.status !== '0') {
-        const errMsg = data.compiler_error || data.compiler_message || data.program_error || 'Execution failed.';
-        newLogs.push({ text: `❌ Execution/Compilation Errors:\n${errMsg}`, type: 'error' });
-      } else {
-        newLogs.push({ text: '✅ Compilation and execution successful.', type: 'success' });
-        if (data.program_output && data.program_output.trim()) {
-          newLogs.push({ text: `\n[OUTPUT]`, type: 'normal' });
-          data.program_output.split('\n').forEach(line => {
-            if (line.trim()) newLogs.push({ text: line, type: 'output' });
-          });
-          newLogs.push({ text: `[END]`, type: 'normal' });
-        } else {
-          newLogs.push({ text: '\n[OUTPUT] (No output)', type: 'normal' });
-        }
-      }
-      setCompilerLogs(newLogs);
-    })
-    .catch(err => {
-      setIsCompiling(false);
-      setCompilerLogs([
-        { text: `❌ Network Error: Could not connect to Wandbox compiler server.`, type: 'error' },
-        { text: `(${err.message})`, type: 'error' }
-      ]);
-    });
-  };
 
   const barRefs = useRef([]);
   const currentDisplayedAlgo = activeTab === 'Sort' ? selectedSort : selectedSearch;
@@ -866,11 +863,11 @@ const SortSearchVisualizer = ({ onBack, openSettings, initialTab = 'Sort', initi
             <div
               style={{
                 position: 'fixed',
-                left: `${logPosition.x}px`,
-                top: `${logPosition.y}px`,
-                width: '340px',
-                maxHeight: '260px',
-                background: 'rgba(15, 23, 42, 0.9)',
+                left: `${Math.max(0, Math.min(logPosition.x, window.innerWidth - logSize.width))}px`,
+                top: `${Math.max(0, Math.min(logPosition.y, window.innerHeight - logSize.height))}px`,
+                width: `${logSize.width}px`,
+                height: `${logSize.height}px`,
+                background: 'rgba(15, 23, 42, 0.95)',
                 backdropFilter: 'blur(12px)',
                 border: '1px solid var(--glass-border)',
                 borderRadius: '12px',
@@ -898,7 +895,7 @@ const SortSearchVisualizer = ({ onBack, openSettings, initialTab = 'Sort', initi
                 }}
               >
                 <span style={{ fontWeight: 600, fontSize: '0.85rem', color: 'var(--text-primary)', display: 'flex', alignItems: 'center', gap: '6px' }}>
-                  📋 Execution Log
+                  📋 Execution Log & Active State
                 </span>
                 <button
                   onClick={() => setShowLogPanel(false)}
@@ -916,55 +913,158 @@ const SortSearchVisualizer = ({ onBack, openSettings, initialTab = 'Sort', initi
                   ×
                 </button>
               </div>
-              {/* Tabs */}
-              <div style={{ display: 'flex', borderBottom: '1px solid var(--glass-border)', background: 'rgba(0,0,0,0.2)', flexShrink: 0 }}>
-                <button
-                  onClick={() => setLogActiveTab('simulation')}
+
+              {/* Dual Column Content Body */}
+              <div style={{ display: 'flex', flex: 1, overflow: 'hidden' }}>
+
+                {/* Left Column: Data Structure Pointers & Elements */}
+                <div
                   style={{
-                    flex: 1,
-                    padding: '6px 12px',
-                    background: 'transparent',
-                    border: 'none',
-                    borderBottom: logActiveTab === 'simulation' ? '2px solid var(--accent-primary)' : '2px solid transparent',
-                    color: logActiveTab === 'simulation' ? 'var(--text-primary)' : 'var(--text-secondary)',
+                    width: `${activeStateWidth}px`,
+                    background: 'rgba(0, 0, 0, 0.25)',
+                    borderRight: '1px solid var(--glass-border)',
+                    padding: '10px 12px',
+                    display: 'flex',
+                    flexDirection: 'column',
+                    gap: '10px',
                     fontSize: '0.8rem',
-                    fontWeight: logActiveTab === 'simulation' ? 'bold' : 'normal',
-                    cursor: 'pointer',
-                    outline: 'none'
+                    color: 'var(--text-secondary)',
+                    overflowY: 'auto',
+                    flexShrink: 0
                   }}
                 >
-                  Simulation
-                </button>
-                <button
-                  onClick={() => setLogActiveTab('compiler')}
+                  <div style={{ fontSize: '0.75rem', color: 'var(--accent-primary)', textTransform: 'uppercase', fontWeight: 'bold', borderBottom: '1px solid rgba(255,255,255,0.06)', paddingBottom: '4px' }}>
+                    Active State
+                  </div>
+                  <div>
+                    <span style={{ color: 'var(--text-secondary)' }}>Algorithm: </span>
+                    <span style={{ color: 'var(--text-primary)', fontWeight: 'bold' }}>
+                      {currentDisplayedAlgo} ({codeLang})
+                    </span>
+                  </div>
+
+                  {(() => {
+                    const frame = timeline[currentStep] || { arr: array, i: -1, j: -1, k: -1 };
+                    return (
+                      <>
+                        <div>
+                          <div style={{ marginBottom: '2px', fontSize: '0.75rem' }}>Elements:</div>
+                          {frame.arr && frame.arr.length > 0 ? (
+                            <div style={{ background: 'rgba(0,0,0,0.18)', padding: '4px 6px', borderRadius: '4px', fontFamily: 'monospace', color: '#34d399', wordBreak: 'break-all', fontWeight: 'bold' }}>
+                              [{frame.arr.join(', ')}]
+                            </div>
+                          ) : (
+                            <span style={{ fontStyle: 'italic' }}>Empty</span>
+                          )}
+                        </div>
+
+                        <div style={{ borderTop: '1px solid rgba(255,255,255,0.06)', paddingTop: '6px', marginTop: '4px' }}>
+                          <div style={{ fontSize: '0.72rem', textTransform: 'uppercase', fontWeight: 'bold', marginBottom: '4px', color: 'var(--accent-secondary)' }}>Pointers & Highlights</div>
+                          <div style={{ display: 'flex', flexDirection: 'column', gap: '4px' }}>
+                            {(() => {
+                              const getValStr = (idx) => {
+                                if (idx === undefined || idx === -1 || !frame.arr) return null;
+                                return `Index ${idx} (Val: ${frame.arr[idx] ?? 'N/A'})`;
+                              };
+                              const details = [];
+                              const { i, j, k } = frame;
+                              
+                              if (currentDisplayedAlgo === 'Bubble Sort') {
+                                if (i !== -1) details.push({ label: 'Index j', val: getValStr(i), color: '#fbbf24' });
+                                if (j !== -1) details.push({ label: 'Index j+1', val: getValStr(j), color: '#60a5fa' });
+                                if (k !== -1) details.push({ label: 'Sorted boundary', val: getValStr(k), color: '#10b981' });
+                              } else if (currentDisplayedAlgo === 'Selection Sort') {
+                                if (i !== -1) details.push({ label: 'Index j', val: getValStr(i), color: '#fbbf24' });
+                                if (j !== -1) details.push({ label: 'Min Index', val: getValStr(j), color: '#60a5fa' });
+                                if (k !== -1) details.push({ label: 'Index i (sorted)', val: getValStr(k), color: '#10b981' });
+                              } else if (currentDisplayedAlgo === 'Insertion Sort') {
+                                if (i !== -1) {
+                                  const label = (frame.msg && (frame.msg.includes('Selected key') || frame.msg.includes('Placed key'))) ? 'Key Index' : 'Index j';
+                                  details.push({ label, val: getValStr(i), color: '#fbbf24' });
+                                }
+                                if (j !== -1) details.push({ label: 'Index j+1', val: getValStr(j), color: '#60a5fa' });
+                              } else if (currentDisplayedAlgo === 'Merge Sort') {
+                                if (i !== -1) details.push({ label: 'Left index', val: getValStr(i), color: '#fbbf24' });
+                                if (j !== -1) details.push({ label: 'Right index', val: getValStr(j), color: '#60a5fa' });
+                                if (k !== -1) details.push({ label: 'Merge index', val: getValStr(k), color: '#10b981' });
+                              } else if (currentDisplayedAlgo === 'Heap Sort') {
+                                if (i !== -1) details.push({ label: 'Index i', val: getValStr(i), color: '#fbbf24' });
+                                if (j !== -1) details.push({ label: 'Child/Swap index', val: getValStr(j), color: '#60a5fa' });
+                                if (k !== -1) details.push({ label: 'Sorted boundary', val: getValStr(k), color: '#10b981' });
+                              } else if (currentDisplayedAlgo === 'Quick Sort') {
+                                if (i !== -1) details.push({ label: 'Index j', val: getValStr(i), color: '#fbbf24' });
+                                if (j !== -1) details.push({ label: 'Pivot index', val: getValStr(j), color: '#60a5fa' });
+                                if (k !== -1) details.push({ label: 'Boundary index i', val: getValStr(k), color: '#10b981' });
+                              } else if (currentDisplayedAlgo === 'Shell Sort') {
+                                if (i !== -1) details.push({ label: 'Index j', val: getValStr(i), color: '#fbbf24' });
+                                if (j !== -1) details.push({ label: 'Index j - gap', val: getValStr(j), color: '#60a5fa' });
+                              } else if (currentDisplayedAlgo === 'Cocktail Shaker Sort') {
+                                if (i !== -1) details.push({ label: 'Index i', val: getValStr(i), color: '#fbbf24' });
+                                if (j !== -1) details.push({ label: 'Index i+1', val: getValStr(j), color: '#60a5fa' });
+                                if (k !== -1) details.push({ label: 'Sorted boundary', val: getValStr(k), color: '#10b981' });
+                              } else if (currentDisplayedAlgo === 'Radix Sort') {
+                                if (i !== -1) details.push({ label: 'Current index', val: getValStr(i), color: '#fbbf24' });
+                                if (j !== -1) details.push({ label: 'Reassemble index', val: getValStr(j), color: '#60a5fa' });
+                                if (k !== -1) details.push({ label: 'Digit place', val: `${k}s place`, color: '#10b981' });
+                              } else if (currentDisplayedAlgo === 'Linear Search') {
+                                if (i !== -1) details.push({ label: 'Current index', val: getValStr(i), color: '#fbbf24' });
+                                if (k !== -1) details.push({ label: 'Found index', val: getValStr(k), color: '#10b981' });
+                              } else if (currentDisplayedAlgo === 'Binary Search') {
+                                if (i !== -1) details.push({ label: 'Mid index (m)', val: getValStr(i), color: '#fbbf24' });
+                                if (j !== -1) details.push({ label: 'Left index (l)', val: getValStr(j), color: '#60a5fa' });
+                                if (k !== -1) details.push({ label: 'Right index (r)', val: getValStr(k), color: '#10b981' });
+                              }
+
+                              if (details.length === 0) {
+                                return <div style={{ color: 'var(--text-secondary)', fontStyle: 'italic', fontSize: '0.8rem' }}>No active pointers</div>;
+                              }
+
+                              return details.map((d, index) => (
+                                <div key={index} style={{ display: 'flex', justifyContent: 'space-between' }}>
+                                  <span>{d.label}:</span>
+                                  <span style={{ color: d.color, fontWeight: 'bold', fontFamily: 'monospace' }}>
+                                    {d.val}
+                                  </span>
+                                </div>
+                              ));
+                            })()}
+                          </div>
+                        </div>
+                      </>
+                    );
+                  })()}
+                </div>
+
+                {/* Vertical Column split resize handle */}
+                <div 
+                  onMouseDown={handleActiveStateColDragStart}
                   style={{
+                    width: '6px',
+                    cursor: 'col-resize',
+                    background: 'rgba(255, 255, 255, 0.05)',
+                    borderLeft: '1px solid var(--glass-border)',
+                    borderRight: '1px solid var(--glass-border)',
+                    alignSelf: 'stretch',
+                    transition: 'background 0.2s',
+                    borderRadius: '3px',
+                    flexShrink: 0
+                  }}
+                  onMouseOver={e => e.currentTarget.style.background = 'rgba(96,165,250,0.5)'}
+                  onMouseOut={e => e.currentTarget.style.background = 'rgba(255, 255, 255, 0.05)'}
+                  title="Drag to resize columns"
+                />
+
+                {/* Right Column: Log list container */}
+                <div
+                  ref={logContainerRef}
+                  style={{
+                    padding: '10px 12px',
+                    overflowY: 'auto',
                     flex: 1,
-                    padding: '6px 12px',
-                    background: 'transparent',
-                    border: 'none',
-                    borderBottom: logActiveTab === 'compiler' ? '2px solid var(--accent-primary)' : '2px solid transparent',
-                    color: logActiveTab === 'compiler' ? 'var(--text-primary)' : 'var(--text-secondary)',
-                    fontSize: '0.8rem',
-                    fontWeight: logActiveTab === 'compiler' ? 'bold' : 'normal',
-                    cursor: 'pointer',
-                    outline: 'none'
+                    fontFamily: 'monospace',
+                    fontSize: '0.82rem'
                   }}
                 >
-                  Compiler
-                </button>
-              </div>
-              {/* Log list container */}
-              <div
-                ref={logContainerRef}
-                style={{
-                  padding: '10px 12px',
-                  overflowY: 'auto',
-                  flex: 1,
-                  fontFamily: 'monospace',
-                  fontSize: '0.82rem'
-                }}
-              >
-                {logActiveTab === 'simulation' ? (
                   <div style={{ display: 'flex', flexDirection: 'column', gap: '5px' }}>
                     {timeline.length === 0 && (
                       <div style={{ color: 'var(--text-secondary)', fontStyle: 'italic', textAlign: 'center', marginTop: '20px' }}>
@@ -982,26 +1082,24 @@ const SortSearchVisualizer = ({ onBack, openSettings, initialTab = 'Sort', initi
                       </div>
                     ))}
                   </div>
-                ) : (
-                  <div style={{ display: 'flex', flexDirection: 'column', gap: '4px' }}>
-                    {compilerLogs.length === 0 && (
-                      <div style={{ color: 'var(--text-secondary)', fontStyle: 'italic', textAlign: 'center', marginTop: '20px' }}>
-                        Click &quot;▶ Run&quot; in Code Panel to compile code template.
-                      </div>
-                    )}
-                    {compilerLogs.map((log, idx) => {
-                      let textColor = 'var(--text-primary)';
-                      if (log.type === 'error') textColor = '#f87171';
-                      else if (log.type === 'output') textColor = '#34d399';
-                      else if (log.type === 'success') textColor = '#60a5fa';
-                      return (
-                        <div key={idx} style={{ color: textColor, whiteSpace: 'pre-wrap', wordBreak: 'break-all', marginBottom: '2px' }}>
-                          {log.text}
-                        </div>
-                      );
-                    })}
-                  </div>
-                )}
+                </div>
+
+                {/* Resize Handle */}
+                <div
+                  style={{
+                    position: 'absolute',
+                    right: '4px',
+                    bottom: '4px',
+                    width: '12px',
+                    height: '12px',
+                    cursor: 'se-resize',
+                    background: 'linear-gradient(135deg, transparent 60%, rgba(255,255,255,0.3) 60%)',
+                    zIndex: 100
+                  }}
+                  onMouseDown={handleResizeMouseDown}
+                  title="Drag to resize panel"
+                />
+
               </div>
             </div>
           )}
@@ -1009,18 +1107,24 @@ const SortSearchVisualizer = ({ onBack, openSettings, initialTab = 'Sort', initi
 
         {/* Right Column: Code Sidebar */}
         {showCode && (
-        <div style={{ width: '450px', background: 'var(--glass-bg)', borderRadius: '14px', border: '1px solid var(--glass-border)', display: 'flex', flexDirection: 'column', padding: '0.85rem', overflow: 'hidden', minWidth: '350px' }}>
-          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '0.6rem', flexShrink: 0 }}>
-            <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
-              <h3 style={{ color: 'var(--text-secondary)', fontSize: '0.9rem', fontWeight: 600, margin: 0 }}>{currentDisplayedAlgo} Code</h3>
-              <button 
-                onClick={runOnlineCompiler} 
-                className="btn btn-insert" 
-                disabled={isCompiling}
-                style={{ padding: '0.2rem 0.5rem', fontSize: '0.75rem', whiteSpace: 'nowrap' }}
-              >
-                {isCompiling ? '⏳...' : '▶ Run'}
-              </button>
+        <>
+          {/* Vertical Drag Handle for column resizing */}
+          <div onMouseDown={handleColDragStart} style={{ width: '8px', background: 'var(--glass-border)', borderRadius: '4px', cursor: 'col-resize', flexShrink: 0, transition: 'background 0.2s' }}
+            onMouseOver={e => e.currentTarget.style.background = 'rgba(96,165,250,0.5)'}
+            onMouseOut={e => e.currentTarget.style.background = 'var(--glass-border)'}
+            title="Drag to resize columns" />
+
+          <div style={{ width: `${codeWidth}px`, background: 'var(--glass-bg)', borderRadius: '14px', border: '1px solid var(--glass-border)', display: 'flex', flexDirection: 'column', padding: '0.85rem', overflow: 'hidden', minWidth: '200px' }}>
+            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '0.6rem', flexShrink: 0 }}>
+              <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
+                <h3 style={{ color: 'var(--text-secondary)', fontSize: '0.9rem', fontWeight: 600, margin: 0 }}>{currentDisplayedAlgo} Code</h3>
+                <button 
+                  onClick={() => setIsRunnerOpen(true)}
+                  className="btn btn-clear" 
+                  style={{ padding: '0.2rem 0.5rem', fontSize: '0.75rem', whiteSpace: 'nowrap', display: 'inline-flex', alignItems: 'center', background: 'rgba(16,185,129,0.2)', color: '#34d399', border: '1px solid rgba(16,185,129,0.3)' }}
+                >
+                  ▶ Run Code
+                </button>
               <button 
                 onClick={handleCopyCode} 
                 className="btn btn-clear" 
@@ -1049,9 +1153,16 @@ const SortSearchVisualizer = ({ onBack, openSettings, initialTab = 'Sort', initi
             </pre>
           </div>
         </div>
+        </>
         )}
 
       </div>
+      <CodeRunnerModal
+        isOpen={isRunnerOpen}
+        onClose={() => setIsRunnerOpen(false)}
+        code={getSortSearchCode(currentDisplayedAlgo, codeLang, array, searchValue ? parseInt(searchValue) : undefined)}
+        language={codeLang}
+      />
     </div>
   );
 };

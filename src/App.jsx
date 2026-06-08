@@ -6,6 +6,7 @@ import { getFullCodeTemplate } from './codeTemplates.js';
 import SortSearchVisualizer from './SortSearchVisualizer.jsx';
 import GeneralDSVisualizer from './GeneralDSVisualizer.jsx';
 import GraphVisualizer from './GraphVisualizer.jsx';
+import CodeRunnerModal from './CodeRunnerModal.jsx';
 
 // ─── Tree Node ───────────────────────────────────────────────────────────────
 class TreeNode {
@@ -748,6 +749,9 @@ function App() {
   const [activeStateWidth, setActiveStateWidth] = useState(260);
   const [showTreeLogPanel, setShowTreeLogPanel] = useState(true);
   const [showCode,          setShowCode]          = useState(true);
+  const [treeLogPosition, setTreeLogPosition] = useState({ x: 20, y: 120 });
+  const [isDraggingTreeLog, setIsDraggingTreeLog] = useState(false);
+  const [treeLogSize, setTreeLogSize] = useState({ width: 580, height: 300 });
   const [globalDsType,  setGlobalDsType]  = useState('HASH_TABLE');
   const [globalDsVariety, setGlobalDsVariety] = useState('HASH_LINEAR');
   const [pendingModule, setPendingModule] = useState(null);
@@ -775,7 +779,6 @@ function App() {
   const [operationsLog,  setOperationsLog] = useState([]);
   const [showDeletionsInCode, setShowDeletionsInCode] = useState(true);
   const [customCode,     setCustomCode]    = useState('');
-  const [customStdin,    setCustomStdin]   = useState('');
   const [homeSearchQuery,setHomeSearchQuery]= useState('');
   const [analysisResult, setAnalysisResult]= useState(null);
   const [animationSpeed, setAnimationSpeed]= useState(400);
@@ -797,23 +800,23 @@ function App() {
 
   const [codeHeight, setCodeHeight] = useState(240);
   const [logWidth, setLogWidth] = useState(380);
+  const treeLogDragStart = useRef({ x: 0, y: 0 });
+  const treeLogPanelStart = useRef({ x: 0, y: 0 });
   const [isChatOpen, setIsChatOpen] = useState(false);
   const [chatMessages, setChatMessages] = useState([
     { sender: 'bot', text: '👋 Hi! I\'m your AI coding assistant powered by Gemini.\n\nAsk me anything:\n• "Explain binary search"\n• "Fix my code"\n• "Write a bubble sort in Python"\n• "What is AVL tree rotation?"\n\nI\'m here to help!' }
   ]);
 
-  const [genericLogs,    setGenericLogs]    = useState([]);
   const [isSettingsOpen, setIsSettingsOpen] = useState(false);
+  const [isRunnerOpen, setIsRunnerOpen] = useState(false);
+  const [runnerCode, setRunnerCode] = useState('');
+  const [runnerLang, setRunnerLang] = useState('Java');
   const [editorFontSize, setEditorFontSize] = useState(14);
   const [editorWordWrap, setEditorWordWrap] = useState('off');
   const [editorScroll,   setEditorScroll]   = useState(0);
-  const [codeValTab, setCodeValTab] = useState('CONSOLE');
 
   // Copy success/options modal state
   const [copyModalData, setCopyModalData] = useState({ isOpen: false, code: '', language: '' });
-  const [isCompilingTree, setIsCompilingTree] = useState(false);
-  const [treeCompilerLogs, setTreeCompilerLogs] = useState([]);
-  const [treeLogActiveTab, setTreeLogActiveTab] = useState('simulation');
   const [activeCodeForChat, setActiveCodeForChat] = useState('');
   const [activeLangForChat, setActiveLangForChat] = useState('C++');
   const [themeMode, setThemeMode] = useState('dark');
@@ -1604,6 +1607,60 @@ function App() {
     document.addEventListener('mouseup', end);
   };
 
+  const handleTreeLogMouseDown = (e) => {
+    const handle = e.target.closest('.log-drag-handle');
+    if (handle) {
+      setIsDraggingTreeLog(true);
+      treeLogDragStart.current = { x: e.clientX, y: e.clientY };
+      treeLogPanelStart.current = { x: treeLogPosition.x, y: treeLogPosition.y };
+      e.preventDefault();
+    }
+  };
+
+  const handleTreeLogResizeMouseDown = (e) => {
+    e.preventDefault();
+    e.stopPropagation();
+    const startX = e.clientX;
+    const startY = e.clientY;
+    const startWidth = treeLogSize.width;
+    const startHeight = treeLogSize.height;
+
+    const handleMouseMove = (moveEvent) => {
+      const newWidth = Math.max(340, startWidth + (moveEvent.clientX - startX));
+      const newHeight = Math.max(180, startHeight + (moveEvent.clientY - startY));
+      setTreeLogSize({ width: newWidth, height: newHeight });
+    };
+
+    const handleMouseUp = () => {
+      document.removeEventListener('mousemove', handleMouseMove);
+      document.removeEventListener('mouseup', handleMouseUp);
+    };
+
+    document.addEventListener('mousemove', handleMouseMove);
+    document.addEventListener('mouseup', handleMouseUp);
+  };
+
+  useEffect(() => {
+    if (!isDraggingTreeLog) return;
+    const handleMouseMove = (e) => {
+      const dx = e.clientX - treeLogDragStart.current.x;
+      const dy = e.clientY - treeLogDragStart.current.y;
+      setTreeLogPosition({
+        x: Math.max(0, Math.min(window.innerWidth - treeLogSize.width, treeLogPanelStart.current.x + dx)),
+        y: Math.max(0, Math.min(window.innerHeight - treeLogSize.height, treeLogPanelStart.current.y + dy))
+      });
+    };
+    const handleMouseUp = () => {
+      setIsDraggingTreeLog(false);
+    };
+    window.addEventListener('mousemove', handleMouseMove);
+    window.addEventListener('mouseup', handleMouseUp);
+    return () => {
+      window.removeEventListener('mousemove', handleMouseMove);
+      window.removeEventListener('mouseup', handleMouseUp);
+    };
+  }, [isDraggingTreeLog]);
+
   // Auto-detect language
   useEffect(() => {
     if (!customCode) return;
@@ -1698,130 +1755,7 @@ function App() {
     });
     return outputs;
   };
-  const runGenericCode = () => {
-    setGenericLogs([{ text: `▶ Running ${codeLang}...`, type: 'normal' }]);
-    if (codeLang === 'JS') {
-      let newLogs = [{ text: `--- ${codeLang} Execution ---`, type: 'normal' }];
-      try {
-        const outputs = [];
-        const origLog = console.log, origErr = console.error;
-        console.log = (...args) => { 
-          args.forEach(a => {
-            if (Array.isArray(a)) outputs.push({ type: 'array_log', data: [...a] });
-            else {
-              const str = typeof a === 'object' ? JSON.stringify(a, null, 2) : String(a);
-              if (/^\[?\s*(-?\d+(?:\.\d+)?(?:[\s,]+-?\d+(?:\.\d+)?)*)\s*\]?$/.test(str)) {
-                const nums = str.replace(/[\[\]]/g, '').split(/[\s,]+/).filter(Boolean).map(Number);
-                if (nums.length > 0) outputs.push({ type: 'array_log', data: nums });
-                else outputs.push({ type: 'text', text: '📤 ' + str });
-              } else outputs.push({ type: 'text', text: '📤 ' + str });
-            }
-          });
-          origLog(...args); 
-        };
-        console.error = (...args) => { outputs.push({ type: 'error', text: '❌ ' + args.join(' ') }); origErr(...args); };
-        new Function(customCode)();
-        console.log = origLog; console.error = origErr;
-        newLogs.push({ text: '✅ Execution successful.', type: 'normal' });
-        if (outputs.length) {
-          newLogs.push({ text: `\n[OUTPUT]`, type: 'normal' });
-          outputs.forEach(o => {
-            if (o.type === 'array_log') newLogs.push(o);
-            else newLogs.push({ text: o.text, type: o.type === 'error' ? 'error' : 'output' });
-          });
-          newLogs.push({ text: `[END]`, type: 'normal' });
-        }
-        else newLogs.push({ text: '[OUTPUT] (No console output)', type: 'normal' });
-        setGenericLogs(newLogs);
-      } catch (err) {
-        newLogs.push({ text: `❌ ${err.constructor.name}: ${err.message}`, type: 'error' });
-        newLogs.push({ text: `   at ${err.stack?.split('\n')[1]?.trim() || 'unknown location'}`, type: 'error' });
-        setGenericLogs(newLogs);
-        setIsChatOpen(true);
-        setChatMessages(prev => [...prev, { sender: 'bot', text: `I detected an error in your JS code:\n\n❌ ${err.message}\n\nWould you like me to help debug this?` }]);
-      }
-    } else {
-      let newLogs = [{ text: `--- ${codeLang} Execution ---`, type: 'normal' }, { text: `☁️ Sending to cloud compiler...`, type: 'normal' }];
-      setGenericLogs([...newLogs]);
 
-      const wandboxLangMap = {
-        'Java': 'openjdk-jdk-21+35',
-        'C++': 'gcc-13.2.0',
-        'Python': 'cpython-3.12.7',
-        'JS': 'nodejs-20.17.0'
-      };
-
-      const compilerId = wandboxLangMap[codeLang] || 'nodejs-20.17.0';
-      let submissionCode = customCode;
-
-      fetch('https://wandbox.org/api/compile.json', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          compiler: compilerId,
-          code: submissionCode,
-          stdin: customStdin
-        })
-      })
-      .then(res => res.json())
-      .then(data => {
-        if (!data) {
-          throw new Error('Invalid compiler response from server.');
-        }
-
-        if (data.status !== '0') {
-          const errMsg = data.compiler_error || data.compiler_message || data.program_error || 'Execution failed.';
-          newLogs.push({ text: `❌ Execution/Compilation Errors:\n${errMsg}`, type: 'error' });
-          setGenericLogs([...newLogs]);
-          return;
-        }
-
-        newLogs.push({ text: '✅ Compilation and execution successful.', type: 'normal' });
-
-        if (data.program_output && data.program_output.trim()) {
-          newLogs.push({ text: `\n[OUTPUT]`, type: 'normal' });
-          const lines = data.program_output.split('\n');
-          lines.forEach(line => {
-            if (!line.trim()) return;
-            const cleanLine = line.trim();
-            if (/^\[?\s*(-?\d+(?:\.\d+)?(?:[\s,]+-?\d+(?:\.\d+)?)*)\s*\]?$/.test(cleanLine)) {
-              const nums = cleanLine.replace(/[\[\]]/g, '').split(/[\s,]+/).filter(Boolean).map(Number);
-              if (nums.length > 0) newLogs.push({ type: 'array_log', data: nums });
-              else newLogs.push({ text: line, type: 'output' });
-            } else newLogs.push({ text: line, type: 'output' });
-          });
-        } else {
-          newLogs.push({ text: '\n[OUTPUT] (No output)', type: 'normal' });
-        }
-
-        newLogs.push({ text: `[END]`, type: 'normal' });
-        setGenericLogs([...newLogs]);
-      })
-      .catch(err => {
-        newLogs.push({ text: `❌ Network Error: Could not connect to Wandbox compiler server.\n(${err.message})\nFalling back to simulated execution...`, type: 'error' });
-        
-        const errors = validateCode(customCode, codeLang);
-        if (errors.length) {
-          errors.forEach(e => newLogs.push({ text: e, type: 'error' }));
-          newLogs.push({ text: `\n💡 Fix the above issues and try again.`, type: 'normal' });
-        } else {
-          const output = extractOutput(customCode, codeLang);
-          if (output.length) {
-            newLogs.push({ text: `\n[SIMULATED OUTPUT]`, type: 'normal' });
-            output.forEach(line => {
-              const cleanLine = line.trim();
-              if (/^\[?\s*(-?\d+(?:\.\d+)?(?:[\s,]+-?\d+(?:\.\d+)?)*)\s*\]?$/.test(cleanLine)) {
-                const nums = cleanLine.replace(/[\[\]]/g, '').split(/[\s,]+/).filter(Boolean).map(Number);
-                if (nums.length > 0) newLogs.push({ type: 'array_log', data: nums });
-                else newLogs.push({ text: line, type: 'output' });
-              } else newLogs.push({ text: line, type: 'output' });
-            });
-          }
-        }
-        setGenericLogs([...newLogs]);
-      });
-    }
-  };
 
   const enterMode = mode => {
     setIsPageLoading(true);
@@ -1870,60 +1804,7 @@ function App() {
   }, [appMode, insertedValues.length, customCode, timeline.length]);
 
 
-  const runOnlineTreeCompiler = () => {
-    const rawCode = getFullCodeTemplate(codeLang, treeType, showDeletionsInCode ? operationsLog : insertedValues.map(v => ({ op: 'insert', val: v })));
-    setIsCompilingTree(true);
-    setTreeLogActiveTab('compiler');
-    setShowTreeLogPanel(true);
-    setTreeCompilerLogs([{ text: `▶ Compiling and running ${codeLang} template on cloud...`, type: 'normal' }]);
 
-    const wandboxLangMap = {
-      'Java': 'openjdk-jdk-21+35',
-      'C++': 'gcc-13.2.0',
-      'Python': 'cpython-3.12.7',
-      'JS': 'nodejs-20.17.0'
-    };
-
-    const compilerId = wandboxLangMap[codeLang] || 'nodejs-20.17.0';
-
-    fetch('https://wandbox.org/api/compile.json', {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({
-        compiler: compilerId,
-        code: rawCode,
-        stdin: ''
-      })
-    })
-    .then(res => res.json())
-    .then(data => {
-      setIsCompilingTree(false);
-      const newLogs = [];
-      if (data.status !== '0') {
-        const errMsg = data.compiler_error || data.compiler_message || data.program_error || 'Execution failed.';
-        newLogs.push({ text: `❌ Execution/Compilation Errors:\n${errMsg}`, type: 'error' });
-      } else {
-        newLogs.push({ text: '✅ Compilation and execution successful.', type: 'success' });
-        if (data.program_output && data.program_output.trim()) {
-          newLogs.push({ text: `\n[OUTPUT]`, type: 'normal' });
-          data.program_output.split('\n').forEach(line => {
-            if (line.trim()) newLogs.push({ text: line, type: 'output' });
-          });
-          newLogs.push({ text: `[END]`, type: 'normal' });
-        } else {
-          newLogs.push({ text: '\n[OUTPUT] (No output)', type: 'normal' });
-        }
-      }
-      setTreeCompilerLogs(newLogs);
-    })
-    .catch(err => {
-      setIsCompilingTree(false);
-      setTreeCompilerLogs([
-        { text: `❌ Network Error: Could not connect to Wandbox compiler server.`, type: 'error' },
-        { text: `(${err.message})`, type: 'error' }
-      ]);
-    });
-  };
 
   const handleCopyTreeCode = () => {
     const rawCode = getFullCodeTemplate(codeLang, treeType, showDeletionsInCode ? operationsLog : insertedValues.map(v => ({ op: 'insert', val: v })));
@@ -3364,16 +3245,25 @@ function App() {
                 <h1 className="title-gradient" style={{ fontSize: '1.7rem' }}>Code Validator ({codeLang})</h1>
               </div>
               <div className="controls-glass">
-                <button className="btn btn-insert" onClick={runGenericCode}>▶ Run Code</button>
+                <button 
+                  onClick={() => {
+                    setRunnerCode(customCode);
+                    setRunnerLang(codeLang);
+                    setIsRunnerOpen(true);
+                  }}
+                  className="btn btn-clear" 
+                  style={{ background: 'rgba(16,185,129,0.2)', color: '#34d399', display: 'inline-flex', alignItems: 'center' }}
+                >
+                  ▶ Run Code
+                </button>
                 <button className="btn btn-clear" style={{ background: 'rgba(236,72,153,0.2)', color: '#fbcfe8' }} onClick={() => enterMode('LINE_BY_LINE_VIS')}>🐛 Debug (Line-by-Line)</button>
-                <button className="btn btn-clear" onClick={() => setGenericLogs([])}>Clear</button>
                 <button className="btn btn-clear" onClick={() => setIsSettingsOpen(true)}>⚙ Settings</button>
                 <button className="btn btn-clear" onClick={() => setAppMode(null)}>🏠 Home</button>
               </div>
             </header>
 
             <div style={{ display: 'flex', flexDirection: 'column', flex: 1, padding: '0.5rem 1rem 1rem 1rem', gap: '0', overflow: 'hidden' }}>
-              <div style={{ flex: 1, background: '#1e1e1e', borderRadius: '10px 10px 0 0', border: '1px solid #333', display: 'flex', flexDirection: 'column', overflow: 'hidden' }}>
+              <div style={{ flex: 1, background: '#1e1e1e', borderRadius: '10px', border: '1px solid #333', display: 'flex', flexDirection: 'column', overflow: 'hidden' }}>
                 <div style={{ padding: '0.5rem 1rem', background: '#252526', borderBottom: '1px solid #333', flexShrink: 0, display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
                   <div style={{ display: 'flex', gap: '10px', alignItems: 'center' }}>
                     <span style={{ fontSize: '0.8rem', color: '#969696', fontFamily: 'monospace' }}>main.{codeLang === 'Python' ? 'py' : codeLang === 'Java' ? 'java' : codeLang === 'C++' ? 'cpp' : 'js'}</span>
@@ -3394,53 +3284,6 @@ function App() {
                       placeholder={`Write your ${codeLang} code here...\n\nExample:\nlet x = 5;\nlet y = 10;\nconsole.log(x + y);`}
                       spellCheck={false} />
                   </div>
-                </div>
-              </div>
-
-              <div onMouseDown={handleDragStart} style={{ height: '8px', background: '#333', cursor: 'row-resize', flexShrink: 0, transition: 'background 0.2s', display: 'flex', alignItems: 'center', justifyContent: 'center' }}
-                onMouseOver={e => e.currentTarget.style.background = '#007acc'}
-                onMouseOut={e => e.currentTarget.style.background = '#333'}
-                title="Drag to resize">
-                <div style={{ width: '30px', height: '2px', background: 'rgba(255,255,255,0.2)' }} />
-              </div>
-
-              <div style={{ height: `${codeHeight}px`, background: '#1e1e1e', borderRadius: '0 0 10px 10px', border: '1px solid #333', display: 'flex', flexDirection: 'column', overflow: 'hidden' }}>
-                <div style={{ padding: '0', background: '#252526', borderBottom: '1px solid #333', flexShrink: 0, display: 'flex' }}>
-                  <button onClick={() => setCodeValTab('CONSOLE')} style={{ padding: '8px 16px', background: 'transparent', border: 'none', borderBottom: codeValTab === 'CONSOLE' ? '1px solid #007acc' : '1px solid transparent', color: codeValTab === 'CONSOLE' ? '#e5e5e5' : '#969696', fontSize: '0.8rem', cursor: 'pointer', outline: 'none', transition: 'all 0.2s' }}>CONSOLE</button>
-                  <button onClick={() => setCodeValTab('STDIN')} style={{ padding: '8px 16px', background: 'transparent', border: 'none', borderBottom: codeValTab === 'STDIN' ? '1px solid #007acc' : '1px solid transparent', color: codeValTab === 'STDIN' ? '#e5e5e5' : '#969696', fontSize: '0.8rem', cursor: 'pointer', outline: 'none', transition: 'all 0.2s' }}>STANDARD INPUT</button>
-                </div>
-                
-                <div style={{ flex: 1, overflowY: 'auto', padding: '1rem', fontFamily: 'monospace', fontSize: '0.85rem' }}>
-                  {codeValTab === 'CONSOLE' && (
-                    <div style={{ display: 'flex', flexDirection: 'column', gap: '4px' }}>
-                      {genericLogs.length === 0 && <span style={{ color: '#52525b', opacity: 0.7 }}>No output. Run your code to see the execution log.</span>}
-                      {genericLogs.map((l, i) => {
-                        let prefix = l.type === 'error' ? '> ERR:' : l.type === 'output' ? '> OUT:' : '$';
-                        let textColor = l.type === 'error' ? '#f87171' : l.type === 'output' ? '#34d399' : '#a1a1aa';
-                        return (
-                          <div key={i} style={{ display: 'flex', gap: '10px', marginBottom: '4px', whiteSpace: 'pre-wrap', wordBreak: 'break-all' }}>
-                            <span style={{ color: '#52525b', userSelect: 'none', minWidth: '40px' }}>{prefix}</span>
-                            <span style={{ color: textColor }}>{l.text}</span>
-                          </div>
-                        );
-                      })}
-                      {genericLogs.length > 0 && <div style={{ color: '#52525b', marginTop: '10px' }}>$ █</div>}
-                      <div ref={logEndRef} />
-                    </div>
-                  )}
-                  {codeValTab === 'STDIN' && (
-                    <div style={{ display: 'flex', flexDirection: 'column', height: '100%' }}>
-                      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '0.4rem' }}>
-                        <span style={{ fontSize: '0.75rem', color: '#fbbf24', background: 'rgba(251,191,36,0.15)', padding: '2px 6px', borderRadius: '4px' }}>Cloud execution requires inputs beforehand</span>
-                      </div>
-                      <p style={{ fontSize: '0.8rem', color: '#969696', marginTop: 0, marginBottom: '0.8rem', lineHeight: '1.4' }}>
-                        Interactive console typing (like Scanner or cin) is not possible via the cloud compiler. Provide all your expected inputs here <strong>before</strong> running.
-                      </p>
-                      <textarea value={customStdin} onChange={e => setCustomStdin(e.target.value)} 
-                        style={{ flex: 1, background: '#1e1e1e', border: '1px solid #333', borderRadius: '6px', color: '#d4d4d4', padding: '0.5rem', fontFamily: 'monospace', fontSize: '0.85rem', resize: 'none', outline: 'none' }}
-                        placeholder="e.g., if your code expects 2 numbers, enter: 5 10" />
-                    </div>
-                  )}
                 </div>
               </div>
             </div>
@@ -3648,211 +3491,192 @@ function App() {
                 </div>
 
                 {showTreeLogPanel && (
-                  <>
-                    <div onMouseDown={handleDragStart} style={{ height: '8px', background: 'var(--glass-border)', borderRadius: '4px', margin: '0 0 0.75rem 0', cursor: 'row-resize', flexShrink: 0, transition: 'background 0.2s' }}
-                      onMouseOver={e => e.currentTarget.style.background = 'rgba(96,165,250,0.5)'}
-                      onMouseOut={e => e.currentTarget.style.background = 'var(--glass-border)'}
-                      title="Drag to resize height" />
+                  <div
+                    style={{
+                      position: 'fixed',
+                      left: `${Math.max(0, Math.min(treeLogPosition.x, window.innerWidth - treeLogSize.width))}px`,
+                      top: `${Math.max(0, Math.min(treeLogPosition.y, window.innerHeight - treeLogSize.height))}px`,
+                      width: `${treeLogSize.width}px`,
+                      height: `${treeLogSize.height}px`,
+                      background: 'rgba(15, 23, 42, 0.95)',
+                      backdropFilter: 'blur(12px)',
+                      border: '1px solid var(--glass-border)',
+                      borderRadius: '12px',
+                      boxShadow: '0 15px 30px rgba(0,0,0,0.5)',
+                      display: 'flex',
+                      flexDirection: 'column',
+                      zIndex: 99,
+                      overflow: 'hidden'
+                    }}
+                  >
+                    {/* Drag Handle Header */}
+                    <div
+                      className="log-drag-handle"
+                      onMouseDown={handleTreeLogMouseDown}
+                      style={{
+                        padding: '8px 12px',
+                        background: 'rgba(255, 255, 255, 0.04)',
+                        borderBottom: '1px solid var(--glass-border)',
+                        cursor: 'move',
+                        display: 'flex',
+                        justifyContent: 'space-between',
+                        alignItems: 'center',
+                        userSelect: 'none',
+                        flexShrink: 0
+                      }}
+                    >
+                      <span style={{ fontWeight: 600, fontSize: '0.85rem', color: 'var(--text-primary)', display: 'flex', alignItems: 'center', gap: '6px' }}>
+                        📋 Execution Log & Active State
+                      </span>
+                      <button
+                        onClick={() => setShowTreeLogPanel(false)}
+                        style={{
+                          background: 'transparent',
+                          border: 'none',
+                          color: 'var(--text-secondary)',
+                          cursor: 'pointer',
+                          fontSize: '1.1rem',
+                          padding: '0 4px',
+                          lineHeight: 1
+                        }}
+                        title="Hide Log"
+                      >
+                        ×
+                      </button>
+                    </div>
 
-                     <div style={{ height: `${codeHeight}px`, flexShrink: 0, background: 'var(--bg-secondary)', borderRadius: '14px', border: '1px solid var(--glass-border)', display: 'flex', flexDirection: 'column', padding: '0.85rem', overflow: 'hidden' }}>
-                      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '0.4rem', flexShrink: 0 }}>
-                        <div style={{ display: 'flex', alignItems: 'center', gap: '15px' }}>
-                          <h3 style={{ color: 'var(--text-secondary)', fontSize: '0.9rem', fontWeight: 600, margin: 0 }}>Execution Log</h3>
-                          <div style={{ display: 'flex', background: 'rgba(0,0,0,0.2)', padding: '2px', borderRadius: '6px' }}>
-                            <button
-                              onClick={() => setTreeLogActiveTab('simulation')}
-                              style={{
-                                padding: '2px 8px',
-                                background: treeLogActiveTab === 'simulation' ? 'rgba(255,255,255,0.06)' : 'transparent',
-                                border: 'none',
-                                color: treeLogActiveTab === 'simulation' ? 'var(--text-primary)' : 'var(--text-secondary)',
-                                fontSize: '0.75rem',
-                                borderRadius: '4px',
-                                fontWeight: 'bold',
-                                cursor: 'pointer',
-                                outline: 'none'
-                              }}
-                            >
-                              Simulation
-                            </button>
-                            <button
-                              onClick={() => setTreeLogActiveTab('compiler')}
-                              style={{
-                                padding: '2px 8px',
-                                background: treeLogActiveTab === 'compiler' ? 'rgba(255,255,255,0.06)' : 'transparent',
-                                border: 'none',
-                                color: treeLogActiveTab === 'compiler' ? 'var(--text-primary)' : 'var(--text-secondary)',
-                                fontSize: '0.75rem',
-                                borderRadius: '4px',
-                                fontWeight: 'bold',
-                                cursor: 'pointer',
-                                outline: 'none'
-                              }}
-                            >
-                              Compiler Output {isCompilingTree && '⏳'}
-                            </button>
-                          </div>
+                    {/* Dual Column Content Body */}
+                    <div style={{ display: 'flex', flex: 1, overflow: 'hidden' }}>
+                      {/* Left Column: Stats & Operations Details */}
+                      <div style={{ 
+                        width: `${activeStateWidth}px`, 
+                        background: 'rgba(0,0,0,0.25)', 
+                        borderRight: '1px solid var(--glass-border)',
+                        padding: '10px 12px', 
+                        display: 'flex', 
+                        flexDirection: 'column', 
+                        gap: '10px',
+                        fontSize: '0.8rem',
+                        color: 'var(--text-secondary)',
+                        overflowY: 'auto',
+                        flexShrink: 0
+                      }}>
+                        <div style={{ fontSize: '0.75rem', color: 'var(--accent-primary)', textTransform: 'uppercase', fontWeight: 'bold', borderBottom: '1px solid rgba(255,255,255,0.06)', paddingBottom: '4px' }}>
+                          Active State
                         </div>
-                        {treeLogActiveTab === 'simulation' && frame.rotation && (
-                          <span style={{ background: 'linear-gradient(135deg, #ef4444, #f97316)', color: 'white', padding: '2px 10px', borderRadius: '12px', fontSize: '0.75rem', fontWeight: 'bold' }}>
-                            ⚡ {frame.rotation}
-                          </span>
-                        )}
-                      </div>
-                      
-                      {treeLogActiveTab === 'simulation' ? (
-                        /* Dashboard split for best space usage */
-                        <div style={{ display: 'flex', flex: 1, gap: '1.25rem', overflow: 'hidden' }}>
-                          {/* Left Column: Stats & Operations Details */}
-                          <div style={{ 
-                            width: `${activeStateWidth}px`, 
-                            background: 'rgba(0,0,0,0.18)', 
-                            borderRadius: '10px', 
-                            padding: '0.75rem', 
-                            display: 'flex', 
-                            flexDirection: 'column', 
-                            gap: '10px',
-                            border: '1px solid rgba(255,255,255,0.03)',
-                            flexShrink: 0
+                        
+                        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                          <span style={{ fontSize: '0.82rem', color: 'var(--text-secondary)' }}>Target Value:</span>
+                          <span style={{ 
+                            fontSize: '0.9rem', 
+                            fontWeight: 'bold', 
+                            color: frame.highlight !== undefined && frame.highlight !== null ? '#fbbf24' : 'var(--text-primary)',
+                            background: frame.highlight !== undefined && frame.highlight !== null ? 'rgba(251,191,36,0.15)' : 'rgba(255,255,255,0.04)',
+                            padding: '2px 8px',
+                            borderRadius: '4px'
                           }}>
-                            <div style={{ fontSize: '0.78rem', color: 'var(--text-secondary)', textTransform: 'uppercase', fontWeight: 'bold', borderBottom: '1px solid rgba(255,255,255,0.05)', paddingBottom: '4px' }}>
-                              Active State
-                            </div>
-                            
-                            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-                              <span style={{ fontSize: '0.82rem', color: 'var(--text-secondary)' }}>Target Value:</span>
-                              <span style={{ 
-                                fontSize: '0.9rem', 
-                                fontWeight: 'bold', 
-                                color: frame.highlight !== undefined && frame.highlight !== null ? '#fbbf24' : 'var(--text-primary)',
-                                background: frame.highlight !== undefined && frame.highlight !== null ? 'rgba(251,191,36,0.15)' : 'rgba(255,255,255,0.04)',
-                                padding: '2px 8px',
-                                borderRadius: '4px'
-                              }}>
-                                {frame.highlight !== undefined && frame.highlight !== null ? String(frame.highlight) : 'None'}
-                              </span>
-                            </div>
+                            {frame.highlight !== undefined && frame.highlight !== null ? String(frame.highlight) : 'None'}
+                          </span>
+                        </div>
 
-                            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-                              <span style={{ fontSize: '0.82rem', color: 'var(--text-secondary)' }}>Event / Action:</span>
-                              <span style={{ 
-                                fontSize: '0.8rem', 
-                                fontWeight: 700, 
-                                color: frame.rotation ? '#f43f5e' : '#60a5fa',
-                                maxWidth: '150px',
-                                whiteSpace: 'nowrap',
-                                overflow: 'hidden',
-                                textOverflow: 'ellipsis'
-                              }} title={frame.rotation || 'Normal'}>
-                                {frame.rotation ? '⚡ Rotation/Split' : 'Normal Trace'}
-                              </span>
-                            </div>
+                        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                          <span style={{ fontSize: '0.82rem', color: 'var(--text-secondary)' }}>Event / Action:</span>
+                          <span style={{ 
+                            fontSize: '0.8rem', 
+                            fontWeight: 700, 
+                            color: frame.rotation ? '#f43f5e' : '#60a5fa',
+                            maxWidth: '150px',
+                            whiteSpace: 'nowrap',
+                            overflow: 'hidden',
+                            textOverflow: 'ellipsis'
+                          }} title={frame.rotation || 'Normal'}>
+                            {frame.rotation ? '⚡ Rotation/Split' : 'Normal Trace'}
+                          </span>
+                        </div>
 
-                            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-                              <span style={{ fontSize: '0.82rem', color: 'var(--text-secondary)' }}>Inserted Nodes:</span>
-                              <span style={{ fontSize: '0.85rem', fontWeight: 'bold' }}>{insertedValues.length}</span>
-                            </div>
+                        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                          <span style={{ fontSize: '0.82rem', color: 'var(--text-secondary)' }}>Inserted Nodes:</span>
+                          <span style={{ fontSize: '0.85rem', fontWeight: 'bold' }}>{insertedValues.length}</span>
+                        </div>
 
-                            <div style={{ flex: 1, display: 'flex', flexDirection: 'column', minHeight: 0 }}>
-                              <div style={{ fontSize: '0.72rem', color: 'var(--text-secondary)', marginBottom: '4px' }}>Timeline Nodes History:</div>
-                              <div style={{ 
-                                flex: 1, 
-                                overflowY: 'auto', 
-                                background: 'rgba(0,0,0,0.12)', 
-                                borderRadius: '6px', 
-                                padding: '4px 6px',
-                                fontSize: '0.75rem',
-                                color: 'var(--text-secondary)',
-                                lineHeight: '1.4',
-                                wordBreak: 'break-all'
-                              }}>
-                                {insertedValues.length > 0 ? insertedValues.join(', ') : 'No nodes inserted yet'}
-                              </div>
-                            </div>
-                          </div>
-
-                          {/* Vertical Column split resize handle */}
-                          <div 
-                            onMouseDown={handleActiveStateColDragStart}
-                            style={{
-                              width: '6px',
-                              cursor: 'col-resize',
-                              background: 'rgba(255, 255, 255, 0.05)',
-                              borderLeft: '1px solid var(--glass-border)',
-                              borderRight: '1px solid var(--glass-border)',
-                              alignSelf: 'stretch',
-                              transition: 'background 0.2s',
-                              borderRadius: '3px',
-                              flexShrink: 0
-                            }}
-                            onMouseOver={e => e.currentTarget.style.background = 'rgba(96,165,250,0.5)'}
-                            onMouseOut={e => e.currentTarget.style.background = 'rgba(255, 255, 255, 0.05)'}
-                            title="Drag to resize columns"
-                          />
-
-                          {/* Right Column: Scrolling Logs */}
+                        <div style={{ flex: 1, display: 'flex', flexDirection: 'column', minHeight: 0 }}>
+                          <div style={{ fontSize: '0.72rem', color: 'var(--text-secondary)', marginBottom: '4px' }}>Timeline Nodes History:</div>
                           <div style={{ 
                             flex: 1, 
-                            background: 'rgba(0,0,0,0.15)', 
-                            borderRadius: '10px', 
-                            padding: '0.75rem 1rem', 
-                            overflowY: 'auto',
-                            border: '1px solid rgba(255,255,255,0.03)',
-                            display: 'flex',
-                            flexDirection: 'column'
+                            overflowY: 'auto', 
+                            background: 'rgba(0,0,0,0.12)', 
+                            borderRadius: '6px', 
+                            padding: '4px 6px',
+                            fontSize: '0.75rem',
+                            color: 'var(--text-secondary)',
+                            lineHeight: '1.4',
+                            wordBreak: 'break-all'
                           }}>
-                            <div style={{ fontSize: '0.78rem', color: 'var(--text-secondary)', textTransform: 'uppercase', fontWeight: 'bold', borderBottom: '1px solid rgba(255,255,255,0.05)', paddingBottom: '4px', marginBottom: '8px' }}>
-                              Simulation Steps Log
-                            </div>
-                            <div style={{ flex: 1, overflowY: 'auto' }}>
-                              {frame.logs.map((log, i) => (
-                                <div key={i} className={`execution-log-item ${log.type}`} style={{ padding: '3px 0', fontSize: '0.85rem' }}>
-                                  {log.text}
-                                </div>
-                              ))}
-                              <div ref={logEndRef} />
-                            </div>
+                            {insertedValues.length > 0 ? insertedValues.join(', ') : 'No nodes inserted yet'}
                           </div>
                         </div>
-                      ) : (
-                        /* Cloud compiler log list container */
-                        <div style={{ 
-                          flex: 1, 
-                          background: 'rgba(0,0,0,0.15)', 
-                          borderRadius: '10px', 
-                          padding: '0.75rem 1rem', 
-                          overflowY: 'auto',
-                          border: '1px solid rgba(255,255,255,0.03)',
-                          display: 'flex',
-                          flexDirection: 'column',
-                          fontFamily: 'monospace',
-                          fontSize: '0.82rem'
-                        }}>
-                          <div style={{ fontSize: '0.78rem', color: 'var(--text-secondary)', textTransform: 'uppercase', fontWeight: 'bold', borderBottom: '1px solid rgba(255,255,255,0.05)', paddingBottom: '4px', marginBottom: '8px' }}>
-                            Compiler Steps Log
-                          </div>
-                          <div style={{ flex: 1, overflowY: 'auto' }}>
-                            {treeCompilerLogs.length === 0 && (
-                              <div style={{ color: 'var(--text-secondary)', fontStyle: 'italic', textAlign: 'center', marginTop: '20px' }}>
-                                Click "▶ Run" in Code Panel to compile code template.
-                              </div>
-                            )}
-                            {treeCompilerLogs.map((log, idx) => {
-                              let textColor = 'var(--text-primary)';
-                              if (log.type === 'error') textColor = '#f87171';
-                              else if (log.type === 'output') textColor = '#34d399';
-                              else if (log.type === 'success') textColor = '#60a5fa';
-                              return (
-                                <div key={idx} style={{ color: textColor, whiteSpace: 'pre-wrap', wordBreak: 'break-all', marginBottom: '2px' }}>
-                                  {log.text}
-                                </div>
-                              );
-                            })}
-                          </div>
+                      </div>
+
+                      {/* Vertical Column split resize handle */}
+                      <div 
+                        onMouseDown={handleActiveStateColDragStart}
+                        style={{
+                          width: '6px',
+                          cursor: 'col-resize',
+                          background: 'rgba(255, 255, 255, 0.05)',
+                          borderLeft: '1px solid var(--glass-border)',
+                          borderRight: '1px solid var(--glass-border)',
+                          alignSelf: 'stretch',
+                          transition: 'background 0.2s',
+                          borderRadius: '3px',
+                          flexShrink: 0
+                        }}
+                        onMouseOver={e => e.currentTarget.style.background = 'rgba(96,165,250,0.5)'}
+                        onMouseOut={e => e.currentTarget.style.background = 'rgba(255, 255, 255, 0.05)'}
+                        title="Drag to resize columns"
+                      />
+
+                      {/* Right Column: Scrolling Logs */}
+                      <div style={{ 
+                        flex: 1, 
+                        background: 'rgba(0,0,0,0.15)', 
+                        borderRadius: '10px', 
+                        padding: '0.75rem 1rem', 
+                        overflowY: 'auto',
+                        border: '1px solid rgba(255,255,255,0.03)',
+                        display: 'flex',
+                        flexDirection: 'column'
+                      }}>
+                        <div style={{ fontSize: '0.78rem', color: 'var(--text-secondary)', textTransform: 'uppercase', fontWeight: 'bold', borderBottom: '1px solid rgba(255,255,255,0.05)', paddingBottom: '4px', marginBottom: '8px' }}>
+                          Simulation Steps Log
                         </div>
-                      )}
+                        <div style={{ flex: 1, overflowY: 'auto' }}>
+                          {frame.logs.map((log, i) => (
+                            <div key={i} className={`execution-log-item ${log.type}`} style={{ padding: '3px 0', fontSize: '0.85rem' }}>
+                              {log.text}
+                            </div>
+                          ))}
+                          <div ref={logEndRef} />
+                        </div>
+                      </div>
                     </div>
-                  </>
+
+                    {/* Resize Handle */}
+                    <div
+                      style={{
+                        position: 'absolute',
+                        right: '4px',
+                        bottom: '4px',
+                        width: '12px',
+                        height: '12px',
+                        cursor: 'se-resize',
+                        background: 'linear-gradient(135deg, transparent 60%, rgba(255,255,255,0.3) 60%)',
+                        zIndex: 100
+                      }}
+                      onMouseDown={handleTreeLogResizeMouseDown}
+                      title="Drag to resize panel"
+                    />
+                  </div>
                 )}
               </div>
 
@@ -3871,12 +3695,16 @@ function App() {
                         <h3 style={{ color: 'var(--text-secondary)', fontSize: '0.9rem', fontWeight: 600, margin: 0 }}>Auto-Generated Code</h3>
                         <div style={{ display: 'flex', gap: '6px' }}>
                           <button 
-                            onClick={runOnlineTreeCompiler} 
-                            className="btn btn-insert" 
-                            disabled={isCompilingTree}
-                            style={{ padding: '2px 8px', fontSize: '0.78rem', whiteSpace: 'nowrap' }}
+                            onClick={() => {
+                              const rawCode = getFullCodeTemplate(codeLang, treeType, showDeletionsInCode ? operationsLog : insertedValues.map(v => ({ op: 'insert', val: v })));
+                              setRunnerCode(rawCode);
+                              setRunnerLang(codeLang);
+                              setIsRunnerOpen(true);
+                            }}
+                            className="btn btn-clear" 
+                            style={{ padding: '2px 8px', fontSize: '0.78rem', whiteSpace: 'nowrap', display: 'inline-flex', alignItems: 'center', background: 'rgba(16,185,129,0.2)', color: '#34d399', border: '1px solid rgba(16,185,129,0.3)', borderRadius: '6px' }}
                           >
-                            {isCompilingTree ? '⏳...' : '▶ Run'}
+                            ▶ Run Code
                           </button>
                           <button 
                             onClick={handleCopyTreeCode} 
@@ -4448,6 +4276,12 @@ function App() {
           </div>
         </div>
       </div>
+      <CodeRunnerModal
+        isOpen={isRunnerOpen}
+        onClose={() => setIsRunnerOpen(false)}
+        code={runnerCode}
+        language={runnerLang}
+      />
     </>
   );
 }
