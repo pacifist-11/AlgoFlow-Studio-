@@ -1140,9 +1140,11 @@ const GraphVisualizer = ({ onBack, openSettings, initialAlgo = 'Dijkstra', onCop
       const clientY = isTouch ? e.touches[0].clientY : e.clientY;
       const dx = clientX - logDragStart.current.x;
       const dy = clientY - logDragStart.current.y;
+      const maxX = Math.max(0, window.innerWidth - logSize.width);
+      const maxY = Math.max(0, window.innerHeight - logSize.height);
       setLogPosition({
-        x: Math.max(0, Math.min(window.innerWidth - logSize.width, logPanelStart.current.x + dx)),
-        y: Math.max(0, Math.min(window.innerHeight - logSize.height, logPanelStart.current.y + dy))
+        x: Math.max(0, Math.min(maxX, logPanelStart.current.x + dx)),
+        y: Math.max(0, Math.min(maxY, logPanelStart.current.y + dy))
       });
     };
     const handleMouseUp = () => {
@@ -2354,7 +2356,8 @@ const GraphVisualizer = ({ onBack, openSettings, initialAlgo = 'Dijkstra', onCop
                      justifyContent: 'space-between',
                      alignItems: 'center',
                      userSelect: 'none',
-                     flexShrink: 0
+                     flexShrink: 0,
+                     touchAction: 'none'
                    }}
                  >
                    <span style={{ fontWeight: 600, fontSize: '0.85rem', color: 'var(--text-primary)', display: 'flex', alignItems: 'center', gap: '6px' }}>
@@ -2470,7 +2473,7 @@ const GraphVisualizer = ({ onBack, openSettings, initialAlgo = 'Dijkstra', onCop
                       onMouseDown={handleActiveStateColDragStart}
                       onTouchStart={handleActiveStateColDragStart}
                       style={{
-                        width: '6px',
+                        width: '8px',
                         cursor: 'col-resize',
                         background: 'rgba(255, 255, 255, 0.05)',
                         borderLeft: '1px solid var(--glass-border)',
@@ -2478,7 +2481,8 @@ const GraphVisualizer = ({ onBack, openSettings, initialAlgo = 'Dijkstra', onCop
                         alignSelf: 'stretch',
                         transition: 'background 0.2s',
                         borderRadius: '3px',
-                        flexShrink: 0
+                        flexShrink: 0,
+                        touchAction: 'none'
                       }}
                       onMouseOver={e => e.currentTarget.style.background = 'rgba(96,165,250,0.5)'}
                       onMouseOut={e => e.currentTarget.style.background = 'rgba(255, 255, 255, 0.05)'}
@@ -2525,7 +2529,8 @@ const GraphVisualizer = ({ onBack, openSettings, initialAlgo = 'Dijkstra', onCop
                         height: '12px',
                         cursor: 'se-resize',
                         background: 'linear-gradient(135deg, transparent 60%, rgba(255,255,255,0.3) 60%)',
-                        zIndex: 100
+                        zIndex: 100,
+                        touchAction: 'none'
                       }}
                       onMouseDown={handleResizeMouseDown}
                       onTouchStart={handleResizeMouseDown}
@@ -2600,7 +2605,7 @@ const GraphVisualizer = ({ onBack, openSettings, initialAlgo = 'Dijkstra', onCop
         {showCode && (
         <>
           {/* Vertical Drag Handle for column resizing */}
-          <div onMouseDown={handleColDragStart} onTouchStart={handleColDragStart} style={{ width: '8px', background: 'var(--glass-border)', borderRadius: '4px', cursor: 'col-resize', flexShrink: 0, transition: 'background 0.2s' }}
+          <div onMouseDown={handleColDragStart} onTouchStart={handleColDragStart} style={{ width: '8px', background: 'var(--glass-border)', borderRadius: '4px', cursor: 'col-resize', flexShrink: 0, transition: 'background 0.2s', touchAction: 'none' }}
             onMouseOver={e => e.currentTarget.style.background = 'rgba(96,165,250,0.5)'}
             onMouseOut={e => e.currentTarget.style.background = 'var(--glass-border)'}
             title="Drag to resize columns" />

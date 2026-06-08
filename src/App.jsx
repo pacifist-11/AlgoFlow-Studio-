@@ -808,6 +808,7 @@ function App() {
   ]);
 
   const [isSettingsOpen, setIsSettingsOpen] = useState(false);
+  const [isUpcomingOpen, setIsUpcomingOpen] = useState(false);
   const [isRunnerOpen, setIsRunnerOpen] = useState(false);
   const [runnerCode, setRunnerCode] = useState('');
   const [runnerLang, setRunnerLang] = useState('Java');
@@ -999,6 +1000,13 @@ function App() {
     const savedTime = localStorage.getItem('loginTime');
     if (savedEmail && savedTime && Date.now() - Number(savedTime) < 3600000) {
       loadStateFromDatabase(savedEmail);
+    }
+
+    // Automatically show upcoming features on first load
+    const shown = localStorage.getItem('upcoming_features_v1');
+    if (!shown) {
+      setIsUpcomingOpen(true);
+      localStorage.setItem('upcoming_features_v1', 'true');
     }
   }, []);
 
@@ -1696,9 +1704,11 @@ function App() {
       const clientY = isTouch ? e.touches[0].clientY : e.clientY;
       const dx = clientX - treeLogDragStart.current.x;
       const dy = clientY - treeLogDragStart.current.y;
+      const maxX = Math.max(0, window.innerWidth - treeLogSize.width);
+      const maxY = Math.max(0, window.innerHeight - treeLogSize.height);
       setTreeLogPosition({
-        x: Math.max(0, Math.min(window.innerWidth - treeLogSize.width, treeLogPanelStart.current.x + dx)),
-        y: Math.max(0, Math.min(window.innerHeight - treeLogSize.height, treeLogPanelStart.current.y + dy))
+        x: Math.max(0, Math.min(maxX, treeLogPanelStart.current.x + dx)),
+        y: Math.max(0, Math.min(maxY, treeLogPanelStart.current.y + dy))
       });
     };
     const handleMouseUp = () => {
@@ -2866,6 +2876,60 @@ function App() {
     );
   };
 
+  const renderUpcomingFeaturesModal = () => {
+    return (
+      <div className="modal-overlay" onClick={() => setIsUpcomingOpen(false)}>
+        <div className="modal-content" style={{ maxWidth: '460px', padding: '2.2rem 2rem', borderRadius: '18px', background: 'rgba(15, 23, 42, 0.95)', border: '1.5px solid rgba(139, 92, 246, 0.35)', boxShadow: '0 20px 50px rgba(0,0,0,0.65)', backdropFilter: 'blur(16px)' }} onClick={e => e.stopPropagation()}>
+          <div style={{ display: 'flex', alignItems: 'center', gap: '12px', marginBottom: '1.2rem' }}>
+            <span style={{ fontSize: '2rem', filter: 'drop-shadow(0 0 8px rgba(139,92,246,0.6))' }}>🚀</span>
+            <h2 className="title-gradient" style={{ fontSize: '1.8rem', margin: 0, fontWeight: 'bold' }}>Upcoming Features</h2>
+          </div>
+          <p style={{ color: 'var(--text-secondary)', fontSize: '0.9rem', marginBottom: '1.5rem', lineHeight: '1.5', fontWeight: 500 }}>
+            We are working on adding several powerful upgrades to AlgoFlow-Studio. Here is the upcoming list:
+          </p>
+          <ul style={{ 
+            listStyle: 'none', 
+            padding: 0, 
+            margin: '0 0 2rem 0', 
+            display: 'flex', 
+            flexDirection: 'column', 
+            gap: '1rem' 
+          }}>
+            {[
+              { title: 'Code Validator and Runner', desc: 'Compile, validate, and execute your code inside the visualizer canvas with dynamic test cases.' },
+              { title: 'AI Assistant Bot', desc: 'Ask questions, dry run algorithms, and get code reviews from our built-in AI helper.' },
+              { title: 'Run Code in Every Module', desc: 'Launch terminal execution containers for all search, sorting, tree, graph, and linear structures.' }
+            ].map((f, i) => (
+              <li key={i} style={{ 
+                background: 'rgba(255, 255, 255, 0.03)', 
+                border: '1px solid var(--glass-border)', 
+                borderRadius: '12px', 
+                padding: '0.9rem 1.2rem',
+                display: 'flex',
+                gap: '12px',
+                alignItems: 'flex-start',
+                textAlign: 'left'
+              }}>
+                <span style={{ color: 'var(--accent-primary)', fontWeight: 'bold', fontSize: '1.1rem', marginTop: '2px' }}>✦</span>
+                <div>
+                  <h4 style={{ margin: '0 0 4px 0', color: 'var(--text-primary)', fontSize: '0.95rem', fontWeight: 700 }}>{f.title}</h4>
+                  <p style={{ margin: 0, color: 'var(--text-secondary)', fontSize: '0.8rem', lineHeight: '1.45' }}>{f.desc}</p>
+                </div>
+              </li>
+            ))}
+          </ul>
+          <button 
+            className="btn btn-start" 
+            style={{ width: '100%', padding: '0.8rem', borderRadius: '12px', fontSize: '0.95rem', fontWeight: 'bold', background: 'linear-gradient(135deg, var(--accent-primary), var(--accent-secondary))', border: 'none', color: '#fff', cursor: 'pointer' }} 
+            onClick={() => setIsUpcomingOpen(false)}
+          >
+            Got it!
+          </button>
+        </div>
+      </div>
+    );
+  };
+
   // ── Screens with State Preservation ──────────────────────────────────────────────────────────────
   const [mountedModes, setMountedModes] = useState({});
 
@@ -2892,6 +2956,15 @@ function App() {
       {/* Home Screen */}
       <div style={{ display: !appMode ? 'block' : 'none', position: 'relative' }}>
         <div style={{ position: 'absolute', top: '20px', right: '20px', zIndex: 50, display: 'flex', gap: '10px' }}>
+          <button 
+            className="btn btn-clear" 
+            onClick={() => setIsUpcomingOpen(true)}
+            style={{ display: 'flex', alignItems: 'center', gap: '8px', padding: '0.6rem 1.2rem', borderRadius: '12px', background: 'rgba(139, 92, 246, 0.08)', border: '1px solid rgba(139, 92, 246, 0.3)', color: 'var(--accent-primary)', cursor: 'pointer', transition: 'all 0.25s', fontWeight: 'bold' }}
+            onMouseEnter={e => e.currentTarget.style.transform = 'scale(1.05)'}
+            onMouseLeave={e => e.currentTarget.style.transform = 'scale(1)'}
+          >
+            🚀 Upcoming Features
+          </button>
           <button 
             className="btn btn-clear" 
             onClick={() => setIsSettingsOpen(true)}
@@ -2941,31 +3014,6 @@ function App() {
           )}
 
           <div style={{ textAlign: 'center' }}>
-            <div className="upcoming-features-banner" style={{
-              background: 'linear-gradient(135deg, rgba(239, 68, 68, 0.08) 0%, rgba(59, 130, 246, 0.08) 100%)',
-              border: '1.5px solid rgba(139, 92, 246, 0.25)',
-              borderRadius: '16px',
-              padding: '1.2rem 1.6rem',
-              marginBottom: '2.5rem',
-              textAlign: 'left',
-              backdropFilter: 'blur(12px)',
-              boxShadow: '0 8px 32px 0 rgba(0, 0, 0, 0.2), inset 0 1px 1px rgba(255,255,255,0.05)',
-              animation: 'fadeIn 0.6s ease',
-              display: 'flex',
-              alignItems: 'flex-start',
-              gap: '15px',
-              maxWidth: '800px',
-              margin: '0 auto 2.5rem auto'
-            }}>
-              <span style={{ fontSize: '1.6rem', filter: 'drop-shadow(0 0 8px rgba(139,92,246,0.6))', marginTop: '2px' }}>📢</span>
-              <div style={{ flex: 1 }}>
-                <h4 style={{ margin: '0 0 6px 0', color: 'var(--accent-primary)', fontSize: '0.9rem', fontWeight: 800, letterSpacing: '0.5px', textTransform: 'uppercase' }}>Notice</h4>
-                <p style={{ margin: 0, color: 'var(--text-primary)', fontSize: '0.92rem', lineHeight: '1.5', fontWeight: '500' }}>
-                  Upcoming features : Code validator and runner, ai bot, run code in every module and  i had tested in mobile also, im unable to move or resize the active state and execution log and showing code.
-                </p>
-              </div>
-            </div>
-
             <h1 className="title-gradient" style={{ fontSize: '3rem', marginBottom: '1.5rem' }}>AlgoFlow-Studio</h1>
             <div style={{ 
               maxWidth: '500px', 
@@ -3603,7 +3651,8 @@ function App() {
                         justifyContent: 'space-between',
                         alignItems: 'center',
                         userSelect: 'none',
-                        flexShrink: 0
+                        flexShrink: 0,
+                        touchAction: 'none'
                       }}
                     >
                       <span style={{ fontWeight: 600, fontSize: '0.85rem', color: 'var(--text-primary)', display: 'flex', alignItems: 'center', gap: '6px' }}>
@@ -3703,7 +3752,7 @@ function App() {
                         onMouseDown={handleActiveStateColDragStart}
                         onTouchStart={handleActiveStateColDragStart}
                         style={{
-                          width: '6px',
+                          width: '8px',
                           cursor: 'col-resize',
                           background: 'rgba(255, 255, 255, 0.05)',
                           borderLeft: '1px solid var(--glass-border)',
@@ -3711,7 +3760,8 @@ function App() {
                           alignSelf: 'stretch',
                           transition: 'background 0.2s',
                           borderRadius: '3px',
-                          flexShrink: 0
+                          flexShrink: 0,
+                          touchAction: 'none'
                         }}
                         onMouseOver={e => e.currentTarget.style.background = 'rgba(96,165,250,0.5)'}
                         onMouseOut={e => e.currentTarget.style.background = 'rgba(255, 255, 255, 0.05)'}
@@ -3753,7 +3803,8 @@ function App() {
                         height: '12px',
                         cursor: 'se-resize',
                         background: 'linear-gradient(135deg, transparent 60%, rgba(255,255,255,0.3) 60%)',
-                        zIndex: 100
+                        zIndex: 100,
+                        touchAction: 'none'
                       }}
                       onMouseDown={handleTreeLogResizeMouseDown}
                       onTouchStart={handleTreeLogResizeMouseDown}
@@ -3766,7 +3817,7 @@ function App() {
               {showCode && (
                 <>
                   {/* Vertical Drag Handle for column resizing */}
-                  <div onMouseDown={handleColDragStart} onTouchStart={handleColDragStart} style={{ width: '8px', background: 'var(--glass-border)', borderRadius: '4px', cursor: 'col-resize', flexShrink: 0, transition: 'background 0.2s' }}
+                  <div onMouseDown={handleColDragStart} onTouchStart={handleColDragStart} style={{ width: '8px', background: 'var(--glass-border)', borderRadius: '4px', cursor: 'col-resize', flexShrink: 0, transition: 'background 0.2s', touchAction: 'none' }}
                     onMouseOver={e => e.currentTarget.style.background = 'rgba(96,165,250,0.5)'}
                     onMouseOut={e => e.currentTarget.style.background = 'var(--glass-border)'}
                     title="Drag to resize columns" />
@@ -3836,6 +3887,7 @@ function App() {
 
       <ChatBot customCode={activeCodeForChat} codeLang={activeLangForChat} isChatOpen={isChatOpen} setIsChatOpen={setIsChatOpen} chatMessages={chatMessages} setChatMessages={setChatMessages} apiKey={globalApiKey} setApiKey={setGlobalApiKey} model={globalModel} setModel={setGlobalModel} />
       {isSettingsOpen && renderSettingsModal()}
+      {isUpcomingOpen && renderUpcomingFeaturesModal()}
 
       {/* Copy Success & Options Modal */}
       {copyModalData.isOpen && (
