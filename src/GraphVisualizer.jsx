@@ -1047,68 +1047,99 @@ const GraphVisualizer = ({ onBack, openSettings, initialAlgo = 'Dijkstra', onCop
   const logContainerRef = useRef(null);
 
   const handleResizeMouseDown = (e) => {
-    e.preventDefault();
+    if (e.cancelable) e.preventDefault();
     e.stopPropagation();
-    const startX = e.clientX;
-    const startY = e.clientY;
+    const isTouch = e.type.startsWith('touch');
+    const startX = isTouch ? e.touches[0].clientX : e.clientX;
+    const startY = isTouch ? e.touches[0].clientY : e.clientY;
     const startWidth = logSize.width;
     const startHeight = logSize.height;
 
     const handleMouseMove = (moveEvent) => {
-      const newWidth = Math.max(340, startWidth + (moveEvent.clientX - startX));
-      const newHeight = Math.max(180, startHeight + (moveEvent.clientY - startY));
+      const currentX = moveEvent.type.startsWith('touch') ? moveEvent.touches[0].clientX : moveEvent.clientX;
+      const currentY = moveEvent.type.startsWith('touch') ? moveEvent.touches[0].clientY : moveEvent.clientY;
+      const newWidth = Math.max(340, startWidth + (currentX - startX));
+      const newHeight = Math.max(180, startHeight + (currentY - startY));
       setLogSize({ width: newWidth, height: newHeight });
     };
 
     const handleMouseUp = () => {
       document.removeEventListener('mousemove', handleMouseMove);
       document.removeEventListener('mouseup', handleMouseUp);
+      document.removeEventListener('touchmove', handleMouseMove);
+      document.removeEventListener('touchend', handleMouseUp);
     };
 
     document.addEventListener('mousemove', handleMouseMove);
     document.addEventListener('mouseup', handleMouseUp);
+    document.addEventListener('touchmove', handleMouseMove, { passive: false });
+    document.addEventListener('touchend', handleMouseUp);
   };
 
   const handleActiveStateColDragStart = (e) => {
-    e.preventDefault();
-    const startX = e.clientX;
+    if (e.cancelable) e.preventDefault();
+    const isTouch = e.type.startsWith('touch');
+    const startX = isTouch ? e.touches[0].clientX : e.clientX;
     const startWidth = activeStateWidth;
     const drag = (moveEvent) => {
-      const newWidth = Math.max(120, Math.min(logSize.width - 120, startWidth + (moveEvent.clientX - startX)));
+      const currentX = moveEvent.type.startsWith('touch') ? moveEvent.touches[0].clientX : moveEvent.clientX;
+      const newWidth = Math.max(120, Math.min(logSize.width - 120, startWidth + (currentX - startX)));
       setActiveStateWidth(newWidth);
     };
     const end = () => {
       document.removeEventListener('mousemove', drag);
       document.removeEventListener('mouseup', end);
+      document.removeEventListener('touchmove', drag);
+      document.removeEventListener('touchend', end);
     };
     document.addEventListener('mousemove', drag);
     document.addEventListener('mouseup', end);
+    document.addEventListener('touchmove', drag, { passive: false });
+    document.addEventListener('touchend', end);
   };
 
   const handleColDragStart = e => {
-    e.preventDefault();
-    const startX = e.clientX, startW = codeWidth;
-    const drag = ev => setCodeWidth(Math.max(200, Math.min(startW + (startX - ev.clientX), window.innerWidth - 300)));
-    const end  = () => { document.removeEventListener('mousemove', drag); document.removeEventListener('mouseup', end); };
+    if (e.cancelable) e.preventDefault();
+    const isTouch = e.type.startsWith('touch');
+    const startX = isTouch ? e.touches[0].clientX : e.clientX;
+    const startW = codeWidth;
+    const drag = ev => {
+      const currentX = ev.type.startsWith('touch') ? ev.touches[0].clientX : ev.clientX;
+      setCodeWidth(Math.max(200, Math.min(startW + (startX - currentX), window.innerWidth - 300)));
+    };
+    const end  = () => {
+      document.removeEventListener('mousemove', drag);
+      document.removeEventListener('mouseup', end);
+      document.removeEventListener('touchmove', drag);
+      document.removeEventListener('touchend', end);
+    };
     document.addEventListener('mousemove', drag);
     document.addEventListener('mouseup', end);
+    document.addEventListener('touchmove', drag, { passive: false });
+    document.addEventListener('touchend', end);
   };
 
   const handleLogMouseDown = (e) => {
     const handle = e.target.closest('.log-drag-handle');
     if (handle) {
       setIsDraggingLog(true);
-      logDragStart.current = { x: e.clientX, y: e.clientY };
+      const isTouch = e.type.startsWith('touch');
+      const clientX = isTouch ? e.touches[0].clientX : e.clientX;
+      const clientY = isTouch ? e.touches[0].clientY : e.clientY;
+      logDragStart.current = { x: clientX, y: clientY };
       logPanelStart.current = { x: logPosition.x, y: logPosition.y };
-      e.preventDefault();
+      if (e.cancelable) e.preventDefault();
     }
   };
 
   useEffect(() => {
     if (!isDraggingLog) return;
     const handleMouseMove = (e) => {
-      const dx = e.clientX - logDragStart.current.x;
-      const dy = e.clientY - logDragStart.current.y;
+      const isTouch = e.type.startsWith('touch');
+      const clientX = isTouch ? e.touches[0].clientX : e.clientX;
+      const clientY = isTouch ? e.touches[0].clientY : e.clientY;
+      const dx = clientX - logDragStart.current.x;
+      const dy = clientY - logDragStart.current.y;
       setLogPosition({
         x: Math.max(0, Math.min(window.innerWidth - logSize.width, logPanelStart.current.x + dx)),
         y: Math.max(0, Math.min(window.innerHeight - logSize.height, logPanelStart.current.y + dy))
@@ -1119,11 +1150,15 @@ const GraphVisualizer = ({ onBack, openSettings, initialAlgo = 'Dijkstra', onCop
     };
     window.addEventListener('mousemove', handleMouseMove);
     window.addEventListener('mouseup', handleMouseUp);
+    window.addEventListener('touchmove', handleMouseMove, { passive: false });
+    window.addEventListener('touchend', handleMouseUp);
     return () => {
       window.removeEventListener('mousemove', handleMouseMove);
       window.removeEventListener('mouseup', handleMouseUp);
+      window.removeEventListener('touchmove', handleMouseMove);
+      window.removeEventListener('touchend', handleMouseUp);
     };
-  }, [isDraggingLog]);
+  }, [isDraggingLog, logSize]);
 
 
 
@@ -2309,6 +2344,7 @@ const GraphVisualizer = ({ onBack, openSettings, initialAlgo = 'Dijkstra', onCop
                  <div
                    className="log-drag-handle"
                    onMouseDown={handleLogMouseDown}
+                   onTouchStart={handleLogMouseDown}
                    style={{
                      padding: '8px 12px',
                      background: 'rgba(255, 255, 255, 0.04)',
@@ -2432,6 +2468,7 @@ const GraphVisualizer = ({ onBack, openSettings, initialAlgo = 'Dijkstra', onCop
                    {/* Vertical Column split resize handle */}
                    <div 
                       onMouseDown={handleActiveStateColDragStart}
+                      onTouchStart={handleActiveStateColDragStart}
                       style={{
                         width: '6px',
                         cursor: 'col-resize',
@@ -2491,6 +2528,7 @@ const GraphVisualizer = ({ onBack, openSettings, initialAlgo = 'Dijkstra', onCop
                         zIndex: 100
                       }}
                       onMouseDown={handleResizeMouseDown}
+                      onTouchStart={handleResizeMouseDown}
                       title="Drag to resize panel"
                     />
 
@@ -2562,7 +2600,7 @@ const GraphVisualizer = ({ onBack, openSettings, initialAlgo = 'Dijkstra', onCop
         {showCode && (
         <>
           {/* Vertical Drag Handle for column resizing */}
-          <div onMouseDown={handleColDragStart} style={{ width: '8px', background: 'var(--glass-border)', borderRadius: '4px', cursor: 'col-resize', flexShrink: 0, transition: 'background 0.2s' }}
+          <div onMouseDown={handleColDragStart} onTouchStart={handleColDragStart} style={{ width: '8px', background: 'var(--glass-border)', borderRadius: '4px', cursor: 'col-resize', flexShrink: 0, transition: 'background 0.2s' }}
             onMouseOver={e => e.currentTarget.style.background = 'rgba(96,165,250,0.5)'}
             onMouseOut={e => e.currentTarget.style.background = 'var(--glass-border)'}
             title="Drag to resize columns" />

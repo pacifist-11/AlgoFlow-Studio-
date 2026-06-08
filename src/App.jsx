@@ -1297,15 +1297,11 @@ function App() {
 
   const checkRestrictedWords = (text) => {
     if (!text) return false;
-    const clean = text.toLowerCase();
     
-    // Check direct substring first
-    const badWords = ['puka', 'lanja', 'lanjodaka', 'naaku', 'modda', 'sulli', 'dengai', 'ass', 'fuck', 'bitch'];
-    for (const w of badWords) {
-      if (clean.includes(w)) return true;
-    }
+    // Normalize string to lowercase
+    let clean = text.toLowerCase();
     
-    // Perform mapping of symbols
+    // Map lookalike symbols and numbers to letters
     const replacements = [
       { from: /@/g, to: 'a' },
       { from: /€/g, to: 'e' },
@@ -1314,50 +1310,74 @@ function App() {
       { from: /!/g, to: 'i' },
       { from: /\|/g, to: 'i' },
       { from: /0/g, to: 'o' },
+      { from: /°/g, to: 'o' },
       { from: /\$/g, to: 's' },
       { from: /5/g, to: 's' },
       { from: /7/g, to: 't' },
       { from: /\+/g, to: 't' },
       { from: /8/g, to: 'b' }
     ];
-
-    // Let's create a few variants of normalized text to check
-    let variant1 = clean;
-    let variant2 = clean;
     
-    // Variant 1: Map symbols to their standard letters
+    let variant1 = clean;
     replacements.forEach(r => {
       variant1 = variant1.replace(r.from, r.to);
     });
     
-    // Variant 2: Replace @ with u and others
-    replacements.forEach(r => {
-      if (r.from.toString().includes('@')) {
-        variant2 = variant2.replace(r.from, 'u');
-      } else {
-        variant2 = variant2.replace(r.from, r.to);
-      }
-    });
+    // Base forbidden root substrings
+    const badWords = [
+      'aathu', 'aathoo', 'aathuu', 'athu', 'aatu', 'athuu',
+      'gudu', 'gudha', 'guda', 'gudda', 'guddha', 'goodu', 'gudhu', 'gudh',
+      'vattakayalu', 'vattakaayalu', 'vattalu', 'vattakaya', 'vatta', 'vattakay', 'vattakayal',
+      'puka', 'puku', 'pooku', 'pukaa', 'pooka',
+      'lanja', 'lanjaa', 'lanza', 'lanjodaka', 'lanjodka', 'lanjakodaka', 'lanje',
+      'modda', 'madda', 'moddae', 'maddodda',
+      'sulli', 'suli',
+      'dengai', 'dengey', 'denga', 'dengu', 'dengutha',
+      'naaku',
+      'fuck', 'bitch', 'ass', 'bastard', 'dick', 'cunt', 'whore', 'shit'
+    ];
+    
+    // Collapsed forbidden root substrings (to match collapsed repeating letters, e.g. "aaathu" -> "athu")
+    // Note: We omit very short common English words like "as" or common innocent words like "naku" or "atu"
+    // to avoid false positives.
+    const collapsedBadWords = [
+      'athu', 'gudu', 'guda', 'gudh', 'vatakayalu', 'vatalu', 'vatakaya', 'vata',
+      'puka', 'puku', 'poku',
+      'lanja', 'lanza', 'lanjodaka', 'lanjodka', 'lanjakodaka', 'lanje',
+      'moda', 'mada',
+      'suli',
+      'dengai', 'dengey', 'denga', 'dengu', 'dengutha',
+      'fuk', 'bich', 'cunt', 'whor', 'shit'
+    ];
 
     const checkString = (str) => {
-      // 1. Direct match
+      // 1. Direct match check on standard text
       for (const w of badWords) {
         if (str.includes(w)) return true;
       }
-      // 2. Remove all non-alpha characters and match
-      const alphaOnly = str.replace(/[^a-z]/g, '');
+      
+      // 2. Strip all non-alphabetic/numeric characters (spaces, tabs, punctuation, *, _, -, etc.) and match
+      const alphaOnly = str.replace(/[^a-z0-9]/g, '');
       for (const w of badWords) {
         if (alphaOnly.includes(w)) return true;
       }
+      
+      // 3. Collapse consecutive duplicate letters and check
+      const collapsed = alphaOnly.replace(/(.)\1+/g, '$1');
+      for (const w of collapsedBadWords) {
+        if (collapsed.includes(w)) return true;
+      }
+      
       return false;
     };
 
-    if (checkString(clean) || checkString(variant1) || checkString(variant2)) {
+    if (checkString(clean) || checkString(variant1)) {
       return true;
     }
     
     return false;
   };
+
 
   // Submit feedback directly
   const submitDirectFeedback = async () => {
@@ -1583,68 +1603,99 @@ function App() {
   };
 
   const handleColDragStart = e => {
-    e.preventDefault();
-    const startX = e.clientX, startW = logWidth;
-    const drag = ev => setLogWidth(Math.max(200, Math.min(startW + (startX - ev.clientX), window.innerWidth - 300)));
-    const end  = () => { document.removeEventListener('mousemove', drag); document.removeEventListener('mouseup', end); };
+    if (e.cancelable) e.preventDefault();
+    const isTouch = e.type.startsWith('touch');
+    const startX = isTouch ? e.touches[0].clientX : e.clientX;
+    const startW = logWidth;
+    const drag = ev => {
+      const currentX = ev.type.startsWith('touch') ? ev.touches[0].clientX : ev.clientX;
+      setLogWidth(Math.max(200, Math.min(startW + (startX - currentX), window.innerWidth - 300)));
+    };
+    const end  = () => {
+      document.removeEventListener('mousemove', drag);
+      document.removeEventListener('mouseup', end);
+      document.removeEventListener('touchmove', drag);
+      document.removeEventListener('touchend', end);
+    };
     document.addEventListener('mousemove', drag);
     document.addEventListener('mouseup', end);
+    document.addEventListener('touchmove', drag, { passive: false });
+    document.addEventListener('touchend', end);
   };
 
   const handleActiveStateColDragStart = (e) => {
-    e.preventDefault();
-    const startX = e.clientX;
+    if (e.cancelable) e.preventDefault();
+    const isTouch = e.type.startsWith('touch');
+    const startX = isTouch ? e.touches[0].clientX : e.clientX;
     const startWidth = activeStateWidth;
     const drag = (moveEvent) => {
-      const newWidth = Math.max(120, Math.min(600, startWidth + (moveEvent.clientX - startX)));
+      const currentX = moveEvent.type.startsWith('touch') ? moveEvent.touches[0].clientX : moveEvent.clientX;
+      const newWidth = Math.max(120, Math.min(600, startWidth + (currentX - startX)));
       setActiveStateWidth(newWidth);
     };
     const end = () => {
       document.removeEventListener('mousemove', drag);
       document.removeEventListener('mouseup', end);
+      document.removeEventListener('touchmove', drag);
+      document.removeEventListener('touchend', end);
     };
     document.addEventListener('mousemove', drag);
     document.addEventListener('mouseup', end);
+    document.addEventListener('touchmove', drag, { passive: false });
+    document.addEventListener('touchend', end);
   };
 
   const handleTreeLogMouseDown = (e) => {
     const handle = e.target.closest('.log-drag-handle');
     if (handle) {
       setIsDraggingTreeLog(true);
-      treeLogDragStart.current = { x: e.clientX, y: e.clientY };
+      const isTouch = e.type.startsWith('touch');
+      const clientX = isTouch ? e.touches[0].clientX : e.clientX;
+      const clientY = isTouch ? e.touches[0].clientY : e.clientY;
+      treeLogDragStart.current = { x: clientX, y: clientY };
       treeLogPanelStart.current = { x: treeLogPosition.x, y: treeLogPosition.y };
-      e.preventDefault();
+      if (e.cancelable) e.preventDefault();
     }
   };
 
   const handleTreeLogResizeMouseDown = (e) => {
-    e.preventDefault();
+    if (e.cancelable) e.preventDefault();
     e.stopPropagation();
-    const startX = e.clientX;
-    const startY = e.clientY;
+    const isTouch = e.type.startsWith('touch');
+    const startX = isTouch ? e.touches[0].clientX : e.clientX;
+    const startY = isTouch ? e.touches[0].clientY : e.clientY;
     const startWidth = treeLogSize.width;
     const startHeight = treeLogSize.height;
 
     const handleMouseMove = (moveEvent) => {
-      const newWidth = Math.max(340, startWidth + (moveEvent.clientX - startX));
-      const newHeight = Math.max(180, startHeight + (moveEvent.clientY - startY));
+      const currentX = moveEvent.type.startsWith('touch') ? moveEvent.touches[0].clientX : moveEvent.clientX;
+      const currentY = moveEvent.type.startsWith('touch') ? moveEvent.touches[0].clientY : moveEvent.clientY;
+      const newWidth = Math.max(340, startWidth + (currentX - startX));
+      const newHeight = Math.max(180, startHeight + (currentY - startY));
       setTreeLogSize({ width: newWidth, height: newHeight });
     };
 
     const handleMouseUp = () => {
       document.removeEventListener('mousemove', handleMouseMove);
       document.removeEventListener('mouseup', handleMouseUp);
+      document.removeEventListener('touchmove', handleMouseMove);
+      document.removeEventListener('touchend', handleMouseUp);
     };
 
     document.addEventListener('mousemove', handleMouseMove);
     document.addEventListener('mouseup', handleMouseUp);
+    document.addEventListener('touchmove', handleMouseMove, { passive: false });
+    document.addEventListener('touchend', handleMouseUp);
   };
 
   useEffect(() => {
     if (!isDraggingTreeLog) return;
     const handleMouseMove = (e) => {
-      const dx = e.clientX - treeLogDragStart.current.x;
-      const dy = e.clientY - treeLogDragStart.current.y;
+      const isTouch = e.type.startsWith('touch');
+      const clientX = isTouch ? e.touches[0].clientX : e.clientX;
+      const clientY = isTouch ? e.touches[0].clientY : e.clientY;
+      const dx = clientX - treeLogDragStart.current.x;
+      const dy = clientY - treeLogDragStart.current.y;
       setTreeLogPosition({
         x: Math.max(0, Math.min(window.innerWidth - treeLogSize.width, treeLogPanelStart.current.x + dx)),
         y: Math.max(0, Math.min(window.innerHeight - treeLogSize.height, treeLogPanelStart.current.y + dy))
@@ -1655,11 +1706,15 @@ function App() {
     };
     window.addEventListener('mousemove', handleMouseMove);
     window.addEventListener('mouseup', handleMouseUp);
+    window.addEventListener('touchmove', handleMouseMove, { passive: false });
+    window.addEventListener('touchend', handleMouseUp);
     return () => {
       window.removeEventListener('mousemove', handleMouseMove);
       window.removeEventListener('mouseup', handleMouseUp);
+      window.removeEventListener('touchmove', handleMouseMove);
+      window.removeEventListener('touchend', handleMouseUp);
     };
-  }, [isDraggingTreeLog]);
+  }, [isDraggingTreeLog, treeLogSize]);
 
   // Auto-detect language
   useEffect(() => {
@@ -2886,6 +2941,31 @@ function App() {
           )}
 
           <div style={{ textAlign: 'center' }}>
+            <div className="upcoming-features-banner" style={{
+              background: 'linear-gradient(135deg, rgba(239, 68, 68, 0.08) 0%, rgba(59, 130, 246, 0.08) 100%)',
+              border: '1.5px solid rgba(139, 92, 246, 0.25)',
+              borderRadius: '16px',
+              padding: '1.2rem 1.6rem',
+              marginBottom: '2.5rem',
+              textAlign: 'left',
+              backdropFilter: 'blur(12px)',
+              boxShadow: '0 8px 32px 0 rgba(0, 0, 0, 0.2), inset 0 1px 1px rgba(255,255,255,0.05)',
+              animation: 'fadeIn 0.6s ease',
+              display: 'flex',
+              alignItems: 'flex-start',
+              gap: '15px',
+              maxWidth: '800px',
+              margin: '0 auto 2.5rem auto'
+            }}>
+              <span style={{ fontSize: '1.6rem', filter: 'drop-shadow(0 0 8px rgba(139,92,246,0.6))', marginTop: '2px' }}>📢</span>
+              <div style={{ flex: 1 }}>
+                <h4 style={{ margin: '0 0 6px 0', color: 'var(--accent-primary)', fontSize: '0.9rem', fontWeight: 800, letterSpacing: '0.5px', textTransform: 'uppercase' }}>Notice</h4>
+                <p style={{ margin: 0, color: 'var(--text-primary)', fontSize: '0.92rem', lineHeight: '1.5', fontWeight: '500' }}>
+                  Upcoming features : Code validator and runner, ai bot, run code in every module and  i had tested in mobile also, im unable to move or resize the active state and execution log and showing code.
+                </p>
+              </div>
+            </div>
+
             <h1 className="title-gradient" style={{ fontSize: '3rem', marginBottom: '1.5rem' }}>AlgoFlow-Studio</h1>
             <div style={{ 
               maxWidth: '500px', 
@@ -3513,6 +3593,7 @@ function App() {
                     <div
                       className="log-drag-handle"
                       onMouseDown={handleTreeLogMouseDown}
+                      onTouchStart={handleTreeLogMouseDown}
                       style={{
                         padding: '8px 12px',
                         background: 'rgba(255, 255, 255, 0.04)',
@@ -3620,6 +3701,7 @@ function App() {
                       {/* Vertical Column split resize handle */}
                       <div 
                         onMouseDown={handleActiveStateColDragStart}
+                        onTouchStart={handleActiveStateColDragStart}
                         style={{
                           width: '6px',
                           cursor: 'col-resize',
@@ -3674,6 +3756,7 @@ function App() {
                         zIndex: 100
                       }}
                       onMouseDown={handleTreeLogResizeMouseDown}
+                      onTouchStart={handleTreeLogResizeMouseDown}
                       title="Drag to resize panel"
                     />
                   </div>
@@ -3683,7 +3766,7 @@ function App() {
               {showCode && (
                 <>
                   {/* Vertical Drag Handle for column resizing */}
-                  <div onMouseDown={handleColDragStart} style={{ width: '8px', background: 'var(--glass-border)', borderRadius: '4px', cursor: 'col-resize', flexShrink: 0, transition: 'background 0.2s' }}
+                  <div onMouseDown={handleColDragStart} onTouchStart={handleColDragStart} style={{ width: '8px', background: 'var(--glass-border)', borderRadius: '4px', cursor: 'col-resize', flexShrink: 0, transition: 'background 0.2s' }}
                     onMouseOver={e => e.currentTarget.style.background = 'rgba(96,165,250,0.5)'}
                     onMouseOut={e => e.currentTarget.style.background = 'var(--glass-border)'}
                     title="Drag to resize columns" />
