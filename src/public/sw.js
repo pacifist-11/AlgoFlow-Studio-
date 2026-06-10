@@ -1,4 +1,4 @@
-const CACHE_NAME = 'algoflow-v1';
+const CACHE_NAME = 'algoflow-v2';
 const ASSETS = [
   '/',
   '/index.html',
