@@ -569,8 +569,12 @@ app.get('/*splat', (req, res) => {
   res.sendFile(path.join(__dirname, '../dist/index.html'));
 });
 
-// Start Express server
-app.listen(PORT, () => {
-  console.log(`\n🚀 Backend Server actively listening at http://localhost:${PORT}`);
-  console.log('💡 Press Ctrl+C to stop the server.\n');
-});
+// Start Express server only if not running inside a Vercel serverless environment
+if (process.env.NODE_ENV !== 'production' || !process.env.VERCEL) {
+  app.listen(PORT, () => {
+    console.log(`\n🚀 Backend Server actively listening at http://localhost:${PORT}`);
+    console.log('💡 Press Ctrl+C to stop the server.\n');
+  });
+}
+
+export default app;
