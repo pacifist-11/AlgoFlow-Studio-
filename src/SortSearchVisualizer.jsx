@@ -60,7 +60,7 @@ const SortSearchVisualizer = ({ onBack, openSettings, initialTab = 'Sort', initi
   const [selectedSearch, setSelectedSearch] = useState(initialSearch);
   const [activeTab, setActiveTab] = useState(initialTab); // 'Sort' or 'Search'
   const [codeLang, setCodeLang] = useState('C++');
-  const [showCode, setShowCode] = useState(true);
+  const [showCode, setShowCode] = useState(false);
   const [isRunnerOpen, setIsRunnerOpen] = useState(false);
 
   // Draggable execution log states

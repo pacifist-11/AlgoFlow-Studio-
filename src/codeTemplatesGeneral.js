@@ -17,6 +17,9 @@ export const getGeneralCodeTemplate = (lang, type, variety, operations) => {
     let ops = [];
     operations.forEach(o => {
       let opName = o.op;
+      if (lang === 'C++' && opName === 'delete') {
+        opName = 'remove';
+      }
       if (o.val !== undefined) {
         ops.push(`${opName}(${o.val})`);
       } else {
@@ -26,7 +29,20 @@ export const getGeneralCodeTemplate = (lang, type, variety, operations) => {
 
     if (lang === 'C++') {
       if (type === 'STACK') {
-        execBlock = `    Stack s(100);\n` + ops.map(op => `    s.${op};`).join('\n') + `\n    s.display();`;
+        if (variety === 'STACK_EXPRESSION') {
+          execBlock = `    ExpressionEvaluator ev;\n` + ops.map(op => `    cout << "Result: " << ev.${op} << endl;`).join('\n');
+        } else if (variety === 'STACK_BRACKETS') {
+          execBlock = `    BracketEvaluator ev;\n` + ops.map(op => `    cout << (ev.${op} ? "Balanced" : "Unbalanced") << endl;`).join('\n');
+        } else if (variety === 'STACK_CONVERSION') {
+          execBlock = `    EquationAnalyzer ev;\n` + ops.map(op => {
+            let methodName = op.split('(')[0];
+            if (op.includes("isBalanced")) return `    cout << "${methodName}: " << (ev.${op} ? "Balanced" : "Unbalanced") << endl;`;
+            return `    cout << "${methodName}: " << ev.${op} << endl;`;
+          }).join('\n');
+        } else {
+          let constructorArg = variety === 'STACK_LL' ? '' : '(100)';
+          execBlock = `    Stack s${constructorArg};\n` + ops.map(op => `    s.${op};`).join('\n') + `\n    s.display();`;
+        }
       } else if (type === 'QUEUE') {
         execBlock = `    Queue q(100);\n` + ops.map(op => `    q.${op};`).join('\n') + `\n    q.display();`;
       } else if (type === 'LINKED_LIST') {
@@ -36,7 +52,20 @@ export const getGeneralCodeTemplate = (lang, type, variety, operations) => {
       }
     } else if (lang === 'Java') {
       if (type === 'STACK') {
-        execBlock = `        Stack s = new Stack(100);\n` + ops.map(op => `        s.${op};`).join('\n') + `\n        s.display();`;
+        if (variety === 'STACK_EXPRESSION') {
+          execBlock = `        ExpressionEvaluator ev = new ExpressionEvaluator();\n` + ops.map(op => `        System.out.println("Result: " + ev.${op});`).join('\n');
+        } else if (variety === 'STACK_BRACKETS') {
+          execBlock = `        BracketEvaluator ev = new BracketEvaluator();\n` + ops.map(op => `        System.out.println(ev.${op} ? "Balanced" : "Unbalanced");`).join('\n');
+        } else if (variety === 'STACK_CONVERSION') {
+          execBlock = `        EquationAnalyzer ev = new EquationAnalyzer();\n` + ops.map(op => {
+            let methodName = op.split('(')[0];
+            if (op.includes("isBalanced")) return `        System.out.println("${methodName}: " + (ev.${op} ? "Balanced" : "Unbalanced"));`;
+            return `        System.out.println("${methodName}: " + ev.${op});`;
+          }).join('\n');
+        } else {
+          let constructorArg = variety === 'STACK_LL' ? '' : '100';
+          execBlock = `        Stack s = new Stack(${constructorArg});\n` + ops.map(op => `        s.${op};`).join('\n') + `\n        s.display();`;
+        }
       } else if (type === 'QUEUE') {
         execBlock = `        Queue q = new Queue(100);\n` + ops.map(op => `        q.${op};`).join('\n') + `\n        q.display();`;
       } else if (type === 'LINKED_LIST') {
@@ -46,7 +75,19 @@ export const getGeneralCodeTemplate = (lang, type, variety, operations) => {
       }
     } else if (lang === 'Python') {
       if (type === 'STACK') {
-        execBlock = `    s = Stack()\n` + ops.map(op => `    s.${op}`).join('\n') + `\n    s.display()`;
+        if (variety === 'STACK_EXPRESSION') {
+          execBlock = `    ev = ExpressionEvaluator()\n` + ops.map(op => `    print("Result:", ev.${op})`).join('\n');
+        } else if (variety === 'STACK_BRACKETS') {
+          execBlock = `    ev = BracketEvaluator()\n` + ops.map(op => `    print("Balanced" if ev.${op} else "Unbalanced")`).join('\n');
+        } else if (variety === 'STACK_CONVERSION') {
+          execBlock = `    ev = EquationAnalyzer()\n` + ops.map(op => {
+            let methodName = op.split('(')[0];
+            if (op.includes("isBalanced")) return `    print("${methodName}:", "Balanced" if ev.${op} else "Unbalanced")`;
+            return `    print("${methodName}:", ev.${op})`;
+          }).join('\n');
+        } else {
+          execBlock = `    s = Stack()\n` + ops.map(op => `    s.${op}`).join('\n') + `\n    s.display()`;
+        }
       } else if (type === 'QUEUE') {
         execBlock = `    q = Queue()\n` + ops.map(op => `    q.${op}`).join('\n') + `\n    q.display()`;
       } else if (type === 'LINKED_LIST') {
@@ -56,7 +97,20 @@ export const getGeneralCodeTemplate = (lang, type, variety, operations) => {
       }
     } else { // JS
       if (type === 'STACK') {
-        execBlock = `  const s = new Stack(100);\n` + ops.map(op => `  s.${op};`).join('\n') + `\n  s.display();`;
+        if (variety === 'STACK_EXPRESSION') {
+          execBlock = `  const ev = new ExpressionEvaluator();\n` + ops.map(op => `  console.log("Result:", ev.${op});`).join('\n');
+        } else if (variety === 'STACK_BRACKETS') {
+          execBlock = `  const ev = new BracketEvaluator();\n` + ops.map(op => `  console.log(ev.${op} ? "Balanced" : "Unbalanced");`).join('\n');
+        } else if (variety === 'STACK_CONVERSION') {
+          execBlock = `  const ev = new EquationAnalyzer();\n` + ops.map(op => {
+            let methodName = op.split('(')[0];
+            if (op.includes("isBalanced")) return `  console.log("${methodName}:", ev.${op} ? "Balanced" : "Unbalanced");`;
+            return `  console.log("${methodName}:", ev.${op});`;
+          }).join('\n');
+        } else {
+          let constructorArg = variety === 'STACK_LL' ? '' : '100';
+          execBlock = `  const s = new Stack(${constructorArg});\n` + ops.map(op => `  s.${op};`).join('\n') + `\n  s.display();`;
+        }
       } else if (type === 'QUEUE') {
         execBlock = `  const q = new Queue(100);\n` + ops.map(op => `  q.${op};`).join('\n') + `\n  q.display();`;
       } else if (type === 'LINKED_LIST') {
@@ -76,12 +130,31 @@ export const getGeneralCodeTemplate = (lang, type, variety, operations) => {
 }
 class LinkedList {
     Node head;
+    void insertHead(int data) {
+        Node n = new Node(data);
+        n.next = head; head = n;
+    }
     void insertTail(int data) {
         Node n = new Node(data);
         if(head == null) { head = n; return; }
         Node t = head;
         while(t.next != null) t = t.next;
         t.next = n;
+    }
+    void deleteValue(int data) {
+        if(head == null) return;
+        if(head.data == data) { head = head.next; return; }
+        Node t = head;
+        while(t.next != null && t.next.data != data) t = t.next;
+        if(t.next != null) t.next = t.next.next;
+    }
+    boolean search(int data) {
+        Node t = head;
+        while (t != null) {
+            if (t.data == data) return true;
+            t = t.next;
+        }
+        return false;
     }
     void printList() {
         Node t = head;
@@ -103,12 +176,31 @@ struct Node {
 class LinkedList {
     Node* head = nullptr;
 public:
+    void insertHead(int data) {
+        Node* n = new Node(data);
+        n->next = head; head = n;
+    }
     void insertTail(int data) {
         Node* n = new Node(data);
         if(!head) { head = n; return; }
         Node* t = head;
         while(t->next) t = t->next;
         t->next = n;
+    }
+    void deleteValue(int data) {
+        if(!head) return;
+        if(head->data == data) { Node* temp = head; head = head->next; delete temp; return; }
+        Node* t = head;
+        while(t->next && t->next->data != data) t = t->next;
+        if(t->next) { Node* temp = t->next; t->next = t->next->next; delete temp; }
+    }
+    bool search(int data) {
+        Node* t = head;
+        while (t) {
+            if (t->data == data) return true;
+            t = t->next;
+        }
+        return false;
     }
     void printList() {
         Node* t = head;
@@ -126,6 +218,10 @@ ${execBlock}
         self.next = None
 class LinkedList:
     def __init__(self): self.head = None
+    def insertHead(self, d):
+        n = Node(d)
+        n.next = self.head
+        self.head = n
     def insertTail(self, d):
         n = Node(d)
         if not self.head:
@@ -134,6 +230,20 @@ class LinkedList:
         t = self.head
         while t.next: t = t.next
         t.next = n
+    def deleteValue(self, d):
+        if not self.head: return
+        if self.head.data == d:
+            self.head = self.head.next
+            return
+        t = self.head
+        while t.next and t.next.data != d: t = t.next
+        if t.next: t.next = t.next.next
+    def search(self, d):
+        t = self.head
+        while t:
+            if t.data == d: return True
+            t = t.next
+        return False
     def print_list(self):
         t = self.head
         while t:
@@ -147,12 +257,32 @@ ${execBlock}`;
 }
 class LinkedList {
     constructor() { this.head = null; }
+    insertHead(d) {
+        let n = new Node(d);
+        n.next = this.head;
+        this.head = n;
+    }
     insertTail(d) {
         let n = new Node(d);
         if(!this.head) { this.head = n; return; }
         let t = this.head;
         while(t.next) t = t.next;
         t.next = n;
+    }
+    deleteValue(d) {
+        if(!this.head) return;
+        if(this.head.data === d) { this.head = this.head.next; return; }
+        let t = this.head;
+        while(t.next && t.next.data !== d) t = t.next;
+        if(t.next) t.next = t.next.next;
+    }
+    search(d) {
+        let t = this.head;
+        while (t) {
+            if (t.data === d) return true;
+            t = t.next;
+        }
+        return false;
     }
     printList() {
         let t = this.head, out = [];
@@ -169,10 +299,41 @@ ${execBlock}`;
 }
 class LinkedList {
     Node head, tail;
+    void insertHead(int data) {
+        Node n = new Node(data);
+        if(head == null) { head = tail = n; return; }
+        n.next = head; head.prev = n; head = n;
+    }
     void insertTail(int data) {
         Node n = new Node(data);
         if(head == null) { head = tail = n; return; }
         tail.next = n; n.prev = tail; tail = n;
+    }
+    void deleteValue(int data) {
+        if(head == null) return;
+        Node t = head;
+        while(t != null && t.data != data) t = t.next;
+        if(t == null) return;
+        if(t == head) {
+            head = head.next;
+            if(head != null) head.prev = null;
+            else tail = null;
+        } else if(t == tail) {
+            tail = tail.prev;
+            if(tail != null) tail.next = null;
+            else head = null;
+        } else {
+            t.prev.next = t.next;
+            t.next.prev = t.prev;
+        }
+    }
+    boolean search(int data) {
+        Node t = head;
+        while (t != null) {
+            if (t.data == data) return true;
+            t = t.next;
+        }
+        return false;
     }
     void printList() {
         Node t = head;
@@ -194,10 +355,42 @@ struct Node {
 class LinkedList {
     Node *head = nullptr, *tail = nullptr;
 public:
+    void insertHead(int data) {
+        Node* n = new Node(data);
+        if(!head) { head = tail = n; return; }
+        n->next = head; head->prev = n; head = n;
+    }
     void insertTail(int data) {
         Node* n = new Node(data);
         if(!head) { head = tail = n; return; }
         tail->next = n; n->prev = tail; tail = n;
+    }
+    void deleteValue(int data) {
+        if(!head) return;
+        Node* t = head;
+        while(t && t->data != data) t = t->next;
+        if(!t) return;
+        if(t == head) {
+            head = head->next;
+            if(head) head->prev = nullptr;
+            else tail = nullptr;
+        } else if(t == tail) {
+            tail = tail->prev;
+            if(tail) tail->next = nullptr;
+            else head = nullptr;
+        } else {
+            t->prev->next = t->next;
+            t->next->prev = t->prev;
+        }
+        delete t;
+    }
+    bool search(int data) {
+        Node* t = head;
+        while (t) {
+            if (t->data == data) return true;
+            t = t->next;
+        }
+        return false;
     }
     void printList() {
         Node* t = head;
@@ -215,6 +408,14 @@ ${execBlock}
         self.prev = self.next = None
 class LinkedList:
     def __init__(self): self.head = self.tail = None
+    def insertHead(self, d):
+        n = Node(d)
+        if not self.head:
+            self.head = self.tail = n
+            return
+        n.next = self.head
+        self.head.prev = n
+        self.head = n
     def insertTail(self, d):
         n = Node(d)
         if not self.head:
@@ -223,6 +424,28 @@ class LinkedList:
         self.tail.next = n
         n.prev = self.tail
         self.tail = n
+    def deleteValue(self, d):
+        if not self.head: return
+        t = self.head
+        while t and t.data != d: t = t.next
+        if not t: return
+        if t == self.head:
+            self.head = self.head.next
+            if self.head: self.head.prev = None
+            else: self.tail = None
+        elif t == self.tail:
+            self.tail = self.tail.prev
+            if self.tail: self.tail.next = None
+            else: self.head = None
+        else:
+            t.prev.next = t.next
+            t.next.prev = t.prev
+    def search(self, d):
+        t = self.head
+        while t:
+            if t.data == d: return True
+            t = t.next
+        return False
     def print_list(self):
         t = self.head
         while t:
@@ -236,10 +459,43 @@ ${execBlock}`;
 }
 class LinkedList {
     constructor() { this.head = this.tail = null; }
+    insertHead(d) {
+        let n = new Node(d);
+        if(!this.head) { this.head = this.tail = n; return; }
+        n.next = this.head;
+        this.head.prev = n;
+        this.head = n;
+    }
     insertTail(d) {
         let n = new Node(d);
         if(!this.head) { this.head = this.tail = n; return; }
         this.tail.next = n; n.prev = this.tail; this.tail = n;
+    }
+    deleteValue(d) {
+        if(!this.head) return;
+        let t = this.head;
+        while(t && t.data !== d) t = t.next;
+        if(!t) return;
+        if(t === this.head) {
+            this.head = this.head.next;
+            if(this.head) this.head.prev = null;
+            else this.tail = null;
+        } else if(t === this.tail) {
+            this.tail = this.tail.prev;
+            if(this.tail) this.tail.next = null;
+            else this.head = null;
+        } else {
+            t.prev.next = t.next;
+            t.next.prev = t.prev;
+        }
+    }
+    search(d) {
+        let t = this.head;
+        while (t) {
+            if (t.data === d) return true;
+            t = t.next;
+        }
+        return false;
     }
     printList() {
         let t = this.head, out = [];
@@ -256,10 +512,41 @@ ${execBlock}`;
 }
 class LinkedList {
     Node head, tail;
+    void insertHead(int data) {
+        Node n = new Node(data);
+        if(head == null) { head = tail = n; n.next = head; return; }
+        n.next = head; head = n; tail.next = head;
+    }
     void insertTail(int data) {
         Node n = new Node(data);
         if(head == null) { head = tail = n; n.next = head; return; }
         tail.next = n; tail = n; tail.next = head;
+    }
+    void deleteValue(int data) {
+        if(head == null) return;
+        if(head.data == data) {
+            if(head == tail) head = tail = null;
+            else { head = head.next; tail.next = head; }
+            return;
+        }
+        Node t = head;
+        do {
+            if(t.next.data == data) {
+                if(t.next == tail) tail = t;
+                t.next = t.next.next;
+                return;
+            }
+            t = t.next;
+        } while(t != head);
+    }
+    boolean search(int data) {
+        if (head == null) return false;
+        Node t = head;
+        do {
+            if (t.data == data) return true;
+            t = t.next;
+        } while (t != head);
+        return false;
     }
     void printList() {
         if(head == null) return;
@@ -282,10 +569,45 @@ struct Node {
 class LinkedList {
     Node *head = nullptr, *tail = nullptr;
 public:
+    void insertHead(int data) {
+        Node* n = new Node(data);
+        if(!head) { head = tail = n; n->next = head; return; }
+        n->next = head; head = n; tail->next = head;
+    }
     void insertTail(int data) {
         Node* n = new Node(data);
         if(!head) { head = tail = n; n->next = head; return; }
         tail->next = n; tail = n; tail->next = head;
+    }
+    void deleteValue(int data) {
+        if(!head) return;
+        if(head->data == data) {
+            Node* temp = head;
+            if(head == tail) head = tail = nullptr;
+            else { head = head->next; tail->next = head; }
+            delete temp;
+            return;
+        }
+        Node* t = head;
+        do {
+            if(t->next->data == data) {
+                Node* temp = t->next;
+                if(temp == tail) tail = t;
+                t->next = temp->next;
+                delete temp;
+                return;
+            }
+            t = t->next;
+        } while(t != head);
+    }
+    bool search(int data) {
+        if (!head) return false;
+        Node* t = head;
+        do {
+            if (t->data == data) return true;
+            t = t->next;
+        } while (t != head);
+        return false;
     }
     void printList() {
         if(!head) return;
@@ -304,6 +626,15 @@ ${execBlock}
         self.next = None
 class LinkedList:
     def __init__(self): self.head = self.tail = None
+    def insertHead(self, d):
+        n = Node(d)
+        if not self.head:
+            self.head = self.tail = n
+            n.next = self.head
+            return
+        n.next = self.head
+        self.head = n
+        self.tail.next = self.head
     def insertTail(self, d):
         n = Node(d)
         if not self.head:
@@ -313,6 +644,30 @@ class LinkedList:
         self.tail.next = n
         self.tail = n
         self.tail.next = self.head
+    def deleteValue(self, d):
+        if not self.head: return
+        if self.head.data == d:
+            if self.head == self.tail: self.head = self.tail = None
+            else:
+                self.head = self.head.next
+                self.tail.next = self.head
+            return
+        t = self.head
+        while True:
+            if t.next.data == d:
+                if t.next == self.tail: self.tail = t
+                t.next = t.next.next
+                return
+            t = t.next
+            if t == self.head: break
+    def search(self, d):
+        if not self.head: return False
+        t = self.head
+        while True:
+            if t.data == d: return True
+            t = t.next
+            if t == self.head: break
+        return False
     def print_list(self):
         if not self.head: return
         t = self.head
@@ -328,10 +683,41 @@ ${execBlock}`;
 }
 class LinkedList {
     constructor() { this.head = this.tail = null; }
+    insertHead(d) {
+        let n = new Node(d);
+        if(!this.head) { this.head = this.tail = n; n.next = this.head; return; }
+        n.next = this.head; this.head = n; this.tail.next = this.head;
+    }
     insertTail(d) {
         let n = new Node(d);
         if(!this.head) { this.head = this.tail = n; n.next = this.head; return; }
         this.tail.next = n; this.tail = n; this.tail.next = this.head;
+    }
+    deleteValue(d) {
+        if(!this.head) return;
+        if(this.head.data === d) {
+            if(this.head === this.tail) this.head = this.tail = null;
+            else { this.head = this.head.next; this.tail.next = this.head; }
+            return;
+        }
+        let t = this.head;
+        do {
+            if(t.next.data === d) {
+                if(t.next === this.tail) this.tail = t;
+                t.next = t.next.next;
+                return;
+            }
+            t = t.next;
+        } while(t !== this.head);
+    }
+    search(d) {
+        if (!this.head) return false;
+        let t = this.head;
+        do {
+            if (t.data === d) return true;
+            t = t.next;
+        } while (t !== this.head);
+        return false;
     }
     printList() {
         if(!this.head) return;
@@ -375,17 +761,46 @@ ${execBlock}
     return 0;
 }`;
       if (lang === 'Python') return `class Stack:
-    def __init__(self): self.arr = []
-    def push(self, val): self.arr.append(val)
-    def pop(self): return self.arr.pop() if self.arr else None
-    def display(self): print(self.arr)
+    def __init__(self, cap=100):
+        self.arr = [None] * cap
+        self.cap = cap
+        self.top = -1
+    def push(self, val):
+        if self.top == self.cap - 1: return
+        self.top += 1
+        self.arr[self.top] = val
+    def pop(self):
+        if self.top == -1: return None
+        val = self.arr[self.top]
+        self.top -= 1
+        return val
+    def display(self):
+        if self.top == -1:
+            print("[]")
+            return
+        print(" ".join(str(self.arr[i]) for i in range(self.top + 1)))
 if __name__ == "__main__":
 ${execBlock}`;
       if (lang === 'JS') return `class Stack {
-    constructor() { this.arr = []; }
-    push(val) { this.arr.push(val); }
-    pop() { return this.arr.pop(); }
-    display() { console.log(this.arr); }
+    constructor(cap = 100) {
+        this.arr = new Array(cap);
+        this.cap = cap;
+        this.top = -1;
+    }
+    push(val) {
+        if (this.top === this.cap - 1) return;
+        this.arr[++this.top] = val;
+    }
+    pop() {
+        if (this.top === -1) return null;
+        return this.arr[this.top--];
+    }
+    display() {
+        if (this.top === -1) { console.log("[]"); return; }
+        let out = [];
+        for (let i = 0; i <= this.top; i++) out.push(this.arr[i]);
+        console.log(out.join(" "));
+    }
 }
 // Execution
 ${execBlock}`;
@@ -450,31 +865,865 @@ class Stack {
 // Execution
 ${execBlock}`;
     } else if (variety === 'STACK_EXPRESSION') {
-        let expFallback = `// Evaluate Postfix / Prefix Expression Logic here...`;
-        if(lang === 'Java') return `import java.util.Stack;
+        if (lang === 'Java') return `import java.util.Stack;
+class ExpressionEvaluator {
+    private int precedence(char op) {
+        if (op == '+' || op == '-') return 1;
+        if (op == '*' || op == '/') return 2;
+        return -1;
+    }
+    private int applyOp(int a, int b, char op) {
+        switch (op) {
+            case '+': return a + b;
+            case '-': return a - b;
+            case '*': return a * b;
+            case '/': return b == 0 ? 0 : a / b;
+        }
+        return 0;
+    }
+    public int evaluateExpression(String exp) {
+        String[] tokens = exp.trim().split("\\\\s+");
+        if (tokens.length == 0 || tokens[0].isEmpty()) return 0;
+        boolean isPrefix = false;
+        boolean isPostfix = false;
+        String first = tokens[0];
+        String last = tokens[tokens.length - 1];
+        if (first.equals("+") || first.equals("-") || first.equals("*") || first.equals("/")) {
+            isPrefix = true;
+        } else if (last.equals("+") || last.equals("-") || last.equals("*") || last.equals("/")) {
+            isPostfix = true;
+        }
+        if (isPrefix) {
+            Stack<Integer> s = new Stack<>();
+            for (int i = tokens.length - 1; i >= 0; i--) {
+                String t = tokens[i];
+                if (t.equals("+") || t.equals("-") || t.equals("*") || t.equals("/")) {
+                    if (s.size() < 2) return 0;
+                    s.push(applyOp(s.pop(), s.pop(), t.charAt(0)));
+                } else {
+                    s.push(Integer.parseInt(t));
+                }
+            }
+            return s.isEmpty() ? 0 : s.pop();
+        } else if (isPostfix) {
+            Stack<Integer> s = new Stack<>();
+            for (String t : tokens) {
+                if (t.equals("+") || t.equals("-") || t.equals("*") || t.equals("/")) {
+                    if (s.size() < 2) return 0;
+                    int val2 = s.pop();
+                    int val1 = s.pop();
+                    s.push(applyOp(val1, val2, t.charAt(0)));
+                } else {
+                    s.push(Integer.parseInt(t));
+                }
+            }
+            return s.isEmpty() ? 0 : s.pop();
+        } else {
+            Stack<Integer> values = new Stack<>();
+            Stack<Character> ops = new Stack<>();
+            for (String t : tokens) {
+                if (t.equals("(")) {
+                    ops.push('(');
+                } else if (t.equals(")")) {
+                    while (!ops.isEmpty() && ops.peek() != '(') {
+                        if (values.size() < 2) return 0;
+                        int val2 = values.pop();
+                        int val1 = values.pop();
+                        values.push(applyOp(val1, val2, ops.pop()));
+                    }
+                    if (!ops.isEmpty()) ops.pop();
+                } else if (t.equals("+") || t.equals("-") || t.equals("*") || t.equals("/")) {
+                    while (!ops.isEmpty() && precedence(ops.peek()) >= precedence(t.charAt(0))) {
+                        if (values.size() < 2) return 0;
+                        int val2 = values.pop();
+                        int val1 = values.pop();
+                        values.push(applyOp(val1, val2, ops.pop()));
+                    }
+                    ops.push(t.charAt(0));
+                } else {
+                    values.push(Integer.parseInt(t));
+                }
+            }
+            while (!ops.isEmpty()) {
+                if (values.size() < 2) return 0;
+                int val2 = values.pop();
+                int val1 = values.pop();
+                values.push(applyOp(val1, val2, ops.pop()));
+            }
+            return values.isEmpty() ? 0 : values.pop();
+        }
+    }
+}
 public class Main {
     public static void main(String[] args) {
-        Stack<Integer> s = new Stack<>();
-        // ${execBlock}
-        System.out.println("Result: " + (s.isEmpty() ? 0 : s.pop()));
+${execBlock}
     }
 }`;
-        if(lang === 'C++') return `#include <iostream>
+        if (lang === 'C++') return `#include <iostream>
 #include <stack>
+#include <sstream>
+#include <vector>
+#include <algorithm>
 using namespace std;
+class ExpressionEvaluator {
+    int precedence(char op) {
+        if (op == '+' || op == '-') return 1;
+        if (op == '*' || op == '/') return 2;
+        return -1;
+    }
+    int applyOp(int a, int b, char op) {
+        switch (op) {
+            case '+': return a + b;
+            case '-': return a - b;
+            case '*': return a * b;
+            case '/': return b == 0 ? 0 : a / b;
+        }
+        return 0;
+    }
+public:
+    int evaluateExpression(string exp) {
+        stringstream ss(exp);
+        string token;
+        vector<string> tokens;
+        while (ss >> token) tokens.push_back(token);
+        if (tokens.empty()) return 0;
+        bool isPrefix = false;
+        bool isPostfix = false;
+        string first = tokens[0];
+        string last = tokens[tokens.size() - 1];
+        if (first == "+" || first == "-" || first == "*" || first == "/") {
+            isPrefix = true;
+        } else if (last == "+" || last == "-" || last == "*" || last == "/") {
+            isPostfix = true;
+        }
+        if (isPrefix) {
+            stack<int> s;
+            for (int i = tokens.size() - 1; i >= 0; i--) {
+                string t = tokens[i];
+                if (t == "+" || t == "-" || t == "*" || t == "/") {
+                    if (s.size() < 2) return 0;
+                    int val1 = s.top(); s.pop();
+                    int val2 = s.top(); s.pop();
+                    s.push(applyOp(val1, val2, t[0]));
+                } else {
+                    s.push(stoi(t));
+                }
+            }
+            return s.empty() ? 0 : s.top();
+        } else if (isPostfix) {
+            stack<int> s;
+            for (string t : tokens) {
+                if (t == "+" || t == "-" || t == "*" || t == "/") {
+                    if (s.size() < 2) return 0;
+                    int val2 = s.top(); s.pop();
+                    int val1 = s.top(); s.pop();
+                    s.push(applyOp(val1, val2, t[0]));
+                } else {
+                    s.push(stoi(t));
+                }
+            }
+            return s.empty() ? 0 : s.top();
+        } else {
+            stack<int> values;
+            stack<char> ops;
+            for (string t : tokens) {
+                if (t == "(") {
+                    ops.push('(');
+                } else if (t == ")") {
+                    while (!ops.empty() && ops.top() != '(') {
+                        if (values.size() < 2) return 0;
+                        int val2 = values.top(); values.pop();
+                        int val1 = values.top(); values.pop();
+                        values.push(applyOp(val1, val2, ops.top()));
+                        ops.pop();
+                    }
+                    if (!ops.empty()) ops.pop();
+                } else if (t == "+" || t == "-" || t == "*" || t == "/") {
+                    while (!ops.empty() && precedence(ops.top()) >= precedence(t[0])) {
+                        if (values.size() < 2) return 0;
+                        int val2 = values.top(); values.pop();
+                        int val1 = values.top(); values.pop();
+                        values.push(applyOp(val1, val2, ops.top()));
+                        ops.pop();
+                    }
+                    ops.push(t[0]);
+                } else {
+                    values.push(stoi(t));
+                }
+            }
+            while (!ops.empty()) {
+                if (values.size() < 2) return 0;
+                int val2 = values.top(); values.pop();
+                int val1 = values.top(); values.pop();
+                values.push(applyOp(val1, val2, ops.top()));
+                ops.pop();
+            }
+            return values.empty() ? 0 : values.top();
+        }
+    }
+};
 int main() {
-    stack<int> s;
-    // ${execBlock}
-    cout << "Result: " << (s.empty() ? 0 : s.top()) << endl;
+${execBlock}
     return 0;
 }`;
-        if(lang === 'Python') return `if __name__ == "__main__":
-    s = []
-    # ${execBlock}
-    print("Result:", s.pop() if s else 0)`;
-        if(lang === 'JS') return `const s = [];
-// ${execBlock}
-console.log("Result:", s.length ? s.pop() : 0);`;
+        if (lang === 'Python') return `class ExpressionEvaluator:
+    def precedence(self, op):
+        if op in ['+', '-']: return 1
+        if op in ['*', '/']: return 2
+        return -1
+    def applyOp(self, a, b, op):
+        if op == '+': return a + b
+        if op == '-': return a - b
+        if op == '*': return a * b
+        if op == '/': return 0 if b == 0 else int(a / b)
+        return 0
+    def evaluateExpression(self, exp):
+        tokens = exp.strip().split()
+        if not tokens: return 0
+        is_prefix = tokens[0] in ['+', '-', '*', '/']
+        is_postfix = tokens[-1] in ['+', '-', '*', '/']
+        if is_prefix:
+            s = []
+            for t in reversed(tokens):
+                if t in ['+', '-', '*', '/']:
+                    if len(s) < 2: return 0
+                    s.append(self.applyOp(s.pop(), s.pop(), t))
+                else:
+                    s.append(int(t))
+            return s[-1] if s else 0
+        elif is_postfix:
+            s = []
+            for t in tokens:
+                if t in ['+', '-', '*', '/']:
+                    if len(s) < 2: return 0
+                    val2 = s.pop()
+                    val1 = s.pop()
+                    s.append(self.applyOp(val1, val2, t))
+                else:
+                    s.append(int(t))
+            return s[-1] if s else 0
+        else:
+            values = []
+            ops = []
+            for t in tokens:
+                if t == '(':
+                    ops.append('(')
+                elif t == ')':
+                    while ops and ops[-1] != '(':
+                        if len(values) < 2: return 0
+                        val2 = values.pop()
+                        val1 = values.pop()
+                        values.append(self.applyOp(val1, val2, ops.pop()))
+                    if ops: ops.pop()
+                elif t in ['+', '-', '*', '/']:
+                    while ops and self.precedence(ops[-1]) >= self.precedence(t):
+                        if len(values) < 2: return 0
+                        val2 = values.pop()
+                        val1 = values.pop()
+                        values.append(self.applyOp(val1, val2, ops.pop()))
+                    ops.append(t)
+                else:
+                    values.append(int(t))
+            while ops:
+                if len(values) < 2: return 0
+                val2 = values.pop()
+                val1 = values.pop()
+                values.append(self.applyOp(val1, val2, ops.pop()))
+            return values[-1] if values else 0
+if __name__ == "__main__":
+${execBlock}`;
+        if (lang === 'JS') return `class ExpressionEvaluator {
+    precedence(op) {
+        if (op === '+' || op === '-') return 1;
+        if (op === '*' || op === '/') return 2;
+        return -1;
+    }
+    applyOp(a, b, op) {
+        switch (op) {
+            case '+': return a + b;
+            case '-': return a - b;
+            case '*': return a * b;
+            case '/': return b === 0 ? 0 : Math.floor(a / b);
+        }
+        return 0;
+    }
+    evaluateExpression(exp) {
+        const tokens = exp.trim().split(/\\s+/);
+        if (tokens.length === 0 || tokens[0] === "") return 0;
+        const isPrefix = ['+', '-', '*', '/'].includes(tokens[0]);
+        const isPostfix = ['+', '-', '*', '/'].includes(tokens[tokens.length - 1]);
+        if (isPrefix) {
+            const s = [];
+            for (let i = tokens.length - 1; i >= 0; i--) {
+                let t = tokens[i];
+                if (['+', '-', '*', '/'].includes(t)) {
+                    if (s.length < 2) return 0;
+                    s.push(this.applyOp(s.pop(), s.pop(), t));
+                } else {
+                    s.push(parseInt(t));
+                }
+            }
+            return s.length ? s.pop() : 0;
+        } else if (isPostfix) {
+            const s = [];
+            for (let t of tokens) {
+                if (['+', '-', '*', '/'].includes(t)) {
+                    if (s.length < 2) return 0;
+                    let val2 = s.pop();
+                    let val1 = s.pop();
+                    s.push(this.applyOp(val1, val2, t));
+                } else {
+                    s.push(parseInt(t));
+                }
+            }
+            return s.length ? s.pop() : 0;
+        } else {
+            const values = [];
+            const ops = [];
+            for (let t of tokens) {
+                if (t === '(') {
+                    ops.push('(');
+                } else if (t === ')') {
+                    while (ops.length && ops[ops.length - 1] !== '(') {
+                        if (values.length < 2) return 0;
+                        let val2 = values.pop();
+                        let val1 = values.pop();
+                        values.push(this.applyOp(val1, val2, ops.pop()));
+                    }
+                    if (ops.length) ops.pop();
+                } else if (['+', '-', '*', '/'].includes(t)) {
+                    while (ops.length && this.precedence(ops[ops.length - 1]) >= this.precedence(t)) {
+                        if (values.length < 2) return 0;
+                        let val2 = values.pop();
+                        let val1 = values.pop();
+                        values.push(this.applyOp(val1, val2, ops.pop()));
+                    }
+                    ops.push(t);
+                } else {
+                    values.push(parseInt(t));
+                }
+            }
+            while (ops.length) {
+                if (values.length < 2) return 0;
+                let val2 = values.pop();
+                let val1 = values.pop();
+                values.push(this.applyOp(val1, val2, ops.pop()));
+            }
+            return values.length ? values.pop() : 0;
+        }
+    }
+}
+// Execution
+${execBlock}`;
+    } else if (variety === 'STACK_BRACKETS') {
+        if (lang === 'Java') return `import java.util.Stack;
+class BracketEvaluator {
+    public boolean isBalanced(String exp) {
+        Stack<Character> s = new Stack<>();
+        for (int i = 0; i < exp.length(); i++) {
+            char c = exp.charAt(i);
+            if (c == '(' || c == '{' || c == '[') {
+                s.push(c);
+            } else if (c == ')' || c == '}' || c == ']') {
+                if (s.isEmpty()) return false;
+                char top = s.pop();
+                if ((c == ')' && top != '(') ||
+                    (c == '}' && top != '{') ||
+                    (c == ']' && top != '[')) {
+                    return false;
+                }
+            }
+        }
+        return s.isEmpty();
+    }
+}
+public class Main {
+    public static void main(String[] args) {
+${execBlock}
+    }
+}`;
+        if (lang === 'C++') return `#include <iostream>
+#include <stack>
+#include <string>
+using namespace std;
+class BracketEvaluator {
+public:
+    bool isBalanced(string exp) {
+        stack<char> s;
+        for (char c : exp) {
+            if (c == '(' || c == '{' || c == '[') {
+                s.push(c);
+            } else if (c == ')' || c == '}' || c == ']') {
+                if (s.empty()) return false;
+                char top = s.top(); s.pop();
+                if ((c == ')' && top != '(') ||
+                    (c == '}' && top != '{') ||
+                    (c == ']' && top != '[')) {
+                    return false;
+                }
+            }
+        }
+        return s.empty();
+    }
+};
+int main() {
+${execBlock}
+    return 0;
+}`;
+        if (lang === 'Python') return `class BracketEvaluator:
+    def isBalanced(self, exp):
+        s = []
+        for c in exp:
+            if c in ['(', '{', '[']:
+                s.append(c)
+            elif c in [')', '}', ']']:
+                if not s: return False
+                top = s.pop()
+                if (c == ')' and top != '(') or \\
+                   (c == '}' and top != '{') or \\
+                   (c == ']' and top != '['):
+                    return False
+        return len(s) == 0
+if __name__ == "__main__":
+${execBlock}`;
+        if (lang === 'JS') return `class BracketEvaluator {
+    isBalanced(exp) {
+        const s = [];
+        for (let c of exp) {
+            if (c === '(' || c === '{' || c === '[') {
+                s.push(c);
+            } else if (c === ')' || c === '}' || c === ']') {
+                if (s.length === 0) return false;
+                let top = s.pop();
+                if ((c === ')' && top !== '(') ||
+                    (c === '}' && top !== '{') ||
+                    (c === ']' && top !== '[')) {
+                    return false;
+                }
+            }
+        }
+        return s.length === 0;
+    }
+}
+// Execution
+${execBlock}`;
+    } else if (variety === 'STACK_CONVERSION') {
+        if (lang === 'Java') return `import java.util.Stack;
+import java.util.ArrayList;
+class EquationAnalyzer {
+    private int precedence(char op) {
+        if (op == '+' || op == '-') return 1;
+        if (op == '*' || op == '/') return 2;
+        if (op == '^') return 3;
+        return -1;
+    }
+    public boolean isBalanced(String exp) {
+        Stack<Character> s = new Stack<>();
+        for (int i = 0; i < exp.length(); i++) {
+            char c = exp.charAt(i);
+            if (c == '(' || c == '{' || c == '[') {
+                s.push(c);
+            } else if (c == ')' || c == '}' || c == ']') {
+                if (s.isEmpty()) return false;
+                char top = s.pop();
+                if ((c == ')' && top != '(') ||
+                    (c == '}' && top != '{') ||
+                    (c == ']' && top != '[')) {
+                    return false;
+                }
+            }
+        }
+        return s.isEmpty();
+    }
+    public String infixToPostfix(String exp) {
+        StringBuilder result = new StringBuilder();
+        Stack<Character> stack = new Stack<>();
+        String[] tokens = exp.trim().split("\\\\s+");
+        if (tokens.length <= 1 && !exp.isEmpty() && !exp.contains(" ")) {
+            tokens = exp.replace(" ", "").split("");
+        }
+        for (String t : tokens) {
+            if (t.isEmpty()) continue;
+            char c = t.charAt(0);
+            if (Character.isLetterOrDigit(c)) {
+                result.append(t).append(" ");
+            } else if (c == '(') {
+                stack.push(c);
+            } else if (c == ')') {
+                while (!stack.isEmpty() && stack.peek() != '(') {
+                    result.append(stack.pop()).append(" ");
+                }
+                if (!stack.isEmpty()) stack.pop();
+            } else {
+                while (!stack.isEmpty() && precedence(stack.peek()) >= precedence(c)) {
+                    result.append(stack.pop()).append(" ");
+                }
+                stack.push(c);
+            }
+        }
+        while (!stack.isEmpty()) {
+            result.append(stack.pop()).append(" ");
+        }
+        return result.toString().trim();
+    }
+    public String infixToPrefix(String exp) {
+        String[] tokens = exp.trim().split("\\\\s+");
+        if (tokens.length <= 1 && !exp.isEmpty() && !exp.contains(" ")) {
+            tokens = exp.replace(" ", "").split("");
+        }
+        ArrayList<String> revTokens = new ArrayList<>();
+        for (int i = tokens.length - 1; i >= 0; i--) {
+            String t = tokens[i];
+            if (t.equals("(")) revTokens.add(")");
+            else if (t.equals(")")) revTokens.add("(");
+            else revTokens.add(t);
+        }
+        StringBuilder postfixLike = new StringBuilder();
+        Stack<Character> stack = new Stack<>();
+        for (String t : revTokens) {
+            if (t.isEmpty()) continue;
+            char c = t.charAt(0);
+            if (Character.isLetterOrDigit(c)) {
+                postfixLike.append(t).append(" ");
+            } else if (c == '(') {
+                stack.push(c);
+            } else if (c == ')') {
+                while (!stack.isEmpty() && stack.peek() != '(') {
+                    postfixLike.append(stack.pop()).append(" ");
+                }
+                if (!stack.isEmpty()) stack.pop();
+            } else {
+                while (!stack.isEmpty() && precedence(stack.peek()) > precedence(c)) {
+                    postfixLike.append(stack.pop()).append(" ");
+                }
+                stack.push(c);
+            }
+        }
+        while (!stack.isEmpty()) {
+            postfixLike.append(stack.pop()).append(" ");
+        }
+        String[] pfTokens = postfixLike.toString().trim().split("\\\\s+");
+        StringBuilder prefix = new StringBuilder();
+        for (int i = pfTokens.length - 1; i >= 0; i--) {
+            prefix.append(pfTokens[i]).append(" ");
+        }
+        return prefix.toString().trim();
+    }
+}
+public class Main {
+    public static void main(String[] args) {
+${execBlock}
+    }
+}`;
+        if (lang === 'C++') return `#include <iostream>
+#include <stack>
+#include <string>
+#include <vector>
+#include <algorithm>
+#include <cctype>
+#include <sstream>
+using namespace std;
+class EquationAnalyzer {
+    int precedence(char op) {
+        if (op == '+' || op == '-') return 1;
+        if (op == '*' || op == '/') return 2;
+        if (op == '^') return 3;
+        return -1;
+    }
+public:
+    bool isBalanced(string exp) {
+        stack<char> s;
+        for (char c : exp) {
+            if (c == '(' || c == '{' || c == '[') {
+                s.push(c);
+            } else if (c == ')' || c == '}' || c == ']') {
+                if (s.empty()) return false;
+                char top = s.top(); s.pop();
+                if ((c == ')' && top != '(') ||
+                    (c == '}' && top != '{') ||
+                    (c == ']' && top != '[')) {
+                    return false;
+                }
+            }
+        }
+        return s.empty();
+    }
+    string infixToPostfix(string exp) {
+        vector<string> tokens;
+        bool hasSpace = false;
+        for (char c : exp) { if (c == ' ') { hasSpace = true; break; } }
+        if (hasSpace) {
+            stringstream ss(exp);
+            string temp;
+            while (ss >> temp) tokens.push_back(temp);
+        } else {
+            for (char c : exp) {
+                if (c != ' ') tokens.push_back(string(1, c));
+            }
+        }
+        string result = "";
+        stack<char> s;
+        for (string t : tokens) {
+            if (t.empty()) continue;
+            char c = t[0];
+            if (isalnum(c)) {
+                result += t + " ";
+            } else if (c == '(') {
+                s.push(c);
+            } else if (c == ')') {
+                while (!s.empty() && s.top() != '(') {
+                    result += string(1, s.top()) + " ";
+                    s.pop();
+                }
+                if (!s.empty()) s.pop();
+            } else {
+                while (!s.empty() && precedence(s.top()) >= precedence(c)) {
+                    result += string(1, s.top()) + " ";
+                    s.pop();
+                }
+                s.push(c);
+            }
+        }
+        while (!s.empty()) {
+            result += string(1, s.top()) + " ";
+            s.pop();
+        }
+        if (!result.empty() && result.back() == ' ') result.pop_back();
+        return result;
+    }
+    string infixToPrefix(string exp) {
+        vector<string> tokens;
+        bool hasSpace = false;
+        for (char c : exp) { if (c == ' ') { hasSpace = true; break; } }
+        if (hasSpace) {
+            stringstream ss(exp);
+            string temp;
+            while (ss >> temp) tokens.push_back(temp);
+        } else {
+            for (char c : exp) {
+                if (c != ' ') tokens.push_back(string(1, c));
+            }
+        }
+        vector<string> revTokens;
+        for (int i = tokens.size() - 1; i >= 0; i--) {
+            string t = tokens[i];
+            if (t == "(") revTokens.push_back(")");
+            else if (t == ")") revTokens.push_back("(");
+            else revTokens.push_back(t);
+        }
+        string postfixLike = "";
+        stack<char> s;
+        for (string t : revTokens) {
+            if (t.empty()) continue;
+            char c = t[0];
+            if (isalnum(c)) {
+                postfixLike += t + " ";
+            } else if (c == '(') {
+                s.push(c);
+            } else if (c == ')') {
+                while (!s.empty() && s.top() != '(') {
+                    postfixLike += string(1, s.top()) + " ";
+                    s.pop();
+                }
+                if (!s.empty()) s.pop();
+            } else {
+                while (!s.empty() && precedence(s.top()) > precedence(c)) {
+                    postfixLike += string(1, s.top()) + " ";
+                    s.pop();
+                }
+                s.push(c);
+            }
+        }
+        while (!s.empty()) {
+            postfixLike += string(1, s.top()) + " ";
+            s.pop();
+        }
+        stringstream ss(postfixLike);
+        string temp;
+        vector<string> pfTokens;
+        while (ss >> temp) pfTokens.push_back(temp);
+        string prefix = "";
+        for (int i = pfTokens.size() - 1; i >= 0; i--) {
+            prefix += pfTokens[i] + " ";
+        }
+        if (!prefix.empty() && prefix.back() == ' ') prefix.pop_back();
+        return prefix;
+    }
+};
+int main() {
+${execBlock}
+    return 0;
+}`;
+        if (lang === 'Python') return `class EquationAnalyzer:
+    def precedence(self, op):
+        if op in ['+', '-']: return 1
+        if op in ['*', '/']: return 2
+        if op == '^': return 3
+        return -1
+    def isBalanced(self, exp):
+        s = []
+        for c in exp:
+            if c in ['(', '{', '[']:
+                s.append(c)
+            elif c in [')', '}', ']']:
+                if not s: return False
+                top = s.pop()
+                if (c == ')' and top != '(') or \
+                   (c == '}' and top != '{') or \
+                   (c == ']' and top != '['):
+                    return False
+        return len(s) == 0
+    def infixToPostfix(self, exp):
+        tokens = exp.strip().split()
+        if len(tokens) <= 1 and exp and ' ' not in exp:
+            tokens = [c for c in exp.replace(" ", "")]
+        result = []
+        stack = []
+        for t in tokens:
+            if not t: continue
+            c = t[0]
+            if c.isalnum():
+                result.append(t)
+            elif c == '(':
+                stack.append(c)
+            elif c == ')':
+                while stack and stack[-1] != '(':
+                    result.append(stack.pop())
+                if stack: stack.pop()
+            else:
+                while stack and self.precedence(stack[-1]) >= self.precedence(c):
+                    result.append(stack.pop())
+                stack.append(c)
+        while stack:
+            result.append(stack.pop())
+        return " ".join(result)
+    def infixToPrefix(self, exp):
+        tokens = exp.strip().split()
+        if len(tokens) <= 1 and exp and ' ' not in exp:
+            tokens = [c for c in exp.replace(" ", "")]
+        rev_tokens = []
+        for t in reversed(tokens):
+            if t == '(': rev_tokens.append(')')
+            elif t == ')': rev_tokens.append('(')
+            else: rev_tokens.append(t)
+        result = []
+        stack = []
+        for t in rev_tokens:
+            if not t: continue
+            c = t[0]
+            if c.isalnum():
+                result.append(t)
+            elif c == '(':
+                stack.append(c)
+            elif c == ')':
+                while stack and stack[-1] != '(':
+                    result.append(stack.pop())
+                if stack: stack.pop()
+            else:
+                while stack and self.precedence(stack[-1]) > self.precedence(c):
+                    result.append(stack.pop())
+                stack.append(c)
+        while stack:
+            result.append(stack.pop())
+        return " ".join(reversed(result))
+if __name__ == "__main__":
+${execBlock}`;
+        if (lang === 'JS') return `class EquationAnalyzer {
+    precedence(op) {
+        if (op === '+' || op === '-') return 1;
+        if (op === '*' || op === '/') return 2;
+        if (op === '^') return 3;
+        return -1;
+    }
+    isBalanced(exp) {
+        const s = [];
+        for (let c of exp) {
+            if (['(', '{', '['].includes(c)) {
+                s.push(c);
+            } else if ([')', '}', ']'].includes(c)) {
+                if (s.length === 0) return false;
+                let top = s.pop();
+                if ((c === ')' && top !== '(') ||
+                    (c === '}' && top !== '{') ||
+                    (c === ']' && top !== '[')) {
+                    return false;
+                }
+            }
+        }
+        return s.length === 0;
+    }
+    infixToPostfix(exp) {
+        let tokens = exp.trim().split(/\\s+/);
+        if (tokens.length <= 1 && exp && !exp.includes(' ')) {
+            tokens = exp.replace(/\\s+/g, '').split('');
+        }
+        const result = [];
+        const stack = [];
+        for (let t of tokens) {
+            if (!t) continue;
+            let c = t[0];
+            if (/[a-zA-Z0-9]/.test(c)) {
+                result.push(t);
+            } else if (c === '(') {
+                stack.push(c);
+            } else if (c === ')') {
+                while (stack.length && stack[stack.length - 1] !== '(') {
+                    result.push(stack.pop());
+                }
+                if (stack.length) stack.pop();
+            } else {
+                while (stack.length && this.precedence(stack[stack.length - 1]) >= this.precedence(c)) {
+                    result.push(stack.pop());
+                }
+                stack.push(c);
+            }
+        }
+        while (stack.length) {
+            result.push(stack.pop());
+        }
+        return result.join(' ');
+    }
+    infixToPrefix(exp) {
+        let tokens = exp.trim().split(/\\s+/);
+        if (tokens.length <= 1 && exp && !exp.includes(' ')) {
+            tokens = exp.replace(/\\s+/g, '').split('');
+        }
+        const revTokens = [];
+        for (let i = tokens.length - 1; i >= 0; i--) {
+            let t = tokens[i];
+            if (t === '(') revTokens.push(')');
+            else if (t === ')') revTokens.push('(');
+            else revTokens.push(t);
+        }
+        const result = [];
+        const stack = [];
+        for (let t of revTokens) {
+            if (!t) continue;
+            let c = t[0];
+            if (/[a-zA-Z0-9]/.test(c)) {
+                result.push(t);
+            } else if (c === '(') {
+                stack.push(c);
+            } else if (c === ')') {
+                while (stack.length && stack[stack.length - 1] !== '(') {
+                    result.push(stack.pop());
+                }
+                if (stack.length) stack.pop();
+            } else {
+                while (stack.length && this.precedence(stack[stack.length - 1]) > this.precedence(c)) {
+                    result.push(stack.pop());
+                }
+                stack.push(c);
+            }
+        }
+        while (stack.length) {
+            result.push(stack.pop());
+        }
+        return result.reverse().join(' ');
+    }
+}
+// Execution
+${execBlock}`;
     }
   }
 
@@ -508,17 +1757,48 @@ ${execBlock}
     return 0;
 }`;
       if (lang === 'Python') return `class Queue:
-    def __init__(self): self.arr = []
-    def enqueue(self, val): self.arr.append(val)
-    def dequeue(self): return self.arr.pop(0) if self.arr else None
-    def display(self): print(self.arr)
+    def __init__(self, cap=100):
+        self.arr = [None] * cap
+        self.cap = cap
+        self.front = 0
+        self.rear = -1
+    def enqueue(self, val):
+        if self.rear == self.cap - 1: return
+        self.rear += 1
+        self.arr[self.rear] = val
+    def dequeue(self):
+        if self.front > self.rear: return None
+        val = self.arr[self.front]
+        self.front += 1
+        return val
+    def display(self):
+        if self.front > self.rear:
+            print("[]")
+            return
+        print(" ".join(str(self.arr[i]) for i in range(self.front, self.rear + 1)))
 if __name__ == "__main__":
 ${execBlock}`;
       if (lang === 'JS') return `class Queue {
-    constructor() { this.arr = []; }
-    enqueue(val) { this.arr.push(val); }
-    dequeue() { return this.arr.shift(); }
-    display() { console.log(this.arr); }
+    constructor(cap = 100) {
+        this.arr = new Array(cap);
+        this.cap = cap;
+        this.front = 0;
+        this.rear = -1;
+    }
+    enqueue(val) {
+        if (this.rear === this.cap - 1) return;
+        this.arr[++this.rear] = val;
+    }
+    dequeue() {
+        if (this.front > this.rear) return null;
+        return this.arr[this.front++];
+    }
+    display() {
+        if (this.front > this.rear) { console.log("[]"); return; }
+        let out = [];
+        for (let i = this.front; i <= this.rear; i++) out.push(this.arr[i]);
+        console.log(out.join(" "));
+    }
 }
 // Execution
 ${execBlock}`;
@@ -537,7 +1817,17 @@ ${execBlock}`;
         if (front == rear) { front = -1; rear = -1; } else front = (front + 1) % cap;
         return d;
     }
-    void display() { /* Print circular logic */ }
+    void display() {
+        if (front == -1) { System.out.println("[]"); return; }
+        int i = front;
+        System.out.print("[");
+        while (true) {
+            System.out.print(arr[i] + (i == rear ? "" : ", "));
+            if (i == rear) break;
+            i = (i + 1) % cap;
+        }
+        System.out.println("]");
+    }
 }
 public class Main {
     public static void main(String[] args) {
@@ -561,7 +1851,17 @@ public:
         if (front == rear) { front = -1; rear = -1; } else front = (front + 1) % cap;
         return d;
     }
-    void display() {}
+    void display() {
+        if (front == -1) { cout << "[]\\n"; return; }
+        int i = front;
+        cout << "[";
+        while (true) {
+            cout << arr[i] << (i == rear ? "" : ", ");
+            if (i == rear) break;
+            i = (i + 1) % cap;
+        }
+        cout << "]\\n";
+    }
 };
 int main() {
 ${execBlock}
@@ -581,7 +1881,17 @@ ${execBlock}
         if self.front == self.rear: self.front = self.rear = -1
         else: self.front = (self.front + 1) % self.cap
         return d
-    def display(self): pass
+    def display(self):
+        if self.front == -1:
+            print("[]")
+            return
+        i = self.front
+        out = []
+        while True:
+            out.append(str(self.arr[i]))
+            if i == self.rear: break
+            i = (i + 1) % self.cap
+        print("[" + ", ".join(out) + "]")
 if __name__ == "__main__":
 ${execBlock}`;
       if (lang === 'JS') return `class Queue {
@@ -597,19 +1907,65 @@ ${execBlock}`;
         if (this.front === this.rear) { this.front = -1; this.rear = -1; } else this.front = (this.front + 1) % this.cap;
         return d;
     }
-    display() {}
+    display() {
+        if (this.front === -1) { console.log("[]"); return; }
+        let i = this.front;
+        let out = [];
+        while (true) {
+            out.push(this.arr[i]);
+            if (i === this.rear) break;
+            i = (i + 1) % this.cap;
+        }
+        console.log("[" + out.join(", ") + "]");
+    }
 }
 // Execution
 ${execBlock}`;
     } else if (variety === 'QUEUE_DEQUE') {
       if (lang === 'Java') return `class Queue {
-    // Basic Deque
-    java.util.LinkedList<Integer> dq = new java.util.LinkedList<>();
-    void enqueueFront(int v) { dq.addFirst(v); }
-    void enqueueRear(int v) { dq.addLast(v); }
-    int dequeueFront() { return dq.removeFirst(); }
-    int dequeueRear() { return dq.removeLast(); }
-    void display() { System.out.println(dq); }
+    int[] arr; int front, rear, cap;
+    public Queue(int size) { cap = size; arr = new int[cap]; front = -1; rear = -1; }
+    void enqueueFront(int val) {
+        if ((front == 0 && rear == cap - 1) || (front == rear + 1)) return;
+        if (front == -1) { front = 0; rear = 0; }
+        else if (front == 0) front = cap - 1;
+        else front = front - 1;
+        arr[front] = val;
+    }
+    void enqueueRear(int val) {
+        if ((front == 0 && rear == cap - 1) || (front == rear + 1)) return;
+        if (front == -1) { front = 0; rear = 0; }
+        else if (rear == cap - 1) rear = 0;
+        else rear = rear + 1;
+        arr[rear] = val;
+    }
+    int dequeueFront() {
+        if (front == -1) return -1;
+        int d = arr[front];
+        if (front == rear) { front = -1; rear = -1; }
+        else if (front == cap - 1) front = 0;
+        else front = front + 1;
+        return d;
+    }
+    int dequeueRear() {
+        if (front == -1) return -1;
+        int d = arr[rear];
+        if (front == rear) { front = -1; rear = -1; }
+        else if (rear == 0) rear = cap - 1;
+        else rear = rear - 1;
+        return d;
+    }
+    void display() {
+        if (front == -1) { System.out.println("[]"); return; }
+        int i = front;
+        System.out.print("[");
+        while (true) {
+            System.out.print(arr[i] + (i == rear ? "" : ", "));
+            if (i == rear) break;
+            i = (i + 1) % cap;
+        }
+        System.out.println("]");
+    }
 }
 public class Main {
     public static void main(String[] args) {
@@ -617,39 +1973,151 @@ ${execBlock}
     }
 }`;
       if (lang === 'C++') return `#include <iostream>
-#include <deque>
 using namespace std;
 class Queue {
-    deque<int> dq;
+    int* arr; int front, rear, cap;
 public:
-    Queue(int c) {}
-    void enqueueFront(int v) { dq.push_front(v); }
-    void enqueueRear(int v) { dq.push_back(v); }
-    int dequeueFront() { int v = dq.front(); dq.pop_front(); return v; }
-    int dequeueRear() { int v = dq.back(); dq.pop_back(); return v; }
-    void display() { for(int v : dq) cout << v << " "; cout << "\\n"; }
+    Queue(int size) { cap = size; arr = new int[cap]; front = -1; rear = -1; }
+    ~Queue() { delete[] arr; }
+    void enqueueFront(int val) {
+        if ((front == 0 && rear == cap - 1) || (front == rear + 1)) return;
+        if (front == -1) { front = 0; rear = 0; }
+        else if (front == 0) front = cap - 1;
+        else front = front - 1;
+        arr[front] = val;
+    }
+    void enqueueRear(int val) {
+        if ((front == 0 && rear == cap - 1) || (front == rear + 1)) return;
+        if (front == -1) { front = 0; rear = 0; }
+        else if (rear == cap - 1) rear = 0;
+        else rear = rear + 1;
+        arr[rear] = val;
+    }
+    int dequeueFront() {
+        if (front == -1) return -1;
+        int d = arr[front];
+        if (front == rear) { front = -1; rear = -1; }
+        else if (front == cap - 1) front = 0;
+        else front = front + 1;
+        return d;
+    }
+    int dequeueRear() {
+        if (front == -1) return -1;
+        int d = arr[rear];
+        if (front == rear) { front = -1; rear = -1; }
+        else if (rear == 0) rear = cap - 1;
+        else rear = rear - 1;
+        return d;
+    }
+    void display() {
+        if (front == -1) { cout << "[]\\n"; return; }
+        int i = front;
+        cout << "[";
+        while (true) {
+            cout << arr[i] << (i == rear ? "" : ", ");
+            if (i == rear) break;
+            i = (i + 1) % cap;
+        }
+        cout << "]\\n";
+    }
 };
 int main() {
 ${execBlock}
     return 0;
 }`;
-      if (lang === 'Python') return `import collections
-class Queue:
-    def __init__(self): self.dq = collections.deque()
-    def enqueueFront(self, v): self.dq.appendleft(v)
-    def enqueueRear(self, v): self.dq.append(v)
-    def dequeueFront(self): return self.dq.popleft()
-    def dequeueRear(self): return self.dq.pop()
-    def display(self): print(list(self.dq))
+      if (lang === 'Python') return `class Queue:
+    def __init__(self, cap=100):
+        self.arr = [None] * cap
+        self.cap = cap
+        self.front = -1
+        self.rear = -1
+    def enqueueFront(self, val):
+        if ((self.front == 0 and self.rear == self.cap - 1) or (self.front == self.rear + 1)): return
+        if self.front == -1: self.front = 0; self.rear = 0
+        elif self.front == 0: self.front = self.cap - 1
+        else: self.front -= 1
+        self.arr[self.front] = val
+    def enqueueRear(self, val):
+        if ((self.front == 0 and self.rear == self.cap - 1) or (self.front == self.rear + 1)): return
+        if self.front == -1: self.front = 0; self.rear = 0
+        elif self.rear == self.cap - 1: self.rear = 0
+        else: self.rear += 1
+        self.arr[self.rear] = val
+    def dequeueFront(self):
+        if self.front == -1: return None
+        val = self.arr[self.front]
+        if self.front == self.rear: self.front = self.rear = -1
+        elif self.front == self.cap - 1: self.front = 0
+        else: self.front += 1
+        return val
+    def dequeueRear(self):
+        if self.front == -1: return None
+        val = self.arr[self.rear]
+        if self.front == self.rear: self.front = self.rear = -1
+        elif self.rear == 0: self.rear = self.cap - 1
+        else: self.rear -= 1
+        return val
+    def display(self):
+        if self.front == -1:
+            print("[]")
+            return
+        out = []
+        i = self.front
+        while True:
+            out.append(str(self.arr[i]))
+            if i == self.rear: break
+            i = (i + 1) % self.cap
+        print("[" + ", ".join(out) + "]")
 if __name__ == "__main__":
 ${execBlock}`;
       if (lang === 'JS') return `class Queue {
-    constructor() { this.arr = []; }
-    enqueueFront(val) { this.arr.unshift(val); }
-    enqueueRear(val) { this.arr.push(val); }
-    dequeueFront() { return this.arr.shift(); }
-    dequeueRear() { return this.arr.pop(); }
-    display() { console.log(this.arr); }
+    constructor(cap = 100) {
+        this.arr = new Array(cap);
+        this.cap = cap;
+        this.front = -1;
+        this.rear = -1;
+    }
+    enqueueFront(val) {
+        if ((this.front === 0 && this.rear === this.cap - 1) || (this.front === this.rear + 1)) return;
+        if (this.front === -1) { this.front = 0; this.rear = 0; }
+        else if (this.front === 0) this.front = this.cap - 1;
+        else this.front = this.front - 1;
+        this.arr[this.front] = val;
+    }
+    enqueueRear(val) {
+        if ((this.front === 0 && this.rear === this.cap - 1) || (this.front === this.rear + 1)) return;
+        if (this.front === -1) { this.front = 0; this.rear = 0; }
+        else if (this.rear === this.cap - 1) this.rear = 0;
+        else this.rear = this.rear + 1;
+        this.arr[this.rear] = val;
+    }
+    dequeueFront() {
+        if (this.front === -1) return null;
+        let d = this.arr[this.front];
+        if (this.front === this.rear) { this.front = -1; this.rear = -1; }
+        else if (this.front === this.cap - 1) this.front = 0;
+        else this.front = this.front + 1;
+        return d;
+    }
+    dequeueRear() {
+        if (this.front === -1) return null;
+        let d = this.arr[this.rear];
+        if (this.front === this.rear) { this.front = -1; this.rear = -1; }
+        else if (this.rear === 0) this.rear = this.cap - 1;
+        else this.rear = this.rear - 1;
+        return d;
+    }
+    display() {
+        if (this.front === -1) { console.log("[]"); return; }
+        let out = [];
+        let i = this.front;
+        while (true) {
+            out.push(this.arr[i]);
+            if (i === this.rear) break;
+            i = (i + 1) % this.cap;
+        }
+        console.log("[" + out.join(", ") + "]");
+    }
 }
 // Execution
 ${execBlock}`;
@@ -657,6 +2125,7 @@ ${execBlock}`;
       if (lang === 'Java') return `import java.util.PriorityQueue;
 class Queue {
     PriorityQueue<Integer> pq = new PriorityQueue<>();
+    public Queue(int cap) {}
     void enqueue(int v) { pq.add(v); }
     int dequeue() { return pq.poll(); }
     void display() { System.out.println(pq); }
@@ -714,6 +2183,14 @@ class HashTable {
         int index = key % tableSize;
         if (!table[index].contains(key)) table[index].add(key);
     }
+    boolean search(int key) {
+        int index = key % tableSize;
+        return table[index].contains(key);
+    }
+    void delete(int key) {
+        int index = key % tableSize;
+        table[index].remove(Integer.valueOf(key));
+    }
     void printTable() {
         for(int i=0; i<tableSize; i++) System.out.println(i + ": " + table[i]);
     }
@@ -737,6 +2214,15 @@ public:
         auto it = find(table[index].begin(), table[index].end(), key);
         if(it == table[index].end()) table[index].push_back(key);
     }
+    bool search(int key) {
+        int index = key % tableSize;
+        auto it = find(table[index].begin(), table[index].end(), key);
+        return it != table[index].end();
+    }
+    void remove(int key) {
+        int index = key % tableSize;
+        table[index].remove(key);
+    }
     void display() {
         for(int i=0; i<tableSize; i++) {
             cout << i << ": ";
@@ -755,6 +2241,13 @@ ${execBlock}
     def insert(self, key):
         index = key % self.size
         if key not in self.table[index]: self.table[index].append(key)
+    def search(self, key):
+        index = key % self.size
+        return key in self.table[index]
+    def delete(self, key):
+        index = key % self.size
+        if key in self.table[index]:
+            self.table[index].remove(key)
     def display(self):
         for i, b in enumerate(self.table): print(f"{i}: {b}")
 if __name__ == "__main__":
@@ -764,6 +2257,14 @@ ${execBlock}`;
     insert(key) {
         let index = key % this.size;
         if (!this.table[index].includes(key)) this.table[index].push(key);
+    }
+    search(key) {
+        let index = key % this.size;
+        return this.table[index].includes(key);
+    }
+    delete(key) {
+        let index = key % this.size;
+        this.table[index] = this.table[index].filter(v => v !== key);
     }
     display() { this.table.forEach((b,i) => console.log(i + ": " + b.join(','))); }
 }
@@ -788,6 +2289,23 @@ class HashTable {
             if (table[probe] == key) return;
         }
     }
+    boolean search(int key) {
+        int index = key % tableSize;
+        for (int i=0; i<tableSize; i++) {
+            ${probeCodeJ}
+            if (table[probe] == null) return false;
+            if (table[probe] == key) return true;
+        }
+        return false;
+    }
+    void delete(int key) {
+        int index = key % tableSize;
+        for (int i=0; i<tableSize; i++) {
+            ${probeCodeJ}
+            if (table[probe] == null) return;
+            if (table[probe] == key) { table[probe] = -1; return; }
+        }
+    }
     void printTable() { System.out.println(Arrays.toString(table)); }
 }
 public class Main {
@@ -810,6 +2328,23 @@ public:
             if (table[probe] == key) return;
         }
     }
+    bool search(int key) {
+        int index = key % tableSize;
+        for (int i=0; i<tableSize; i++) {
+            ${probeCodeC}
+            if (table[probe] == -1) return false;
+            if (table[probe] == key) return true;
+        }
+        return false;
+    }
+    void remove(int key) {
+        int index = key % tableSize;
+        for (int i=0; i<tableSize; i++) {
+            ${probeCodeC}
+            if (table[probe] == -1) return;
+            if (table[probe] == key) { table[probe] = -2; return; }
+        }
+    }
     void display() {
         for(int v : table) cout << v << " ";
         cout << "\\n";
@@ -830,6 +2365,21 @@ ${execBlock}
                 self.table[probe] = key
                 return
             if self.table[probe] == key: return
+    def search(self, key):
+        index = key % self.size
+        for i in range(self.size):
+            ${probeCodeP}
+            if self.table[probe] is None: return False
+            if self.table[probe] == key: return True
+        return False
+    def delete(self, key):
+        index = key % self.size
+        for i in range(self.size):
+            ${probeCodeP}
+            if self.table[probe] is None: return
+            if self.table[probe] == key:
+                self.table[probe] = -1
+                return
     def display(self): print(self.table)
 if __name__ == "__main__":
 ${execBlock}`;
@@ -841,6 +2391,23 @@ ${execBlock}`;
             ${probeCodeJS}
             if (this.table[probe] === null || this.table[probe] === 'TOMBSTONE') { this.table[probe] = key; return; }
             if (this.table[probe] === key) return;
+        }
+    }
+    search(key) {
+        let index = key % this.size;
+        for (let i=0; i<this.size; i++) {
+            ${probeCodeJS}
+            if (this.table[probe] === null) return false;
+            if (this.table[probe] === key) return true;
+        }
+        return false;
+    }
+    delete(key) {
+        let index = key % this.size;
+        for (let i=0; i<this.size; i++) {
+            ${probeCodeJS}
+            if (this.table[probe] === null) return;
+            if (this.table[probe] === key) { this.table[probe] = 'TOMBSTONE'; return; }
         }
     }
     display() { console.log(this.table); }

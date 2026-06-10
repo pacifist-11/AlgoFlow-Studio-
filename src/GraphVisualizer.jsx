@@ -1178,7 +1178,7 @@ const GraphVisualizer = ({ onBack, openSettings, initialAlgo = 'Dijkstra', onCop
 
   // Side-by-side Code
   const [codeLang, setCodeLang] = useState('Java');
-  const [showCode, setShowCode] = useState(true);
+  const [showCode, setShowCode] = useState(false);
 
   const [copied, setCopied] = useState(false);
   const [isRunnerOpen, setIsRunnerOpen] = useState(false);

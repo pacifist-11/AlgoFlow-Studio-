@@ -748,7 +748,9 @@ function App() {
   const [treeType,      setTreeType]      = useState('BST');
   const [activeStateWidth, setActiveStateWidth] = useState(260);
   const [showTreeLogPanel, setShowTreeLogPanel] = useState(true);
-  const [showCode,          setShowCode]          = useState(true);
+  const [showCode,          setShowCode]          = useState(false);
+  const [deferredPrompt, setDeferredPrompt] = useState(null);
+  const [isInstallable, setIsInstallable] = useState(false);
   const [treeLogPosition, setTreeLogPosition] = useState({ x: 20, y: 120 });
   const [isDraggingTreeLog, setIsDraggingTreeLog] = useState(false);
   const [treeLogSize, setTreeLogSize] = useState({ width: 580, height: 300 });
@@ -2870,6 +2872,31 @@ function App() {
             </select>
           </div>
 
+          {isInstallable && (
+            <div className="select-group" style={{ marginBottom: '0.6rem', borderTop: '1px solid var(--glass-border)', paddingTop: '0.8rem' }}>
+              <label style={{ fontWeight: 700, fontSize: '0.95rem', color: 'var(--text-primary)', display: 'block', marginBottom: '4px' }}>📥 Install Application</label>
+              <button 
+                onClick={async () => {
+                  if (deferredPrompt) {
+                    deferredPrompt.prompt();
+                    const { outcome } = await deferredPrompt.userChoice;
+                    if (outcome === 'accepted') {
+                      setDeferredPrompt(null);
+                      setIsInstallable(false);
+                    }
+                  }
+                }}
+                style={{
+                  width: '100%', padding: '0.6rem', borderRadius: '10px', 
+                  border: 'none', background: 'linear-gradient(135deg, #10b981, #059669)',
+                  color: 'white', cursor: 'pointer', fontWeight: 700, transition: 'all 0.2s', fontSize: '0.9rem'
+                }}
+              >
+                Install AlgoFlow Studio
+              </button>
+            </div>
+          )}
+
           <button className="btn btn-start" style={{ marginTop: '0.75rem', padding: '0.75rem' }} onClick={() => setIsSettingsOpen(false)}>Save &amp; Close</button>
         </div>
       </div>
@@ -2945,6 +2972,26 @@ function App() {
       setLastSetupComplete(setupComplete);
     }
   }, [appMode, setupComplete]);
+
+  useEffect(() => {
+    const handler = (e) => {
+      e.preventDefault();
+      setDeferredPrompt(e);
+      setIsInstallable(true);
+    };
+    window.addEventListener('beforeinstallprompt', handler);
+    
+    const installedHandler = () => {
+      setDeferredPrompt(null);
+      setIsInstallable(false);
+    };
+    window.addEventListener('appinstalled', installedHandler);
+
+    return () => {
+      window.removeEventListener('beforeinstallprompt', handler);
+      window.removeEventListener('appinstalled', installedHandler);
+    };
+  }, []);
 
   const frame = timeline[currentStep] || new Frame(null, [], null);
   const progress = timeline.length > 1 ? (currentStep / (timeline.length - 1)) * 100 : 0;

@@ -55,7 +55,8 @@ const GeneralDSVisualizer = ({ onBack, openSettings, initialType = 'HASH_TABLE',
   const [speed, setSpeed] = useState(400);
   const [tableSize, setTableSize] = useState(7);
   const [codeLanguage, setCodeLanguage] = useState('Java');
-  const [showCode, setShowCode] = useState(true);
+  const [showCode, setShowCode] = useState(false);
+  const [showHistory, setShowHistory] = useState(true);
   const [theme, setTheme] = useState('dark');
   const [copied, setCopied] = useState(false);
   const [isRunnerOpen, setIsRunnerOpen] = useState(false);
@@ -195,6 +196,7 @@ const GeneralDSVisualizer = ({ onBack, openSettings, initialType = 'HASH_TABLE',
   const [hashTable, setHashTable] = useState(Array.from({length: tableSize}, () => []));
   const [cqState, setCqState] = useState({ arr: Array(5).fill(null), f: -1, r: -1 });
   const [operationsLog, setOperationsLog] = useState([]);
+  const [poppedElements, setPoppedElements] = useState([]);
 
   // Declare currentCode here so it's initialized before hooks run
   const currentCode = getGeneralCodeTemplate(codeLanguage, dsType, dsVariety, operationsLog);
@@ -246,6 +248,7 @@ const GeneralDSVisualizer = ({ onBack, openSettings, initialType = 'HASH_TABLE',
   const handleClear = (overrideVariety = dsVariety, overrideSize = tableSize) => {
     setElements([]);
     setOperationsLog([]);
+    setPoppedElements([]);
     if (overrideVariety === 'HASH_CHAINING') {
       setHashTable(Array.from({length: overrideSize}, () => []));
     } else if (overrideVariety?.startsWith('HASH_')) {
@@ -325,42 +328,348 @@ const GeneralDSVisualizer = ({ onBack, openSettings, initialType = 'HASH_TABLE',
     frames.push({ arr: newArr, activeIdx: -1, msg: `Successfully popped ${val}`, activeLineText: line2 });
     setTimeline(frames); setCurrentStep(0); setIsPlaying(true); setElements(newArr); triggerFocus();
     setOperationsLog(prev => [...prev, { op: 'pop' }]);
+    setPoppedElements(prev => [...prev, { val, op: 'Pop', ds: 'Stack' }]);
   };
 
   const evaluateExpression = () => {
     let tokens = inputValue.trim().split(/\s+/);
     if(tokens.length === 0 || tokens[0] === '') return;
     let frames = [];
-    let stack = [];
-    frames.push({ arr: [...stack], activeIdx: -1, msg: `Start Expression Evaluation: ${inputValue}`, activeLineText: 'split(" ")' });
     
+    // Check if Prefix, Postfix, or Infix
     let isPrefix = ['+','-','*','/'].includes(tokens[0]);
-    if(isPrefix) tokens = tokens.reverse();
+    let isPostfix = ['+','-','*','/'].includes(tokens[tokens.length - 1]);
+    let isInfix = !isPrefix && !isPostfix;
 
-    for(let token of tokens) {
-        if (!isNaN(token)) {
-            stack.push(parseInt(token));
-            frames.push({ arr: [...stack], activeIdx: stack.length-1, msg: `Read operand '${token}'. Push to Stack.`, activeLineText: 'stack.push(Integer.parseInt' });
+    if (isInfix) {
+        let values = [];
+        let ops = [];
+        const precedence = (op) => {
+            if (op === '+' || op === '-') return 1;
+            if (op === '*' || op === '/') return 2;
+            return -1;
+        };
+        const applyOp = (a, b, op) => {
+            if (op === '+') return a + b;
+            if (op === '-') return a - b;
+            if (op === '*') return a * b;
+            if (op === '/') return Math.floor(a / b);
+            return 0;
+        };
+        
+        frames.push({ arr: [...values], activeIdx: -1, msg: `Start Infix Evaluation. Values: [] | Ops: []`, activeLineText: 'evaluateExpression' });
+
+        for (let i = 0; i < tokens.length; i++) {
+            let t = tokens[i];
+            if (t === '(') {
+                ops.push('(');
+                frames.push({ arr: [...values], activeIdx: -1, msg: `Read '('. Push to Operators. Values: [${values.join(', ')}] | Ops: [${ops.join(', ')}]`, activeLineText: 'ops.push' });
+            } else if (t === ')') {
+                frames.push({ arr: [...values], activeIdx: -1, msg: `Read ')'. Evaluate until '(' is found. Values: [${values.join(', ')}] | Ops: [${ops.join(', ')}]` });
+                while (ops.length && ops[ops.length - 1] !== '(') {
+                    if (values.length < 2) {
+                        frames.push({ arr: [...values], activeIdx: -1, msg: `Error: Invalid expression.` });
+                        break;
+                    }
+                    let val2 = values.pop();
+                    let val1 = values.pop();
+                    let op = ops.pop();
+                    let res = applyOp(val1, val2, op);
+                    values.push(res);
+                    frames.push({ arr: [...values], activeIdx: values.length - 1, msg: `Pop ${val2} and ${val1}. Apply '${op}' -> ${res}. Values: [${values.join(', ')}] | Ops: [${ops.join(', ')}]` });
+                }
+                if (ops.length && ops[ops.length - 1] === '(') {
+                    ops.pop();
+                    frames.push({ arr: [...values], activeIdx: -1, msg: `Pop '(' from Operators. Values: [${values.join(', ')}] | Ops: [${ops.join(', ')}]` });
+                }
+            } else if (['+', '-', '*', '/'].includes(t)) {
+                while (ops.length && precedence(ops[ops.length - 1]) >= precedence(t)) {
+                    if (values.length < 2) break;
+                    let val2 = values.pop();
+                    let val1 = values.pop();
+                    let op = ops.pop();
+                    let res = applyOp(val1, val2, op);
+                    values.push(res);
+                    frames.push({ arr: [...values], activeIdx: values.length - 1, msg: `Operator '${t}' precedence <= top operator '${op}'. Evaluate. Values: [${values.join(', ')}] | Ops: [${ops.join(', ')}]` });
+                }
+                ops.push(t);
+                frames.push({ arr: [...values], activeIdx: -1, msg: `Push operator '${t}' to Operators. Values: [${values.join(', ')}] | Ops: [${ops.join(', ')}]` });
+            } else if (!isNaN(t)) {
+                values.push(parseInt(t));
+                frames.push({ arr: [...values], activeIdx: values.length - 1, msg: `Read operand '${t}'. Push to Values. Values: [${values.join(', ')}] | Ops: [${ops.join(', ')}]` });
+            }
+        }
+        
+        while (ops.length) {
+            if (values.length < 2) break;
+            let val2 = values.pop();
+            let val1 = values.pop();
+            let op = ops.pop();
+            let res = applyOp(val1, val2, op);
+            values.push(res);
+            frames.push({ arr: [...values], activeIdx: values.length - 1, msg: `Evaluate remaining operator '${op}'. Values: [${values.join(', ')}] | Ops: [${ops.join(', ')}]` });
+        }
+        
+        frames.push({ arr: [...values], activeIdx: -1, msg: `Evaluation complete. Final Result: ${values[0]}` });
+        setTimeline(frames); setCurrentStep(0); setIsPlaying(true); setElements(values); setInputValue(''); triggerFocus();
+    } else {
+        let stack = [];
+        frames.push({ arr: [...stack], activeIdx: -1, msg: `Start ${isPrefix ? 'Prefix' : 'Postfix'} Evaluation: ${inputValue}`, activeLineText: 'split(" ")' });
+        
+        let processedTokens = isPrefix ? [...tokens].reverse() : tokens;
+
+        for(let token of processedTokens) {
+            if (!isNaN(token)) {
+                stack.push(parseInt(token));
+                frames.push({ arr: [...stack], activeIdx: stack.length-1, msg: `Read operand '${token}'. Push to Stack.`, activeLineText: 'stack.push(Integer.parseInt' });
+            } else {
+                if (stack.length < 2) { frames.push({ arr: [...stack], activeIdx: -1, msg: `Error: Not enough operands for operator '${token}'` }); break; }
+                let b = stack.pop();
+                let a = stack.pop();
+                
+                let op1 = isPrefix ? b : a;
+                let op2 = isPrefix ? a : b;
+                
+                frames.push({ arr: [...stack], activeIdx: -1, msg: `Read operator '${token}'. Pop ${op2} and ${op1}.`, activeLineText: 'stack.pop()' });
+                let res = 0;
+                if(token === '+') res = op1 + op2;
+                if(token === '-') res = op1 - op2;
+                if(token === '*') res = op1 * op2;
+                if(token === '/') res = Math.floor(op1 / op2);
+                stack.push(res);
+                frames.push({ arr: [...stack], activeIdx: stack.length-1, msg: `Calculated ${op1} ${token} ${op2} = ${res}. Push result.`, activeLineText: 'switch(token)' });
+            }
+        }
+        setTimeline(frames); setCurrentStep(0); setIsPlaying(true); setElements(stack); setInputValue(''); triggerFocus();
+    }
+    setOperationsLog(prev => [...prev, { op: 'evaluateExpression', val: `"${inputValue}"` }]);
+  };
+
+  const evaluateBrackets = () => {
+    let exp = inputValue.trim();
+    if(exp.length === 0) return;
+    let frames = [];
+    let stack = [];
+    
+    frames.push({ arr: [...stack], activeIdx: -1, msg: `Start Bracket Evaluation: ${exp}`, activeLineText: 'isBalanced' });
+    
+    let balanced = true;
+    for(let i=0; i<exp.length; i++) {
+        let char = exp[i];
+        if (['(', '{', '['].includes(char)) {
+            stack.push(char);
+            frames.push({ arr: [...stack], activeIdx: stack.length-1, msg: `Character '${char}' is opening. Push to Stack.`, activeLineText: 's.push' });
+        } else if ([')', '}', ']'].includes(char)) {
+            if (stack.length === 0) {
+                balanced = false;
+                frames.push({ arr: [...stack], activeIdx: -1, msg: `Character '${char}' is closing, but Stack is empty! Mismatch.`, activeLineText: 's.isEmpty' });
+                break;
+            }
+            let top = stack[stack.length - 1];
+            if ((char === ')' && top === '(') || (char === '}' && top === '{') || (char === ']' && top === '[')) {
+                stack.pop();
+                frames.push({ arr: [...stack], activeIdx: -1, msg: `Character '${char}' matches top '${top}'. Pop from Stack.`, activeLineText: 's.pop' });
+            } else {
+                balanced = false;
+                frames.push({ arr: [...stack], activeIdx: -1, msg: `Character '${char}' mismatches top '${top}'! Unbalanced.`, activeLineText: 'mismatch' });
+                break;
+            }
         } else {
-            if (stack.length < 2) { frames.push({ arr: [...stack], activeIdx: -1, msg: `Error: Not enough operands for operator '${token}'` }); break; }
-            let b = stack.pop();
-            let a = stack.pop();
-            
-            let op1 = isPrefix ? b : a;
-            let op2 = isPrefix ? a : b;
-            
-            frames.push({ arr: [...stack], activeIdx: -1, msg: `Read operator '${token}'. Pop ${op2} and ${op1}.`, activeLineText: 'stack.pop()' });
-            let res = 0;
-            if(token === '+') res = op1 + op2;
-            if(token === '-') res = op1 - op2;
-            if(token === '*') res = op1 * op2;
-            if(token === '/') res = Math.floor(op1 / op2);
-            stack.push(res);
-            frames.push({ arr: [...stack], activeIdx: stack.length-1, msg: `Calculated ${op1} ${token} ${op2} = ${res}. Push result.`, activeLineText: 'switch(token)' });
+            frames.push({ arr: [...stack], activeIdx: -1, msg: `Character '${char}' is not a bracket. Ignore.`, activeLineText: 'continue' });
         }
     }
+    
+    if (balanced && stack.length === 0) {
+        frames.push({ arr: [...stack], activeIdx: -1, msg: `All characters scanned. Stack is empty. Balanced!` });
+    } else if (balanced && stack.length > 0) {
+        frames.push({ arr: [...stack], activeIdx: -1, msg: `All characters scanned. Stack is not empty. Unbalanced!` });
+    }
+    
     setTimeline(frames); setCurrentStep(0); setIsPlaying(true); setElements(stack); setInputValue(''); triggerFocus();
-    setOperationsLog(prev => [...prev, { op: 'evaluateExpression', val: `"${inputValue}"` }]);
+    setOperationsLog(prev => [...prev, { op: 'isBalanced', val: `"${exp}"` }]);
+  };
+
+  const infixToPostfix = () => {
+    let exp = inputValue.trim();
+    if(exp.length === 0) return;
+    let tokens = exp.includes(' ') ? exp.split(/\s+/) : exp.replace(/\s+/g, '').split('');
+    let frames = [];
+    let stack = [];
+    let output = [];
+    
+    frames.push({ arr: [...stack], activeIdx: -1, output: '', msg: `Start Infix to Postfix: ${exp}`, activeLineText: 'infixToPostfix' });
+    
+    const precedence = (op) => {
+        if (op === '+' || op === '-') return 1;
+        if (op === '*' || op === '/') return 2;
+        if (op === '^') return 3;
+        return -1;
+    };
+    
+    for (let i = 0; i < tokens.length; i++) {
+        let t = tokens[i];
+        if (/[a-zA-Z0-9]/.test(t)) {
+            output.push(t);
+            frames.push({ arr: [...stack], activeIdx: -1, output: output.join(' '), msg: `Read operand '${t}' ➔ append to output. Output: ${output.join(' ')}`, activeLineText: 'result.append' });
+        } else if (t === '(') {
+            stack.push(t);
+            frames.push({ arr: [...stack], activeIdx: stack.length - 1, output: output.join(' '), msg: `Read '(' ➔ push to Stack. Output: ${output.join(' ')}`, activeLineText: 'stack.push' });
+        } else if (t === ')') {
+            frames.push({ arr: [...stack], activeIdx: -1, output: output.join(' '), msg: `Read ')' ➔ pop until '(' is found. Output: ${output.join(' ')}` });
+            while (stack.length && stack[stack.length - 1] !== '(') {
+                let op = stack.pop();
+                output.push(op);
+                frames.push({ arr: [...stack], activeIdx: -1, output: output.join(' '), msg: `Pop operator '${op}' to output. Output: ${output.join(' ')}`, activeLineText: 'result.append(stack.pop' });
+            }
+            if (stack.length && stack[stack.length - 1] === '(') {
+                stack.pop();
+                frames.push({ arr: [...stack], activeIdx: -1, output: output.join(' '), msg: `Discard '(' from Stack. Output: ${output.join(' ')}`, activeLineText: 'stack.pop()' });
+            }
+        } else {
+            frames.push({ arr: [...stack], activeIdx: stack.length > 0 ? stack.length - 1 : -1, output: output.join(' '), msg: `Read operator '${t}' ➔ pop higher/equal precedence. Output: ${output.join(' ')}` });
+            while (stack.length && precedence(stack[stack.length - 1]) >= precedence(t)) {
+                let op = stack.pop();
+                output.push(op);
+                frames.push({ arr: [...stack], activeIdx: -1, output: output.join(' '), msg: `Pop '${op}' (precedence ${precedence(op)} >= ${precedence(t)}) to output. Output: ${output.join(' ')}`, activeLineText: 'result.append(stack.pop' });
+            }
+            stack.push(t);
+            frames.push({ arr: [...stack], activeIdx: stack.length - 1, output: output.join(' '), msg: `Push operator '${t}' to Stack. Output: ${output.join(' ')}`, activeLineText: 'stack.push' });
+        }
+    }
+    
+    if (stack.length > 0) {
+        frames.push({ arr: [...stack], activeIdx: -1, output: output.join(' '), msg: `Scanned all tokens. Pop remaining operators. Output: ${output.join(' ')}` });
+        while (stack.length) {
+            let op = stack.pop();
+            output.push(op);
+            frames.push({ arr: [...stack], activeIdx: -1, output: output.join(' '), msg: `Pop '${op}' to output. Output: ${output.join(' ')}`, activeLineText: 'stack.pop' });
+        }
+    }
+    
+    let finalResult = output.join(' ');
+    frames.push({ arr: [...stack], activeIdx: -1, output: finalResult, msg: `Conversion complete! Postfix: ${finalResult}` });
+    
+    setTimeline(frames); setCurrentStep(0); setIsPlaying(true); setElements(stack); setInputValue(''); triggerFocus();
+    setOperationsLog(prev => [...prev, { op: 'infixToPostfix', val: `"${exp}"` }]);
+  };
+
+  const infixToPrefix = () => {
+    let exp = inputValue.trim();
+    if(exp.length === 0) return;
+    let tokens = exp.includes(' ') ? exp.split(/\s+/) : exp.replace(/\s+/g, '').split('');
+    let frames = [];
+    
+    let revTokens = [];
+    for (let i = tokens.length - 1; i >= 0; i--) {
+        let t = tokens[i];
+        if (t === '(') revTokens.push(')');
+        else if (t === ')') revTokens.push('(');
+        else revTokens.push(t);
+    }
+    
+    frames.push({ arr: [], activeIdx: -1, output: '', msg: `Reverse expression & swap brackets: ${revTokens.join(' ')}`, activeLineText: 'infixToPrefix' });
+    
+    let stack = [];
+    let output = [];
+    
+    const precedence = (op) => {
+        if (op === '+' || op === '-') return 1;
+        if (op === '*' || op === '/') return 2;
+        if (op === '^') return 3;
+        return -1;
+    };
+    
+    for (let i = 0; i < revTokens.length; i++) {
+        let t = revTokens[i];
+        if (/[a-zA-Z0-9]/.test(t)) {
+            output.push(t);
+            frames.push({ arr: [...stack], activeIdx: -1, output: output.join(' '), msg: `Read operand '${t}'. Add to output. Output: ${output.join(' ')}`, activeLineText: 'postfixLike.append' });
+        } else if (t === '(') {
+            stack.push(t);
+            frames.push({ arr: [...stack], activeIdx: stack.length - 1, output: output.join(' '), msg: `Read '(' ➔ push to Stack. Output: ${output.join(' ')}`, activeLineText: 'stack.push' });
+        } else if (t === ')') {
+            frames.push({ arr: [...stack], activeIdx: -1, output: output.join(' '), msg: `Read ')' ➔ pop until '(' is found. Output: ${output.join(' ')}` });
+            while (stack.length && stack[stack.length - 1] !== '(') {
+                let op = stack.pop();
+                output.push(op);
+                frames.push({ arr: [...stack], activeIdx: -1, output: output.join(' '), msg: `Pop operator '${op}' to output. Output: ${output.join(' ')}` });
+            }
+            if (stack.length && stack[stack.length - 1] === '(') {
+                stack.pop();
+                frames.push({ arr: [...stack], activeIdx: -1, output: output.join(' '), msg: `Discard '(' from Stack. Output: ${output.join(' ')}` });
+            }
+        } else {
+            frames.push({ arr: [...stack], activeIdx: stack.length > 0 ? stack.length - 1 : -1, output: output.join(' '), msg: `Read operator '${t}' ➔ pop STRICTLY higher precedence. Output: ${output.join(' ')}` });
+            while (stack.length && precedence(stack[stack.length - 1]) > precedence(t)) {
+                let op = stack.pop();
+                output.push(op);
+                frames.push({ arr: [...stack], activeIdx: -1, output: output.join(' '), msg: `Pop '${op}' (precedence ${precedence(op)} > ${precedence(t)}) to output. Output: ${output.join(' ')}` });
+            }
+            stack.push(t);
+            frames.push({ arr: [...stack], activeIdx: stack.length - 1, output: output.join(' '), msg: `Push operator '${t}' to Stack. Output: ${output.join(' ')}` });
+        }
+    }
+    
+    if (stack.length > 0) {
+        frames.push({ arr: [...stack], activeIdx: -1, output: output.join(' '), msg: `Scanned reversed expression. Pop remaining operators. Output: ${output.join(' ')}` });
+        while (stack.length) {
+            let op = stack.pop();
+            output.push(op);
+            frames.push({ arr: [...stack], activeIdx: -1, output: output.join(' '), msg: `Pop '${op}' to output. Output: ${output.join(' ')}` });
+        }
+    }
+    
+    let reversedOutput = [...output].reverse();
+    frames.push({ arr: [], activeIdx: -1, output: reversedOutput.join(' '), msg: `Reverse postfix-like output [${output.join(' ')}] to get prefix.` });
+    let finalResult = reversedOutput.join(' ');
+    frames.push({ arr: [], activeIdx: -1, output: finalResult, msg: `Conversion complete! Prefix: ${finalResult}` });
+    
+    setTimeline(frames); setCurrentStep(0); setIsPlaying(true); setElements(stack); setInputValue(''); triggerFocus();
+    setOperationsLog(prev => [...prev, { op: 'infixToPrefix', val: `"${exp}"` }]);
+  };
+
+  const checkEquationBalance = () => {
+    let exp = inputValue.trim();
+    if(exp.length === 0) return;
+    let frames = [];
+    let stack = [];
+    
+    frames.push({ arr: [...stack], activeIdx: -1, msg: `Start Bracket Check: ${exp}`, activeLineText: 'isBalanced' });
+    
+    let balanced = true;
+    for(let i=0; i<exp.length; i++) {
+        let char = exp[i];
+        if (['(', '{', '['].includes(char)) {
+            stack.push(char);
+            frames.push({ arr: [...stack], activeIdx: stack.length - 1, msg: `Character '${char}' is opening. Push to Stack.`, activeLineText: 's.push' });
+        } else if ([')', '}', ']'].includes(char)) {
+            if (stack.length === 0) {
+                balanced = false;
+                frames.push({ arr: [...stack], activeIdx: -1, msg: `Character '${char}' is closing, but Stack is empty! Mismatch.`, activeLineText: 's.isEmpty' });
+                break;
+            }
+            let top = stack[stack.length - 1];
+            if ((char === ')' && top === '(') || (char === '}' && top === '{') || (char === ']' && top === '[')) {
+                stack.pop();
+                frames.push({ arr: [...stack], activeIdx: -1, msg: `Character '${char}' matches top '${top}'. Pop from Stack.`, activeLineText: 's.pop' });
+            } else {
+                balanced = false;
+                frames.push({ arr: [...stack], activeIdx: stack.length - 1, msg: `Character '${char}' mismatches top '${top}'! Unbalanced.`, activeLineText: 'mismatch' });
+                break;
+            }
+        } else {
+            frames.push({ arr: [...stack], activeIdx: -1, msg: `Character '${char}' is not a bracket. Skip.`, activeLineText: 'continue' });
+        }
+    }
+    
+    if (balanced && stack.length === 0) {
+        frames.push({ arr: [...stack], activeIdx: -1, msg: `All characters scanned. Stack is empty. Balanced!` });
+    } else if (balanced && stack.length > 0) {
+        frames.push({ arr: [...stack], activeIdx: -1, msg: `All characters scanned. Stack is not empty. Unbalanced!` });
+    }
+    
+    setTimeline(frames); setCurrentStep(0); setIsPlaying(true); setElements(stack); setInputValue(''); triggerFocus();
+    setOperationsLog(prev => [...prev, { op: 'isBalanced', val: `"${exp}"` }]);
   };
 
   // Operations for Queue
@@ -413,6 +722,7 @@ const GeneralDSVisualizer = ({ onBack, openSettings, initialType = 'HASH_TABLE',
       frames.push({ cq: { arr: newArr, f: newF, r: newR }, activeIdx: -1, msg: `Dequeued ${val}. Front advances to ${newF}`, activeLineText: '(front + 1) % size' });
       setTimeline(frames); setCurrentStep(0); setIsPlaying(true); setCqState({ arr: newArr, f: newF, r: newR }); triggerFocus();
       setOperationsLog(prev => [...prev, { op: 'dequeue' }]);
+      setPoppedElements(prev => [...prev, { val, op: 'Dequeue', ds: 'Queue' }]);
     } else {
       let currentArr = timeline.length > 0 ? timeline[timeline.length-1].arr : elements;
       if(currentArr.length === 0) { alert('Queue Underflow'); return; }
@@ -423,6 +733,7 @@ const GeneralDSVisualizer = ({ onBack, openSettings, initialType = 'HASH_TABLE',
       setTimeline(frames); setCurrentStep(0); setIsPlaying(true); setElements(newArr); triggerFocus();
       let opName = dsVariety === 'QUEUE_DEQUE' ? (rear ? 'dequeueRear' : 'dequeueFront') : 'dequeue';
       setOperationsLog(prev => [...prev, { op: opName }]);
+      setPoppedElements(prev => [...prev, { val, op: opName === 'dequeueFront' ? 'Deq Front' : (opName === 'dequeueRear' ? 'Deq Rear' : 'Dequeue'), ds: 'Queue' }]);
     }
   };
 
@@ -467,6 +778,28 @@ const GeneralDSVisualizer = ({ onBack, openSettings, initialType = 'HASH_TABLE',
     frames.push({ arr: newArr, activeIdx: -1, msg: `Unlinked Node(${val}) and reconnected pointers.`, activeLineText: 'temp.next = temp.next.next' });
     setTimeline(frames); setCurrentStep(0); setIsPlaying(true); setElements(newArr); setInputValue(''); triggerFocus();
     setOperationsLog(prev => [...prev, { op: 'deleteValue', val }]);
+    setPoppedElements(prev => [...prev, { val, op: 'Delete', ds: 'Linked List' }]);
+  };
+
+  const sllSearch = () => {
+    let val = parseInt(inputValue);
+    if(isNaN(val)) return;
+    let currentArr = timeline.length > 0 ? timeline[timeline.length-1].arr : elements;
+    let frames = [];
+    let foundIdx = currentArr.indexOf(val);
+    frames.push({ arr: [...currentArr], activeIdx: -1, msg: `Search: Searching Linked List for ${val}...`, activeLineText: 'search' });
+    if (foundIdx === -1) {
+        for(let i=0; i<currentArr.length; i++){
+            frames.push({ arr: [...currentArr], activeIdx: i, msg: `Checking index ${i} ➔ ${currentArr[i]} != ${val}`, activeLineText: 't = t.next' });
+        }
+        frames.push({ arr: [...currentArr], activeIdx: -1, msg: `Value ${val} not found in Linked List.` });
+    } else {
+        for(let i=0; i<=foundIdx; i++){
+            frames.push({ arr: [...currentArr], activeIdx: i, msg: i === foundIdx ? `Found ${val} at index ${i}!` : `Checking index ${i} ➔ ${currentArr[i]} != ${val}`, activeLineText: 't = t.next' });
+        }
+    }
+    setTimeline(frames); setCurrentStep(0); setIsPlaying(true); setInputValue(''); triggerFocus();
+    setOperationsLog(prev => [...prev, { op: 'search', val }]);
   };
 
   // Operations for Hash Table
@@ -596,6 +929,7 @@ const GeneralDSVisualizer = ({ onBack, openSettings, initialType = 'HASH_TABLE',
           safeHt[bucket] = safeHt[bucket].filter(v => v !== val);
           frames.push({ ht: safeHt.map(b => [...b]), activeBucket: bucket, activeNode: -1, msg: `Deleted ${val} and updated chain pointers.` });
           setOperationsLog(prev => [...prev, { op: 'delete', val }]);
+          setPoppedElements(prev => [...prev, { val, op: 'Delete', ds: 'Hash Table' }]);
       } else {
           frames.push({ ht: safeHt.map(b => [...b]), activeBucket: bucket, activeNode: -1, msg: `${val} not found in Bucket ${bucket}.` });
       }
@@ -615,6 +949,7 @@ const GeneralDSVisualizer = ({ onBack, openSettings, initialType = 'HASH_TABLE',
           frames.push({ ht: [...safeHt], activeBucket: probeBucket, msg: `Slot ${probeBucket} marked as DELETED (Tombstone).`, activeLineText: 'table[probe] = -1' });
           found = true;
           setOperationsLog(prev => [...prev, { op: 'delete', val }]);
+          setPoppedElements(prev => [...prev, { val, op: 'Delete', ds: 'Hash Table' }]);
           break;
         } else if (safeHt[probeBucket] === null) {
           frames.push({ ht: [...safeHt], activeBucket: probeBucket, msg: `Slot ${probeBucket} is empty. Terminating search.`, activeLineText: 'table[probe] == null' });
@@ -633,25 +968,66 @@ const GeneralDSVisualizer = ({ onBack, openSettings, initialType = 'HASH_TABLE',
   // RENDERERS
   const renderStack = (frame) => {
     const arr = frame.arr || [];
+    const showOutput = dsVariety === 'STACK_CONVERSION' && frame.output !== undefined;
     return (
-      <div style={{ display: 'flex', flexDirection: 'column-reverse', alignItems: 'center', gap: '4px', marginTop: 'auto', padding: '2rem' }}>
-        <div style={{ position: 'absolute', bottom: '15%', width: '160px', height: '60%', borderLeft: '4px solid var(--glass-border)', borderRight: '4px solid var(--glass-border)', borderBottom: '4px solid var(--glass-border)', borderRadius: '0 0 12px 12px', pointerEvents: 'none', background: 'linear-gradient(180deg, transparent, rgba(255,255,255,0.02))' }} />
-        {arr.map((val, idx) => (
-          <React.Fragment key={idx}>
-            <div style={{
-              width: '130px', height: '42px', background: idx === frame.activeIdx ? 'linear-gradient(90deg, #fbbf24, #f59e0b)' : 'linear-gradient(90deg, var(--accent-primary), var(--accent-secondary))',
-              borderRadius: '6px', display: 'flex', alignItems: 'center', justifyContent: 'center', color: 'white', fontWeight: 'bold', fontSize: '1.1rem',
-              boxShadow: idx === frame.activeIdx ? '0 0 20px rgba(245,158,11,0.8)' : '0 4px 10px rgba(0,0,0,0.3)',
-              transition: 'all 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275)', zIndex: 2
+      <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', width: '100%', height: '100%', padding: '1rem', boxSizing: 'border-box' }}>
+        <div style={{ display: 'flex', flexDirection: 'column-reverse', alignItems: 'center', gap: '4px', position: 'relative', minHeight: '220px', width: '160px', paddingBottom: '10px', justifyContent: 'flex-start' }}>
+          <div style={{ position: 'absolute', bottom: '10px', width: '100%', height: 'calc(100% - 10px)', borderLeft: '4px solid var(--glass-border)', borderRight: '4px solid var(--glass-border)', borderBottom: '4px solid var(--glass-border)', borderRadius: '0 0 12px 12px', pointerEvents: 'none', background: 'linear-gradient(180deg, transparent, rgba(255,255,255,0.02))' }} />
+          {arr.map((val, idx) => (
+            <React.Fragment key={idx}>
+              <div style={{
+                width: '130px', height: '42px', background: idx === frame.activeIdx ? 'linear-gradient(90deg, #fbbf24, #f59e0b)' : 'linear-gradient(90deg, var(--accent-primary), var(--accent-secondary))',
+                borderRadius: '6px', display: 'flex', alignItems: 'center', justifyContent: 'center', color: 'white', fontWeight: 'bold', fontSize: '1.1rem',
+                boxShadow: idx === frame.activeIdx ? '0 0 20px rgba(245,158,11,0.8)' : '0 4px 10px rgba(0,0,0,0.3)',
+                transition: 'all 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275)', zIndex: 2
+              }}>
+                {val}
+              </div>
+              {dsVariety === 'STACK_LL' && idx > 0 && (
+                <div style={{ color: '#10b981', fontSize: '1.5rem', margin: '-4px 0', zIndex: 1, textShadow: '0 0 5px rgba(16,185,129,0.5)' }}>⬇</div>
+              )}
+            </React.Fragment>
+          ))}
+          {arr.length === 0 && <div style={{ color: 'var(--text-secondary)', fontStyle: 'italic', zIndex: 2, paddingBottom: '20px', marginTop: 'auto' }}>Stack is empty</div>}
+        </div>
+        
+        <div style={{ color: 'var(--text-secondary)', fontSize: '0.8rem', fontWeight: 'bold', marginTop: '12px', textTransform: 'uppercase', letterSpacing: '1px' }}>
+          {dsVariety === 'STACK_CONVERSION' ? 'Operator Stack' : (dsVariety === 'STACK_LL' ? 'Linked List Stack' : 'Array Stack')}
+        </div>
+
+        {showOutput && (
+          <div style={{
+            marginTop: '20px',
+            width: '90%',
+            maxWidth: '450px',
+            background: 'rgba(255, 255, 255, 0.03)',
+            border: '1px solid var(--glass-border)',
+            borderRadius: '12px',
+            padding: '12px 16px',
+            boxShadow: '0 8px 32px 0 rgba(0, 0, 0, 0.3)',
+            backdropFilter: 'blur(4px)',
+            display: 'flex',
+            flexDirection: 'column',
+            gap: '6px',
+            alignItems: 'center'
+          }}>
+            <span style={{ fontSize: '0.75rem', color: 'var(--accent-primary)', fontWeight: 'bold', textTransform: 'uppercase', letterSpacing: '1px' }}>
+              Output Expression
+            </span>
+            <div style={{ 
+              fontSize: '1.25rem', 
+              fontFamily: "'Fira Code', monospace", 
+              color: '#34d399', 
+              fontWeight: 'bold', 
+              letterSpacing: '1px',
+              textAlign: 'center',
+              wordBreak: 'break-all',
+              textShadow: '0 0 8px rgba(52,211,153,0.2)'
             }}>
-              {val}
+              {frame.output || <span style={{ color: 'var(--text-secondary)', fontStyle: 'italic', fontSize: '0.95rem', fontWeight: 'normal' }}>empty</span>}
             </div>
-            {dsVariety === 'STACK_LL' && idx > 0 && (
-              <div style={{ color: '#10b981', fontSize: '1.5rem', margin: '-4px 0', zIndex: 1, textShadow: '0 0 5px rgba(16,185,129,0.5)' }}>⬇</div>
-            )}
-          </React.Fragment>
-        ))}
-        {arr.length === 0 && <div style={{ color: 'var(--text-secondary)', fontStyle: 'italic', zIndex: 2, paddingBottom: '10px' }}>Stack is empty</div>}
+          </div>
+        )}
       </div>
     );
   };
@@ -865,7 +1241,9 @@ const GeneralDSVisualizer = ({ onBack, openSettings, initialType = 'HASH_TABLE',
             {dsType === 'STACK' && <>
                 <option value="STACK_ARRAY">Array Based</option>
                 <option value="STACK_LL">Linked List Based</option>
-                <option value="STACK_EXPRESSION">Prefix/Postfix Eval</option>
+                <option value="STACK_EXPRESSION">Expression Evaluator</option>
+                <option value="STACK_BRACKETS">Bracket Evaluator</option>
+                <option value="STACK_CONVERSION">Equation Converter</option>
             </>}
             {dsType === 'QUEUE' && <>
                 <option value="QUEUE_SIMPLE">Simple Queue</option>
@@ -894,15 +1272,28 @@ const GeneralDSVisualizer = ({ onBack, openSettings, initialType = 'HASH_TABLE',
              </div>
           )}
 
-          <input ref={inputRef} type={dsVariety === 'STACK_EXPRESSION' ? 'text' : 'number'} className="styled-input" style={{ width: dsVariety === 'STACK_EXPRESSION' ? '150px' : '90px', opacity: isPlaying ? 0.7 : 1, fontSize: '1rem', fontWeight: 'bold' }} placeholder={dsVariety === 'STACK_EXPRESSION' ? "e.g. 2 3 + 4 *" : "Value"} value={inputValue} onChange={e=>setInputValue(e.target.value)} onKeyDown={e => {
+          <input ref={inputRef} type={(dsVariety === 'STACK_EXPRESSION' || dsVariety === 'STACK_BRACKETS' || dsVariety === 'STACK_CONVERSION') ? 'text' : 'number'} className="styled-input" style={{ width: (dsVariety === 'STACK_EXPRESSION' || dsVariety === 'STACK_BRACKETS' || dsVariety === 'STACK_CONVERSION') ? '180px' : '90px', opacity: isPlaying ? 0.7 : 1, fontSize: '1rem', fontWeight: 'bold' }} placeholder={dsVariety === 'STACK_EXPRESSION' ? "e.g. 2 3 + 4 *" : dsVariety === 'STACK_BRACKETS' ? "e.g. {[()]}" : dsVariety === 'STACK_CONVERSION' ? "e.g. ( A + B ) * C" : "Value"} value={inputValue} onChange={e=>setInputValue(e.target.value)} onKeyDown={e => {
             if(e.key === 'Enter' && !isPlaying && inputValue) {
-              if(dsType==='STACK') { dsVariety === 'STACK_EXPRESSION' ? evaluateExpression() : stackPush(); } else if(dsType==='QUEUE') queueEnqueue(); else if(dsType==='LINKED_LIST') sllInsertTail(); else if(dsType==='HASH_TABLE') hashInsert();
+              if(dsType==='STACK') {
+                if (dsVariety === 'STACK_EXPRESSION') evaluateExpression();
+                else if (dsVariety === 'STACK_BRACKETS') evaluateBrackets();
+                else if (dsVariety === 'STACK_CONVERSION') infixToPostfix();
+                else stackPush();
+              } else if(dsType==='QUEUE') queueEnqueue();
+              else if(dsType==='LINKED_LIST') sllInsertTail();
+              else if(dsType==='HASH_TABLE') hashInsert();
             }
           }} disabled={isPlaying}/>
           
           {dsType === 'STACK' && <>
-            {dsVariety === 'STACK_EXPRESSION' ? (
-                <button className="btn btn-insert" onClick={evaluateExpression} disabled={isPlaying || !inputValue}>Evaluate</button>
+            {(dsVariety === 'STACK_EXPRESSION' || dsVariety === 'STACK_BRACKETS') ? (
+                <button className="btn btn-insert" onClick={dsVariety === 'STACK_EXPRESSION' ? evaluateExpression : evaluateBrackets} disabled={isPlaying || !inputValue}>Evaluate</button>
+            ) : dsVariety === 'STACK_CONVERSION' ? (
+                <>
+                <button className="btn btn-insert" onClick={infixToPostfix} disabled={isPlaying || !inputValue}>To Postfix</button>
+                <button className="btn btn-insert" style={{background: '#8b5cf6'}} onClick={infixToPrefix} disabled={isPlaying || !inputValue}>To Prefix</button>
+                <button className="btn btn-insert" style={{background: '#ec4899'}} onClick={checkEquationBalance} disabled={isPlaying || !inputValue}>Check Balance</button>
+                </>
             ) : (
                 <>
                 <button className="btn btn-insert" onClick={stackPush} disabled={isPlaying || !inputValue}>Push</button>
@@ -930,7 +1321,8 @@ const GeneralDSVisualizer = ({ onBack, openSettings, initialType = 'HASH_TABLE',
           {dsType === 'LINKED_LIST' && <>
             <button className="btn btn-insert" onClick={sllInsertHead} disabled={isPlaying || !inputValue}>Insert Head</button>
             <button className="btn btn-insert" onClick={sllInsertTail} disabled={isPlaying || !inputValue} style={{background: '#8b5cf6'}}>Insert Tail</button>
-            <button className="btn btn-clear" style={{background: 'var(--accent-secondary)', color:'white', border:'none', opacity: isPlaying || !inputValue ? 0.5:1}} onClick={sllDeleteValue} disabled={isPlaying || !inputValue}>Delete Value</button>
+            <button className="btn btn-clear" style={{background: '#10b981', color:'white', border:'none', opacity: isPlaying || !inputValue ? 0.5:1}} onClick={sllSearch} disabled={isPlaying || !inputValue}>Search</button>
+            <button className="btn btn-clear" style={{background: '#ef4444', color:'white', border:'none', opacity: isPlaying || !inputValue ? 0.5:1}} onClick={sllDeleteValue} disabled={isPlaying || !inputValue}>Delete Value</button>
           </>}
 
           {dsType === 'HASH_TABLE' && <>
@@ -941,6 +1333,7 @@ const GeneralDSVisualizer = ({ onBack, openSettings, initialType = 'HASH_TABLE',
 
           <div style={{ width: '1px', height: '26px', background: 'var(--glass-border)', margin: '0 8px' }} />
           <button className="btn btn-clear" onClick={() => setShowLogPanel(!showLogPanel)}>{showLogPanel ? '📋 Hide Log' : '📋 Show Log'}</button>
+          <button className="btn btn-clear" onClick={() => setShowHistory(!showHistory)}>{showHistory ? '🗑️ Hide History' : '🗑️ Show History'}</button>
           <button className="btn btn-clear" onClick={() => setShowCode(!showCode)}>{showCode ? '💻 Hide Code' : '💻 Show Code'}</button>
           {openSettings && <button className="btn btn-clear" onClick={openSettings}>⚙️ Settings</button>}
           <button className="btn btn-clear" onClick={() => handleClear(dsVariety, tableSize)} disabled={isPlaying}>🗑 Clear</button>
@@ -955,7 +1348,8 @@ const GeneralDSVisualizer = ({ onBack, openSettings, initialType = 'HASH_TABLE',
               {frame.msg || 'Select an operation to begin...'}
             </span>
           </div>
-            <div style={{ flex: 1, display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', background: 'var(--glass-bg)', borderRadius: '16px', border: '1px solid var(--glass-border)', overflow: 'auto', position: 'relative', boxShadow: 'inset 0 0 40px rgba(0,0,0,0.2)' }}>
+          <div style={{ flex: 1, display: 'flex', gap: '1.5rem', overflow: 'hidden', width: '100%' }}>
+            <div style={{ flex: 1, display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', background: 'var(--glass-bg)', borderRadius: '16px', border: '1px solid var(--glass-border)', overflow: 'auto', position: 'relative', boxShadow: 'inset 0 0 40px rgba(0,0,0,0.2)', width: '100%', height: '100%' }}>
             {dsType === 'STACK' && renderStack(frame)}
             {dsType === 'QUEUE' && renderQueue(frame)}
             {dsType === 'LINKED_LIST' && renderLinkedList(frame)}
@@ -1220,6 +1614,118 @@ const GeneralDSVisualizer = ({ onBack, openSettings, initialType = 'HASH_TABLE',
                  </div>
                </div>
              )}
+            </div>
+
+            {/* Popped/Removed Elements Sidebar Panel */}
+            {showHistory && (
+              <div style={{
+                width: '220px',
+                background: 'var(--glass-bg)',
+                backdropFilter: 'blur(16px)',
+                border: '1px solid var(--glass-border)',
+                borderRadius: '16px',
+                display: 'flex',
+                flexDirection: 'column',
+                overflow: 'hidden',
+                boxShadow: '0 10px 25px rgba(0,0,0,0.3)',
+                transition: 'all 0.3s',
+                flexShrink: 0
+              }}>
+                <div style={{
+                  padding: '12px 16px',
+                  background: 'rgba(255, 255, 255, 0.03)',
+                  borderBottom: '1px solid var(--glass-border)',
+                  fontWeight: 'bold',
+                  fontSize: '0.9rem',
+                  color: 'var(--text-primary)',
+                  display: 'flex',
+                  justifyContent: 'space-between',
+                  alignItems: 'center'
+                }}>
+                  <span style={{ display: 'flex', alignItems: 'center', gap: '6px' }}>
+                    {dsType === 'STACK' && '🗑️ Popped Elements'}
+                    {dsType === 'QUEUE' && '🗑️ Dequeued Elements'}
+                    {dsType === 'LINKED_LIST' && '🗑️ Deleted Elements'}
+                    {dsType === 'HASH_TABLE' && '🗑️ Deleted Elements'}
+                  </span>
+                  {poppedElements.length > 0 && (
+                    <button
+                      onClick={() => setPoppedElements([])}
+                      style={{
+                        background: 'transparent',
+                        border: 'none',
+                        color: '#ef4444',
+                        cursor: 'pointer',
+                        fontSize: '0.75rem',
+                        fontWeight: 'bold',
+                        padding: '2px 6px',
+                        borderRadius: '4px',
+                        transition: 'background 0.2s'
+                      }}
+                      onMouseOver={e => e.currentTarget.style.background = 'rgba(239, 68, 68, 0.1)'}
+                      onMouseOut={e => e.currentTarget.style.background = 'transparent'}
+                    >
+                      Clear
+                    </button>
+                  )}
+                </div>
+                <div style={{
+                  flex: 1,
+                  padding: '12px',
+                  overflowY: 'auto',
+                  display: 'flex',
+                  flexDirection: 'column',
+                  gap: '8px'
+                }}>
+                  {poppedElements.length === 0 ? (
+                    <div style={{
+                      color: 'var(--text-secondary)',
+                      fontStyle: 'italic',
+                      fontSize: '0.8rem',
+                      textAlign: 'center',
+                      marginTop: '20px'
+                    }}>
+                      No elements {dsType === 'STACK' ? 'popped' : dsType === 'QUEUE' ? 'dequeued' : 'deleted'} yet.
+                    </div>
+                  ) : (
+                    [...poppedElements].reverse().map((item, index) => {
+                      const displayVal = typeof item === 'object' ? item.val : item;
+                      const opName = typeof item === 'object' ? item.op : 'Pop';
+                      const dsName = typeof item === 'object' ? item.ds : 'Stack';
+                      return (
+                        <div 
+                          key={index} 
+                          style={{
+                            display: 'flex',
+                            flexDirection: 'column',
+                            gap: '6px',
+                            padding: '10px 12px',
+                            background: 'rgba(255, 255, 255, 0.02)',
+                            border: '1px solid var(--glass-border)',
+                            borderRadius: '8px',
+                            fontSize: '0.85rem',
+                            color: 'var(--text-primary)',
+                            animation: 'fadeIn 0.3s ease-out'
+                          }}
+                        >
+                          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                            <span style={{ color: 'var(--text-secondary)', fontSize: '0.72rem', fontFamily: 'monospace' }}>
+                              #{poppedElements.length - index} ({dsName})
+                            </span>
+                            <span style={{ color: 'var(--accent-primary)', fontSize: '0.72rem', fontWeight: 'bold', textTransform: 'uppercase' }}>
+                              {opName}
+                            </span>
+                          </div>
+                          <div style={{ display: 'flex', justifyContent: 'flex-end', fontWeight: 'bold', fontSize: '1.1rem', color: '#f43f5e', textShadow: '0 0 10px rgba(244,63,94,0.3)' }}>
+                            {displayVal}
+                          </div>
+                        </div>
+                      );
+                    })
+                  )}
+                </div>
+              </div>
+            )}
           </div>
           
           <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginTop: '1.5rem', background: 'var(--glass-bg)', padding: '12px 24px', borderRadius: '16px', border: '1px solid var(--glass-border)' }}>
