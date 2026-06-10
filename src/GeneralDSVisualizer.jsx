@@ -331,6 +331,40 @@ const GeneralDSVisualizer = ({ onBack, openSettings, initialType = 'HASH_TABLE',
     setPoppedElements(prev => [...prev, { val, op: 'Pop', ds: 'Stack' }]);
   };
 
+  const stackSearch = () => {
+    let val = parseInt(inputValue);
+    if(isNaN(val)) return;
+    let currentArr = timeline.length > 0 ? timeline[timeline.length-1].arr : elements;
+    let frames = [];
+    frames.push({ arr: [...currentArr], activeIdx: -1, msg: `Searching Stack for ${val}...`, activeLineText: 'search' });
+    let foundIdx = -1;
+    for (let i = currentArr.length - 1; i >= 0; i--) {
+      if (currentArr[i] === val) {
+        foundIdx = i;
+        break;
+      }
+    }
+
+    if (foundIdx === -1) {
+      for (let i = currentArr.length - 1; i >= 0; i--) {
+        frames.push({ arr: [...currentArr], activeIdx: i, msg: `Checking index ${i} (top-${currentArr.length - 1 - i}) ➔ ${currentArr[i]} != ${val}`, activeLineText: 'arr[i] == val' });
+      }
+      frames.push({ arr: [...currentArr], activeIdx: -1, msg: `Value ${val} not found in Stack.` });
+    } else {
+      for (let i = currentArr.length - 1; i >= foundIdx; i--) {
+        frames.push({
+          arr: [...currentArr],
+          activeIdx: i,
+          msg: i === foundIdx ? `Found ${val} at index ${i} (top-${currentArr.length - 1 - i})!` : `Checking index ${i} (top-${currentArr.length - 1 - i}) ➔ ${currentArr[i]} != ${val}`,
+          activeLineText: 'arr[i] == val'
+        });
+      }
+    }
+
+    setTimeline(frames); setCurrentStep(0); setIsPlaying(true); setInputValue(''); triggerFocus();
+    setOperationsLog(prev => [...prev, { op: 'search', val }]);
+  };
+
   const evaluateExpression = () => {
     let tokens = inputValue.trim().split(/\s+/);
     if(tokens.length === 0 || tokens[0] === '') return;
@@ -734,6 +768,71 @@ const GeneralDSVisualizer = ({ onBack, openSettings, initialType = 'HASH_TABLE',
       let opName = dsVariety === 'QUEUE_DEQUE' ? (rear ? 'dequeueRear' : 'dequeueFront') : 'dequeue';
       setOperationsLog(prev => [...prev, { op: opName }]);
       setPoppedElements(prev => [...prev, { val, op: opName === 'dequeueFront' ? 'Deq Front' : (opName === 'dequeueRear' ? 'Deq Rear' : 'Dequeue'), ds: 'Queue' }]);
+    }
+  };
+
+  const queueSearch = () => {
+    let val = parseInt(inputValue);
+    if(isNaN(val)) return;
+    let frames = [];
+    
+    if (dsVariety === 'QUEUE_CIRCULAR') {
+      let state = timeline.length > 0 ? timeline[timeline.length-1].cq : cqState;
+      let { arr, f, r } = state;
+      frames.push({ cq: { arr: [...arr], f, r }, activeIdx: -1, msg: `Searching Circular Queue for ${val}...`, activeLineText: 'search' });
+      if (f === -1) {
+        frames.push({ cq: { arr: [...arr], f, r }, activeIdx: -1, msg: `Queue is empty. Value ${val} not found.` });
+      } else {
+        let i = f;
+        let found = false;
+        let visited = [];
+        while (true) {
+          visited.push(i);
+          if (arr[i] === val) {
+            found = true;
+            break;
+          }
+          if (i === r) break;
+          i = (i + 1) % 5;
+        }
+
+        for (let idx = 0; idx < visited.length; idx++) {
+          let currIdx = visited[idx];
+          let isLast = idx === visited.length - 1;
+          frames.push({
+            cq: { arr: [...arr], f, r },
+            activeIdx: currIdx,
+            msg: (isLast && found) ? `Found ${val} at index ${currIdx}!` : `Checking index ${currIdx} ➔ ${arr[currIdx]} != ${val}`,
+            activeLineText: 'arr[i] == val'
+          });
+        }
+        if (!found) {
+          frames.push({ cq: { arr: [...arr], f, r }, activeIdx: -1, msg: `Value ${val} not found in Circular Queue.` });
+        }
+      }
+      setTimeline(frames); setCurrentStep(0); setIsPlaying(true); setInputValue(''); triggerFocus();
+      setOperationsLog(prev => [...prev, { op: 'search', val }]);
+    } else {
+      let currentArr = timeline.length > 0 ? timeline[timeline.length-1].arr : elements;
+      frames.push({ arr: [...currentArr], activeIdx: -1, msg: `Searching Queue for ${val}...`, activeLineText: 'search' });
+      let foundIdx = currentArr.indexOf(val);
+      if (foundIdx === -1) {
+        for (let i = 0; i < currentArr.length; i++) {
+          frames.push({ arr: [...currentArr], activeIdx: i, msg: `Checking index ${i} (front+${i}) ➔ ${currentArr[i]} != ${val}`, activeLineText: 'arr[i] == val' });
+        }
+        frames.push({ arr: [...currentArr], activeIdx: -1, msg: `Value ${val} not found in Queue.` });
+      } else {
+        for (let i = 0; i <= foundIdx; i++) {
+          frames.push({
+            arr: [...currentArr],
+            activeIdx: i,
+            msg: i === foundIdx ? `Found ${val} at index ${i} (front+${i})!` : `Checking index ${i} (front+${i}) ➔ ${currentArr[i]} != ${val}`,
+            activeLineText: 'arr[i] == val'
+          });
+        }
+      }
+      setTimeline(frames); setCurrentStep(0); setIsPlaying(true); setInputValue(''); triggerFocus();
+      setOperationsLog(prev => [...prev, { op: 'search', val }]);
     }
   };
 
@@ -1298,6 +1397,7 @@ const GeneralDSVisualizer = ({ onBack, openSettings, initialType = 'HASH_TABLE',
                 <>
                 <button className="btn btn-insert" onClick={stackPush} disabled={isPlaying || !inputValue}>Push</button>
                 <button className="btn btn-clear" style={{background: 'var(--accent-secondary)', color:'white', border:'none', opacity: isPlaying || elements.length===0 ? 0.5:1}} onClick={stackPop} disabled={isPlaying || elements.length===0}>Pop</button>
+                <button className="btn btn-clear" style={{background: '#10b981', color:'white', border:'none', opacity: isPlaying || elements.length===0 || !inputValue ? 0.5:1}} onClick={stackSearch} disabled={isPlaying || elements.length===0 || !inputValue}>Search</button>
                 </>
             )}
           </>}
@@ -1309,11 +1409,13 @@ const GeneralDSVisualizer = ({ onBack, openSettings, initialType = 'HASH_TABLE',
                 <button className="btn btn-insert" onClick={() => queueEnqueue(false)} disabled={isPlaying || !inputValue} style={{background: '#8b5cf6'}}>Enqueue Rear</button>
                 <button className="btn btn-clear" style={{background: 'var(--accent-secondary)', color:'white', border:'none', opacity: isPlaying || elements.length===0 ? 0.5:1}} onClick={() => queueDequeue(false)} disabled={isPlaying || elements.length===0}>Dequeue Front</button>
                 <button className="btn btn-clear" style={{background: 'var(--accent-secondary)', color:'white', border:'none', opacity: isPlaying || elements.length===0 ? 0.5:1}} onClick={() => queueDequeue(true)} disabled={isPlaying || elements.length===0}>Dequeue Rear</button>
+                <button className="btn btn-clear" style={{background: '#10b981', color:'white', border:'none', opacity: isPlaying || elements.length===0 || !inputValue ? 0.5:1}} onClick={queueSearch} disabled={isPlaying || elements.length===0 || !inputValue}>Search</button>
               </>
             ) : (
               <>
                 <button className="btn btn-insert" onClick={() => queueEnqueue(false)} disabled={isPlaying || !inputValue}>Enqueue</button>
                 <button className="btn btn-clear" style={{background: 'var(--accent-secondary)', color:'white', border:'none', opacity: isPlaying || (dsVariety==='QUEUE_CIRCULAR'?cqState.f===-1:elements.length===0) ? 0.5:1}} onClick={() => queueDequeue(false)} disabled={isPlaying || (dsVariety==='QUEUE_CIRCULAR'?cqState.f===-1:elements.length===0)}>Dequeue</button>
+                <button className="btn btn-clear" style={{background: '#10b981', color:'white', border:'none', opacity: isPlaying || (dsVariety==='QUEUE_CIRCULAR'?cqState.f===-1:elements.length===0) || !inputValue ? 0.5:1}} onClick={queueSearch} disabled={isPlaying || (dsVariety==='QUEUE_CIRCULAR'?cqState.f===-1:elements.length===0) || !inputValue}>Search</button>
               </>
             )}
           </>}

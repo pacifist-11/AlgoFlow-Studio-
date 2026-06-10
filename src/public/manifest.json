@@ -20,5 +20,35 @@
       "type": "image/png",
       "purpose": "any maskable"
     }
+  ],
+  "screenshots": [
+    {
+      "src": "/screenshot_sorting.png",
+      "sizes": "1024x1024",
+      "type": "image/png",
+      "form_factor": "wide",
+      "label": "Sorting Algorithms Visualizer"
+    },
+    {
+      "src": "/screenshot_sorting.png",
+      "sizes": "1024x1024",
+      "type": "image/png",
+      "form_factor": "narrow",
+      "label": "Sorting Algorithms Visualizer"
+    },
+    {
+      "src": "/screenshot_graph.png",
+      "sizes": "1024x1024",
+      "type": "image/png",
+      "form_factor": "wide",
+      "label": "Graph Traversals Visualizer"
+    },
+    {
+      "src": "/screenshot_graph.png",
+      "sizes": "1024x1024",
+      "type": "image/png",
+      "form_factor": "narrow",
+      "label": "Graph Traversals Visualizer"
+    }
   ]
 }

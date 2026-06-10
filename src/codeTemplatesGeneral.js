@@ -735,11 +735,38 @@ ${execBlock}`;
   if (type === 'STACK') {
     if (variety === 'STACK_ARRAY') {
       if (lang === 'Java') return `class Stack {
-    int[] arr; int top, cap;
-    Stack(int size) { arr = new int[size]; cap = size; top = -1; }
-    void push(int val) { if (top == cap - 1) return; arr[++top] = val; }
-    int pop() { if (top == -1) return -1; return arr[top--]; }
-    void display() { for(int i=0; i<=top; i++) System.out.print(arr[i] + " "); System.out.println(); }
+    int[] arr;
+    int top, cap;
+
+    Stack(int size) {
+        arr = new int[size];
+        cap = size;
+        top = -1;
+    }
+
+    void push(int val) {
+        if (top == cap - 1) return;
+        arr[++top] = val;
+    }
+
+    int pop() {
+        if (top == -1) return -1;
+        return arr[top--];
+    }
+
+    boolean search(int val) {
+        for (int i = 0; i <= top; i++) {
+            if (arr[i] == val) return true;
+        }
+        return false;
+    }
+
+    void display() {
+        for (int i = 0; i <= top; i++) {
+            System.out.print(arr[i] + " ");
+        }
+        System.out.println();
+    }
 }
 public class Main {
     public static void main(String[] args) {
@@ -748,13 +775,39 @@ ${execBlock}
 }`;
       if (lang === 'C++') return `#include <iostream>
 using namespace std;
+
 class Stack {
-    int* arr; int top, cap;
+    int* arr;
+    int top, cap;
 public:
-    Stack(int size) { arr = new int[size]; cap = size; top = -1; }
-    void push(int val) { if (top == cap - 1) return; arr[++top] = val; }
-    int pop() { if (top == -1) return -1; return arr[top--]; }
-    void display() { for(int i=0; i<=top; i++) cout << arr[i] << " "; cout << "\\n"; }
+    Stack(int size) {
+        arr = new int[size];
+        cap = size;
+        top = -1;
+    }
+    ~Stack() {
+        delete[] arr;
+    }
+    void push(int val) {
+        if (top == cap - 1) return;
+        arr[++top] = val;
+    }
+    int pop() {
+        if (top == -1) return -1;
+        return arr[top--];
+    }
+    bool search(int val) {
+        for (int i = 0; i <= top; i++) {
+            if (arr[i] == val) return true;
+        }
+        return false;
+    }
+    void display() {
+        for (int i = 0; i <= top; i++) {
+            cout << arr[i] << " ";
+        }
+        cout << "\\n";
+    }
 };
 int main() {
 ${execBlock}
@@ -765,15 +818,26 @@ ${execBlock}
         self.arr = [None] * cap
         self.cap = cap
         self.top = -1
+
     def push(self, val):
-        if self.top == self.cap - 1: return
+        if self.top == self.cap - 1:
+            return
         self.top += 1
         self.arr[self.top] = val
+
     def pop(self):
-        if self.top == -1: return None
+        if self.top == -1:
+            return None
         val = self.arr[self.top]
         self.top -= 1
         return val
+
+    def search(self, val):
+        for i in range(self.top + 1):
+            if self.arr[i] == val:
+                return True
+        return False
+
     def display(self):
         if self.top == -1:
             print("[]")
@@ -795,10 +859,21 @@ ${execBlock}`;
         if (this.top === -1) return null;
         return this.arr[this.top--];
     }
+    search(val) {
+        for (let i = 0; i <= this.top; i++) {
+            if (this.arr[i] === val) return true;
+        }
+        return false;
+    }
     display() {
-        if (this.top === -1) { console.log("[]"); return; }
+        if (this.top === -1) {
+            console.log("[]");
+            return;
+        }
         let out = [];
-        for (let i = 0; i <= this.top; i++) out.push(this.arr[i]);
+        for (let i = 0; i <= this.top; i++) {
+            out.push(this.arr[i]);
+        }
         console.log(out.join(" "));
     }
 }
@@ -806,14 +881,46 @@ ${execBlock}`;
 ${execBlock}`;
     } else if (variety === 'STACK_LL') {
       if (lang === 'Java') return `class Node {
-    int data; Node next;
-    Node(int d) { data = d; next = null; }
+    int data;
+    Node next;
+    Node(int d) {
+        data = d;
+        next = null;
+    }
 }
 class Stack {
     Node top;
-    void push(int val) { Node n = new Node(val); n.next = top; top = n; }
-    int pop() { if(top == null) return -1; int d = top.data; top = top.next; return d; }
-    void display() { Node t = top; while(t != null) { System.out.print(t.data + " "); t = t.next; } System.out.println(); }
+
+    void push(int val) {
+        Node n = new Node(val);
+        n.next = top;
+        top = n;
+    }
+
+    int pop() {
+        if (top == null) return -1;
+        int d = top.data;
+        top = top.next;
+        return d;
+    }
+
+    boolean search(int val) {
+        Node t = top;
+        while (t != null) {
+            if (t.data == val) return true;
+            t = t.next;
+        }
+        return false;
+    }
+
+    void display() {
+        Node t = top;
+        while (t != null) {
+            System.out.print(t.data + " ");
+            t = t.next;
+        }
+        System.out.println();
+    }
 }
 public class Main {
     public static void main(String[] args) {
@@ -822,44 +929,131 @@ ${execBlock}
 }`;
       if (lang === 'C++') return `#include <iostream>
 using namespace std;
-struct Node { int data; Node* next; Node(int d) : data(d), next(nullptr) {} };
+
+struct Node {
+    int data;
+    Node* next;
+    Node(int d) : data(d), next(nullptr) {}
+};
 class Stack {
     Node* top = nullptr;
 public:
-    void push(int val) { Node* n = new Node(val); n->next = top; top = n; }
-    int pop() { if(!top) return -1; int d = top->data; top = top->next; return d; }
-    void display() { Node* t = top; while(t) { cout << t->data << " "; t = t->next; } cout << "\\n"; }
+    ~Stack() {
+        while (top) {
+            Node* temp = top;
+            top = top->next;
+            delete temp;
+        }
+    }
+    void push(int val) {
+        Node* n = new Node(val);
+        n->next = top;
+        top = n;
+    }
+    int pop() {
+        if (!top) return -1;
+        Node* temp = top;
+        int d = top->data;
+        top = top->next;
+        delete temp;
+        return d;
+    }
+    bool search(int val) {
+        Node* t = top;
+        while (t) {
+            if (t->data == val) return true;
+            t = t->next;
+        }
+        return false;
+    }
+    void display() {
+        Node* t = top;
+        while (t) {
+            cout << t->data << " ";
+            t = t->next;
+        }
+        cout << "\\n";
+    }
 };
 int main() {
 ${execBlock}
     return 0;
 }`;
       if (lang === 'Python') return `class Node:
-    def __init__(self, d): self.data = d; self.next = None
+    def __init__(self, d):
+        self.data = d
+        self.next = None
+
 class Stack:
-    def __init__(self): self.top = None
+    def __init__(self):
+        self.top = None
+
     def push(self, val):
-        n = Node(val); n.next = self.top; self.top = n
+        n = Node(val)
+        n.next = self.top
+        self.top = n
+
     def pop(self):
-        if not self.top: return None
-        d = self.top.data; self.top = self.top.next; return d
+        if not self.top:
+            return None
+        d = self.top.data
+        self.top = self.top.next
+        return d
+
+    def search(self, val):
+        t = self.top
+        while t:
+            if t.data == val:
+                return True
+            t = t.next
+        return False
+
     def display(self):
-        t = self.top; out = []
-        while t: out.append(t.data); t = t.next
-        print(out)
+        t = self.top
+        out = []
+        while t:
+            out.append(t.data)
+            t = t.next
+        print(" ".join(str(x) for x in out))
 if __name__ == "__main__":
 ${execBlock}`;
       if (lang === 'JS') return `class Node {
-    constructor(d) { this.data = d; this.next = null; }
+    constructor(d) {
+        this.data = d;
+        this.next = null;
+    }
 }
 class Stack {
-    constructor() { this.top = null; }
-    push(val) { let n = new Node(val); n.next = this.top; this.top = n; }
-    pop() { if(!this.top) return null; let d = this.top.data; this.top = this.top.next; return d; }
+    constructor() {
+        this.top = null;
+    }
+    push(val) {
+        let n = new Node(val);
+        n.next = this.top;
+        this.top = n;
+    }
+    pop() {
+        if (!this.top) return null;
+        let d = this.top.data;
+        this.top = this.top.next;
+        return d;
+    }
+    search(val) {
+        let t = this.top;
+        while (t) {
+            if (t.data === val) return true;
+            t = t.next;
+        }
+        return false;
+    }
     display() {
-        let t = this.top, out = [];
-        while(t) { out.push(t.data); t = t.next; }
-        console.log(out);
+        let t = this.top;
+        let out = [];
+        while (t) {
+            out.push(t.data);
+            t = t.next;
+        }
+        console.log(out.join(" "));
     }
 }
 // Execution
@@ -1726,16 +1920,49 @@ ${execBlock}`;
 ${execBlock}`;
     }
   }
-
   // QUEUES
   if (type === 'QUEUE') {
     if (variety === 'QUEUE_SIMPLE') {
       if (lang === 'Java') return `class Queue {
-    int[] arr; int front=0, rear=-1, cap;
-    Queue(int size) { cap = size; arr = new int[cap]; }
-    void enqueue(int val) { if (rear == cap - 1) return; arr[++rear] = val; }
-    int dequeue() { if (front > rear) return -1; return arr[front++]; }
-    void display() { for(int i=front; i<=rear; i++) System.out.print(arr[i]+" "); System.out.println(); }
+    int[] arr;
+    int front = 0;
+    int rear = -1;
+    int cap;
+
+    Queue(int size) {
+        cap = size;
+        arr = new int[cap];
+    }
+
+    void enqueue(int val) {
+        if (rear == cap - 1) {
+            return;
+        }
+        arr[++rear] = val;
+    }
+
+    int dequeue() {
+        if (front > rear) {
+            return -1;
+        }
+        return arr[front++];
+    }
+
+    boolean search(int val) {
+        for (int i = front; i <= rear; i++) {
+            if (arr[i] == val) {
+                return true;
+            }
+        }
+        return false;
+    }
+
+    void display() {
+        for (int i = front; i <= rear; i++) {
+            System.out.print(arr[i] + " ");
+        }
+        System.out.println();
+    }
 }
 public class Main {
     public static void main(String[] args) {
@@ -1744,13 +1971,46 @@ ${execBlock}
 }`;
       if (lang === 'C++') return `#include <iostream>
 using namespace std;
+
 class Queue {
-    int* arr; int front=0, rear=-1, cap;
+    int* arr;
+    int front = 0;
+    int rear = -1;
+    int cap;
 public:
-    Queue(int size) { cap = size; arr = new int[cap]; }
-    void enqueue(int val) { if (rear == cap - 1) return; arr[++rear] = val; }
-    int dequeue() { if (front > rear) return -1; return arr[front++]; }
-    void display() { for(int i=front; i<=rear; i++) cout << arr[i] << " "; cout << "\\n"; }
+    Queue(int size) {
+        cap = size;
+        arr = new int[cap];
+    }
+    ~Queue() {
+        delete[] arr;
+    }
+    void enqueue(int val) {
+        if (rear == cap - 1) {
+            return;
+        }
+        arr[++rear] = val;
+    }
+    int dequeue() {
+        if (front > rear) {
+            return -1;
+        }
+        return arr[front++];
+    }
+    bool search(int val) {
+        for (int i = front; i <= rear; i++) {
+            if (arr[i] == val) {
+                return true;
+            }
+        }
+        return false;
+    }
+    void display() {
+        for (int i = front; i <= rear; i++) {
+            cout << arr[i] << " ";
+        }
+        cout << "\n";
+    }
 };
 int main() {
 ${execBlock}
@@ -1762,15 +2022,26 @@ ${execBlock}
         self.cap = cap
         self.front = 0
         self.rear = -1
+
     def enqueue(self, val):
-        if self.rear == self.cap - 1: return
+        if self.rear == self.cap - 1:
+            return
         self.rear += 1
         self.arr[self.rear] = val
+
     def dequeue(self):
-        if self.front > self.rear: return None
+        if self.front > self.rear:
+            return None
         val = self.arr[self.front]
         self.front += 1
         return val
+
+    def search(self, val):
+        for i in range(self.front, self.rear + 1):
+            if self.arr[i] == val:
+                return True
+        return False
+
     def display(self):
         if self.front > self.rear:
             print("[]")
@@ -1786,17 +2057,34 @@ ${execBlock}`;
         this.rear = -1;
     }
     enqueue(val) {
-        if (this.rear === this.cap - 1) return;
+        if (this.rear === this.cap - 1) {
+            return;
+        }
         this.arr[++this.rear] = val;
     }
     dequeue() {
-        if (this.front > this.rear) return null;
+        if (this.front > this.rear) {
+            return null;
+        }
         return this.arr[this.front++];
     }
+    search(val) {
+        for (let i = this.front; i <= this.rear; i++) {
+            if (this.arr[i] === val) {
+                return true;
+            }
+        }
+        return false;
+    }
     display() {
-        if (this.front > this.rear) { console.log("[]"); return; }
+        if (this.front > this.rear) {
+            console.log("[]");
+            return;
+        }
         let out = [];
-        for (let i = this.front; i <= this.rear; i++) out.push(this.arr[i]);
+        for (let i = this.front; i <= this.rear; i++) {
+            out.push(this.arr[i]);
+        }
         console.log(out.join(" "));
     }
 }
@@ -1804,26 +2092,70 @@ ${execBlock}`;
 ${execBlock}`;
     } else if (variety === 'QUEUE_CIRCULAR') {
       if (lang === 'Java') return `class Queue {
-    int[] arr; int front=-1, rear=-1, cap;
-    Queue(int size) { cap = size; arr = new int[cap]; }
-    void enqueue(int val) {
-        if ((rear + 1) % cap == front) return;
-        if (front == -1) front = 0;
-        rear = (rear + 1) % cap; arr[rear] = val;
+    int[] arr;
+    int front = -1;
+    int rear = -1;
+    int cap;
+
+    Queue(int size) {
+        cap = size;
+        arr = new int[cap];
     }
+
+    void enqueue(int val) {
+        if ((rear + 1) % cap == front) {
+            return;
+        }
+        if (front == -1) {
+            front = 0;
+        }
+        rear = (rear + 1) % cap;
+        arr[rear] = val;
+    }
+
     int dequeue() {
-        if (front == -1) return -1;
+        if (front == -1) {
+            return -1;
+        }
         int d = arr[front];
-        if (front == rear) { front = -1; rear = -1; } else front = (front + 1) % cap;
+        if (front == rear) {
+            front = -1;
+            rear = -1;
+        } else {
+            front = (front + 1) % cap;
+        }
         return d;
     }
+
+    boolean search(int val) {
+        if (front == -1) {
+            return false;
+        }
+        int i = front;
+        while (true) {
+            if (arr[i] == val) {
+                return true;
+            }
+            if (i == rear) {
+                break;
+            }
+            i = (i + 1) % cap;
+        }
+        return false;
+    }
+
     void display() {
-        if (front == -1) { System.out.println("[]"); return; }
+        if (front == -1) {
+            System.out.println("[]");
+            return;
+        }
         int i = front;
         System.out.print("[");
         while (true) {
             System.out.print(arr[i] + (i == rear ? "" : ", "));
-            if (i == rear) break;
+            if (i == rear) {
+                break;
+            }
             i = (i + 1) % cap;
         }
         System.out.println("]");
@@ -1836,189 +2168,74 @@ ${execBlock}
 }`;
       if (lang === 'C++') return `#include <iostream>
 using namespace std;
+
 class Queue {
-    int* arr; int front=-1, rear=-1, cap;
+    int* arr;
+    int front = -1;
+    int rear = -1;
+    int cap;
 public:
-    Queue(int size) { cap = size; arr = new int[cap]; }
+    Queue(int size) {
+        cap = size;
+        arr = new int[cap];
+    }
+    ~Queue() {
+        delete[] arr;
+    }
     void enqueue(int val) {
-        if ((rear + 1) % cap == front) return;
-        if (front == -1) front = 0;
-        rear = (rear + 1) % cap; arr[rear] = val;
+        if ((rear + 1) % cap == front) {
+            return;
+        }
+        if (front == -1) {
+            front = 0;
+        }
+        rear = (rear + 1) % cap;
+        arr[rear] = val;
     }
     int dequeue() {
-        if (front == -1) return -1;
+        if (front == -1) {
+            return -1;
+        }
         int d = arr[front];
-        if (front == rear) { front = -1; rear = -1; } else front = (front + 1) % cap;
+        if (front == rear) {
+            front = -1;
+            rear = -1;
+        } else {
+            front = (front + 1) % cap;
+        }
         return d;
     }
+    bool search(int val) {
+        if (front == -1) {
+            return false;
+        }
+        int i = front;
+        while (true) {
+            if (arr[i] == val) {
+                return true;
+            }
+            if (i == rear) {
+                break;
+            }
+            i = (i + 1) % cap;
+        }
+        return false;
+    }
     void display() {
-        if (front == -1) { cout << "[]\\n"; return; }
+        if (front == -1) {
+            cout << "[]\n";
+            return;
+        }
         int i = front;
         cout << "[";
         while (true) {
             cout << arr[i] << (i == rear ? "" : ", ");
-            if (i == rear) break;
+            if (i == rear) {
+                break;
+            }
             i = (i + 1) % cap;
         }
-        cout << "]\\n";
-    }
-};
-int main() {
-${execBlock}
-    return 0;
-}`;
-      if (lang === 'Python') return `class Queue:
-    def __init__(self, cap=100):
-        self.arr = [None]*cap; self.cap = cap; self.front = -1; self.rear = -1
-    def enqueue(self, val):
-        if (self.rear + 1) % self.cap == self.front: return
-        if self.front == -1: self.front = 0
-        self.rear = (self.rear + 1) % self.cap
-        self.arr[self.rear] = val
-    def dequeue(self):
-        if self.front == -1: return None
-        d = self.arr[self.front]
-        if self.front == self.rear: self.front = self.rear = -1
-        else: self.front = (self.front + 1) % self.cap
-        return d
-    def display(self):
-        if self.front == -1:
-            print("[]")
-            return
-        i = self.front
-        out = []
-        while True:
-            out.append(str(self.arr[i]))
-            if i == self.rear: break
-            i = (i + 1) % self.cap
-        print("[" + ", ".join(out) + "]")
-if __name__ == "__main__":
-${execBlock}`;
-      if (lang === 'JS') return `class Queue {
-    constructor(cap=100) { this.arr = new Array(cap); this.cap = cap; this.front = -1; this.rear = -1; }
-    enqueue(val) {
-        if ((this.rear + 1) % this.cap === this.front) return;
-        if (this.front === -1) this.front = 0;
-        this.rear = (this.rear + 1) % this.cap; this.arr[this.rear] = val;
-    }
-    dequeue() {
-        if (this.front === -1) return null;
-        let d = this.arr[this.front];
-        if (this.front === this.rear) { this.front = -1; this.rear = -1; } else this.front = (this.front + 1) % this.cap;
-        return d;
-    }
-    display() {
-        if (this.front === -1) { console.log("[]"); return; }
-        let i = this.front;
-        let out = [];
-        while (true) {
-            out.push(this.arr[i]);
-            if (i === this.rear) break;
-            i = (i + 1) % this.cap;
-        }
-        console.log("[" + out.join(", ") + "]");
-    }
-}
-// Execution
-${execBlock}`;
-    } else if (variety === 'QUEUE_DEQUE') {
-      if (lang === 'Java') return `class Queue {
-    int[] arr; int front, rear, cap;
-    public Queue(int size) { cap = size; arr = new int[cap]; front = -1; rear = -1; }
-    void enqueueFront(int val) {
-        if ((front == 0 && rear == cap - 1) || (front == rear + 1)) return;
-        if (front == -1) { front = 0; rear = 0; }
-        else if (front == 0) front = cap - 1;
-        else front = front - 1;
-        arr[front] = val;
-    }
-    void enqueueRear(int val) {
-        if ((front == 0 && rear == cap - 1) || (front == rear + 1)) return;
-        if (front == -1) { front = 0; rear = 0; }
-        else if (rear == cap - 1) rear = 0;
-        else rear = rear + 1;
-        arr[rear] = val;
-    }
-    int dequeueFront() {
-        if (front == -1) return -1;
-        int d = arr[front];
-        if (front == rear) { front = -1; rear = -1; }
-        else if (front == cap - 1) front = 0;
-        else front = front + 1;
-        return d;
-    }
-    int dequeueRear() {
-        if (front == -1) return -1;
-        int d = arr[rear];
-        if (front == rear) { front = -1; rear = -1; }
-        else if (rear == 0) rear = cap - 1;
-        else rear = rear - 1;
-        return d;
-    }
-    void display() {
-        if (front == -1) { System.out.println("[]"); return; }
-        int i = front;
-        System.out.print("[");
-        while (true) {
-            System.out.print(arr[i] + (i == rear ? "" : ", "));
-            if (i == rear) break;
-            i = (i + 1) % cap;
-        }
-        System.out.println("]");
-    }
-}
-public class Main {
-    public static void main(String[] args) {
-${execBlock}
-    }
-}`;
-      if (lang === 'C++') return `#include <iostream>
-using namespace std;
-class Queue {
-    int* arr; int front, rear, cap;
-public:
-    Queue(int size) { cap = size; arr = new int[cap]; front = -1; rear = -1; }
-    ~Queue() { delete[] arr; }
-    void enqueueFront(int val) {
-        if ((front == 0 && rear == cap - 1) || (front == rear + 1)) return;
-        if (front == -1) { front = 0; rear = 0; }
-        else if (front == 0) front = cap - 1;
-        else front = front - 1;
-        arr[front] = val;
-    }
-    void enqueueRear(int val) {
-        if ((front == 0 && rear == cap - 1) || (front == rear + 1)) return;
-        if (front == -1) { front = 0; rear = 0; }
-        else if (rear == cap - 1) rear = 0;
-        else rear = rear + 1;
-        arr[rear] = val;
-    }
-    int dequeueFront() {
-        if (front == -1) return -1;
-        int d = arr[front];
-        if (front == rear) { front = -1; rear = -1; }
-        else if (front == cap - 1) front = 0;
-        else front = front + 1;
-        return d;
-    }
-    int dequeueRear() {
-        if (front == -1) return -1;
-        int d = arr[rear];
-        if (front == rear) { front = -1; rear = -1; }
-        else if (rear == 0) rear = cap - 1;
-        else rear = rear - 1;
-        return d;
-    }
-    void display() {
-        if (front == -1) { cout << "[]\\n"; return; }
-        int i = front;
-        cout << "[";
-        while (true) {
-            cout << arr[i] << (i == rear ? "" : ", ");
-            if (i == rear) break;
-            i = (i + 1) % cap;
-        }
-        cout << "]\\n";
+        cout << "]\n";
     }
 };
 int main() {
@@ -2031,32 +2248,411 @@ ${execBlock}
         self.cap = cap
         self.front = -1
         self.rear = -1
-    def enqueueFront(self, val):
-        if ((self.front == 0 and self.rear == self.cap - 1) or (self.front == self.rear + 1)): return
-        if self.front == -1: self.front = 0; self.rear = 0
-        elif self.front == 0: self.front = self.cap - 1
-        else: self.front -= 1
-        self.arr[self.front] = val
-    def enqueueRear(self, val):
-        if ((self.front == 0 and self.rear == self.cap - 1) or (self.front == self.rear + 1)): return
-        if self.front == -1: self.front = 0; self.rear = 0
-        elif self.rear == self.cap - 1: self.rear = 0
-        else: self.rear += 1
+
+    def enqueue(self, val):
+        if (self.rear + 1) % self.cap == self.front:
+            return
+        if self.front == -1:
+            self.front = 0
+        self.rear = (self.rear + 1) % self.cap
         self.arr[self.rear] = val
+
+    def dequeue(self):
+        if self.front == -1:
+            return None
+        d = self.arr[self.front]
+        if self.front == self.rear:
+            self.front = self.rear = -1
+        else:
+            self.front = (self.front + 1) % self.cap
+        return d
+
+    def search(self, val):
+        if self.front == -1:
+            return False
+        i = self.front
+        while True:
+            if self.arr[i] == val:
+                return True
+            if i == self.rear:
+                break
+            i = (i + 1) % self.cap
+        return False
+
+    def display(self):
+        if self.front == -1:
+            print("[]")
+            return
+        i = self.front
+        out = []
+        while True:
+            out.append(str(self.arr[i]))
+            if i == self.rear:
+                break
+            i = (i + 1) % self.cap
+        print("[" + ", ".join(out) + "]")
+if __name__ == "__main__":
+${execBlock}`;
+      if (lang === 'JS') return `class Queue {
+    constructor(cap = 100) {
+        this.arr = new Array(cap);
+        this.cap = cap;
+        this.front = -1;
+        this.rear = -1;
+    }
+    enqueue(val) {
+        if ((this.rear + 1) % this.cap === this.front) {
+            return;
+        }
+        if (this.front === -1) {
+            this.front = 0;
+        }
+        this.rear = (this.rear + 1) % this.cap;
+        this.arr[this.rear] = val;
+    }
+    dequeue() {
+        if (this.front === -1) {
+            return null;
+        }
+        let d = this.arr[this.front];
+        if (this.front === this.rear) {
+            this.front = -1;
+            this.rear = -1;
+        } else {
+            this.front = (this.front + 1) % this.cap;
+        }
+        return d;
+    }
+    search(val) {
+        if (this.front === -1) {
+            return false;
+        }
+        let i = this.front;
+        while (true) {
+            if (this.arr[i] === val) {
+                return true;
+            }
+            if (i === this.rear) {
+                break;
+            }
+            i = (i + 1) % this.cap;
+        }
+        return false;
+    }
+    display() {
+        if (this.front === -1) {
+            console.log("[]");
+            return;
+        }
+        let i = this.front;
+        let out = [];
+        while (true) {
+            out.push(this.arr[i]);
+            if (i === this.rear) {
+                break;
+            }
+            i = (i + 1) % this.cap;
+        }
+        console.log("[" + out.join(", ") + "]");
+    }
+}
+// Execution
+${execBlock}`;
+    } else if (variety === 'QUEUE_DEQUE') {
+      if (lang === 'Java') return `class Queue {
+    int[] arr;
+    int front;
+    int rear;
+    int cap;
+
+    public Queue(int size) {
+        cap = size;
+        arr = new int[cap];
+        front = -1;
+        rear = -1;
+    }
+
+    void enqueueFront(int val) {
+        if ((front == 0 && rear == cap - 1) || (front == rear + 1)) {
+            return;
+        }
+        if (front == -1) {
+            front = 0;
+            rear = 0;
+        } else if (front == 0) {
+            front = cap - 1;
+        } else {
+            front = front - 1;
+        }
+        arr[front] = val;
+    }
+
+    void enqueueRear(int val) {
+        if ((front == 0 && rear == cap - 1) || (front == rear + 1)) {
+            return;
+        }
+        if (front == -1) {
+            front = 0;
+            rear = 0;
+        } else if (rear == cap - 1) {
+            rear = 0;
+        } else {
+            rear = rear + 1;
+        }
+        arr[rear] = val;
+    }
+
+    int dequeueFront() {
+        if (front == -1) {
+            return -1;
+        }
+        int d = arr[front];
+        if (front == rear) {
+            front = -1;
+            rear = -1;
+        } else if (front == cap - 1) {
+            front = 0;
+        } else {
+            front = front + 1;
+        }
+        return d;
+    }
+
+    int dequeueRear() {
+        if (front == -1) {
+            return -1;
+        }
+        int d = arr[rear];
+        if (front == rear) {
+            front = -1;
+            rear = -1;
+        } else if (rear == 0) {
+            rear = cap - 1;
+        } else {
+            rear = rear - 1;
+        }
+        return d;
+    }
+
+    boolean search(int val) {
+        if (front == -1) {
+            return false;
+        }
+        int i = front;
+        while (true) {
+            if (arr[i] == val) {
+                return true;
+            }
+            if (i == rear) {
+                break;
+            }
+            i = (i + 1) % cap;
+        }
+        return false;
+    }
+
+    void display() {
+        if (front == -1) {
+            System.out.println("[]");
+            return;
+        }
+        int i = front;
+        System.out.print("[");
+        while (true) {
+            System.out.print(arr[i] + (i == rear ? "" : ", "));
+            if (i == rear) {
+                break;
+            }
+            i = (i + 1) % cap;
+        }
+        System.out.println("]");
+    }
+}
+public class Main {
+    public static void main(String[] args) {
+${execBlock}
+    }
+}`;
+      if (lang === 'C++') return `#include <iostream>
+using namespace std;
+
+class Queue {
+    int* arr;
+    int front;
+    int rear;
+    int cap;
+public:
+    Queue(int size) {
+        cap = size;
+        arr = new int[cap];
+        front = -1;
+        rear = -1;
+    }
+    ~Queue() {
+        delete[] arr;
+    }
+    void enqueueFront(int val) {
+        if ((front == 0 && rear == cap - 1) || (front == rear + 1)) {
+            return;
+        }
+        if (front == -1) {
+            front = 0;
+            rear = 0;
+        } else if (front == 0) {
+            front = cap - 1;
+        } else {
+            front = front - 1;
+        }
+        arr[front] = val;
+    }
+    void enqueueRear(int val) {
+        if ((front == 0 && rear == cap - 1) || (front == rear + 1)) {
+            return;
+        }
+        if (front == -1) {
+            front = 0;
+            rear = 0;
+        } else if (rear == cap - 1) {
+            rear = 0;
+        } else {
+            rear = rear + 1;
+        }
+        arr[rear] = val;
+    }
+    int dequeueFront() {
+        if (front == -1) {
+            return -1;
+        }
+        int d = arr[front];
+        if (front == rear) {
+            front = -1;
+            rear = -1;
+        } else if (front == cap - 1) {
+            front = 0;
+        } else {
+            front = front + 1;
+        }
+        return d;
+    }
+    int dequeueRear() {
+        if (front == -1) {
+            return -1;
+        }
+        int d = arr[rear];
+        if (front == rear) {
+            front = -1;
+            rear = -1;
+        } else if (rear == 0) {
+            rear = cap - 1;
+        } else {
+            rear = rear - 1;
+        }
+        return d;
+    }
+    bool search(int val) {
+        if (front == -1) {
+            return false;
+        }
+        int i = front;
+        while (true) {
+            if (arr[i] == val) {
+                return true;
+            }
+            if (i == rear) {
+                break;
+            }
+            i = (i + 1) % cap;
+        }
+        return false;
+    }
+    void display() {
+        if (front == -1) {
+            cout << "[]\n";
+            return;
+        }
+        int i = front;
+        cout << "[";
+        while (true) {
+            cout << arr[i] << (i == rear ? "" : ", ");
+            if (i == rear) {
+                break;
+            }
+            i = (i + 1) % cap;
+        }
+        cout << "]\n";
+    }
+};
+int main() {
+${execBlock}
+    return 0;
+}`;
+      if (lang === 'Python') return `class Queue:
+    def __init__(self, cap=100):
+        self.arr = [None] * cap
+        self.cap = cap
+        self.front = -1
+        self.rear = -1
+
+    def enqueueFront(self, val):
+        if (self.front == 0 and self.rear == self.cap - 1) or (self.front == self.rear + 1):
+            return
+        if self.front == -1:
+            self.front = 0
+            self.rear = 0
+        elif self.front == 0:
+            self.front = self.cap - 1
+        else:
+            self.front -= 1
+        self.arr[self.front] = val
+
+    def enqueueRear(self, val):
+        if (self.front == 0 and self.rear == self.cap - 1) or (self.front == self.rear + 1):
+            return
+        if self.front == -1:
+            self.front = 0
+            self.rear = 0
+        elif self.rear == self.cap - 1:
+            self.rear = 0
+        else:
+            self.rear += 1
+        self.arr[self.rear] = val
+
     def dequeueFront(self):
-        if self.front == -1: return None
+        if self.front == -1:
+            return None
         val = self.arr[self.front]
-        if self.front == self.rear: self.front = self.rear = -1
-        elif self.front == self.cap - 1: self.front = 0
-        else: self.front += 1
+        if self.front == self.rear:
+            self.front = self.rear = -1
+        elif self.front == self.cap - 1:
+            self.front = 0
+        else:
+            self.front += 1
         return val
+
     def dequeueRear(self):
-        if self.front == -1: return None
+        if self.front == -1:
+            return None
         val = self.arr[self.rear]
-        if self.front == self.rear: self.front = self.rear = -1
-        elif self.rear == 0: self.rear = self.cap - 1
-        else: self.rear -= 1
+        if self.front == self.rear:
+            self.front = self.rear = -1
+        elif self.rear == 0:
+            self.rear = self.cap - 1
+        else:
+            self.rear -= 1
         return val
+
+    def search(self, val):
+        if self.front == -1:
+            return False
+        i = self.front
+        while True:
+            if self.arr[i] == val:
+                return True
+            if i == self.rear:
+                break
+            i = (i + 1) % self.cap
+        return False
+
     def display(self):
         if self.front == -1:
             print("[]")
@@ -2065,7 +2661,8 @@ ${execBlock}
         i = self.front
         while True:
             out.append(str(self.arr[i]))
-            if i == self.rear: break
+            if i == self.rear:
+                break
             i = (i + 1) % self.cap
         print("[" + ", ".join(out) + "]")
 if __name__ == "__main__":
@@ -2078,42 +2675,91 @@ ${execBlock}`;
         this.rear = -1;
     }
     enqueueFront(val) {
-        if ((this.front === 0 && this.rear === this.cap - 1) || (this.front === this.rear + 1)) return;
-        if (this.front === -1) { this.front = 0; this.rear = 0; }
-        else if (this.front === 0) this.front = this.cap - 1;
-        else this.front = this.front - 1;
+        if ((this.front === 0 && this.rear === this.cap - 1) || (this.front === this.rear + 1)) {
+            return;
+        }
+        if (this.front === -1) {
+            this.front = 0;
+            this.rear = 0;
+        } else if (this.front === 0) {
+            this.front = this.cap - 1;
+        } else {
+            this.front = this.front - 1;
+        }
         this.arr[this.front] = val;
     }
     enqueueRear(val) {
-        if ((this.front === 0 && this.rear === this.cap - 1) || (this.front === this.rear + 1)) return;
-        if (this.front === -1) { this.front = 0; this.rear = 0; }
-        else if (this.rear === this.cap - 1) this.rear = 0;
-        else this.rear = this.rear + 1;
+        if ((this.front === 0 && this.rear === this.cap - 1) || (this.front === this.rear + 1)) {
+            return;
+        }
+        if (this.front === -1) {
+            this.front = 0;
+            this.rear = 0;
+        } else if (this.rear === this.cap - 1) {
+            this.rear = 0;
+        } else {
+            this.rear = this.rear + 1;
+        }
         this.arr[this.rear] = val;
     }
     dequeueFront() {
-        if (this.front === -1) return null;
+        if (this.front === -1) {
+            return null;
+        }
         let d = this.arr[this.front];
-        if (this.front === this.rear) { this.front = -1; this.rear = -1; }
-        else if (this.front === this.cap - 1) this.front = 0;
-        else this.front = this.front + 1;
+        if (this.front === this.rear) {
+            this.front = -1;
+            this.rear = -1;
+        } else if (this.front === this.cap - 1) {
+            this.front = 0;
+        } else {
+            this.front = this.front + 1;
+        }
         return d;
     }
     dequeueRear() {
-        if (this.front === -1) return null;
+        if (this.front === -1) {
+            return null;
+        }
         let d = this.arr[this.rear];
-        if (this.front === this.rear) { this.front = -1; this.rear = -1; }
-        else if (this.rear === 0) this.rear = this.cap - 1;
-        else this.rear = this.rear - 1;
+        if (this.front === this.rear) {
+            this.front = -1;
+            this.rear = -1;
+        } else if (this.rear === 0) {
+            this.rear = this.cap - 1;
+        } else {
+            this.rear = this.rear - 1;
+        }
         return d;
     }
+    search(val) {
+        if (this.front === -1) {
+            return false;
+        }
+        let i = this.front;
+        while (true) {
+            if (this.arr[i] === val) {
+                return true;
+            }
+            if (i === this.rear) {
+                break;
+            }
+            i = (i + 1) % this.cap;
+        }
+        return false;
+    }
     display() {
-        if (this.front === -1) { console.log("[]"); return; }
+        if (this.front === -1) {
+            console.log("[]");
+            return;
+        }
         let out = [];
         let i = this.front;
         while (true) {
             out.push(this.arr[i]);
-            if (i === this.rear) break;
+            if (i === this.rear) {
+                break;
+            }
             i = (i + 1) % this.cap;
         }
         console.log("[" + out.join(", ") + "]");
@@ -2123,12 +2769,27 @@ ${execBlock}`;
 ${execBlock}`;
     } else if (variety === 'QUEUE_PRIORITY') {
       if (lang === 'Java') return `import java.util.PriorityQueue;
+
 class Queue {
     PriorityQueue<Integer> pq = new PriorityQueue<>();
+
     public Queue(int cap) {}
-    void enqueue(int v) { pq.add(v); }
-    int dequeue() { return pq.poll(); }
-    void display() { System.out.println(pq); }
+
+    void enqueue(int v) {
+        pq.add(v);
+    }
+
+    int dequeue() {
+        return pq.poll();
+    }
+
+    boolean search(int val) {
+        return pq.contains(val);
+    }
+
+    void display() {
+        System.out.println(pq);
+    }
 }
 public class Main {
     public static void main(String[] args) {
@@ -2137,35 +2798,105 @@ ${execBlock}
 }`;
       if (lang === 'C++') return `#include <iostream>
 #include <queue>
+#include <vector>
 using namespace std;
+
 class Queue {
     priority_queue<int, vector<int>, greater<int>> pq;
 public:
     Queue(int c) {}
-    void enqueue(int v) { pq.push(v); }
-    int dequeue() { int v = pq.top(); pq.pop(); return v; }
-    void display() { /* PQ traversal not standard */ }
+
+    void enqueue(int v) {
+        pq.push(v);
+    }
+
+    int dequeue() {
+        int v = pq.top();
+        pq.pop();
+        return v;
+    }
+
+    bool search(int val) {
+        priority_queue<int, vector<int>, greater<int>> temp = pq;
+        while (!temp.empty()) {
+            if (temp.top() == val) {
+                return true;
+            }
+            temp.pop();
+        }
+        return false;
+    }
+
+    void display() {
+        // Traversal of C++ priority_queue prints elements in sorted order
+        priority_queue<int, vector<int>, greater<int>> temp = pq;
+        while (!temp.empty()) {
+            cout << temp.top() << " ";
+            temp.pop();
+        }
+        cout << "\n";
+    }
 };
 int main() {
 ${execBlock}
     return 0;
 }`;
       if (lang === 'Python') return `import heapq
+
 class Queue:
-    def __init__(self): self.pq = []
-    def enqueue(self, v): heapq.heappush(self.pq, v)
-    def dequeue(self): return heapq.heappop(self.pq)
-    def display(self): print(self.pq)
+    def __init__(self):
+        self.pq = []
+
+    def enqueue(self, v):
+        heapq.heappush(self.pq, v)
+
+    def dequeue(self):
+        if not self.pq:
+            return None
+        return heapq.heappop(self.pq)
+
+    def search(self, val):
+        for x in self.pq:
+            if x == val:
+                return True
+        return False
+
+    def display(self):
+        print(self.pq)
 if __name__ == "__main__":
-${execBlock}`;
+\${execBlock}`;
       if (lang === 'JS') return `class Queue {
-    constructor() { this.arr = []; }
-    enqueue(val) { this.arr.push(val); this.arr.sort((a,b) => a-b); }
-    dequeue() { return this.arr.shift(); }
-    display() { console.log(this.arr); }
+    constructor() {
+        this.arr = [];
+    }
+
+    enqueue(val) {
+        this.arr.push(val);
+        this.arr.sort((a, b) => a - b);
+    }
+
+    dequeue() {
+        if (this.arr.length === 0) {
+            return null;
+        }
+        return this.arr.shift();
+    }
+
+    search(val) {
+        for (let i = 0; i < this.arr.length; i++) {
+            if (this.arr[i] === val) {
+                return true;
+            }
+        }
+        return false;
+    }
+
+    display() {
+        console.log(this.arr);
+    }
 }
 // Execution
-${execBlock}`;
+\${execBlock}`;
     }
   }
 
