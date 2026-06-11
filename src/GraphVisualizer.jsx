@@ -1,4 +1,4 @@
-/* eslint-disable react/prop-types, react-hooks/set-state-in-effect, react-hooks/exhaustive-deps, no-unused-vars */
+/* eslint-disable react/prop-types, react-hooks/exhaustive-deps, no-unused-vars */
 import React, { useState, useEffect, useRef } from 'react';
 import gsap from 'gsap';
 import CodeRunnerModal from './CodeRunnerModal.jsx';
@@ -1034,6 +1034,18 @@ const GraphVisualizer = ({ onBack, openSettings, initialAlgo = 'Dijkstra', onCop
   const [nodeToDelete, setNodeToDelete] = useState('');
   const [edgeToDelete, setEdgeToDelete] = useState('');
 
+  const [isMobile, setIsMobile] = useState(typeof window !== 'undefined' ? window.innerWidth < 768 : false);
+  const [mobileTab, setMobileTab] = useState('vis');
+  const [showEditControls, setShowEditControls] = useState(false);
+
+  useEffect(() => {
+    const handleResize = () => {
+      setIsMobile(window.innerWidth < 768);
+    };
+    window.addEventListener('resize', handleResize);
+    return () => window.removeEventListener('resize', handleResize);
+  }, []);
+
   // Draggable execution log states
   const [showLogPanel, setShowLogPanel] = useState(true);
   const [logPosition, setLogPosition] = useState({ x: 20, y: 120 });
@@ -1948,104 +1960,108 @@ const GraphVisualizer = ({ onBack, openSettings, initialAlgo = 'Dijkstra', onCop
       </div>
 
       {/* Control Bar matching user screenshot exact design */}
-      <div style={{ 
+      <div className="controls-glass" style={{ 
         display: 'flex', 
         alignItems: 'center', 
         justifyContent: 'center', 
-        gap: '15px', 
+        gap: '12px', 
         padding: '0.8rem 1.5rem', 
         background: 'rgba(15,23,42,0.6)', 
         borderBottom: '1px solid var(--glass-border)',
         flexWrap: 'wrap'
       }}>
-        {/* Node controls */}
-        <input 
-          type="text" 
-          className="styled-input" 
-          style={{ width: '110px', fontSize: '0.9rem', padding: '0.35rem 0.6rem' }} 
-          placeholder="Node Label" 
-          value={nodeLabel} 
-          onChange={e => setNodeLabel(e.target.value)} 
-          onKeyDown={e => { if (e.key === 'Enter') handleAddNode(); }}
-        />
-        <button className="btn btn-insert" style={{ padding: '0.4rem 1rem' }} onClick={handleAddNode}>
-          + Node
-        </button>
+        {(!isMobile || showEditControls) && (
+          <>
+            {/* Node controls */}
+            <input 
+              type="text" 
+              className="styled-input" 
+              style={{ width: '110px', fontSize: '0.9rem', padding: '0.35rem 0.6rem' }} 
+              placeholder="Node Label" 
+              value={nodeLabel} 
+              onChange={e => setNodeLabel(e.target.value)} 
+              onKeyDown={e => { if (e.key === 'Enter') handleAddNode(); }}
+            />
+            <button className="btn btn-insert" style={{ padding: '0.4rem 1rem' }} onClick={handleAddNode}>
+              + Node
+            </button>
 
-        <div style={{ width: '1px', height: '22px', background: 'var(--glass-border)' }} />
+            <div style={{ width: '1px', height: '22px', background: 'var(--glass-border)' }} />
 
-        {/* Edge links */}
-        <select 
-          className="styled-select" 
-          style={{ width: '100px', padding: '0.35rem' }} 
-          value={edgeFrom} 
-          onChange={e => setEdgeFrom(e.target.value)}
-        >
-          <option value="">From...</option>
-          {nodes.map(n => <option key={n.id} value={n.id}>{n.label}</option>)}
-        </select>
-        
-        <span style={{ color: 'var(--text-secondary)', fontWeight: 'bold' }}>➔</span>
+            {/* Edge links */}
+            <select 
+              className="styled-select" 
+              style={{ width: '100px', padding: '0.35rem' }} 
+              value={edgeFrom} 
+              onChange={e => setEdgeFrom(e.target.value)}
+            >
+              <option value="">From...</option>
+              {nodes.map(n => <option key={n.id} value={n.id}>{n.label}</option>)}
+            </select>
+            
+            <span style={{ color: 'var(--text-secondary)', fontWeight: 'bold' }}>➔</span>
 
-        <select 
-          className="styled-select" 
-          style={{ width: '100px', padding: '0.35rem' }} 
-          value={edgeTo} 
-          onChange={e => setEdgeTo(e.target.value)}
-        >
-          <option value="">To...</option>
-          {nodes.map(n => <option key={n.id} value={n.id}>{n.label}</option>)}
-        </select>
+            <select 
+              className="styled-select" 
+              style={{ width: '100px', padding: '0.35rem' }} 
+              value={edgeTo} 
+              onChange={e => setEdgeTo(e.target.value)}
+            >
+              <option value="">To...</option>
+              {nodes.map(n => <option key={n.id} value={n.id}>{n.label}</option>)}
+            </select>
 
-        <input 
-          type="number" 
-          className="styled-input" 
-          style={{ width: '60px', padding: '0.35rem' }} 
-          placeholder="Wt" 
-          value={edgeWeight} 
-          onChange={e => setEdgeWeight(Math.max(1, parseInt(e.target.value) || 1))} 
-          onKeyDown={e => { if (e.key === 'Enter') handleAddEdge(); }}
-          title="Edge Weight"
-        />
+            <input 
+              type="number" 
+              className="styled-input" 
+              style={{ width: '60px', padding: '0.35rem' }} 
+              placeholder="Wt" 
+              value={edgeWeight} 
+              onChange={e => setEdgeWeight(Math.max(1, parseInt(e.target.value) || 1))} 
+              onKeyDown={e => { if (e.key === 'Enter') handleAddEdge(); }}
+              title="Edge Weight"
+            />
 
-        <button className="btn btn-insert" style={{ padding: '0.4rem 1rem', background: '#8b5cf6' }} onClick={handleAddEdge}>
-          + Edge
-        </button>
+            <button className="btn btn-insert" style={{ padding: '0.4rem 1rem', background: '#8b5cf6' }} onClick={handleAddEdge}>
+              + Edge
+            </button>
 
-        <div style={{ width: '1px', height: '22px', background: 'var(--glass-border)' }} />
+            <div style={{ width: '1px', height: '22px', background: 'var(--glass-border)' }} />
 
-        {/* Delete controls */}
-        <select 
-          className="styled-select" 
-          style={{ width: '90px', padding: '0.35rem' }} 
-          value={nodeToDelete} 
-          onChange={e => setNodeToDelete(e.target.value)}
-        >
-          <option value="">Node...</option>
-          {nodes.map(n => <option key={n.id} value={n.id}>{n.label}</option>)}
-        </select>
-        <button className="btn btn-clear" style={{ padding: '0.4rem 0.8rem', background: '#ef4444', color: 'white', borderColor: 'transparent' }} onClick={handleDeleteNode}>
-          Delete Node
-        </button>
+            {/* Delete controls */}
+            <select 
+              className="styled-select" 
+              style={{ width: '90px', padding: '0.35rem' }} 
+              value={nodeToDelete} 
+              onChange={e => setNodeToDelete(e.target.value)}
+            >
+              <option value="">Node...</option>
+              {nodes.map(n => <option key={n.id} value={n.id}>{n.label}</option>)}
+            </select>
+            <button className="btn btn-clear" style={{ padding: '0.4rem 0.8rem', background: '#ef4444', color: 'white', borderColor: 'transparent' }} onClick={handleDeleteNode}>
+              Delete Node
+            </button>
 
-        <select 
-          className="styled-select" 
-          style={{ width: '110px', padding: '0.35rem' }} 
-          value={edgeToDelete} 
-          onChange={e => setEdgeToDelete(e.target.value)}
-        >
-          <option value="">Edge...</option>
-          {edges.map(e => {
-            const fromLabel = nodes.find(n => n.id === e.from)?.label || String(e.from);
-            const toLabel = nodes.find(n => n.id === e.to)?.label || String(e.to);
-            return <option key={e.id} value={e.id}>{`${fromLabel} ➔ ${toLabel}`}</option>;
-          })}
-        </select>
-        <button className="btn btn-clear" style={{ padding: '0.4rem 0.8rem', background: '#ef4444', color: 'white', borderColor: 'transparent' }} onClick={handleDeleteEdge}>
-          Delete Edge
-        </button>
+            <select 
+              className="styled-select" 
+              style={{ width: '110px', padding: '0.35rem' }} 
+              value={edgeToDelete} 
+              onChange={e => setEdgeToDelete(e.target.value)}
+            >
+              <option value="">Edge...</option>
+              {edges.map(e => {
+                const fromLabel = nodes.find(n => n.id === e.from)?.label || String(e.from);
+                const toLabel = nodes.find(n => n.id === e.to)?.label || String(e.to);
+                return <option key={e.id} value={e.id}>{`${fromLabel} ➔ ${toLabel}`}</option>;
+              })}
+            </select>
+            <button className="btn btn-clear" style={{ padding: '0.4rem 0.8rem', background: '#ef4444', color: 'white', borderColor: 'transparent' }} onClick={handleDeleteEdge}>
+              Delete Edge
+            </button>
 
-        <div style={{ width: '1px', height: '22px', background: 'var(--glass-border)' }} />
+            {isMobile && <div style={{ width: '100%', height: '1px', background: 'var(--glass-border)', margin: '4px 0' }} />}
+          </>
+        )}
 
         {/* Graph directed/undirected toggle */}
         <button 
@@ -2061,6 +2077,22 @@ const GraphVisualizer = ({ onBack, openSettings, initialAlgo = 'Dijkstra', onCop
         >
           {isDirected ? 'Directed Graph' : 'Undirected Graph'}
         </button>
+
+        {isMobile && (
+          <button 
+            className="btn btn-clear" 
+            style={{ 
+              background: showEditControls ? 'rgba(139,92,246,0.2)' : 'rgba(255,255,255,0.03)', 
+              border: `1.5px solid ${showEditControls ? 'var(--accent-primary)' : 'var(--glass-border)'}`,
+              color: showEditControls ? 'var(--accent-primary)' : 'var(--text-primary)',
+              fontWeight: 800,
+              padding: '0.4rem 1.1rem'
+            }} 
+            onClick={() => setShowEditControls(!showEditControls)}
+          >
+            🔧 Edit Graph
+          </button>
+        )}
 
         <button 
           className="btn btn-clear" 
@@ -2125,11 +2157,19 @@ const GraphVisualizer = ({ onBack, openSettings, initialAlgo = 'Dijkstra', onCop
 
       </div>
 
+      {isMobile && (
+        <div className="mobile-tabs-container">
+          <button className={`mobile-tab-btn ${mobileTab === 'vis' ? 'active' : ''}`} onClick={() => setMobileTab('vis')}>📊 Visualizer</button>
+          <button className={`mobile-tab-btn ${mobileTab === 'code' ? 'active' : ''}`} onClick={() => { setMobileTab('code'); setShowCode(true); }}>💻 Code</button>
+          <button className={`mobile-tab-btn ${mobileTab === 'log' ? 'active' : ''}`} onClick={() => { setMobileTab('log'); setShowLogPanel(true); }}>📋 Logs</button>
+        </div>
+      )}
+
       {/* Main Workspace split */}
-      <div style={{ flex: 1, display: 'flex', overflow: 'hidden' }}>
+      <div style={{ flex: 1, display: 'flex', flexDirection: isMobile ? 'column' : 'row', overflow: 'hidden' }}>
         
         {/* Left Side: Visualizer and Animation Controls */}
-        <div style={{ flex: 1, display: 'flex', flexDirection: 'column', padding: '1.2rem', overflow: 'hidden' }}>
+        <div style={{ display: (isMobile && mobileTab !== 'vis') ? 'none' : 'flex', flex: 1, flexDirection: 'column', padding: isMobile ? '0.35rem' : '1.2rem', overflow: 'hidden' }}>
           
           {/* Active step message bar */}
           <div style={{ textAlign: 'center', marginBottom: '1rem', height: '38px', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
@@ -2323,7 +2363,7 @@ const GraphVisualizer = ({ onBack, openSettings, initialAlgo = 'Dijkstra', onCop
               </div>
             )}
 
-             {showLogPanel && (
+             {showLogPanel && !isMobile && (
                <div
                  style={{
                    position: 'fixed',
@@ -2543,10 +2583,10 @@ const GraphVisualizer = ({ onBack, openSettings, initialAlgo = 'Dijkstra', onCop
           </div>
 
           {/* Bottom animation steps & algorithm configuration bar */}
-          <div style={{ display: 'flex', gap: '15px', marginTop: '1.2rem', background: 'var(--glass-bg)', padding: '12px 24px', borderRadius: '16px', border: '1px solid var(--glass-border)', alignItems: 'center', flexWrap: 'wrap' }}>
+          <div style={{ display: 'flex', flexDirection: isMobile ? 'column' : 'row', gap: '10px', marginTop: '1.2rem', background: 'var(--glass-bg)', padding: isMobile ? '10px 14px' : '12px 24px', borderRadius: '16px', border: '1px solid var(--glass-border)', alignItems: 'center', flexWrap: 'wrap', justifyContent: 'space-between' }}>
             
-            <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
-              <select className="styled-select" style={{ width: '130px', fontWeight: 'bold' }} value={algoMode} onChange={e => { setAlgoMode(e.target.value); handleResetAnimation(); }} disabled={isPlaying}>
+            <div style={{ display: 'flex', alignItems: 'center', gap: isMobile ? '4px' : '8px', flexWrap: 'wrap', justifyContent: 'center' }}>
+              <select className="styled-select" style={{ width: isMobile ? '110px' : '130px', fontWeight: 'bold' }} value={algoMode} onChange={e => { setAlgoMode(e.target.value); handleResetAnimation(); }} disabled={isPlaying}>
                 <option value="Dijkstra">Dijkstra</option>
                 <option value="BFS">BFS</option>
                 <option value="DFS">DFS</option>
@@ -2557,31 +2597,31 @@ const GraphVisualizer = ({ onBack, openSettings, initialAlgo = 'Dijkstra', onCop
                 <option value="Kahn">{"Kahn's (Topo Sort)"}</option>
               </select>
 
-              <div style={{ display: 'flex', gap: '5px', alignItems: 'center', marginLeft: '5px' }}>
-                <span style={{ fontSize: '0.8rem', color: 'var(--text-secondary)', fontWeight: 'bold' }}>Start:</span>
-                <select className="styled-select" style={{ width: '65px', padding: '0.2rem' }} value={startNode} onChange={e => setStartNode(parseInt(e.target.value))} disabled={isPlaying}>
+              <div style={{ display: 'flex', gap: '4px', alignItems: 'center' }}>
+                <span style={{ fontSize: '0.75rem', color: 'var(--text-secondary)', fontWeight: 'bold' }}>Start:</span>
+                <select className="styled-select" style={{ width: '55px', padding: '2px 4px' }} value={startNode} onChange={e => setStartNode(parseInt(e.target.value))} disabled={isPlaying}>
                   {nodes.map(n => <option key={n.id} value={n.id}>{n.label}</option>)}
                 </select>
               </div>
 
               {(algoMode === 'Dijkstra' || algoMode === 'Greedy' || algoMode === 'Bellman-Ford') && (
-                <div style={{ display: 'flex', gap: '5px', alignItems: 'center', marginLeft: '5px' }}>
-                  <span style={{ fontSize: '0.8rem', color: 'var(--text-secondary)', fontWeight: 'bold' }}>Target:</span>
-                  <select className="styled-select" style={{ width: '65px', padding: '0.2rem' }} value={targetNode} onChange={e => setTargetNode(parseInt(e.target.value))} disabled={isPlaying}>
+                <div style={{ display: 'flex', gap: '4px', alignItems: 'center' }}>
+                  <span style={{ fontSize: '0.75rem', color: 'var(--text-secondary)', fontWeight: 'bold' }}>Target:</span>
+                  <select className="styled-select" style={{ width: '55px', padding: '2px 4px' }} value={targetNode} onChange={e => setTargetNode(parseInt(e.target.value))} disabled={isPlaying}>
                     {nodes.map(n => <option key={n.id} value={n.id}>{n.label}</option>)}
                   </select>
                 </div>
               )}
 
-              <button className="btn btn-insert" style={{ marginLeft: '10px', boxShadow: '0 4px 15px rgba(59,130,246,0.3)' }} onClick={runTraversal} disabled={isPlaying || nodes.length === 0}>
-                ▶ Run Traversal
+              <button className="btn btn-insert" style={{ padding: '0.4rem 0.8rem', boxShadow: '0 4px 15px rgba(59,130,246,0.3)' }} onClick={runTraversal} disabled={isPlaying || nodes.length === 0}>
+                ▶ Run
               </button>
             </div>
 
-            <div style={{ width: '1px', height: '24px', background: 'var(--glass-border)' }} />
+            {!isMobile && <div style={{ width: '1px', height: '24px', background: 'var(--glass-border)' }} />}
 
             {/* Playback controller */}
-            <div style={{ display: 'flex', alignItems: 'center', gap: '6px' }}>
+            <div style={{ display: 'flex', alignItems: 'center', gap: '6px', flexWrap: 'wrap', justifyContent: 'center' }}>
               <button className="btn btn-clear" style={{ padding: '0.4rem 0.8rem' }} onClick={() => { setIsPlaying(false); setCurrentStep(0); }} disabled={!timeline.length || currentStep === 0}>⏮</button>
               <button className="btn btn-clear" style={{ padding: '0.4rem 0.8rem' }} onClick={() => { setIsPlaying(false); setCurrentStep(p => Math.max(0, p - 1)); }} disabled={!timeline.length || currentStep === 0}>◀</button>
               <button className="btn btn-clear" style={{ padding: '0.4rem 1.2rem', background: isPlaying ? 'rgba(59,130,246,0.5)' : 'var(--accent-primary)', color: 'white' }} onClick={() => setIsPlaying(!isPlaying)} disabled={!timeline.length}>
@@ -2589,28 +2629,121 @@ const GraphVisualizer = ({ onBack, openSettings, initialAlgo = 'Dijkstra', onCop
               </button>
               <button className="btn btn-clear" style={{ padding: '0.4rem 0.8rem' }} onClick={() => { setIsPlaying(false); setCurrentStep(p => Math.min(timeline.length - 1, p + 1)); }} disabled={!timeline.length || currentStep === timeline.length - 1}>▶</button>
               <button className="btn btn-clear" style={{ padding: '0.4rem 0.8rem' }} onClick={() => { setIsPlaying(false); setCurrentStep(timeline.length - 1); }} disabled={!timeline.length || currentStep === timeline.length - 1}>⏭</button>
-              <span style={{ fontSize: '0.9rem', color: 'var(--text-secondary)', fontFamily: 'monospace', marginLeft: '5px' }}>{timeline.length ? currentStep + 1 : 0}/{timeline.length}</span>
+              <span style={{ fontSize: '0.85rem', color: 'var(--text-secondary)', fontFamily: 'monospace', marginLeft: '5px' }}>{timeline.length ? currentStep + 1 : 0}/{timeline.length}</span>
             </div>
 
-            <div style={{ marginLeft: 'auto', display: 'flex', alignItems: 'center', gap: '10px' }}>
+            <div style={{ display: 'flex', alignItems: 'center', gap: '10px', width: isMobile ? '100%' : 'auto', justifyContent: 'center' }}>
               <span style={{ color: 'var(--text-secondary)', fontSize: '0.8rem', fontWeight: 'bold' }}>Speed</span>
-              <input type="range" min={100} max={1500} step={100} value={1600 - speed} onChange={e => setSpeed(1600 - Number(e.target.value))} style={{ width: '100px', cursor: 'pointer', accentColor: 'var(--accent-primary)' }} />
+              <input type="range" min={100} max={1500} step={100} value={1600 - speed} onChange={e => setSpeed(1600 - Number(e.target.value))} style={{ width: isMobile ? '100%' : '100px', cursor: 'pointer', accentColor: 'var(--accent-primary)' }} />
             </div>
 
           </div>
 
         </div>
 
+        {/* Inline Mobile Log Panel */}
+        {isMobile && showLogPanel && mobileTab === 'log' && (
+          <div style={{ flex: 1, background: 'var(--bg-secondary)', borderRadius: '14px', border: '1px solid var(--glass-border)', display: 'flex', flexDirection: 'column', padding: '0.85rem', overflow: 'hidden', height: '100%', width: '100%' }}>
+            <div style={{ padding: '6px 12px', background: 'rgba(255, 255, 255, 0.04)', borderBottom: '1px solid var(--glass-border)', display: 'flex', justifyContent: 'space-between', alignItems: 'center', flexShrink: 0 }}>
+              <span style={{ fontWeight: 600, fontSize: '0.85rem', color: 'var(--text-primary)' }}>
+                📋 Execution Log & Active State
+              </span>
+            </div>
+            
+            <div style={{ display: 'flex', flex: 1, flexDirection: 'column', overflowY: 'auto', gap: '10px', marginTop: '10px' }}>
+              {/* Active State Details */}
+              <div style={{ background: 'rgba(0,0,0,0.25)', border: '1px solid var(--glass-border)', borderRadius: '8px', padding: '10px 12px', display: 'flex', flexDirection: 'column', gap: '8px', fontSize: '0.8rem', color: 'var(--text-secondary)' }}>
+                <div style={{ fontSize: '0.75rem', color: 'var(--accent-primary)', textTransform: 'uppercase', fontWeight: 'bold', borderBottom: '1px solid rgba(255,255,255,0.06)', paddingBottom: '4px' }}>
+                  Active State
+                </div>
+                <div>
+                  <span style={{ color: 'var(--text-secondary)' }}>Algorithm: </span>
+                  <span style={{ color: 'var(--text-primary)', fontWeight: 'bold' }}>{algoMode}</span>
+                </div>
+                <div>
+                  <span style={{ color: 'var(--text-secondary)' }}>Active Node: </span>
+                  <span style={{ color: '#fbbf24', fontWeight: 'bold' }}>
+                    {currentFrame.active !== undefined && currentFrame.active !== null && currentFrame.active !== -1 ? `Node ${nodes.find(n => n.id === currentFrame.active)?.label || currentFrame.active}` : 'None'}
+                  </span>
+                </div>
+
+                <div>
+                  <div style={{ marginBottom: '2px', fontSize: '0.75rem' }}>Visited / Resolved Nodes:</div>
+                  <div style={{ background: 'rgba(0,0,0,0.18)', padding: '4px 6px', borderRadius: '4px', fontFamily: 'monospace', color: '#34d399', wordBreak: 'break-all', fontWeight: 'bold' }}>
+                    {currentFrame.visited ? (
+                      Object.keys(currentFrame.visited).length > 0 ? Object.keys(currentFrame.visited).join(', ') : 'None'
+                    ) : currentFrame.dist ? (
+                      Object.keys(currentFrame.dist).filter(k => currentFrame.dist[k] !== Infinity).join(', ') || 'None'
+                    ) : 'None'}
+                  </div>
+                </div>
+
+                <div>
+                  <div style={{ marginBottom: '2px', fontSize: '0.75rem' }}>
+                    {algoMode === 'DFS' ? 'Stack State:' : 'Queue State:'}
+                  </div>
+                  <div style={{ background: 'rgba(0,0,0,0.18)', padding: '4px 6px', borderRadius: '4px', fontFamily: 'monospace', color: '#60a5fa', wordBreak: 'break-all' }}>
+                    {currentFrame.queue ? (
+                      `[${currentFrame.queue.map(item => typeof item === 'object' ? item.id : item).join(', ')}]`
+                    ) : currentFrame.stack ? (
+                      `[${currentFrame.stack.join(', ')}]`
+                    ) : '[]'}
+                  </div>
+                </div>
+
+                <div style={{ borderTop: '1px solid rgba(255,255,255,0.06)', paddingTop: '6px', marginTop: '4px' }}>
+                  <div style={{ fontSize: '0.72rem', textTransform: 'uppercase', fontWeight: 'bold', marginBottom: '4px', color: 'var(--accent-secondary)' }}>Trace Variables</div>
+                  <div style={{ display: 'flex', flexDirection: 'column', gap: '4px' }}>
+                    {currentFrame.activeEdge && (
+                      <div style={{ display: 'flex', justifyContent: 'space-between' }}>
+                        <span>Active Edge:</span>
+                        <span style={{ color: 'var(--text-primary)', fontFamily: 'monospace' }}>
+                          {currentFrame.activeEdge}
+                        </span>
+                      </div>
+                    )}
+                    {currentFrame.activeLine && (
+                      <div style={{ marginTop: '8px' }}>
+                        <div style={{ fontSize: '0.65rem', color: 'var(--text-secondary)' }}>Snippet:</div>
+                        <div style={{ fontSize: '0.72rem', color: '#60a5fa', fontFamily: 'monospace', background: 'rgba(0,0,0,0.2)', padding: '2px 4px', borderRadius: '4px', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }} title={currentFrame.activeLine}>
+                          {currentFrame.activeLine}
+                        </div>
+                      </div>
+                    )}
+                  </div>
+                </div>
+              </div>
+
+              {/* Log Timeline Steps */}
+              <div style={{ flex: 1, background: 'rgba(0,0,0,0.15)', borderRadius: '10px', padding: '0.75rem 1rem', overflowY: 'auto', border: '1px solid rgba(255,255,255,0.03)' }}>
+                {timeline.length === 0 && (
+                  <div style={{ color: 'var(--text-secondary)', fontStyle: 'italic', textAlign: 'center', marginTop: '20px' }}>
+                    No simulation logs yet. Run traversal to start.
+                  </div>
+                )}
+                {timeline.slice(0, currentStep + 1).map((f, idx) => (
+                  <div key={idx} style={{ display: 'flex', gap: '6px', fontSize: '0.8rem', marginBottom: '4px' }}>
+                    <span style={{ color: 'var(--text-secondary)' }}>{idx === currentStep ? '➔' : `${idx + 1}.`}</span>
+                    <span style={{ color: idx === currentStep ? '#fbbf24' : 'var(--text-primary)' }}>{f.msg}</span>
+                  </div>
+                ))}
+              </div>
+            </div>
+          </div>
+        )}
+
         {/* Right Side Code Panel */}
-        {showCode && (
+        {showCode && (isMobile ? mobileTab === 'code' : true) && (
         <>
           {/* Vertical Drag Handle for column resizing */}
-          <div onMouseDown={handleColDragStart} onTouchStart={handleColDragStart} style={{ width: '8px', background: 'var(--glass-border)', borderRadius: '4px', cursor: 'col-resize', flexShrink: 0, transition: 'background 0.2s', touchAction: 'none' }}
-            onMouseOver={e => e.currentTarget.style.background = 'rgba(96,165,250,0.5)'}
-            onMouseOut={e => e.currentTarget.style.background = 'var(--glass-border)'}
-            title="Drag to resize columns" />
+          {!isMobile && (
+            <div onMouseDown={handleColDragStart} onTouchStart={handleColDragStart} style={{ width: '8px', background: 'var(--glass-border)', borderRadius: '4px', cursor: 'col-resize', flexShrink: 0, transition: 'background 0.2s', touchAction: 'none' }}
+              onMouseOver={e => e.currentTarget.style.background = 'rgba(96,165,250,0.5)'}
+              onMouseOut={e => e.currentTarget.style.background = 'var(--glass-border)'}
+              title="Drag to resize columns" />
+          )}
 
-          <div style={{ width: `${codeWidth}px`, background: 'var(--bg-secondary)', borderLeft: '1px solid var(--glass-border)', display: 'flex', flexDirection: 'column', overflow: 'hidden', minWidth: '200px' }}>
+          <div style={{ width: isMobile ? '100%' : `${codeWidth}px`, background: 'var(--bg-secondary)', borderLeft: isMobile ? 'none' : '1px solid var(--glass-border)', display: 'flex', flexDirection: 'column', overflow: 'hidden', minWidth: isMobile ? '100%' : '200px' }}>
             <div style={{ padding: '1rem', borderBottom: '1px solid var(--glass-border)', display: 'flex', justifyContent: 'space-between', alignItems: 'center', background: 'var(--glass-bg)', gap: '10px' }}>
               <h3 style={{ margin: 0, fontSize: '1.1rem', color: 'var(--text-primary)', fontWeight: 'bold', flex: 1 }}>Algorithm Code</h3>
               <div style={{ display: 'flex', gap: '6px' }}>
@@ -2677,7 +2810,7 @@ const GraphVisualizer = ({ onBack, openSettings, initialAlgo = 'Dijkstra', onCop
       </div>
       
       {/* Floating workspace buttons */}
-      {!showCode && (
+      {!showCode && !isMobile && (
         <button 
           style={{ position: 'absolute', right: '20px', bottom: '80px', background: 'var(--accent-primary)', color: 'white', border: 'none', borderRadius: '50%', width: '50px', height: '50px', cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: '1.4rem', boxShadow: '0 4px 15px rgba(59,130,246,0.4)', zIndex: 100 }}
           onClick={() => setShowCode(true)}

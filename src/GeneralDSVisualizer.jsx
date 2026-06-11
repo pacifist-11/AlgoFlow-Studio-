@@ -61,6 +61,18 @@ const GeneralDSVisualizer = ({ onBack, openSettings, initialType = 'HASH_TABLE',
   const [copied, setCopied] = useState(false);
   const [isRunnerOpen, setIsRunnerOpen] = useState(false);
 
+  const [isMobile, setIsMobile] = useState(typeof window !== 'undefined' ? window.innerWidth < 768 : false);
+  const [mobileTab, setMobileTab] = useState('vis');
+  const [showMobileOptions, setShowMobileOptions] = useState(false);
+
+  useEffect(() => {
+    const handleResize = () => {
+      setIsMobile(window.innerWidth < 768);
+    };
+    window.addEventListener('resize', handleResize);
+    return () => window.removeEventListener('resize', handleResize);
+  }, []);
+
   // Draggable execution log states
   const [showLogPanel, setShowLogPanel] = useState(true);
   const [logPosition, setLogPosition] = useState({ x: 20, y: 120 });
@@ -1328,15 +1340,15 @@ const GeneralDSVisualizer = ({ onBack, openSettings, initialType = 'HASH_TABLE',
           <h2 className="title-gradient" style={{ fontSize: '1.4rem', fontWeight: 'bold', margin: 0 }}>✨ General DSA Visualizer</h2>
         </div>
         
-        <div style={{ display: 'flex', gap: '8px', flexWrap: 'wrap', alignItems: 'center' }}>
-          <select className="styled-select" style={{ width: '160px', fontWeight: 'bold' }} value={dsType} onChange={e => setDsType(e.target.value)} disabled={isPlaying}>
+        <div className="controls-glass" style={{ display: 'flex', gap: '8px', flexWrap: 'wrap', alignItems: 'center' }}>
+          <select className="styled-select" style={{ width: isMobile ? '120px' : '160px', fontWeight: 'bold' }} value={dsType} onChange={e => setDsType(e.target.value)} disabled={isPlaying}>
             <option value="LINKED_LIST">Linked List</option>
             <option value="QUEUE">Queue</option>
             <option value="HASH_TABLE">Hash Table</option>
             <option value="STACK">Stack</option>
           </select>
 
-          <select className="styled-select" style={{ width: '180px', fontWeight: 'bold' }} value={dsVariety} onChange={e => setDsVariety(e.target.value)} disabled={isPlaying}>
+          <select className="styled-select" style={{ width: isMobile ? '130px' : '180px', fontWeight: 'bold' }} value={dsVariety} onChange={e => setDsVariety(e.target.value)} disabled={isPlaying}>
             {dsType === 'STACK' && <>
                 <option value="STACK_ARRAY">Array Based</option>
                 <option value="STACK_LL">Linked List Based</option>
@@ -1367,11 +1379,11 @@ const GeneralDSVisualizer = ({ onBack, openSettings, initialType = 'HASH_TABLE',
           {dsType === 'HASH_TABLE' && (
              <div style={{ display: 'flex', alignItems: 'center', gap: '5px' }}>
                 <span style={{color: 'var(--text-secondary)', fontSize: '0.8rem', fontWeight: 'bold'}}>Table Size:</span>
-                <input type="number" className="styled-input" style={{ width: '60px', opacity: isPlaying ? 0.7 : 1, fontSize: '0.9rem', fontWeight: 'bold', padding: '0.3rem' }} value={tableSize} onChange={e=>setTableSize(Math.max(1, parseInt(e.target.value)||7))} disabled={isPlaying}/>
+                <input type="number" className="styled-input" style={{ width: '50px', opacity: isPlaying ? 0.7 : 1, fontSize: '0.9rem', fontWeight: 'bold', padding: '0.3rem' }} value={tableSize} onChange={e=>setTableSize(Math.max(1, parseInt(e.target.value)||7))} disabled={isPlaying}/>
              </div>
           )}
 
-          <input ref={inputRef} type={(dsVariety === 'STACK_EXPRESSION' || dsVariety === 'STACK_BRACKETS' || dsVariety === 'STACK_CONVERSION') ? 'text' : 'number'} className="styled-input" style={{ width: (dsVariety === 'STACK_EXPRESSION' || dsVariety === 'STACK_BRACKETS' || dsVariety === 'STACK_CONVERSION') ? '180px' : '90px', opacity: isPlaying ? 0.7 : 1, fontSize: '1rem', fontWeight: 'bold' }} placeholder={dsVariety === 'STACK_EXPRESSION' ? "e.g. 2 3 + 4 *" : dsVariety === 'STACK_BRACKETS' ? "e.g. {[()]}" : dsVariety === 'STACK_CONVERSION' ? "e.g. ( A + B ) * C" : "Value"} value={inputValue} onChange={e=>setInputValue(e.target.value)} onKeyDown={e => {
+          <input ref={inputRef} type={(dsVariety === 'STACK_EXPRESSION' || dsVariety === 'STACK_BRACKETS' || dsVariety === 'STACK_CONVERSION') ? 'text' : 'number'} className="styled-input" style={{ width: isMobile ? '80px' : ((dsVariety === 'STACK_EXPRESSION' || dsVariety === 'STACK_BRACKETS' || dsVariety === 'STACK_CONVERSION') ? '180px' : '90px'), opacity: isPlaying ? 0.7 : 1, fontSize: '1rem', fontWeight: 'bold' }} placeholder={isMobile ? "Val" : (dsVariety === 'STACK_EXPRESSION' ? "e.g. 2 3 + 4 *" : dsVariety === 'STACK_BRACKETS' ? "e.g. {[()]}" : dsVariety === 'STACK_CONVERSION' ? "e.g. ( A + B ) * C" : "Value")} value={inputValue} onChange={e=>setInputValue(e.target.value)} onKeyDown={e => {
             if(e.key === 'Enter' && !isPlaying && inputValue) {
               if(dsType==='STACK') {
                 if (dsVariety === 'STACK_EXPRESSION') evaluateExpression();
@@ -1405,11 +1417,11 @@ const GeneralDSVisualizer = ({ onBack, openSettings, initialType = 'HASH_TABLE',
           {dsType === 'QUEUE' && <>
             {dsVariety === 'QUEUE_DEQUE' ? (
               <>
-                <button className="btn btn-insert" onClick={() => queueEnqueue(true)} disabled={isPlaying || !inputValue}>Enqueue Front</button>
-                <button className="btn btn-insert" onClick={() => queueEnqueue(false)} disabled={isPlaying || !inputValue} style={{background: '#8b5cf6'}}>Enqueue Rear</button>
-                <button className="btn btn-clear" style={{background: 'var(--accent-secondary)', color:'white', border:'none', opacity: isPlaying || elements.length===0 ? 0.5:1}} onClick={() => queueDequeue(false)} disabled={isPlaying || elements.length===0}>Dequeue Front</button>
-                <button className="btn btn-clear" style={{background: 'var(--accent-secondary)', color:'white', border:'none', opacity: isPlaying || elements.length===0 ? 0.5:1}} onClick={() => queueDequeue(true)} disabled={isPlaying || elements.length===0}>Dequeue Rear</button>
-                <button className="btn btn-clear" style={{background: '#10b981', color:'white', border:'none', opacity: isPlaying || elements.length===0 || !inputValue ? 0.5:1}} onClick={queueSearch} disabled={isPlaying || elements.length===0 || !inputValue}>Search</button>
+                <button className="btn btn-insert" onClick={() => queueEnqueue(true)} disabled={isPlaying || !inputValue}>{isMobile ? '+F' : 'Enqueue Front'}</button>
+                <button className="btn btn-insert" onClick={() => queueEnqueue(false)} disabled={isPlaying || !inputValue} style={{background: '#8b5cf6'}}>{isMobile ? '+R' : 'Enqueue Rear'}</button>
+                <button className="btn btn-clear" style={{background: 'var(--accent-secondary)', color:'white', border:'none', opacity: isPlaying || elements.length===0 ? 0.5:1}} onClick={() => queueDequeue(false)} disabled={isPlaying || elements.length===0}>{isMobile ? '-F' : 'Dequeue Front'}</button>
+                <button className="btn btn-clear" style={{background: 'var(--accent-secondary)', color:'white', border:'none', opacity: isPlaying || elements.length===0 ? 0.5:1}} onClick={() => queueDequeue(true)} disabled={isPlaying || elements.length===0}>{isMobile ? '-R' : 'Dequeue Rear'}</button>
+                <button className="btn btn-clear" style={{background: '#10b981', color:'white', border:'none', opacity: isPlaying || elements.length===0 || !inputValue ? 0.5:1}} onClick={queueSearch} disabled={isPlaying || elements.length===0 || !inputValue}>{isMobile ? '🔍' : 'Search'}</button>
               </>
             ) : (
               <>
@@ -1421,10 +1433,10 @@ const GeneralDSVisualizer = ({ onBack, openSettings, initialType = 'HASH_TABLE',
           </>}
 
           {dsType === 'LINKED_LIST' && <>
-            <button className="btn btn-insert" onClick={sllInsertHead} disabled={isPlaying || !inputValue}>Insert Head</button>
-            <button className="btn btn-insert" onClick={sllInsertTail} disabled={isPlaying || !inputValue} style={{background: '#8b5cf6'}}>Insert Tail</button>
-            <button className="btn btn-clear" style={{background: '#10b981', color:'white', border:'none', opacity: isPlaying || !inputValue ? 0.5:1}} onClick={sllSearch} disabled={isPlaying || !inputValue}>Search</button>
-            <button className="btn btn-clear" style={{background: '#ef4444', color:'white', border:'none', opacity: isPlaying || !inputValue ? 0.5:1}} onClick={sllDeleteValue} disabled={isPlaying || !inputValue}>Delete Value</button>
+            <button className="btn btn-insert" onClick={sllInsertHead} disabled={isPlaying || !inputValue}>{isMobile ? '+H' : 'Insert Head'}</button>
+            <button className="btn btn-insert" onClick={sllInsertTail} disabled={isPlaying || !inputValue} style={{background: '#8b5cf6'}}>{isMobile ? '+T' : 'Insert Tail'}</button>
+            <button className="btn btn-clear" style={{background: '#10b981', color:'white', border:'none', opacity: isPlaying || !inputValue ? 0.5:1}} onClick={sllSearch} disabled={isPlaying || !inputValue}>{isMobile ? '🔍' : 'Search'}</button>
+            <button className="btn btn-clear" style={{background: '#ef4444', color:'white', border:'none', opacity: isPlaying || !inputValue ? 0.5:1}} onClick={sllDeleteValue} disabled={isPlaying || !inputValue}>{isMobile ? '❌' : 'Delete Value'}</button>
           </>}
 
           {dsType === 'HASH_TABLE' && <>
@@ -1433,18 +1445,48 @@ const GeneralDSVisualizer = ({ onBack, openSettings, initialType = 'HASH_TABLE',
             <button className="btn btn-clear" style={{background: '#ef4444', color:'white', border:'none', opacity: isPlaying || !inputValue ? 0.5:1}} onClick={hashDelete} disabled={isPlaying || !inputValue}>Delete</button>
           </>}
 
-          <div style={{ width: '1px', height: '26px', background: 'var(--glass-border)', margin: '0 8px' }} />
-          <button className="btn btn-clear" onClick={() => setShowLogPanel(!showLogPanel)}>{showLogPanel ? '📋 Hide Log' : '📋 Show Log'}</button>
-          <button className="btn btn-clear" onClick={() => setShowHistory(!showHistory)}>{showHistory ? '🗑️ Hide History' : '🗑️ Show History'}</button>
-          <button className="btn btn-clear" onClick={() => setShowCode(!showCode)}>{showCode ? '💻 Hide Code' : '💻 Show Code'}</button>
-          {openSettings && <button className="btn btn-clear" onClick={openSettings}>⚙️ Settings</button>}
-          <button className="btn btn-clear" onClick={() => handleClear(dsVariety, tableSize)} disabled={isPlaying}>🗑 Clear</button>
+          {isMobile && (
+            <button 
+              className="btn btn-clear" 
+              style={{ 
+                borderColor: showMobileOptions ? 'var(--accent-primary)' : 'var(--glass-border)', 
+                color: showMobileOptions ? 'var(--accent-primary)' : 'var(--text-primary)' 
+              }} 
+              onClick={() => setShowMobileOptions(!showMobileOptions)}
+            >
+              ⚙️ Options
+            </button>
+          )}
+
+          {(!isMobile || showMobileOptions) && (
+            <>
+              {openSettings && <button className="btn btn-clear" onClick={openSettings}>⚙️ Settings</button>}
+              <button className="btn btn-clear" onClick={() => handleClear(dsVariety, tableSize)} disabled={isPlaying}>🗑 Clear</button>
+            </>
+          )}
+
+          {!isMobile && (
+            <>
+              <div style={{ width: '1px', height: '26px', background: 'var(--glass-border)', margin: '0 8px' }} />
+              <button className="btn btn-clear" onClick={() => setShowLogPanel(!showLogPanel)}>{showLogPanel ? '📋 Hide Log' : '📋 Show Log'}</button>
+              <button className="btn btn-clear" onClick={() => setShowHistory(!showHistory)}>{showHistory ? '🗑️ Hide History' : '🗑️ Show History'}</button>
+              <button className="btn btn-clear" onClick={() => setShowCode(!showCode)}>{showCode ? '💻 Hide Code' : '💻 Show Code'}</button>
+            </>
+          )}
           <button className="btn btn-clear" onClick={onBack}>🏠 Home</button>
         </div>
       </header>
 
-      <div style={{ flex: 1, display: 'flex', overflow: 'hidden' }}>
-        <div style={{ flex: 1, display: 'flex', flexDirection: 'column', padding: '1.5rem', overflow: 'hidden' }}>
+      {isMobile && (
+        <div className="mobile-tabs-container">
+          <button className={`mobile-tab-btn ${mobileTab === 'vis' ? 'active' : ''}`} onClick={() => setMobileTab('vis')}>📊 Visualizer</button>
+          <button className={`mobile-tab-btn ${mobileTab === 'code' ? 'active' : ''}`} onClick={() => { setMobileTab('code'); setShowCode(true); }}>💻 Code</button>
+          <button className={`mobile-tab-btn ${mobileTab === 'log' ? 'active' : ''}`} onClick={() => { setMobileTab('log'); setShowLogPanel(true); }}>📋 Logs</button>
+        </div>
+      )}
+
+      <div style={{ flex: 1, display: 'flex', flexDirection: isMobile ? 'column' : 'row', overflow: 'hidden' }}>
+        <div style={{ display: (isMobile && mobileTab !== 'vis') ? 'none' : 'flex', flex: 1, flexDirection: 'column', padding: isMobile ? '0.35rem' : '1.5rem', overflow: 'hidden' }}>
           <div style={{ textAlign: 'center', marginBottom: '1.2rem', height: '40px', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
             <span style={{ fontSize: '1.4rem', color: 'var(--text-primary)', fontWeight: 'bold', background: 'rgba(255,255,255,0.05)', padding: '6px 20px', borderRadius: '20px', border: '1px solid var(--glass-border)', boxShadow: '0 4px 15px rgba(0,0,0,0.2)' }}>
               {frame.msg || 'Select an operation to begin...'}
@@ -1457,7 +1499,7 @@ const GeneralDSVisualizer = ({ onBack, openSettings, initialType = 'HASH_TABLE',
             {dsType === 'LINKED_LIST' && renderLinkedList(frame)}
             {dsType === 'HASH_TABLE' && renderHashTable(frame)}
 
-             {showLogPanel && (
+             {showLogPanel && !isMobile && (
                <div
                  style={{
                    position: 'fixed',
@@ -1719,7 +1761,7 @@ const GeneralDSVisualizer = ({ onBack, openSettings, initialType = 'HASH_TABLE',
             </div>
 
             {/* Popped/Removed Elements Sidebar Panel */}
-            {showHistory && (
+            {showHistory && !isMobile && (
               <div style={{
                 width: '220px',
                 background: 'var(--glass-bg)',
@@ -1830,33 +1872,201 @@ const GeneralDSVisualizer = ({ onBack, openSettings, initialType = 'HASH_TABLE',
             )}
           </div>
           
-          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginTop: '1.5rem', background: 'var(--glass-bg)', padding: '12px 24px', borderRadius: '16px', border: '1px solid var(--glass-border)' }}>
-            <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+          <div style={{ display: 'flex', flexDirection: isMobile ? 'column' : 'row', justifyContent: 'space-between', alignItems: 'center', marginTop: '1.5rem', background: 'var(--glass-bg)', padding: isMobile ? '10px 14px' : '12px 24px', borderRadius: '16px', border: '1px solid var(--glass-border)', gap: '10px' }}>
+            <div style={{ display: 'flex', alignItems: 'center', gap: isMobile ? '4px' : '8px', flexWrap: 'wrap', justifyContent: 'center' }}>
               <button className="btn btn-clear" style={{ padding: '0.5rem 1rem', fontWeight: 'bold' }} onClick={() => { setIsPlaying(false); setCurrentStep(0); }} disabled={!timeline.length||currentStep===0}>⏮ First</button>
               <button className="btn btn-clear" style={{ padding: '0.5rem 1rem', fontWeight: 'bold' }} onClick={() => { setIsPlaying(false); setCurrentStep(p => Math.max(0, p - 1)); }} disabled={!timeline.length||currentStep===0}>◀ Prev</button>
               <button className="btn btn-clear" style={{ padding: '0.5rem 1.5rem', border: 'none', background: isPlaying ? 'rgba(59,130,246,0.6)' : 'var(--accent-primary)', color: 'white', fontWeight: 'bold', boxShadow: '0 4px 10px rgba(59,130,246,0.4)' }} onClick={() => setIsPlaying(p => !p)} disabled={!timeline.length}>{isPlaying ? '⏸ Pause' : '▶ Play'}</button>
               <button className="btn btn-clear" style={{ padding: '0.5rem 1rem', fontWeight: 'bold' }} onClick={() => { setIsPlaying(false); setCurrentStep(p => Math.min(timeline.length - 1, p + 1)); }} disabled={!timeline.length||currentStep===timeline.length-1}>Next ▶</button>
               <button className="btn btn-clear" style={{ padding: '0.5rem 1rem', fontWeight: 'bold' }} onClick={() => { setIsPlaying(false); setCurrentStep(timeline.length - 1); }} disabled={!timeline.length||currentStep===timeline.length-1}>Last ⏭</button>
-              <span style={{ fontSize: '1rem', color: 'var(--text-secondary)', marginLeft: '15px', fontWeight: 'bold', fontFamily: 'monospace' }}>Frame: {timeline.length ? currentStep + 1 : 0} / {timeline.length}</span>
+              <span style={{ fontSize: '0.85rem', color: 'var(--text-secondary)', marginLeft: isMobile ? '5px' : '15px', fontWeight: 'bold', fontFamily: 'monospace' }}>Frame: {timeline.length ? currentStep + 1 : 0} / {timeline.length}</span>
             </div>
 
-            <div style={{ display: 'flex', alignItems: 'center', gap: '15px' }}>
-              <span style={{ color: 'var(--text-secondary)', fontWeight: 600, fontSize: '0.9rem' }}>Animation Speed</span>
-              <input type="range" min={50} max={1000} step={50} value={1050 - speed} onChange={e => setSpeed(1050 - Number(e.target.value))} style={{ width: '200px', accentColor: 'var(--accent-primary)', cursor: 'pointer' }}/>
+            <div style={{ display: 'flex', alignItems: 'center', gap: '10px', width: isMobile ? '100%' : 'auto', justifyContent: 'center' }}>
+              <span style={{ color: 'var(--text-secondary)', fontWeight: 600, fontSize: '0.85rem', whiteSpace: 'nowrap' }}>Animation Speed</span>
+              <input type="range" min={50} max={1000} step={50} value={1050 - speed} onChange={e => setSpeed(1050 - Number(e.target.value))} style={{ width: isMobile ? '100%' : '200px', accentColor: 'var(--accent-primary)', cursor: 'pointer' }}/>
             </div>
           </div>
         </div>
 
+        {/* Inline Mobile Log Panel */}
+        {isMobile && showLogPanel && mobileTab === 'log' && (
+          <div style={{ flex: 1, background: 'var(--bg-secondary)', borderRadius: '14px', border: '1px solid var(--glass-border)', display: 'flex', flexDirection: 'column', padding: '0.85rem', overflow: 'hidden', height: '100%', width: '100%' }}>
+            <div style={{ padding: '6px 12px', background: 'rgba(255, 255, 255, 0.04)', borderBottom: '1px solid var(--glass-border)', display: 'flex', justifyContent: 'space-between', alignItems: 'center', flexShrink: 0 }}>
+              <span style={{ fontWeight: 600, fontSize: '0.85rem', color: 'var(--text-primary)' }}>
+                📋 Execution Log & Active State
+              </span>
+            </div>
+            
+            <div style={{ display: 'flex', flex: 1, flexDirection: 'column', overflowY: 'auto', gap: '10px', marginTop: '10px' }}>
+              {/* Active State Details */}
+              <div style={{ background: 'rgba(0,0,0,0.25)', border: '1px solid var(--glass-border)', borderRadius: '8px', padding: '10px 12px', display: 'flex', flexDirection: 'column', gap: '8px', fontSize: '0.8rem', color: 'var(--text-secondary)' }}>
+                <div style={{ fontSize: '0.75rem', color: 'var(--accent-primary)', textTransform: 'uppercase', fontWeight: 'bold', borderBottom: '1px solid rgba(255,255,255,0.06)', paddingBottom: '4px' }}>
+                  Active State
+                </div>
+                <div>
+                  <span style={{ color: 'var(--text-secondary)' }}>Type: </span>
+                  <span style={{ color: 'var(--text-primary)', fontWeight: 'bold' }}>
+                    {dsType.replace('_', ' ')} {dsVariety && `(${dsVariety.replace('HASH_', '').replace('CIRCULAR_', '')})`}
+                  </span>
+                </div>
+                <div>
+                  <div style={{ marginBottom: '2px', fontSize: '0.75rem' }}>Elements:</div>
+                  {frame.arr ? (
+                    <div style={{ background: 'rgba(0,0,0,0.18)', padding: '4px 6px', borderRadius: '4px', fontFamily: 'monospace', color: '#34d399', wordBreak: 'break-all', fontWeight: 'bold' }}>
+                      [{frame.arr.join(', ')}]
+                    </div>
+                  ) : frame.cq && frame.cq.arr ? (
+                    <div style={{ background: 'rgba(0,0,0,0.18)', padding: '4px 6px', borderRadius: '4px', fontFamily: 'monospace', color: '#34d399', wordBreak: 'break-all', fontWeight: 'bold' }}>
+                      [{frame.cq.arr.map((x) => x === null ? 'null' : x).join(', ')}]
+                    </div>
+                  ) : frame.ht ? (
+                    <div style={{ background: 'rgba(0,0,0,0.18)', padding: '4px 6px', borderRadius: '4px', fontFamily: 'monospace', color: '#34d399', fontSize: '0.72rem', overflowY: 'auto', maxHeight: '90px' }}>
+                      {frame.ht.map((bucket, bIdx) => (
+                        <div key={bIdx} style={{ whiteSpace: 'nowrap' }}>
+                          {bIdx}: {Array.isArray(bucket) ? (bucket.length > 0 ? bucket.join(' ➔ ') : 'empty') : (bucket === null ? 'empty' : bucket === 'TOMBSTONE' ? 'DEL' : bucket)}
+                        </div>
+                      ))}
+                    </div>
+                  ) : (
+                    <span style={{ fontStyle: 'italic' }}>Empty</span>
+                  )}
+                </div>
+                
+                <div style={{ borderTop: '1px solid rgba(255,255,255,0.06)', paddingTop: '6px', marginTop: '4px' }}>
+                  <div style={{ fontSize: '0.72rem', textTransform: 'uppercase', fontWeight: 'bold', marginBottom: '4px', color: 'var(--accent-secondary)' }}>Trace Variables</div>
+                  
+                  {dsType === 'HASH_TABLE' ? (
+                    <div style={{ display: 'flex', flexDirection: 'column', gap: '4px' }}>
+                      {frame.activeBucket !== undefined && frame.activeBucket !== -1 && (
+                        <div style={{ display: 'flex', justifyContent: 'space-between' }}>
+                          <span>Target Slot:</span>
+                          <span style={{ color: '#fbbf24', fontWeight: 'bold', fontFamily: 'monospace' }}>
+                            {frame.activeBucket}
+                          </span>
+                        </div>
+                      )}
+                      {frame.activeNode !== undefined && frame.activeNode !== -1 && (
+                        <div style={{ display: 'flex', justifyContent: 'space-between' }}>
+                          <span>Chain Node Index:</span>
+                          <span style={{ color: 'var(--text-primary)', fontFamily: 'monospace' }}>{frame.activeNode}</span>
+                        </div>
+                      )}
+                      {(frame.activeBucket === undefined || frame.activeBucket === -1) && (
+                        <div style={{ color: 'var(--text-secondary)', fontStyle: 'italic', fontSize: '0.8rem' }}>No active slot</div>
+                      )}
+                    </div>
+                  ) : dsVariety === 'QUEUE_CIRCULAR' ? (
+                    <div style={{ display: 'flex', flexDirection: 'column', gap: '4px' }}>
+                      <div style={{ display: 'flex', justifyContent: 'space-between' }}>
+                        <span>Front Index:</span>
+                        <span style={{ color: '#fbbf24', fontWeight: 'bold', fontFamily: 'monospace' }}>
+                          {frame.cq && frame.cq.f !== -1 ? frame.cq.f : 'N/A'}
+                        </span>
+                      </div>
+                      <div style={{ display: 'flex', justifyContent: 'space-between' }}>
+                        <span>Rear Index:</span>
+                        <span style={{ color: '#60a5fa', fontWeight: 'bold', fontFamily: 'monospace' }}>
+                          {frame.cq && frame.cq.r !== -1 ? frame.cq.r : 'N/A'}
+                        </span>
+                      </div>
+                    </div>
+                  ) : (
+                    <div style={{ display: 'flex', flexDirection: 'column', gap: '4px' }}>
+                      {frame.activeIdx !== undefined && frame.activeIdx !== -1 ? (
+                        <>
+                          <div style={{ display: 'flex', justifyContent: 'space-between' }}>
+                            <span>Active Val:</span>
+                            <span style={{ color: '#fbbf24', fontWeight: 'bold' }}>
+                              {frame.arr ? (frame.arr[frame.activeIdx] ?? 'N/A') : 'N/A'}
+                            </span>
+                          </div>
+                          <div style={{ display: 'flex', justifyContent: 'space-between' }}>
+                            <span>Active Index:</span>
+                            <span style={{ color: 'var(--text-primary)', fontFamily: 'monospace' }}>
+                              {frame.activeIdx}
+                            </span>
+                          </div>
+                        </>
+                      ) : (
+                        <div style={{ color: 'var(--text-secondary)', fontStyle: 'italic', fontSize: '0.8rem' }}>No active pointer</div>
+                      )}
+                    </div>
+                  )}
+                </div>
+              </div>
+
+              {/* Operations/Timeline Log */}
+              <div style={{ flex: '1 0 150px', background: 'rgba(0,0,0,0.15)', borderRadius: '10px', padding: '0.75rem 1rem', overflowY: 'auto', border: '1px solid rgba(255,255,255,0.03)' }}>
+                <div style={{ fontSize: '0.75rem', color: 'var(--text-secondary)', fontWeight: 'bold', textTransform: 'uppercase', marginBottom: '8px' }}>Log Steps</div>
+                {timeline.length === 0 && (
+                  <div style={{ color: 'var(--text-secondary)', fontStyle: 'italic', fontSize: '0.8rem' }}>
+                    No simulation logs yet. Run operation to start.
+                  </div>
+                )}
+                {timeline.slice(0, currentStep + 1).map((f, idx) => (
+                  <div key={idx} style={{ display: 'flex', gap: '6px', fontSize: '0.8rem', marginBottom: '4px' }}>
+                    <span style={{ color: 'var(--text-secondary)' }}>{idx === currentStep ? '➔' : `${idx + 1}.`}</span>
+                    <span style={{ color: idx === currentStep ? '#fbbf24' : 'var(--text-primary)' }}>{f.msg}</span>
+                  </div>
+                ))}
+              </div>
+
+              {/* Popped/Removed Elements History (under mobile Tab 3) */}
+              {showHistory && (
+                <div style={{ flex: '1 0 150px', background: 'rgba(0,0,0,0.15)', borderRadius: '10px', padding: '0.75rem 1rem', overflowY: 'auto', border: '1px solid rgba(255,255,255,0.03)' }}>
+                  <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', borderBottom: '1px solid rgba(255,255,255,0.06)', paddingBottom: '4px', marginBottom: '8px' }}>
+                    <span style={{ fontSize: '0.75rem', color: 'var(--text-secondary)', fontWeight: 'bold', textTransform: 'uppercase' }}>
+                      {dsType === 'STACK' && '🗑️ Popped'}
+                      {dsType === 'QUEUE' && '🗑️ Dequeued'}
+                      {dsType === 'LINKED_LIST' && '🗑️ Deleted'}
+                      {dsType === 'HASH_TABLE' && '🗑️ Deleted'} Elements History
+                    </span>
+                    {poppedElements.length > 0 && (
+                      <button onClick={() => setPoppedElements([])} style={{ background: 'transparent', border: 'none', color: '#ef4444', cursor: 'pointer', fontSize: '0.72rem', fontWeight: 'bold' }}>
+                        Clear
+                      </button>
+                    )}
+                  </div>
+                  {poppedElements.length === 0 ? (
+                    <div style={{ color: 'var(--text-secondary)', fontStyle: 'italic', fontSize: '0.8rem', textAlign: 'center', marginTop: '10px' }}>
+                      No elements processed yet.
+                    </div>
+                  ) : (
+                    <div style={{ display: 'flex', flexDirection: 'column', gap: '6px' }}>
+                      {[...poppedElements].reverse().map((item, index) => {
+                        const displayVal = typeof item === 'object' ? item.val : item;
+                        const opName = typeof item === 'object' ? item.op : 'Pop';
+                        const dsName = typeof item === 'object' ? item.ds : 'Stack';
+                        return (
+                          <div key={index} style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', background: 'rgba(255, 255, 255, 0.02)', padding: '6px 10px', borderRadius: '6px', border: '1px solid var(--glass-border)', fontSize: '0.8rem' }}>
+                            <span style={{ color: 'var(--text-secondary)', fontSize: '0.72rem' }}>
+                              #{poppedElements.length - index} ({dsName} {opName})
+                            </span>
+                            <span style={{ fontWeight: 'bold', color: '#f43f5e' }}>{displayVal}</span>
+                          </div>
+                        );
+                      })}
+                    </div>
+                  )}
+                </div>
+              )}
+            </div>
+          </div>
+        )}
+
         {/* Code Sidebar */}
-        {showCode && (
+        {showCode && (isMobile ? mobileTab === 'code' : true) && (
         <>
            {/* Vertical Drag Handle for column resizing */}
-          <div onMouseDown={handleColDragStart} onTouchStart={handleColDragStart} style={{ width: '8px', background: 'var(--glass-border)', borderRadius: '4px', cursor: 'col-resize', flexShrink: 0, transition: 'background 0.2s', touchAction: 'none' }}
-            onMouseOver={e => e.currentTarget.style.background = 'rgba(96,165,250,0.5)'}
-            onMouseOut={e => e.currentTarget.style.background = 'var(--glass-border)'}
-            title="Drag to resize columns" />
+          {!isMobile && (
+            <div onMouseDown={handleColDragStart} onTouchStart={handleColDragStart} style={{ width: '8px', background: 'var(--glass-border)', borderRadius: '4px', cursor: 'col-resize', flexShrink: 0, transition: 'background 0.2s', touchAction: 'none' }}
+              onMouseOver={e => e.currentTarget.style.background = 'rgba(96,165,250,0.5)'}
+              onMouseOut={e => e.currentTarget.style.background = 'var(--glass-border)'}
+              title="Drag to resize columns" />
+          )}
 
-          <div style={{ width: `${codeWidth}px`, background: 'var(--bg-secondary)', borderLeft: '1px solid var(--glass-border)', display: 'flex', flexDirection: 'column', overflow: 'hidden', minWidth: '200px' }}>
+          <div style={{ width: isMobile ? '100%' : `${codeWidth}px`, background: 'var(--bg-secondary)', borderLeft: isMobile ? 'none' : '1px solid var(--glass-border)', display: 'flex', flexDirection: 'column', overflow: 'hidden', minWidth: isMobile ? '100%' : '200px' }}>
             <div style={{ padding: '1rem', borderBottom: '1px solid var(--glass-border)', display: 'flex', justifyContent: 'space-between', alignItems: 'center', background: 'var(--glass-bg)', gap: '10px' }}>
               <h3 style={{ margin: 0, fontSize: '1.1rem', color: 'var(--text-primary)', fontWeight: 'bold', flex: 1 }}>Implementation</h3>
               <div style={{ display: 'flex', gap: '6px' }}>

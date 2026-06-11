@@ -1,4 +1,4 @@
-/* eslint-disable react/prop-types, react-hooks/set-state-in-effect, react-hooks/exhaustive-deps */
+/* eslint-disable react/prop-types, react-hooks/set-state-in-effect */
 import React, { useState, useEffect, useRef } from 'react';
 import gsap from 'gsap';
 import { getSortSearchCode } from './codeTemplatesSort';
@@ -62,6 +62,16 @@ const SortSearchVisualizer = ({ onBack, openSettings, initialTab = 'Sort', initi
   const [codeLang, setCodeLang] = useState('C++');
   const [showCode, setShowCode] = useState(false);
   const [isRunnerOpen, setIsRunnerOpen] = useState(false);
+  const [isMobile, setIsMobile] = useState(typeof window !== 'undefined' ? window.innerWidth < 768 : false);
+  const [mobileTab, setMobileTab] = useState('vis'); // 'vis' | 'code' | 'log'
+
+  useEffect(() => {
+    const handleResize = () => {
+      setIsMobile(window.innerWidth < 768);
+    };
+    window.addEventListener('resize', handleResize);
+    return () => window.removeEventListener('resize', handleResize);
+  }, []);
 
   // Draggable execution log states
   const [showLogPanel, setShowLogPanel] = useState(true);
@@ -783,17 +793,25 @@ const SortSearchVisualizer = ({ onBack, openSettings, initialTab = 'Sort', initi
         </div>
       </header>
       
-      <div style={{ flex: 1, display: 'flex', padding: '1.5rem', gap: '1.5rem', overflow: 'hidden' }}>
+      {isMobile && (
+        <div className="mobile-tabs-container">
+          <button className={`mobile-tab-btn ${mobileTab === 'vis' ? 'active' : ''}`} onClick={() => setMobileTab('vis')}>📊 Visualizer</button>
+          <button className={`mobile-tab-btn ${mobileTab === 'code' ? 'active' : ''}`} onClick={() => { setMobileTab('code'); setShowCode(true); }}>💻 Code</button>
+          <button className={`mobile-tab-btn ${mobileTab === 'log' ? 'active' : ''}`} onClick={() => { setMobileTab('log'); setShowLogPanel(true); }}>📋 Logs</button>
+        </div>
+      )}
+      
+      <div style={{ flex: 1, display: 'flex', flexDirection: isMobile ? 'column' : 'row', padding: isMobile ? '0.35rem' : '1.5rem', gap: isMobile ? '0.5rem' : '1.5rem', overflow: 'hidden' }}>
         
         {/* Left Column: Visualizer */}
-        <div style={{ flex: 1, display: 'flex', flexDirection: 'column', overflow: 'hidden', position: 'relative' }}>
+        <div style={{ display: (isMobile && mobileTab !== 'vis') ? 'none' : 'flex', flex: 1, flexDirection: 'column', overflow: 'hidden', position: 'relative' }}>
           <div style={{ textAlign: 'center', marginBottom: '1.2rem', height: '40px', display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0 }}>
-             <span style={{ fontSize: '1.4rem', color: 'var(--text-primary)', fontWeight: 'bold', background: 'rgba(255,255,255,0.05)', padding: '6px 20px', borderRadius: '20px', border: '1px solid var(--glass-border)', boxShadow: '0 4px 15px rgba(0,0,0,0.2)' }}>
+             <span style={{ fontSize: isMobile ? '1.05rem' : '1.4rem', color: 'var(--text-primary)', fontWeight: 'bold', background: 'rgba(255,255,255,0.05)', padding: '6px 20px', borderRadius: '20px', border: '1px solid var(--glass-border)', boxShadow: '0 4px 15px rgba(0,0,0,0.2)' }}>
                {frame.msg || 'Select a sort or search algorithm'}
              </span>
           </div>
           
-          <div style={{ flex: 1, display: 'flex', alignItems: 'flex-end', justifyContent: 'center', gap: '8px', background: 'rgba(15,23,42,0.5)', borderRadius: '14px', border: '1px solid var(--glass-border)', padding: '2rem 1rem', overflow: 'hidden' }}>
+          <div style={{ flex: 1, display: 'flex', alignItems: 'flex-end', justifyContent: 'center', gap: isMobile ? '4px' : '8px', background: 'rgba(15,23,42,0.5)', borderRadius: '14px', border: '1px solid var(--glass-border)', padding: isMobile ? '1rem 0.5rem' : '2rem 1rem', overflow: 'hidden' }}>
             {frame.arr.map((val, idx) => {
               let bg = 'linear-gradient(to top, var(--accent-primary), var(--accent-secondary))';
               if (idx === frame.i || idx === frame.j) bg = 'linear-gradient(to top, #fbbf24, #f59e0b)'; 
@@ -802,14 +820,15 @@ const SortSearchVisualizer = ({ onBack, openSettings, initialTab = 'Sort', initi
               return (
                 <div key={idx} ref={el => barRefs.current[idx] = el} style={{
                   height: `${Math.max(val, 5)}%`, 
-                  width: '45px',
+                  width: isMobile ? '20px' : '45px',
                   background: bg,
-                  borderRadius: '6px 6px 0 0',
+                  borderRadius: '4px 4px 0 0',
                   display: 'flex',
                   alignItems: 'flex-start',
                   justifyContent: 'center',
                   color: 'white',
                   fontWeight: 'bold',
+                  fontSize: isMobile ? '0.7rem' : '1rem',
                   paddingTop: '8px',
                   boxShadow: '0 4px 12px rgba(0,0,0,0.1)',
                   transition: 'height 0.2s ease, background 0.2s',
@@ -836,7 +855,7 @@ const SortSearchVisualizer = ({ onBack, openSettings, initialTab = 'Sort', initi
               <h4 style={{ margin: 0, color: 'var(--text-secondary)', fontSize: '0.9rem', fontWeight: 'bold' }}>
                 🪣 Radix Digits Buckets (0 to 9) - {frame.k}s Place
               </h4>
-              <div style={{ display: 'grid', gridTemplateColumns: 'repeat(10, 1fr)', gap: '10px' }}>
+              <div style={{ display: 'grid', gridTemplateColumns: 'repeat(10, 1fr)', gap: isMobile ? '4px' : '10px' }}>
                 {frame.buckets.map((bucket, bIdx) => (
                   <div 
                     key={bIdx} 
@@ -844,27 +863,27 @@ const SortSearchVisualizer = ({ onBack, openSettings, initialTab = 'Sort', initi
                       background: 'rgba(255,255,255,0.03)', 
                       border: '1px solid var(--glass-border)', 
                       borderRadius: '8px', 
-                      minHeight: '80px',
+                      minHeight: isMobile ? '50px' : '80px',
                       display: 'flex',
                       flexDirection: 'column',
                       alignItems: 'center',
-                      padding: '6px 0',
+                      padding: '4px 0',
                       gap: '4px',
                       boxShadow: 'inset 0 0 10px rgba(0,0,0,0.1)'
                     }}
                   >
-                    <span style={{ fontSize: '0.85rem', fontWeight: 'bold', color: '#fbbf24', borderBottom: '1px solid var(--glass-border)', width: '100%', textAlign: 'center', paddingBottom: '3px' }}>
+                    <span style={{ fontSize: isMobile ? '0.7rem' : '0.85rem', fontWeight: 'bold', color: '#fbbf24', borderBottom: '1px solid var(--glass-border)', width: '100%', textAlign: 'center', paddingBottom: '3px' }}>
                       [{bIdx}]
                     </span>
-                    <div style={{ display: 'flex', flexDirection: 'column', gap: '4px', width: '100%', alignItems: 'center', overflowY: 'auto' }}>
+                    <div style={{ display: 'flex', flexDirection: 'column', gap: '2px', width: '100%', alignItems: 'center', overflowY: 'auto' }}>
                       {bucket.map((val, idx) => (
                         <div 
                           key={idx} 
                           style={{ 
                             background: 'linear-gradient(135deg, var(--accent-primary), var(--accent-secondary))',
                             borderRadius: '4px', 
-                            padding: '2px 8px', 
-                            fontSize: '0.8rem', 
+                            padding: '1px 4px', 
+                            fontSize: isMobile ? '0.65rem' : '0.8rem', 
                             fontWeight: 'bold', 
                             color: '#fff',
                             boxShadow: '0 2px 5px rgba(0,0,0,0.2)'
@@ -880,23 +899,23 @@ const SortSearchVisualizer = ({ onBack, openSettings, initialTab = 'Sort', initi
             </div>
           )}
           
-          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginTop: '1.5rem', background: 'var(--glass-bg)', padding: '12px 24px', borderRadius: '16px', border: '1px solid var(--glass-border)', flexShrink: 0 }}>
-            <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
-              <button className="btn btn-clear" style={{ padding: '0.5rem 1rem', fontWeight: 'bold' }} onClick={() => { setIsPlaying(false); setCurrentStep(0); }} disabled={!timeline.length||currentStep===0}>⏮ First</button>
-              <button className="btn btn-clear" style={{ padding: '0.5rem 1rem', fontWeight: 'bold' }} onClick={() => { setIsPlaying(false); setCurrentStep(p => Math.max(0, p - 1)); }} disabled={!timeline.length||currentStep===0}>◀ Prev</button>
-              <button className="btn btn-clear" style={{ padding: '0.5rem 1.5rem', border: 'none', background: isPlaying ? 'rgba(59,130,246,0.6)' : 'var(--accent-primary)', color: 'white', fontWeight: 'bold', boxShadow: '0 4px 10px rgba(59,130,246,0.4)' }} onClick={() => setIsPlaying(p => !p)} disabled={!timeline.length}>{isPlaying ? '⏸ Pause' : '▶ Play'}</button>
-              <button className="btn btn-clear" style={{ padding: '0.5rem 1rem', fontWeight: 'bold' }} onClick={() => { setIsPlaying(false); setCurrentStep(p => Math.min(timeline.length - 1, p + 1)); }} disabled={!timeline.length||currentStep===timeline.length-1}>Next ▶</button>
-              <button className="btn btn-clear" style={{ padding: '0.5rem 1rem', fontWeight: 'bold' }} onClick={() => { setIsPlaying(false); setCurrentStep(timeline.length - 1); }} disabled={!timeline.length||currentStep===timeline.length-1}>Last ⏭</button>
-              <span style={{ fontSize: '1rem', color: 'var(--text-secondary)', marginLeft: '15px', fontWeight: 'bold', fontFamily: 'monospace' }}>Step: {timeline.length ? currentStep + 1 : 0} / {timeline.length}</span>
+          <div style={{ display: 'flex', flexDirection: isMobile ? 'column' : 'row', justifyContent: 'space-between', alignItems: 'center', marginTop: '1.5rem', background: 'var(--glass-bg)', padding: isMobile ? '10px 14px' : '12px 24px', borderRadius: '16px', border: '1px solid var(--glass-border)', flexShrink: 0, gap: '10px' }}>
+            <div style={{ display: 'flex', alignItems: 'center', gap: isMobile ? '4px' : '8px', flexWrap: 'wrap', justifyContent: 'center' }}>
+              <button className="btn btn-clear" style={{ fontWeight: 'bold' }} onClick={() => { setIsPlaying(false); setCurrentStep(0); }} disabled={!timeline.length||currentStep===0}>⏮ First</button>
+              <button className="btn btn-clear" style={{ fontWeight: 'bold' }} onClick={() => { setIsPlaying(false); setCurrentStep(p => Math.max(0, p - 1)); }} disabled={!timeline.length||currentStep===0}>◀ Prev</button>
+              <button className="btn btn-clear" style={{ border: 'none', background: isPlaying ? 'rgba(59,130,246,0.6)' : 'var(--accent-primary)', color: 'white', fontWeight: 'bold', boxShadow: '0 4px 10px rgba(59,130,246,0.4)' }} onClick={() => setIsPlaying(p => !p)} disabled={!timeline.length}>{isPlaying ? '⏸' : '▶ Play'}</button>
+              <button className="btn btn-clear" style={{ fontWeight: 'bold' }} onClick={() => { setIsPlaying(false); setCurrentStep(p => Math.min(timeline.length - 1, p + 1)); }} disabled={!timeline.length||currentStep===timeline.length-1}>Next ▶</button>
+              <button className="btn btn-clear" style={{ fontWeight: 'bold' }} onClick={() => { setIsPlaying(false); setCurrentStep(timeline.length - 1); }} disabled={!timeline.length||currentStep===timeline.length-1}>Last ⏭</button>
+              <span style={{ fontSize: '0.85rem', color: 'var(--text-secondary)', marginLeft: isMobile ? '5px' : '15px', fontWeight: 'bold', fontFamily: 'monospace' }}>Step: {timeline.length ? currentStep + 1 : 0}/{timeline.length}</span>
             </div>
 
-            <div style={{ display: 'flex', alignItems: 'center', gap: '15px' }}>
-              <span style={{ color: 'var(--text-secondary)', fontWeight: 600, fontSize: '0.9rem' }}>Animation Speed</span>
-              <input type="range" min={50} max={1000} step={50} value={1050 - speed} onChange={e => setSpeed(1050 - Number(e.target.value))} style={{ width: '200px', accentColor: 'var(--accent-primary)' }}/>
+            <div style={{ display: 'flex', alignItems: 'center', gap: '10px', width: isMobile ? '100%' : 'auto', justifyContent: 'center' }}>
+              <span style={{ color: 'var(--text-secondary)', fontWeight: 600, fontSize: '0.82rem', whiteSpace: 'nowrap' }}>Speed</span>
+              <input type="range" min={50} max={1000} step={50} value={1050 - speed} onChange={e => setSpeed(1050 - Number(e.target.value))} style={{ width: isMobile ? '100%' : '140px', accentColor: 'var(--accent-primary)' }}/>
             </div>
           </div>
 
-          {showLogPanel && (
+          {showLogPanel && !isMobile && (
             <div
               style={{
                 position: 'fixed',
@@ -1148,19 +1167,82 @@ const SortSearchVisualizer = ({ onBack, openSettings, initialTab = 'Sort', initi
           )}
         </div>
 
+        {/* Inline Mobile Log Panel */}
+        {isMobile && showLogPanel && mobileTab === 'log' && (
+          <div style={{ flex: 1, background: 'var(--bg-secondary)', borderRadius: '14px', border: '1px solid var(--glass-border)', display: 'flex', flexDirection: 'column', padding: '0.85rem', overflow: 'hidden', height: '100%', width: '100%' }}>
+            <div style={{ padding: '6px 12px', background: 'rgba(255, 255, 255, 0.04)', borderBottom: '1px solid var(--glass-border)', display: 'flex', justifyContent: 'space-between', alignItems: 'center', flexShrink: 0 }}>
+              <span style={{ fontWeight: 600, fontSize: '0.85rem', color: 'var(--text-primary)' }}>
+                📋 Execution Log & Active State
+              </span>
+            </div>
+            <div style={{ display: 'flex', flex: 1, flexDirection: 'column', overflow: 'hidden', gap: '10px', marginTop: '10px' }}>
+              <div style={{ background: 'rgba(0,0,0,0.25)', border: '1px solid var(--glass-border)', borderRadius: '8px', padding: '10px 12px', display: 'flex', flexDirection: 'column', gap: '8px', fontSize: '0.8rem', color: 'var(--text-secondary)' }}>
+                <div style={{ fontSize: '0.75rem', color: 'var(--accent-primary)', textTransform: 'uppercase', fontWeight: 'bold', borderBottom: '1px solid rgba(255,255,255,0.06)', paddingBottom: '4px' }}>
+                  Active State
+                </div>
+                <div>
+                  <span style={{ color: 'var(--text-secondary)' }}>Algorithm: </span>
+                  <span style={{ color: 'var(--text-primary)', fontWeight: 'bold' }}>{currentDisplayedAlgo}</span>
+                </div>
+                <div>
+                  <span style={{ color: 'var(--text-secondary)' }}>Elements: </span>
+                  <span style={{ color: '#34d399', fontFamily: 'monospace', fontWeight: 'bold' }}>[{frame.arr ? frame.arr.join(', ') : ''}]</span>
+                </div>
+                {(() => {
+                  const details = [];
+                  const { i, j, k } = frame;
+                  const getValStr = (idx) => (idx !== undefined && idx !== -1 && frame.arr) ? `Idx ${idx} (Val: ${frame.arr[idx] ?? 'N/A'})` : null;
+
+                  if (currentDisplayedAlgo === 'Bubble Sort') {
+                    if (i !== -1) details.push({ label: 'Index j', val: getValStr(i), color: '#fbbf24' });
+                    if (j !== -1) details.push({ label: 'Index j+1', val: getValStr(j), color: '#60a5fa' });
+                  } else if (currentDisplayedAlgo === 'Selection Sort') {
+                    if (i !== -1) details.push({ label: 'Index j', val: getValStr(i), color: '#fbbf24' });
+                    if (j !== -1) details.push({ label: 'Min Index', val: getValStr(j), color: '#60a5fa' });
+                  } else if (currentDisplayedAlgo === 'Insertion Sort') {
+                    if (i !== -1) details.push({ label: 'Active Key Index', val: getValStr(i), color: '#fbbf24' });
+                  } else if (currentDisplayedAlgo === 'Binary Search') {
+                    if (i !== -1) details.push({ label: 'Mid Index', val: getValStr(i), color: '#fbbf24' });
+                    if (j !== -1) details.push({ label: 'Left Index', val: getValStr(j), color: '#60a5fa' });
+                    if (k !== -1) details.push({ label: 'Right Index', val: getValStr(k), color: '#10b981' });
+                  }
+
+                  return details.map((d, index) => (
+                    <div key={index} style={{ display: 'flex', justifyContent: 'space-between' }}>
+                      <span>{d.label}:</span>
+                      <span style={{ color: d.color, fontWeight: 'bold' }}>{d.val}</span>
+                    </div>
+                  ));
+                })()}
+              </div>
+
+              <div style={{ flex: 1, background: 'rgba(0,0,0,0.15)', borderRadius: '10px', padding: '0.75rem 1rem', overflowY: 'auto', border: '1px solid rgba(255,255,255,0.03)' }}>
+                {timeline.slice(0, currentStep + 1).map((f, idx) => (
+                  <div key={idx} style={{ display: 'flex', gap: '6px', fontSize: '0.8rem', marginBottom: '4px' }}>
+                    <span style={{ color: 'var(--text-secondary)' }}>{idx === currentStep ? '➔' : `${idx + 1}.`}</span>
+                    <span style={{ color: idx === currentStep ? '#fbbf24' : 'var(--text-primary)' }}>{f.msg}</span>
+                  </div>
+                ))}
+              </div>
+            </div>
+          </div>
+        )}
+
         {/* Right Column: Code Sidebar */}
-        {showCode && (
+        {showCode && (isMobile ? mobileTab === 'code' : true) && (
         <>
           {/* Vertical Drag Handle for column resizing */}
-          <div onMouseDown={handleColDragStart} onTouchStart={handleColDragStart} style={{ width: '8px', background: 'var(--glass-border)', borderRadius: '4px', cursor: 'col-resize', flexShrink: 0, transition: 'background 0.2s', touchAction: 'none' }}
-            onMouseOver={e => e.currentTarget.style.background = 'rgba(96,165,250,0.5)'}
-            onMouseOut={e => e.currentTarget.style.background = 'var(--glass-border)'}
-            title="Drag to resize columns" />
+          {!isMobile && (
+            <div onMouseDown={handleColDragStart} onTouchStart={handleColDragStart} style={{ width: '8px', background: 'var(--glass-border)', borderRadius: '4px', cursor: 'col-resize', flexShrink: 0, transition: 'background 0.2s', touchAction: 'none' }}
+              onMouseOver={e => e.currentTarget.style.background = 'rgba(96,165,250,0.5)'}
+              onMouseOut={e => e.currentTarget.style.background = 'var(--glass-border)'}
+              title="Drag to resize columns" />
+          )}
 
-          <div style={{ width: `${codeWidth}px`, background: 'var(--glass-bg)', borderRadius: '14px', border: '1px solid var(--glass-border)', display: 'flex', flexDirection: 'column', padding: '0.85rem', overflow: 'hidden', minWidth: '200px' }}>
+          <div style={{ width: isMobile ? '100%' : `${codeWidth}px`, background: 'var(--glass-bg)', borderRadius: '14px', border: '1px solid var(--glass-border)', display: 'flex', flexDirection: 'column', padding: '0.85rem', overflow: 'hidden', minWidth: isMobile ? '100%' : '200px' }}>
             <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '0.6rem', flexShrink: 0 }}>
               <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
-                <h3 style={{ color: 'var(--text-secondary)', fontSize: '0.9rem', fontWeight: 600, margin: 0 }}>{currentDisplayedAlgo} Code</h3>
+                <h3 style={{ color: 'var(--text-secondary)', fontSize: '0.9rem', fontWeight: 600, margin: 0 }}>Code</h3>
                 <button 
                   onClick={() => onShowUpcomingFeatures ? onShowUpcomingFeatures() : setIsRunnerOpen(true)}
                   className="btn btn-clear"  
@@ -1168,34 +1250,34 @@ const SortSearchVisualizer = ({ onBack, openSettings, initialTab = 'Sort', initi
                 >
                   ▶ Run Code
                 </button>
-              <button 
-                onClick={handleCopyCode} 
-                className="btn btn-clear" 
-                style={{ padding: '0.2rem 0.5rem', fontSize: '0.75rem', whiteSpace: 'nowrap' }}
-              >
-                {copied ? '✓ Copied' : '📋 Copy'}
-              </button>
+                <button 
+                  onClick={handleCopyCode} 
+                  className="btn btn-clear" 
+                  style={{ padding: '0.2rem 0.5rem', fontSize: '0.75rem', whiteSpace: 'nowrap' }}
+                >
+                  {copied ? '✓ Copied' : '📋 Copy'}
+                </button>
+              </div>
+              <select className="styled-select" style={{ padding: '4px 8px', fontSize: '0.8rem', width: '100px' }} value={codeLang} onChange={e => setCodeLang(e.target.value)}>
+                <option value="C++">C++</option>
+                <option value="Java">Java</option>
+                <option value="Python">Python</option>
+                <option value="JS">JavaScript</option>
+              </select>
             </div>
-            <select className="styled-select" style={{ padding: '4px 8px', fontSize: '0.8rem', width: '100px' }} value={codeLang} onChange={e => setCodeLang(e.target.value)}>
-              <option value="C++">C++</option>
-              <option value="Java">Java</option>
-              <option value="Python">Python</option>
-              <option value="JS">JavaScript</option>
-            </select>
+            <div className="code-box" style={{ flex: 1, overflowY: 'auto', padding: '1rem', borderRadius: '8px' }}>
+              <pre style={{ 
+                margin: 0, 
+                color: 'var(--text-primary)', 
+                fontFamily: "'Fira Code', monospace", 
+                lineHeight: '1.6',
+                fontSize: `${fontSize}px`,
+                whiteSpace: wordWrap === 'on' ? 'pre-wrap' : 'pre'
+              }}>
+                 {getSortSearchCode(currentDisplayedAlgo, codeLang, array, searchValue ? parseInt(searchValue) : undefined)}
+              </pre>
+            </div>
           </div>
-          <div className="code-box" style={{ flex: 1, overflowY: 'auto', padding: '1rem', borderRadius: '8px' }}>
-            <pre style={{ 
-              margin: 0, 
-              color: 'var(--text-primary)', 
-              fontFamily: "'Fira Code', monospace", 
-              lineHeight: '1.6',
-              fontSize: `${fontSize}px`,
-              whiteSpace: wordWrap === 'on' ? 'pre-wrap' : 'pre'
-            }}>
-               {getSortSearchCode(currentDisplayedAlgo, codeLang, array, searchValue ? parseInt(searchValue) : undefined)}
-            </pre>
-          </div>
-        </div>
         </>
         )}
 

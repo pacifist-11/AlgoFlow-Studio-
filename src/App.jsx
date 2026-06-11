@@ -511,7 +511,7 @@ const loadingQuotes = [
   { text: "\"Before software can be reusable it first has to be usable.\"", color: "#eab308" }
 ];
 
-const LineDebugger = ({ initialCode, lang: initialLang, fontSize, wordWrap, onBack, openSettings, isChatOpen, setIsChatOpen, chatMessages, setChatMessages, apiKey, setApiKey, model, setModel, onShowUpcomingFeatures }) => {
+const LineDebugger = ({ initialCode, lang: initialLang, fontSize, wordWrap, onBack, openSettings, isChatOpen, setIsChatOpen, chatMessages, setChatMessages, apiKey, setApiKey, model, setModel, onShowUpcomingFeatures, isMobile }) => {
   const [isDebugStarted, setIsDebugStarted] = useState(false);
   const [isIframeLoading, setIsIframeLoading] = useState(false);
   const [quoteIndex, setQuoteIndex] = useState(() => Math.floor(Math.random() * loadingQuotes.length));
@@ -613,10 +613,10 @@ const LineDebugger = ({ initialCode, lang: initialLang, fontSize, wordWrap, onBa
         </div>
       </header>
 
-      <div style={{ display: 'flex', flex: 1, overflow: 'hidden' }}>
+      <div style={{ display: 'flex', flexDirection: isMobile ? 'column' : 'row', flex: 1, overflow: 'hidden' }}>
         {!isDebugStarted ? (
           <>
-            <div style={{ flex: 1, display: 'flex', flexDirection: 'column', overflow: 'hidden', borderRight: '2px solid #ddd', background: 'var(--bg-secondary)' }}>
+            <div style={{ flex: 1, display: 'flex', flexDirection: 'column', overflow: 'hidden', borderRight: isMobile ? 'none' : '2px solid #ddd', background: 'var(--bg-secondary)' }}>
               <div style={{ padding: '6px 12px', borderBottom: '1px solid #ddd', background: 'var(--glass-bg)', display: 'flex', justifyContent: 'space-between', alignItems: 'center', flexShrink: 0 }}>
                 <span style={{ fontSize: '0.82rem', fontWeight: 700, color: 'var(--text-secondary)', fontFamily: 'monospace' }}>Code Editor</span>
               </div>
@@ -635,12 +635,14 @@ const LineDebugger = ({ initialCode, lang: initialLang, fontSize, wordWrap, onBa
                   spellCheck={false} />
               </div>
             </div>
-            <div style={{ flex: 1, display: 'flex', flexDirection: 'column', overflow: 'hidden', background: '#e8ecf0', minWidth: '350px' }}>
-              <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', height: '100%', color: '#888', fontStyle: 'italic', fontSize: '0.9rem', padding: '2rem' }}>
-                <div style={{ fontSize: '2.5rem', marginBottom: '10px' }}>🔍</div>
-                Click "Start Debug" to trace execution
+            {!isMobile && (
+              <div style={{ flex: 1, display: 'flex', flexDirection: 'column', overflow: 'hidden', background: '#e8ecf0', minWidth: '350px' }}>
+                <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', height: '100%', color: '#888', fontStyle: 'italic', fontSize: '0.9rem', padding: '2rem' }}>
+                  <div style={{ fontSize: '2.5rem', marginBottom: '10px' }}>🔍</div>
+                  Click "Start Debug" to trace execution
+                </div>
               </div>
-            </div>
+            )}
           </>
         ) : (
           <div style={{ flex: 1, background: '#fff', position: 'relative' }}>
@@ -764,6 +766,17 @@ function App() {
   const [showBoundsInfo,  setShowBoundsInfo]  = useState(false);
   const [codeLang,      setCodeLang]      = useState('C++');
   const [currentTheme,  setCurrentTheme]  = useState('Cosmic Dark');
+  const [isMobile, setIsMobile] = useState(typeof window !== 'undefined' ? window.innerWidth < 768 : false);
+  const [mobileTab, setMobileTab] = useState('vis'); // 'vis' | 'code' | 'log'
+  const [showMobileOptions, setShowMobileOptions] = useState(false);
+
+  useEffect(() => {
+    const handleResize = () => {
+      setIsMobile(window.innerWidth < 768);
+    };
+    window.addEventListener('resize', handleResize);
+    return () => window.removeEventListener('resize', handleResize);
+  }, []);
   const [globalApiKey,  setGlobalApiKey]  = useState(localStorage.getItem('gemini_api_key') || '');
   const [globalModel,   setGlobalModel]   = useState(localStorage.getItem('gemini_model') || 'gemini-1.5-flash');
 
@@ -3476,7 +3489,7 @@ function App() {
       {/* Line-by-Line Debugger */}
       <div style={{ display: appMode === 'LINE_BY_LINE_VIS' && setupComplete ? 'block' : 'none' }}>
         {mountedModes['LINE_BY_LINE_VIS'] && (
-          <LineDebugger initialCode={customCode} lang={codeLang} fontSize={editorFontSize} wordWrap={editorWordWrap} onBack={goBack} openSettings={() => setIsSettingsOpen(true)} isChatOpen={isChatOpen} setIsChatOpen={setIsChatOpen} chatMessages={chatMessages} setChatMessages={setChatMessages} apiKey={globalApiKey} setApiKey={setGlobalApiKey} model={globalModel} setModel={setGlobalModel} onShowUpcomingFeatures={() => setIsUpcomingOpen(true)} />
+          <LineDebugger initialCode={customCode} lang={codeLang} fontSize={editorFontSize} wordWrap={editorWordWrap} onBack={goBack} openSettings={() => setIsSettingsOpen(true)} isChatOpen={isChatOpen} setIsChatOpen={setIsChatOpen} chatMessages={chatMessages} setChatMessages={setChatMessages} apiKey={globalApiKey} setApiKey={setGlobalApiKey} model={globalModel} setModel={setGlobalModel} onShowUpcomingFeatures={() => setIsUpcomingOpen(true)} isMobile={isMobile} />
         )}
       </div>
 
@@ -3495,70 +3508,17 @@ function App() {
               </div>
 
               <div className="controls-glass" style={{ display: 'flex', gap: '0.5rem', flexWrap: 'wrap', alignItems: 'center' }}>
-                <div style={{ display: 'flex', alignItems: 'center', gap: '4px', background: 'rgba(0,0,0,0.35)', padding: '0.4rem 0.6rem', borderRadius: '10px' }}>
-                  <button className="btn btn-clear" style={{ padding: '0.4rem 0.6rem', border: 'none' }} onClick={() => { setIsPlaying(false); setCurrentStep(0); }} disabled={!timeline.length||currentStep===0}>⏮ First</button>
-                  <button className="btn btn-clear" style={{ padding: '0.4rem 0.6rem', border: 'none' }} onClick={() => { setIsPlaying(false); setCurrentStep(p => Math.max(0, p - 1)); }} disabled={!timeline.length||currentStep===0}>◀ Prev</button>
-                  <button className="btn btn-clear" style={{ padding: '0.4rem 1rem', border: 'none', background: isPlaying ? 'rgba(59,130,246,0.4)' : 'transparent', fontWeight: 'bold' }} onClick={() => setIsPlaying(p => !p)} disabled={!timeline.length}>{isPlaying ? '⏸ Pause' : '▶ Play'}</button>
-                  <button className="btn btn-clear" style={{ padding: '0.4rem 0.6rem', border: 'none' }} onClick={() => { setIsPlaying(false); setCurrentStep(p => Math.min(timeline.length - 1, p + 1)); }} disabled={!timeline.length||currentStep===timeline.length-1}>Next ▶</button>
-                  <button className="btn btn-clear" style={{ padding: '0.4rem 0.6rem', border: 'none', fontWeight: 'bold', background: 'rgba(236, 72, 153, 0.2)', color: '#fbcfe8' }} onClick={() => { setIsPlaying(false); setCurrentStep(timeline.length - 1); }} disabled={!timeline.length||currentStep===timeline.length-1}>Last ⏭</button>
-                  <span style={{ fontSize: '0.85rem', color: 'var(--text-secondary)', marginLeft: '8px', whiteSpace: 'nowrap', fontWeight: 'bold' }}>{timeline.length ? currentStep + 1 : 0} / {timeline.length}</span>
-                </div>
-
-                <div style={{ display: 'flex', alignItems: 'center', gap: '5px' }}>
-                  <span style={{ fontSize: '0.75rem', color: 'var(--text-secondary)' }}>Speed</span>
-                  <input type="range" min={80} max={1200} step={80} value={animationSpeed} onChange={e => setAnimationSpeed(Number(e.target.value))} style={{ width: '64px', accentColor: 'var(--accent-primary)' }} />
-                </div>
-
-                {(treeType === 'B_TREE' || treeType === 'B_PLUS_TREE') && (
-                  <>
-                    <div style={{ display: 'flex', alignItems: 'center', gap: '5px', background: 'rgba(255,255,255,0.05)', padding: '4px 10px', borderRadius: '8px' }}>
-                      <span style={{ fontSize: '0.8rem', color: 'var(--text-secondary)' }}>Order</span>
-                      <select className="styled-select" style={{ padding: '2px 8px', fontSize: '0.85rem', width: 'auto' }} value={bTreeOrder} onChange={e => setBTreeOrder(Number(e.target.value))}>
-                        {[3,4,5,6,7,8,9,10].map(o => <option key={o} value={o}>{o}</option>)}
-                      </select>
-                    </div>
-                    <div style={{ display: 'flex', alignItems: 'center', gap: '5px', background: 'rgba(255,255,255,0.05)', padding: '4px 10px', borderRadius: '8px' }}>
-                      <span style={{ fontSize: '0.8rem', color: 'var(--text-secondary)' }}>Split</span>
-                      <select className="styled-select" style={{ padding: '2px 8px', fontSize: '0.85rem', width: 'auto' }} value={splitStrategy} onChange={e => setSplitStrategy(e.target.value)}>
-                        <option value="MEDIAN">Median</option>
-                        <option value="LEFT_BIASED">Left-Biased</option>
-                        <option value="RIGHT_BIASED">Right-Biased</option>
-                      </select>
-                    </div>
-                    <label style={{ display: 'flex', alignItems: 'center', gap: '6px', background: 'rgba(255,255,255,0.05)', padding: '4px 10px', borderRadius: '8px', cursor: 'pointer', fontSize: '0.82rem', color: 'var(--text-secondary)', userSelect: 'none' }}>
-                      <input type="checkbox" checked={showBoundsInfo} onChange={e => setShowBoundsInfo(e.target.checked)} style={{ accentColor: 'var(--accent-primary)', cursor: 'pointer' }} />
-                      <span>Node Bounds</span>
-                    </label>
-                  </>
-                )}
-
-                {(treeType === 'BST' || treeType === 'AVL') && (
-                  <div style={{ display: 'flex', alignItems: 'center', gap: '5px', background: 'rgba(255,255,255,0.05)', padding: '4px 10px', borderRadius: '8px' }}>
-                    <span style={{ fontSize: '0.8rem', color: 'var(--text-secondary)' }}>Shift on Delete</span>
-                    <select className="styled-select" style={{ padding: '2px 8px', fontSize: '0.85rem', width: 'auto' }} value={deleteStrategy} onChange={e => setDeleteStrategy(e.target.value)}>
-                      <option value="RIGHT">Right (Successor)</option>
-                      <option value="LEFT">Left (Predecessor)</option>
-                    </select>
-                  </div>
-                )}
-
-                {treeType === 'FENWICK_TREE' && (
-                  <label style={{ display: 'flex', alignItems: 'center', gap: '6px', background: 'rgba(255,255,255,0.05)', padding: '4px 10px', borderRadius: '8px', cursor: 'pointer', fontSize: '0.82rem', color: 'var(--text-secondary)', userSelect: 'none' }}>
-                    <input type="checkbox" checked={fenwickBitMode} onChange={e => setFenwickBitMode(e.target.checked)} style={{ accentColor: 'var(--accent-primary)', cursor: 'pointer' }} />
-                    <span>Show Bit Representation</span>
-                  </label>
-                )}
-
+                {/* Always show main operation inputs */}
                 {treeType !== 'MIN_HEAP' && treeType !== 'MAX_HEAP' && (
-                  <input type={treeType === 'BFS_TREE' || treeType === 'DFS_TREE' ? "text" : "number"} className="styled-input" style={{ width: treeType === 'BFS_TREE' || treeType === 'DFS_TREE' ? '150px' : '115px', opacity: isPlaying ? 0.7 : 1 }} placeholder={isPlaying ? "Wait..." : (treeType === 'BFS_TREE' || treeType === 'DFS_TREE' ? "Edge (1-2) or Node" : "Value…")} value={inputValue} onChange={e => setInputValue(e.target.value)} onKeyDown={e => e.key === 'Enter' && !isPlaying && inputValue.trim() && handleInsert()} />
+                  <input type={treeType === 'BFS_TREE' || treeType === 'DFS_TREE' ? "text" : "number"} className="styled-input" style={{ width: isMobile ? '80px' : (treeType === 'BFS_TREE' || treeType === 'DFS_TREE' ? '150px' : '115px'), opacity: isPlaying ? 0.7 : 1 }} placeholder={isPlaying ? "Wait..." : "Val…"} value={inputValue} onChange={e => setInputValue(e.target.value)} onKeyDown={e => e.key === 'Enter' && !isPlaying && inputValue.trim() && handleInsert()} />
                 )}
                 {treeType !== 'MIN_HEAP' && treeType !== 'MAX_HEAP' ? (
                   <button className="btn btn-insert" onClick={handleInsert} disabled={isPlaying || !inputValue.trim()}>
-                    {isPlaying ? '⏳...' : 'Insert'}
+                    {isPlaying ? '⏳' : 'Insert'}
                   </button>
                 ) : (
                   <div style={{ display: 'flex', gap: '5px', alignItems: 'center' }}>
-                    <input type="number" className="styled-input" style={{ width: '100px', opacity: isPlaying ? 0.7 : 1 }} placeholder="Value…" value={inputValue} onChange={e => setInputValue(e.target.value)} onKeyDown={e => e.key === 'Enter' && !isPlaying && inputValue.trim() && handleInsert()} />
+                    <input type="number" className="styled-input" style={{ width: '80px', opacity: isPlaying ? 0.7 : 1 }} placeholder="Val…" value={inputValue} onChange={e => setInputValue(e.target.value)} onKeyDown={e => e.key === 'Enter' && !isPlaying && inputValue.trim() && handleInsert()} />
                     <button className="btn btn-insert" onClick={handleInsert} disabled={isPlaying || !inputValue.trim()}>Insert</button>
                   </div>
                 )}
@@ -3567,14 +3527,99 @@ function App() {
                   const canDel = !isPlaying && (isHeap ? insertedValues.length > 0 : ((treeType === 'BST' || treeType === 'AVL') && inputValue.trim()));
                   return (
                     <button className="btn btn-clear" style={{background: 'var(--accent-secondary)', color: 'white', border: 'none', opacity: canDel ? 1 : 0.5}} onClick={handleDelete} disabled={!canDel}>
-                      {isHeap ? 'Extract Root' : 'Delete'}
+                      {isHeap ? 'Extract' : 'Delete'}
                     </button>
                   );
                 })()}
-                <button className="btn btn-clear" onClick={handleClear}>Clear</button>
-                <button className="btn btn-clear" onClick={() => setShowTreeLogPanel(p => !p)}>📋 {showTreeLogPanel ? 'Hide Log' : 'Show Log'}</button>
-                <button className="btn btn-clear" onClick={() => setShowCode(p => !p)}>💻 {showCode ? 'Hide Code' : 'Show Code'}</button>
-                <button className="btn btn-clear" onClick={() => setIsSettingsOpen(true)}>⚙ Settings</button>
+
+                {isMobile && (
+                  <button 
+                    className="btn btn-clear" 
+                    style={{ 
+                      borderColor: showMobileOptions ? 'var(--accent-primary)' : 'var(--glass-border)', 
+                      color: showMobileOptions ? 'var(--accent-primary)' : 'var(--text-primary)' 
+                    }} 
+                    onClick={() => setShowMobileOptions(!showMobileOptions)}
+                  >
+                    ⚙️ Options
+                  </button>
+                )}
+
+                {/* Secondary settings / Playbacks */}
+                {(!isMobile || showMobileOptions) && (
+                  <>
+                    <div style={{ display: 'flex', alignItems: 'center', gap: '4px', background: 'rgba(0,0,0,0.35)', padding: '0.4rem 0.6rem', borderRadius: '10px' }}>
+                      <button className="btn btn-clear" style={{ padding: '0.4rem 0.6rem', border: 'none' }} onClick={() => { setIsPlaying(false); setCurrentStep(0); }} disabled={!timeline.length||currentStep===0}>⏮ First</button>
+                      <button className="btn btn-clear" style={{ padding: '0.4rem 0.6rem', border: 'none' }} onClick={() => { setIsPlaying(false); setCurrentStep(p => Math.max(0, p - 1)); }} disabled={!timeline.length||currentStep===0}>◀ Prev</button>
+                      <button className="btn btn-clear" style={{ padding: '0.4rem 1rem', border: 'none', background: isPlaying ? 'rgba(59,130,246,0.4)' : 'transparent', fontWeight: 'bold' }} onClick={() => setIsPlaying(p => !p)} disabled={!timeline.length}>{isPlaying ? '⏸' : '▶ Play'}</button>
+                      <button className="btn btn-clear" style={{ padding: '0.4rem 0.6rem', border: 'none' }} onClick={() => { setIsPlaying(false); setCurrentStep(p => Math.min(timeline.length - 1, p + 1)); }} disabled={!timeline.length||currentStep===timeline.length-1}>Next ▶</button>
+                      <button className="btn btn-clear" style={{ padding: '0.4rem 0.6rem', border: 'none', fontWeight: 'bold', background: 'rgba(236, 72, 153, 0.2)', color: '#fbcfe8' }} onClick={() => { setIsPlaying(false); setCurrentStep(timeline.length - 1); }} disabled={!timeline.length||currentStep===timeline.length-1}>Last ⏭</button>
+                      <span style={{ fontSize: '0.85rem', color: 'var(--text-secondary)', marginLeft: '8px', whiteSpace: 'nowrap', fontWeight: 'bold' }}>{timeline.length ? currentStep + 1 : 0}/{timeline.length}</span>
+                    </div>
+
+                    <div style={{ display: 'flex', alignItems: 'center', gap: '5px' }}>
+                      <span style={{ fontSize: '0.75rem', color: 'var(--text-secondary)' }}>Speed</span>
+                      <input type="range" min={80} max={1200} step={80} value={animationSpeed} onChange={e => setAnimationSpeed(Number(e.target.value))} style={{ width: '64px', accentColor: 'var(--accent-primary)' }} />
+                    </div>
+
+                    {(treeType === 'B_TREE' || treeType === 'B_PLUS_TREE') && (
+                      <>
+                        <div style={{ display: 'flex', alignItems: 'center', gap: '5px', background: 'rgba(255,255,255,0.05)', padding: '4px 10px', borderRadius: '8px' }}>
+                          <span style={{ fontSize: '0.8rem', color: 'var(--text-secondary)' }}>Order</span>
+                          <select className="styled-select" style={{ padding: '2px 8px', fontSize: '0.85rem', width: 'auto' }} value={bTreeOrder} onChange={e => setBTreeOrder(Number(e.target.value))}>
+                            {[3,4,5,6,7,8,9,10].map(o => <option key={o} value={o}>{o}</option>)}
+                          </select>
+                        </div>
+                        <div style={{ display: 'flex', alignItems: 'center', gap: '5px', background: 'rgba(255,255,255,0.05)', padding: '4px 10px', borderRadius: '8px' }}>
+                          <span style={{ fontSize: '0.8rem', color: 'var(--text-secondary)' }}>Split</span>
+                          <select className="styled-select" style={{ padding: '2px 8px', fontSize: '0.85rem', width: 'auto' }} value={splitStrategy} onChange={e => setSplitStrategy(e.target.value)}>
+                            <option value="MEDIAN">Median</option>
+                            <option value="LEFT_BIASED">Left-Biased</option>
+                            <option value="RIGHT_BIASED">Right-Biased</option>
+                          </select>
+                        </div>
+                        <label style={{ display: 'flex', alignItems: 'center', gap: '6px', background: 'rgba(255,255,255,0.05)', padding: '4px 10px', borderRadius: '8px', cursor: 'pointer', fontSize: '0.82rem', color: 'var(--text-secondary)', userSelect: 'none' }}>
+                          <input type="checkbox" checked={showBoundsInfo} onChange={e => setShowBoundsInfo(e.target.checked)} style={{ accentColor: 'var(--accent-primary)', cursor: 'pointer' }} />
+                          <span>Node Bounds</span>
+                        </label>
+                      </>
+                    )}
+
+                    {(treeType === 'BST' || treeType === 'AVL') && (
+                      <div style={{ display: 'flex', alignItems: 'center', gap: '5px', background: 'rgba(255,255,255,0.05)', padding: '4px 10px', borderRadius: '8px' }}>
+                        <span style={{ fontSize: '0.8rem', color: 'var(--text-secondary)' }}>Shift on Delete</span>
+                        <select className="styled-select" style={{ padding: '2px 8px', fontSize: '0.85rem', width: 'auto' }} value={deleteStrategy} onChange={e => setDeleteStrategy(e.target.value)}>
+                          <option value="RIGHT">Right (Successor)</option>
+                          <option value="LEFT">Left (Predecessor)</option>
+                        </select>
+                      </div>
+                    )}
+
+                    {treeType === 'FENWICK_TREE' && (
+                      <label style={{ display: 'flex', alignItems: 'center', gap: '6px', background: 'rgba(255,255,255,0.05)', padding: '4px 10px', borderRadius: '8px', cursor: 'pointer', fontSize: '0.82rem', color: 'var(--text-secondary)', userSelect: 'none' }}>
+                        <input type="checkbox" checked={fenwickBitMode} onChange={e => setFenwickBitMode(e.target.checked)} style={{ accentColor: 'var(--accent-primary)', cursor: 'pointer' }} />
+                        <span>Show Bit Representation</span>
+                      </label>
+                    )}
+                    
+                    {isMobile && (
+                      <>
+                        <button className="btn btn-clear" onClick={handleClear}>Clear</button>
+                        <button className="btn btn-clear" onClick={() => setIsSettingsOpen(true)}>⚙ Settings</button>
+                      </>
+                    )}
+                  </>
+                )}
+
+                {/* Laptop-only options toggle panel nodes */}
+                {!isMobile && (
+                  <>
+                    <button className="btn btn-clear" onClick={handleClear}>Clear</button>
+                    <button className="btn btn-clear" onClick={() => setShowTreeLogPanel(p => !p)}>📋 {showTreeLogPanel ? 'Hide Log' : 'Show Log'}</button>
+                    <button className="btn btn-clear" onClick={() => setShowCode(p => !p)}>💻 {showCode ? 'Hide Code' : 'Show Code'}</button>
+                    <button className="btn btn-clear" onClick={() => setIsSettingsOpen(true)}>⚙ Settings</button>
+                  </>
+                )}
                 <button className="btn btn-clear" onClick={() => setAppMode(null)}>🏠 Home</button>
               </div>
             </header>
@@ -3607,8 +3652,16 @@ function App() {
               </div>
             )}
 
-            <div style={{ display: 'flex', flex: 1, padding: '0.75rem', gap: '0.75rem', overflow: 'hidden' }}>
-              <div style={{ display: 'flex', flexDirection: 'column', flex: 1, overflow: 'hidden' }}>
+            {isMobile && (
+              <div className="mobile-tabs-container">
+                <button className={`mobile-tab-btn ${mobileTab === 'vis' ? 'active' : ''}`} onClick={() => setMobileTab('vis')}>📊 Visualizer</button>
+                <button className={`mobile-tab-btn ${mobileTab === 'code' ? 'active' : ''}`} onClick={() => { setMobileTab('code'); setShowCode(true); }}>💻 Code</button>
+                <button className={`mobile-tab-btn ${mobileTab === 'log' ? 'active' : ''}`} onClick={() => { setMobileTab('log'); setShowTreeLogPanel(true); }}>📋 Logs</button>
+              </div>
+            )}
+
+            <div style={{ display: 'flex', flexDirection: isMobile ? 'column' : 'row', flex: 1, padding: isMobile ? '0.25rem' : '0.75rem', gap: '0.75rem', overflow: 'hidden' }}>
+              <div style={{ display: (isMobile && mobileTab !== 'vis') ? 'none' : 'flex', flexDirection: 'column', flex: 1, overflow: 'hidden' }}>
                 <div className="tree-container" ref={containerRef} style={{ flex: 1, background: 'rgba(15,23,42,0.5)', borderRadius: '14px', border: '1px solid var(--glass-border)', position: 'relative', overflow: 'auto', minHeight: '260px', marginBottom: '0.75rem', display: 'flex', flexDirection: 'column' }}>
                   <div style={{ flex: 1, position: 'relative', minHeight: '200px' }}>
                     {frame.root ? renderTreeSVG(frame.root, frame.highlight) : (
@@ -3672,7 +3725,7 @@ function App() {
                   </div>
                 </div>
 
-                {showTreeLogPanel && (
+                {showTreeLogPanel && !isMobile && (
                   <div
                     style={{
                       position: 'fixed',
@@ -3868,16 +3921,75 @@ function App() {
                 )}
               </div>
 
-              {showCode && (
+              {/* Inline mobile execution logs */}
+              {isMobile && showTreeLogPanel && mobileTab === 'log' && (
+                <div style={{ flex: 1, background: 'var(--bg-secondary)', borderRadius: '14px', border: '1px solid var(--glass-border)', display: 'flex', flexDirection: 'column', padding: '0.85rem', overflow: 'hidden', height: '100%', width: '100%' }}>
+                  <div style={{ padding: '6px 12px', background: 'rgba(255, 255, 255, 0.04)', borderBottom: '1px solid var(--glass-border)', display: 'flex', justifyContent: 'space-between', alignItems: 'center', flexShrink: 0 }}>
+                    <span style={{ fontWeight: 600, fontSize: '0.85rem', color: 'var(--text-primary)', display: 'flex', alignItems: 'center', gap: '6px' }}>
+                      📋 Execution Log & Active State
+                    </span>
+                  </div>
+                  <div style={{ display: 'flex', flex: 1, flexDirection: 'column', overflow: 'hidden', gap: '10px', marginTop: '10px' }}>
+                    <div style={{ background: 'rgba(0,0,0,0.25)', border: '1px solid var(--glass-border)', borderRadius: '8px', padding: '10px 12px', display: 'flex', flexDirection: 'column', gap: '8px', fontSize: '0.8rem', color: 'var(--text-secondary)' }}>
+                      <div style={{ fontSize: '0.75rem', color: 'var(--accent-primary)', textTransform: 'uppercase', fontWeight: 'bold', borderBottom: '1px solid rgba(255,255,255,0.06)', paddingBottom: '4px' }}>
+                        Active State
+                      </div>
+                      
+                      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                        <span>Target Value:</span>
+                        <span style={{ fontSize: '0.9rem', fontWeight: 'bold', color: frame.highlight !== undefined && frame.highlight !== null ? '#fbbf24' : 'var(--text-primary)', background: frame.highlight !== undefined && frame.highlight !== null ? 'rgba(251,191,36,0.15)' : 'rgba(255,255,255,0.04)', padding: '2px 8px', borderRadius: '4px' }}>
+                          {frame.highlight !== undefined && frame.highlight !== null ? String(frame.highlight) : 'None'}
+                        </span>
+                      </div>
+
+                      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                        <span>Event / Action:</span>
+                        <span style={{ fontSize: '0.8rem', fontWeight: 700, color: frame.rotation ? '#f43f5e' : '#60a5fa' }}>
+                          {frame.rotation ? '⚡ Rotation/Split' : 'Normal Trace'}
+                        </span>
+                      </div>
+
+                      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                        <span>Inserted Nodes:</span>
+                        <span style={{ fontSize: '0.85rem', fontWeight: 'bold', color: 'var(--text-primary)' }}>{insertedValues.length}</span>
+                      </div>
+                      
+                      <div>
+                        <div style={{ fontSize: '0.72rem', color: 'var(--text-secondary)', marginBottom: '4px' }}>Timeline Nodes History:</div>
+                        <div style={{ overflowY: 'auto', background: 'rgba(0,0,0,0.12)', borderRadius: '6px', padding: '4px 6px', fontSize: '0.75rem', color: 'var(--text-secondary)', maxHeight: '60px', wordBreak: 'break-all' }}>
+                          {insertedValues.length > 0 ? insertedValues.join(', ') : 'No nodes inserted yet'}
+                        </div>
+                      </div>
+                    </div>
+                    
+                    <div style={{ flex: 1, background: 'rgba(0,0,0,0.15)', borderRadius: '10px', padding: '0.75rem 1rem', overflowY: 'auto', border: '1px solid rgba(255,255,255,0.03)', display: 'flex', flexDirection: 'column' }}>
+                      <div style={{ fontSize: '0.78rem', color: 'var(--text-secondary)', textTransform: 'uppercase', fontWeight: 'bold', borderBottom: '1px solid rgba(255,255,255,0.05)', paddingBottom: '4px', marginBottom: '8px', flexShrink: 0 }}>
+                        Simulation Steps Log
+                      </div>
+                      <div style={{ flex: 1, overflowY: 'auto' }}>
+                        {frame.logs.map((log, i) => (
+                          <div key={i} className={`execution-log-item ${log.type}`} style={{ padding: '3px 0', fontSize: '0.85rem' }}>
+                            {log.text}
+                          </div>
+                        ))}
+                      </div>
+                    </div>
+                  </div>
+                </div>
+              )}
+
+              {showCode && (isMobile ? mobileTab === 'code' : true) && (
                 <>
                   {/* Vertical Drag Handle for column resizing */}
-                  <div onMouseDown={handleColDragStart} onTouchStart={handleColDragStart} style={{ width: '8px', background: 'var(--glass-border)', borderRadius: '4px', cursor: 'col-resize', flexShrink: 0, transition: 'background 0.2s', touchAction: 'none' }}
-                    onMouseOver={e => e.currentTarget.style.background = 'rgba(96,165,250,0.5)'}
-                    onMouseOut={e => e.currentTarget.style.background = 'var(--glass-border)'}
-                    title="Drag to resize columns" />
+                  {!isMobile && (
+                    <div onMouseDown={handleColDragStart} onTouchStart={handleColDragStart} style={{ width: '8px', background: 'var(--glass-border)', borderRadius: '4px', cursor: 'col-resize', flexShrink: 0, transition: 'background 0.2s', touchAction: 'none' }}
+                      onMouseOver={e => e.currentTarget.style.background = 'rgba(96,165,250,0.5)'}
+                      onMouseOut={e => e.currentTarget.style.background = 'var(--glass-border)'}
+                      title="Drag to resize columns" />
+                  )}
 
                   {/* Right Column Sidebar: Auto-Generated Code */}
-                  <div style={{ width: `${logWidth}px`, flexShrink: 0, background: 'var(--bg-secondary)', borderRadius: '14px', border: '1px solid var(--glass-border)', display: 'flex', flexDirection: 'column', padding: '0.85rem', overflow: 'hidden' }}>
+                  <div style={{ width: isMobile ? '100%' : `${logWidth}px`, flexShrink: 0, background: 'var(--bg-secondary)', borderRadius: '14px', border: '1px solid var(--glass-border)', display: 'flex', flexDirection: 'column', padding: '0.85rem', overflow: 'hidden', height: isMobile ? '100%' : 'auto' }}>
                     <div style={{ display: 'flex', flexDirection: 'column', gap: '8px', borderBottom: '1px solid var(--glass-border)', paddingBottom: '0.6rem', marginBottom: '0.6rem', flexShrink: 0 }}>
                       <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
                         <h3 style={{ color: 'var(--text-secondary)', fontSize: '0.9rem', fontWeight: 600, margin: 0 }}>Auto-Generated Code</h3>
