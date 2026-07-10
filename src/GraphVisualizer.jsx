@@ -169,6 +169,75 @@ int main() {
     g.primMST(${startNode});
     return 0;
 }`;
+    if (algo === 'Kruskal') return `#include <iostream>
+#include <vector>
+#include <algorithm>
+using namespace std;
+
+struct Edge {
+    int src, dest, weight;
+    bool operator<(const Edge& other) const {
+        return weight < other.weight;
+    }
+};
+
+class DisjointSet {
+    vector<int> parent, rank;
+public:
+    DisjointSet(int n) {
+        parent.resize(n);
+        rank.resize(n, 0);
+        for (int i = 0; i < n; i++) parent[i] = i;
+    }
+    int find(int i) {
+        if (parent[i] == i) return i;
+        return parent[i] = find(parent[i]);
+    }
+    bool unite(int i, int j) {
+        int rootI = find(i);
+        int rootJ = find(j);
+        if (rootI != rootJ) {
+            if (rank[rootI] < rank[rootJ]) parent[rootI] = rootJ;
+            else if (rank[rootI] > rank[rootJ]) parent[rootJ] = rootI;
+            else {
+                parent[rootJ] = rootI;
+                rank[rootI]++;
+            }
+            return true;
+        }
+        return false;
+    }
+};
+
+class Graph {
+    int V;
+    vector<Edge> edges;
+public:
+    Graph(int V) : V(V) {}
+    void addEdge(int u, int v, int w) {
+        edges.push_back({u, v, w});
+    }
+    void kruskalMST() {
+        vector<Edge> result;
+        DisjointSet ds(V);
+        sort(edges.begin(), edges.end());
+        for (auto& edge : edges) {
+            if (ds.unite(edge.src, edge.dest)) {
+                result.push_back(edge);
+            }
+        }
+        for (auto& edge : result) {
+            cout << edge.src << " - " << edge.dest << " (" << edge.weight << ")" << endl;
+        }
+    }
+};
+
+int main() {
+    Graph g(5);
+    g.addEdge(0, 1, 2); g.addEdge(0, 3, 6); g.addEdge(1, 2, 3); g.addEdge(1, 3, 8); g.addEdge(1, 4, 5);
+    g.kruskalMST();
+    return 0;
+}`;
     if (algo === 'Bellman-Ford') return `#include <iostream>
 #include <vector>
 using namespace std;
@@ -455,6 +524,72 @@ class Graph {
             if (parent[i] != -1) System.out.println(parent[i] + " - " + i);
     }
 }`;
+    if (algo === 'Kruskal') return `import java.util.*;
+
+class Edge implements Comparable<Edge> {
+    int src, dest, weight;
+    public Edge(int src, int dest, int weight) {
+        this.src = src; this.dest = dest; this.weight = weight;
+    }
+    public int compareTo(Edge other) {
+        return this.weight - other.weight;
+    }
+}
+
+class DisjointSet {
+    int[] parent, rank;
+    public DisjointSet(int n) {
+        parent = new int[n];
+        rank = new int[n];
+        for (int i = 0; i < n; i++) parent[i] = i;
+    }
+    public int find(int i) {
+        if (parent[i] == i) return i;
+        return parent[i] = find(parent[i]);
+    }
+    public boolean union(int i, int j) {
+        int rootI = find(i);
+        int rootJ = find(j);
+        if (rootI != rootJ) {
+            if (rank[rootI] < rank[rootJ]) parent[rootI] = rootJ;
+            else if (rank[rootI] > rank[rootJ]) parent[rootJ] = rootI;
+            else {
+                parent[rootJ] = rootI;
+                rank[rootI]++;
+            }
+            return true;
+        }
+        return false;
+    }
+}
+
+class Graph {
+    int V;
+    List<Edge> edges = new ArrayList<>();
+    public Graph(int V) { this.V = V; }
+    public void addEdge(int u, int v, int w) { edges.add(new Edge(u, v, w)); }
+    public void kruskalMST() {
+        List<Edge> result = new ArrayList<>();
+        DisjointSet ds = new DisjointSet(V);
+        Collections.sort(edges);
+        for (Edge edge : edges) {
+            if (ds.union(edge.src, edge.dest)) {
+                result.add(edge);
+            }
+        }
+        for (Edge edge : result) {
+            System.out.println(edge.src + " - " + edge.dest + " (" + edge.weight + ")");
+        }
+    }
+}
+
+public class Main {
+    public static void main(String[] args) {
+        Graph g = new Graph(5);
+        g.addEdge(0, 1, 2); g.addEdge(0, 3, 6); g.addEdge(1, 2, 3); g.addEdge(1, 3, 8); g.addEdge(1, 4, 5);
+        g.kruskalMST();
+    }
+}`;
     if (algo === 'Bellman-Ford') return `import java.util.*;
 
 class Edge {
@@ -667,6 +802,53 @@ class Graph:
         for i in range(self.V):
             if parent[i] != -1:
                 print(f"{parent[i]} - {i}")`;
+    if (algo === 'Kruskal') return `class DisjointSet:
+    def __init__(self, n):
+        self.parent = list(range(n))
+        self.rank = [0] * n
+    def find(self, i):
+        if self.parent[i] == i:
+            return i
+        self.parent[i] = self.find(self.parent[i])
+        return self.parent[i]
+    def union(self, i, j):
+        root_i = self.find(i)
+        root_j = self.find(j)
+        if root_i != root_j:
+            if self.rank[root_i] < self.rank[root_j]:
+                self.parent[root_i] = root_j
+            elif self.rank[root_i] > self.rank[root_j]:
+                self.parent[root_j] = root_i
+            else:
+                self.parent[root_j] = root_i
+                self.rank[root_i] += 1
+            return True
+        return False
+
+class Graph:
+    def __init__(self, V):
+        self.V = V
+        self.edges = []
+    def add_edge(self, u, v, w):
+        self.edges.append((u, v, w))
+    def kruskal_mst(self):
+        result = []
+        ds = DisjointSet(self.V)
+        self.edges.sort(key=lambda x: x[2])
+        for u, v, w in self.edges:
+            if ds.union(u, v):
+                result.append((u, v, w))
+        for u, v, w in result:
+            print(f"{u} - {v} ({w})")
+
+if __name__ == "__main__":
+    g = Graph(5)
+    g.add_edge(0, 1, 2)
+    g.add_edge(0, 3, 6)
+    g.add_edge(1, 2, 3)
+    g.add_edge(1, 3, 8)
+    g.add_edge(1, 4, 5)
+    g.kruskal_mst()`;
     if (algo === 'Bellman-Ford') return `class Graph:
     def __init__(self, V):
         self.V = V
@@ -860,6 +1042,63 @@ g.bfs(${startNode});`;
     }
   }
 }`;
+
+  if (algo === 'Kruskal') return `class DisjointSet {
+  constructor(n) {
+    this.parent = Array.from({ length: n }, (_, i) => i);
+    this.rank = new Array(n).fill(0);
+  }
+  find(i) {
+    if (this.parent[i] === i) return i;
+    this.parent[i] = this.find(this.parent[i]);
+    return this.parent[i];
+  }
+  union(i, j) {
+    let rootI = this.find(i);
+    let rootJ = this.find(j);
+    if (rootI !== rootJ) {
+      if (this.rank[rootI] < this.rank[rootJ]) this.parent[rootI] = rootJ;
+      else if (this.rank[rootI] > this.rank[rootJ]) this.parent[rootJ] = rootI;
+      else {
+        this.parent[rootJ] = rootI;
+        this.rank[rootI]++;
+      }
+      return true;
+    }
+    return false;
+  }
+}
+
+class Graph {
+  constructor(V) {
+    this.V = V;
+    this.edges = [];
+  }
+  addEdge(u, v, w) {
+    this.edges.push({ src: u, dest: v, weight: w });
+  }
+  kruskalMST() {
+    let result = [];
+    let ds = new DisjointSet(this.V);
+    this.edges.sort((a, b) => a.weight - b.weight);
+    this.edges.forEach(edge => {
+      if (ds.union(edge.src, edge.dest)) {
+        result.push(edge);
+      }
+    });
+    result.forEach(edge => {
+      console.log(edge.src + " - " + edge.dest + " (" + edge.weight + ")");
+    });
+  }
+}
+
+const g = new Graph(5);
+g.addEdge(0, 1, 2);
+g.addEdge(0, 3, 6);
+g.addEdge(1, 2, 3);
+g.addEdge(1, 3, 8);
+g.addEdge(1, 4, 5);
+g.kruskalMST();`;
 
   if (algo === 'Bellman-Ford') return `class Graph {
   constructor(V) {
@@ -1921,6 +2160,96 @@ const GraphVisualizer = ({ onBack, openSettings, initialAlgo = 'Dijkstra', onCop
           : `Topological Sort complete! Order: [${topoOrder.join(', ')}]`,
         activeLine: 'return topoOrder;'
       });
+    } else if (algoMode === 'Kruskal') {
+      const parent = {};
+      const rank = {};
+      nodes.forEach(n => {
+        parent[n.id] = n.id;
+        rank[n.id] = 0;
+      });
+
+      const find = (i) => {
+        if (parent[i] === i) return i;
+        parent[i] = find(parent[i]);
+        return parent[i];
+      };
+
+      const union = (i, j) => {
+        const rootI = find(i);
+        const rootJ = find(j);
+        if (rootI !== rootJ) {
+          if (rank[rootI] < rank[rootJ]) parent[rootI] = rootJ;
+          else if (rank[rootI] > rank[rootJ]) parent[rootJ] = rootI;
+          else {
+            parent[rootJ] = rootI;
+            rank[rootI]++;
+          }
+          return true;
+        }
+        return false;
+      };
+
+      const sortedEdges = [...edges].sort((a, b) => a.weight - b.weight);
+      const pathHighlight = [];
+      
+      frames.push({
+        parent: { ...parent },
+        active: -1,
+        pathHighlight: [],
+        dsuState: { ...parent },
+        msg: `Initialize Kruskal's MST: Sort all edges by weight. Sorted edges count: ${sortedEdges.length}`,
+        activeLine: 'sort(edges.begin(), edges.end())'
+      });
+
+      for (let edge of sortedEdges) {
+        const u = edge.from;
+        const v = edge.to;
+        const rootU = find(u);
+        const rootV = find(v);
+        
+        frames.push({
+          parent: { ...parent },
+          active: -1,
+          activeEdge: edge.id,
+          pathHighlight: [...pathHighlight],
+          dsuState: { ...parent },
+          msg: `Inspect edge ${nodes.find(n => n.id === u)?.label}➔${nodes.find(n => n.id === v)?.label} (wt: ${edge.weight}). Component representatives: ${nodes.find(n => n.id === rootU)?.label} vs ${nodes.find(n => n.id === rootV)?.label}`,
+          activeLine: 'if (find(u) != find(v))'
+        });
+
+        if (rootU !== rootV) {
+          union(u, v);
+          pathHighlight.push(edge.id);
+          frames.push({
+            parent: { ...parent },
+            active: -1,
+            activeEdge: edge.id,
+            pathHighlight: [...pathHighlight],
+            dsuState: { ...parent },
+            msg: `Success! Union components for edge ${nodes.find(n => n.id === u)?.label}➔${nodes.find(n => n.id === v)?.label}. Adding to MST.`,
+            activeLine: 'union(u, v); MST.push(edge);'
+          });
+        } else {
+          frames.push({
+            parent: { ...parent },
+            active: -1,
+            activeEdge: edge.id,
+            pathHighlight: [...pathHighlight],
+            dsuState: { ...parent },
+            msg: `Cycle Detected! Edge ${nodes.find(n => n.id === u)?.label}➔${nodes.find(n => n.id === v)?.label} forms a loop. Rejected.`,
+            activeLine: '// forms cycle'
+          });
+        }
+      }
+
+      frames.push({
+        parent: { ...parent },
+        active: -1,
+        pathHighlight: [...pathHighlight],
+        dsuState: { ...parent },
+        msg: `Kruskal's MST completed successfully! Total edges in MST: ${pathHighlight.length}`,
+        activeLine: 'printMST()'
+      });
     }
 
     setTimeline(frames);
@@ -2482,6 +2811,24 @@ const GraphVisualizer = ({ onBack, openSettings, initialAlgo = 'Dijkstra', onCop
                              </div>
                            </div>
 
+                           {frame.dsuState && (
+                             <div>
+                               <div style={{ marginBottom: '2px', fontSize: '0.75rem', color: '#fbbf24', marginTop: '8px' }}>Union-Find Parents:</div>
+                               <div style={{ background: 'rgba(0,0,0,0.18)', padding: '6px 8px', borderRadius: '4px', fontFamily: 'monospace', color: '#10b981', fontSize: '0.72rem', display: 'flex', flexDirection: 'column', gap: '3px' }}>
+                                 {Object.keys(frame.dsuState).map(k => {
+                                   const nodeLabel = nodes.find(n => n.id === parseInt(k))?.label || k;
+                                   const parentLabel = nodes.find(n => n.id === frame.dsuState[k])?.label || frame.dsuState[k];
+                                   return (
+                                     <div key={k} style={{ display: 'flex', justifyContent: 'space-between' }}>
+                                       <span>{nodeLabel}:</span>
+                                       <span style={{ color: 'white', fontWeight: 'bold' }}>parent ➔ {parentLabel}</span>
+                                     </div>
+                                   );
+                                 })}
+                               </div>
+                             </div>
+                           )}
+
                            <div style={{ borderTop: '1px solid rgba(255,255,255,0.06)', paddingTop: '6px', marginTop: '4px' }}>
                              <div style={{ fontSize: '0.72rem', textTransform: 'uppercase', fontWeight: 'bold', marginBottom: '4px', color: 'var(--accent-secondary)' }}>Trace Variables</div>
                              <div style={{ display: 'flex', flexDirection: 'column', gap: '4px' }}>
@@ -2592,6 +2939,7 @@ const GraphVisualizer = ({ onBack, openSettings, initialAlgo = 'Dijkstra', onCop
                 <option value="DFS">DFS</option>
                 <option value="Greedy">Greedy BFS</option>
                 <option value="Prim">{"Prim's MST"}</option>
+                <option value="Kruskal">{"Kruskal's MST"}</option>
                 <option value="Bellman-Ford">Bellman-Ford</option>
                 <option value="Floyd-Warshall">Floyd-Warshall</option>
                 <option value="Kahn">{"Kahn's (Topo Sort)"}</option>

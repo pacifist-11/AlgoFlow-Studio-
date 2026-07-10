@@ -47,6 +47,73 @@ const copyToClipboard = (text) => {
   }
 };
 
+const getHeapTreePositions = (n, width, height) => {
+  if (n === 0) return [];
+  const levels = Math.floor(Math.log2(n)) + 1;
+  const paddingY = 40;
+  const paddingX = 35;
+  const usableWidth = width - 2 * paddingX;
+  const usableHeight = height - 2 * paddingY;
+  
+  const positions = [];
+  for (let i = 0; i < n; i++) {
+    const level = Math.floor(Math.log2(i + 1));
+    const levelNodes = Math.pow(2, level);
+    const levelIndex = i - (levelNodes - 1);
+    
+    const y = paddingY + (usableHeight / Math.max(1, levels - 1)) * level;
+    const x = paddingX + (usableWidth / levelNodes) * (levelIndex + 0.5);
+    
+    positions.push({ x, y, level, levelIndex });
+  }
+  return positions;
+};
+
+const getBSTPositions = (arr, width, height) => {
+  if (arr.length === 0) return [];
+
+  const nodes = Array(arr.length).fill(null).map((_, idx) => ({
+    idx,
+    val: arr[idx],
+    depth: 0,
+    parentIdx: -1,
+    leftIdx: -1,
+    rightIdx: -1
+  }));
+
+  const buildTree = (l, r, parentIdx, depth) => {
+    if (l > r) return -1;
+    const m = Math.floor((l + r) / 2);
+    
+    nodes[m].depth = depth;
+    nodes[m].parentIdx = parentIdx;
+    
+    nodes[m].leftIdx = buildTree(l, m - 1, m, depth + 1);
+    nodes[m].rightIdx = buildTree(m + 1, r, m, depth + 1);
+    return m;
+  };
+
+  buildTree(0, arr.length - 1, -1, 0);
+
+  const maxDepth = Math.max(...nodes.map(n => n.depth), 1);
+  const paddingX = 40;
+  const paddingY = 45;
+  const usableWidth = width - 2 * paddingX;
+  const usableHeight = height - 2 * paddingY;
+  
+  const positions = nodes.map((node) => {
+    const x = arr.length > 1 ? paddingX + (node.idx * usableWidth) / (arr.length - 1) : paddingX + usableWidth / 2;
+    const y = maxDepth > 0 ? paddingY + (node.depth * usableHeight) / maxDepth : paddingY + usableHeight / 2;
+    return {
+      ...node,
+      x,
+      y
+    };
+  });
+
+  return positions;
+};
+
 const SortSearchVisualizer = ({ onBack, openSettings, initialTab = 'Sort', initialSort = 'Bubble Sort', initialSearch = 'Linear Search', onCopyCode, onCodeChange, fontSize = 14, wordWrap = 'off', onShowUpcomingFeatures }) => {
   const [array, setArray] = useState([]);
   const [initialArray, setInitialArray] = useState([]);
@@ -59,6 +126,7 @@ const SortSearchVisualizer = ({ onBack, openSettings, initialTab = 'Sort', initi
   const [selectedSort, setSelectedSort] = useState(initialSort);
   const [selectedSearch, setSelectedSearch] = useState(initialSearch);
   const [activeTab, setActiveTab] = useState(initialTab); // 'Sort' or 'Search'
+  const currentDisplayedAlgo = activeTab === 'Sort' ? selectedSort : selectedSearch;
   const [codeLang, setCodeLang] = useState('C++');
   const [showCode, setShowCode] = useState(false);
   const [isRunnerOpen, setIsRunnerOpen] = useState(false);
@@ -84,6 +152,58 @@ const SortSearchVisualizer = ({ onBack, openSettings, initialTab = 'Sort', initi
   const logDragStart = useRef({ x: 0, y: 0 });
   const logPanelStart = useRef({ x: 0, y: 0 });
   const logContainerRef = useRef(null);
+
+  // Draggable tree visualizer states
+  const [showTreePanel, setShowTreePanel] = useState(false);
+  const [treePanelPosition, setTreePanelPosition] = useState({ x: 620, y: 120 });
+  const [isDraggingTreePanel, setIsDraggingTreePanel] = useState(false);
+  const [treePanelSize, setTreePanelSize] = useState({ width: 550, height: 380 });
+
+  const treePanelDragStart = useRef({ x: 0, y: 0 });
+  const treePanelStart = useRef({ x: 0, y: 0 });
+
+  const handleTreePanelMouseDown = (e) => {
+    const handle = e.target.closest('.tree-panel-drag-handle');
+    if (handle) {
+      setIsDraggingTreePanel(true);
+      const isTouch = e.type.startsWith('touch');
+      const clientX = isTouch ? e.touches[0].clientX : e.clientX;
+      const clientY = isTouch ? e.touches[0].clientY : e.clientY;
+      treePanelDragStart.current = { x: clientX, y: clientY };
+      treePanelStart.current = { x: treePanelPosition.x, y: treePanelPosition.y };
+      if (e.cancelable) e.preventDefault();
+    }
+  };
+
+  const handleTreePanelResizeMouseDown = (e) => {
+    if (e.cancelable) e.preventDefault();
+    e.stopPropagation();
+    const isTouch = e.type.startsWith('touch');
+    const startX = isTouch ? e.touches[0].clientX : e.clientX;
+    const startY = isTouch ? e.touches[0].clientY : e.clientY;
+    const startWidth = treePanelSize.width;
+    const startHeight = treePanelSize.height;
+
+    const handleMouseMove = (moveEvent) => {
+      const currentX = moveEvent.type.startsWith('touch') ? moveEvent.touches[0].clientX : moveEvent.clientX;
+      const currentY = moveEvent.type.startsWith('touch') ? moveEvent.touches[0].clientY : moveEvent.clientY;
+      const newWidth = Math.max(340, startWidth + (currentX - startX));
+      const newHeight = Math.max(240, startHeight + (currentY - startY));
+      setTreePanelSize({ width: newWidth, height: newHeight });
+    };
+
+    const handleMouseUp = () => {
+      document.removeEventListener('mousemove', handleMouseMove);
+      document.removeEventListener('mouseup', handleMouseUp);
+      document.removeEventListener('touchmove', handleMouseMove);
+      document.removeEventListener('touchend', handleMouseUp);
+    };
+
+    document.addEventListener('mousemove', handleMouseMove);
+    document.addEventListener('mouseup', handleMouseUp);
+    document.addEventListener('touchmove', handleMouseMove, { passive: false });
+    document.addEventListener('touchend', handleMouseUp);
+  };
 
   const handleLogMouseDown = (e) => {
     const handle = e.target.closest('.log-drag-handle');
@@ -202,15 +322,52 @@ const SortSearchVisualizer = ({ onBack, openSettings, initialTab = 'Sort', initi
   }, [isDraggingLog, logSize]);
 
   useEffect(() => {
+    if (!isDraggingTreePanel) return;
+    const handleMouseMove = (e) => {
+      const isTouch = e.type.startsWith('touch');
+      const clientX = isTouch ? e.touches[0].clientX : e.clientX;
+      const clientY = isTouch ? e.touches[0].clientY : e.clientY;
+      const dx = clientX - treePanelDragStart.current.x;
+      const dy = clientY - treePanelDragStart.current.y;
+      const maxX = Math.max(0, window.innerWidth - treePanelSize.width);
+      const maxY = Math.max(0, window.innerHeight - treePanelSize.height);
+      setTreePanelPosition({
+        x: Math.max(0, Math.min(maxX, treePanelStart.current.x + dx)),
+        y: Math.max(0, Math.min(maxY, treePanelStart.current.y + dy))
+      });
+    };
+    const handleMouseUp = () => {
+      setIsDraggingTreePanel(false);
+    };
+    window.addEventListener('mousemove', handleMouseMove);
+    window.addEventListener('mouseup', handleMouseUp);
+    window.addEventListener('touchmove', handleMouseMove, { passive: false });
+    window.addEventListener('touchend', handleMouseUp);
+    return () => {
+      window.removeEventListener('mousemove', handleMouseMove);
+      window.removeEventListener('mouseup', handleMouseUp);
+      window.removeEventListener('touchmove', handleMouseMove);
+      window.removeEventListener('touchend', handleMouseUp);
+    };
+  }, [isDraggingTreePanel, treePanelSize]);
+
+  useEffect(() => {
     if (logContainerRef.current) {
       logContainerRef.current.scrollTop = logContainerRef.current.scrollHeight;
     }
   }, [currentStep, showLogPanel, timeline]);
 
+  useEffect(() => {
+    if (currentDisplayedAlgo === 'Heap Sort' || currentDisplayedAlgo === 'Binary Search') {
+      setShowTreePanel(true);
+    } else {
+      setShowTreePanel(false);
+    }
+  }, [currentDisplayedAlgo]);
+
 
 
   const barRefs = useRef([]);
-  const currentDisplayedAlgo = activeTab === 'Sort' ? selectedSort : selectedSearch;
   
   const generateArray = () => {
     const arr = Array.from({length: 20}, () => Math.floor(Math.random() * 90) + 10);
@@ -294,8 +451,8 @@ const SortSearchVisualizer = ({ onBack, openSettings, initialTab = 'Sort', initi
     }
   }, [currentStep, timeline]);
 
-  const record = (arr, i, j, k, msg, frames) => {
-    frames.push({ arr: [...arr], i, j, k, msg });
+  const record = (arr, i, j, k, msg, frames, extra = {}) => {
+    frames.push({ arr: [...arr], i, j, k, msg, ...extra });
   };
 
   const bubbleSort = () => {
@@ -468,7 +625,7 @@ const SortSearchVisualizer = ({ onBack, openSettings, initialTab = 'Sort', initi
   const heapSort = () => {
     let arr = [...array];
     let frames = [];
-    record(arr, -1, -1, -1, 'Starting Heap Sort', frames);
+    record(arr, -1, -1, -1, 'Starting Heap Sort', frames, { heapSize: arr.length });
 
     const heapify = (n, i) => {
       let largest = i;
@@ -476,17 +633,17 @@ const SortSearchVisualizer = ({ onBack, openSettings, initialTab = 'Sort', initi
       let r = 2 * i + 2;
 
       if (l < n) {
-        record(arr, largest, l, -1, `Comparing with left child`, frames);
+        record(arr, largest, l, -1, `Comparing left child ${arr[l]} with parent ${arr[largest]}`, frames, { heapSize: n });
         if (arr[l] > arr[largest]) largest = l;
       }
       if (r < n) {
-        record(arr, largest, r, -1, `Comparing with right child`, frames);
+        record(arr, largest, r, -1, `Comparing right child ${arr[r]} with parent ${arr[largest]}`, frames, { heapSize: n });
         if (arr[r] > arr[largest]) largest = r;
       }
 
       if (largest !== i) {
         let temp = arr[i]; arr[i] = arr[largest]; arr[largest] = temp;
-        record(arr, i, largest, -1, `Swapped to maintain max-heap`, frames);
+        record(arr, i, largest, -1, `Swapped parent ${arr[largest]} and child ${arr[i]}`, frames, { heapSize: n });
         heapify(n, largest);
       }
     };
@@ -494,15 +651,15 @@ const SortSearchVisualizer = ({ onBack, openSettings, initialTab = 'Sort', initi
     for (let i = Math.floor(arr.length / 2) - 1; i >= 0; i--) {
       heapify(arr.length, i);
     }
-    record(arr, -1, -1, -1, 'Max Heap Built', frames);
+    record(arr, -1, -1, -1, 'Max Heap Built', frames, { heapSize: arr.length });
 
     for (let i = arr.length - 1; i > 0; i--) {
       let temp = arr[0]; arr[0] = arr[i]; arr[i] = temp;
-      record(arr, 0, i, i, `Moved max element ${arr[i]} to end`, frames);
+      record(arr, 0, i, i, `Moved max element ${arr[i]} to end of heap`, frames, { heapSize: i });
       heapify(i, 0);
     }
 
-    record(arr, -1, -1, -1, 'Heap Sort Complete!', frames);
+    record(arr, -1, -1, -1, 'Heap Sort Complete!', frames, { heapSize: 0 });
     setTimeline(frames);
     setCurrentStep(0);
     setIsPlaying(true);
@@ -721,6 +878,90 @@ const SortSearchVisualizer = ({ onBack, openSettings, initialTab = 'Sort', initi
     setIsPlaying(true);
   };
 
+  const countingSort = () => {
+    let arr = [...array];
+    let frames = [];
+    let maxVal = Math.max(...arr);
+    let minVal = Math.min(...arr);
+    let range = maxVal - minVal + 1;
+    let counts = new Array(range).fill(0);
+    
+    frames.push({
+      arr: [...arr],
+      i: -1,
+      j: -1,
+      k: -1,
+      msg: `Starting Counting Sort: Range is [${minVal}, ${maxVal}] (size ${range})`,
+      counts: [...counts],
+      minVal
+    });
+
+    // Step 1: Count occurrences
+    for (let i = 0; i < arr.length; i++) {
+      let val = arr[i];
+      counts[val - minVal]++;
+      frames.push({
+        arr: [...arr],
+        i: i,
+        j: -1,
+        k: -1,
+        msg: `Count phase: Element ${val} found, incrementing count at index ${val} to ${counts[val - minVal]}`,
+        counts: [...counts],
+        minVal
+      });
+    }
+
+    // Step 2: Accumulate counts (prefix sums)
+    let cumCounts = [...counts];
+    for (let i = 1; i < cumCounts.length; i++) {
+      cumCounts[i] += cumCounts[i - 1];
+    }
+    frames.push({
+      arr: [...arr],
+      i: -1,
+      j: -1,
+      k: -1,
+      msg: `Calculate cumulative counts (prefix sums) for stable sorting`,
+      counts: [...cumCounts],
+      minVal
+    });
+
+    // Step 3: Reconstruct sorted array
+    let output = new Array(arr.length).fill(0);
+    let tempCounts = [...cumCounts];
+    for (let i = arr.length - 1; i >= 0; i--) {
+      let val = arr[i];
+      let pos = tempCounts[val - minVal] - 1;
+      output[pos] = val;
+      tempCounts[val - minVal]--;
+      
+      frames.push({
+        arr: [...output],
+        i: i,
+        j: pos,
+        k: -1,
+        msg: `Reconstruction: Placing ${val} from index ${i} to sorted index ${pos} (Count was ${tempCounts[val - minVal] + 1})`,
+        counts: [...tempCounts],
+        minVal
+      });
+    }
+
+    arr = [...output];
+    frames.push({
+      arr: [...arr],
+      i: -1,
+      j: -1,
+      k: -1,
+      msg: 'Counting Sort complete! Array is fully sorted!',
+      counts: new Array(range).fill(0),
+      minVal
+    });
+
+    setTimeline(frames);
+    setCurrentStep(0);
+    setIsPlaying(true);
+  };
+
   const executeSort = () => {
     if (selectedSort === 'Bubble Sort') bubbleSort();
     else if (selectedSort === 'Selection Sort') selectionSort();
@@ -731,11 +972,293 @@ const SortSearchVisualizer = ({ onBack, openSettings, initialTab = 'Sort', initi
     else if (selectedSort === 'Cocktail Shaker Sort') cocktailSort();
     else if (selectedSort === 'Quick Sort') quickSort();
     else if (selectedSort === 'Radix Sort') radixSort();
+    else if (selectedSort === 'Counting Sort') countingSort();
   };
 
   const executeSearch = () => {
     if (selectedSearch === 'Linear Search') linearSearch();
     else if (selectedSearch === 'Binary Search') binarySearch();
+  };
+
+  const renderTreeSVG = (width = 600, height = 400) => {
+    const frame = timeline[currentStep] || { arr: array, i: -1, j: -1, k: -1, msg: '' };
+    const arr = frame.arr || array;
+    if (arr.length === 0) {
+      return (
+        <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', height: '100%', color: 'var(--text-secondary)', fontStyle: 'italic' }}>
+          No elements to display
+        </div>
+      );
+    }
+
+    if (currentDisplayedAlgo === 'Heap Sort') {
+      const positions = getHeapTreePositions(arr.length, width, height);
+      const heapSize = frame.heapSize !== undefined ? frame.heapSize : arr.length;
+
+      return (
+        <svg viewBox={`0 0 ${width} ${height}`} width="100%" height="100%" style={{ overflow: 'visible' }}>
+          <defs>
+            <linearGradient id="heap-node-grad" x1="0%" y1="0%" x2="100%" y2="100%">
+              <stop offset="0%" stopColor="#6366f1" />
+              <stop offset="100%" stopColor="#4f46e5" />
+            </linearGradient>
+            <linearGradient id="heap-highlight-grad" x1="0%" y1="0%" x2="100%" y2="100%">
+              <stop offset="0%" stopColor="#fbbf24" />
+              <stop offset="100%" stopColor="#f59e0b" />
+            </linearGradient>
+            <linearGradient id="heap-boundary-grad" x1="0%" y1="0%" x2="100%" y2="100%">
+              <stop offset="0%" stopColor="#10b981" />
+              <stop offset="100%" stopColor="#059669" />
+            </linearGradient>
+            <filter id="heap-shadow" x="-20%" y="-20%" width="140%" height="140%">
+              <feDropShadow dx="0" dy="2" stdDeviation="3" floodOpacity="0.4" floodColor="#000" />
+            </filter>
+          </defs>
+
+          {/* Render Connections */}
+          {positions.map((node, idx) => {
+            if (idx === 0) return null;
+            const parentIdx = Math.floor((idx - 1) / 2);
+            const parent = positions[parentIdx];
+            if (!parent) return null;
+
+            const isSorted = idx >= heapSize || parentIdx >= heapSize;
+            const isActiveComparison = (idx === frame.i && parentIdx === frame.j) || (idx === frame.j && parentIdx === frame.i);
+
+            let stroke = 'rgba(99, 102, 241, 0.35)';
+            let strokeWidth = 2;
+            let dash = undefined;
+
+            if (isActiveComparison) {
+              stroke = '#fbbf24';
+              strokeWidth = 3;
+            } else if (isSorted) {
+              stroke = 'rgba(255, 255, 255, 0.12)';
+              dash = '4,4';
+            }
+
+            return (
+              <line
+                key={`line-${idx}`}
+                x1={parent.x}
+                y1={parent.y}
+                x2={node.x}
+                y2={node.y}
+                stroke={stroke}
+                strokeWidth={strokeWidth}
+                strokeDasharray={dash}
+                style={{ transition: 'all 0.3s ease' }}
+              />
+            );
+          })}
+
+          {/* Render Nodes */}
+          {positions.map((node, idx) => {
+            const val = arr[idx];
+            const isSorted = idx >= heapSize;
+            const isHighlight = idx === frame.i || idx === frame.j;
+            const isBoundary = idx === frame.k;
+
+            let fill = 'url(#heap-node-grad)';
+            let stroke = 'rgba(99, 102, 241, 0.8)';
+            let strokeWidth = 2;
+            let opacity = 1;
+            let textColor = '#ffffff';
+
+            if (isHighlight) {
+              fill = 'url(#heap-highlight-grad)';
+              stroke = '#f59e0b';
+              strokeWidth = 3;
+            } else if (isBoundary) {
+              fill = 'url(#heap-boundary-grad)';
+              stroke = '#059669';
+              strokeWidth = 3;
+            } else if (isSorted) {
+              fill = 'rgba(30, 41, 59, 0.45)';
+              stroke = 'rgba(255, 255, 255, 0.15)';
+              opacity = 0.55;
+              textColor = 'rgba(255, 255, 255, 0.35)';
+            }
+
+            return (
+              <g key={`node-${idx}`} transform={`translate(${node.x}, ${node.y})`} style={{ transition: 'all 0.3s ease', opacity }}>
+                <circle
+                  r={16}
+                  fill={fill}
+                  stroke={stroke}
+                  strokeWidth={strokeWidth}
+                  filter="url(#heap-shadow)"
+                />
+                <text
+                  fill={textColor}
+                  fontSize="11"
+                  fontWeight="bold"
+                  textAnchor="middle"
+                  dy=".3em"
+                  style={{ userSelect: 'none' }}
+                >
+                  {val}
+                </text>
+                <text
+                  fill="rgba(255, 255, 255, 0.35)"
+                  fontSize="8"
+                  textAnchor="middle"
+                  y={24}
+                  style={{ userSelect: 'none', fontFamily: 'monospace' }}
+                >
+                  [{idx}]
+                </text>
+              </g>
+            );
+          })}
+        </svg>
+      );
+    }
+
+    if (currentDisplayedAlgo === 'Binary Search') {
+      const positions = getBSTPositions(arr, width, height);
+
+      // Determine active search range
+      let searchL = 0;
+      let searchR = arr.length - 1;
+      if (frame.msg && (frame.msg.includes('Found') || frame.msg.includes('complete'))) {
+        if (frame.k !== -1) {
+          searchL = frame.k;
+          searchR = frame.k;
+        } else {
+          searchL = -1;
+          searchR = -1;
+        }
+      } else if (frame.j !== -1 && frame.k !== -1) {
+        searchL = frame.j;
+        searchR = frame.k;
+      } else if (frame.i === -1 && frame.j === -1 && frame.k === -1) {
+        if (frame.msg && (frame.msg.includes('not found') || frame.msg.includes('Complete'))) {
+          searchL = -1;
+          searchR = -1;
+        }
+      }
+
+      return (
+        <svg viewBox={`0 0 ${width} ${height}`} width="100%" height="100%" style={{ overflow: 'visible' }}>
+          <defs>
+            <linearGradient id="bst-node-grad" x1="0%" y1="0%" x2="100%" y2="100%">
+              <stop offset="0%" stopColor="#10b981" />
+              <stop offset="100%" stopColor="#059669" />
+            </linearGradient>
+            <linearGradient id="bst-highlight-grad" x1="0%" y1="0%" x2="100%" y2="100%">
+              <stop offset="0%" stopColor="#fbbf24" />
+              <stop offset="100%" stopColor="#f59e0b" />
+            </linearGradient>
+            <filter id="bst-shadow" x="-20%" y="-20%" width="140%" height="140%">
+              <feDropShadow dx="0" dy="2" stdDeviation="3" floodOpacity="0.4" floodColor="#000" />
+            </filter>
+          </defs>
+
+          {/* Render Connections */}
+          {positions.map((node) => {
+            if (node.parentIdx === -1) return null;
+            const parent = positions[node.parentIdx];
+            if (!parent) return null;
+
+            const isNodeExcluded = node.idx < searchL || node.idx > searchR;
+            const isParentExcluded = parent.idx < searchL || parent.idx > searchR;
+            const isExcluded = isNodeExcluded || isParentExcluded;
+
+            // Highlight path connection if parent is checked and this node is part of active path/comparison
+            const isActivePath = (parent.idx === frame.i && (node.idx === frame.j || node.idx === frame.k || node.idx === frame.i)) || 
+                                 (node.idx === frame.i && parent.idx !== -1);
+
+            let stroke = 'rgba(16, 185, 129, 0.35)';
+            let strokeWidth = 2;
+            let dash = undefined;
+
+            if (isActivePath && !isExcluded && frame.i !== -1) {
+              stroke = '#fbbf24';
+              strokeWidth = 3;
+            } else if (isExcluded) {
+              stroke = 'rgba(255, 255, 255, 0.12)';
+              dash = '4,4';
+            }
+
+            return (
+              <line
+                key={`line-${node.idx}`}
+                x1={parent.x}
+                y1={parent.y}
+                x2={node.x}
+                y2={node.y}
+                stroke={stroke}
+                strokeWidth={strokeWidth}
+                strokeDasharray={dash}
+                style={{ transition: 'all 0.3s ease' }}
+              />
+            );
+          })}
+
+          {/* Render Nodes */}
+          {positions.map((node) => {
+            const val = node.val;
+            const isExcluded = node.idx < searchL || node.idx > searchR;
+            const isHighlight = node.idx === frame.i; // Current mid node
+            const isBoundary = node.idx === frame.j || node.idx === frame.k;
+
+            let fill = 'url(#bst-node-grad)';
+            let stroke = 'rgba(16, 185, 129, 0.8)';
+            let strokeWidth = 2;
+            let opacity = 1;
+            let textColor = '#ffffff';
+
+            if (isHighlight) {
+              fill = 'url(#bst-highlight-grad)';
+              stroke = '#f59e0b';
+              strokeWidth = 3;
+            } else if (isBoundary && !isExcluded) {
+              stroke = '#38bdf8'; // Sky blue border for L/R boundaries
+              strokeWidth = 2.5;
+            } else if (isExcluded) {
+              fill = 'rgba(30, 41, 59, 0.45)';
+              stroke = 'rgba(255, 255, 255, 0.15)';
+              opacity = 0.55;
+              textColor = 'rgba(255, 255, 255, 0.35)';
+            }
+
+            return (
+              <g key={`node-${node.idx}`} transform={`translate(${node.x}, ${node.y})`} style={{ transition: 'all 0.3s ease', opacity }}>
+                <circle
+                  r={16}
+                  fill={fill}
+                  stroke={stroke}
+                  strokeWidth={strokeWidth}
+                  filter="url(#bst-shadow)"
+                />
+                <text
+                  fill={textColor}
+                  fontSize="11"
+                  fontWeight="bold"
+                  textAnchor="middle"
+                  dy=".3em"
+                  style={{ userSelect: 'none' }}
+                >
+                  {val}
+                </text>
+                <text
+                  fill="rgba(255, 255, 255, 0.35)"
+                  fontSize="8"
+                  textAnchor="middle"
+                  y={24}
+                  style={{ userSelect: 'none', fontFamily: 'monospace' }}
+                >
+                  [{node.idx}]
+                </text>
+              </g>
+            );
+          })}
+        </svg>
+      );
+    }
+
+    return null;
   };
 
   const frame = timeline[currentStep] || { arr: array, i: -1, j: -1, k: -1, msg: '' };
@@ -771,6 +1294,7 @@ const SortSearchVisualizer = ({ onBack, openSettings, initialTab = 'Sort', initi
                 <option value="Cocktail Shaker Sort">Cocktail Sort</option>
                 <option value="Quick Sort">Quick Sort</option>
                 <option value="Radix Sort">Radix Sort</option>
+                <option value="Counting Sort">Counting Sort</option>
               </select>
               <button className="btn btn-insert" onClick={executeSort} disabled={isPlaying}>▶ Run Sort</button>
             </>
@@ -786,6 +1310,11 @@ const SortSearchVisualizer = ({ onBack, openSettings, initialTab = 'Sort', initi
           )}
 
           <div style={{ width: '1px', height: '22px', background: 'var(--glass-border)', margin: '0 4px' }} />
+          {(currentDisplayedAlgo === 'Heap Sort' || currentDisplayedAlgo === 'Binary Search') && (
+            <button className="btn btn-clear" onClick={() => setShowTreePanel(!showTreePanel)}>
+              {showTreePanel ? '🌳 Hide Tree' : '🌳 Show Tree'}
+            </button>
+          )}
           <button className="btn btn-clear" onClick={() => setShowLogPanel(!showLogPanel)}>{showLogPanel ? '📋 Hide Log' : '📋 Show Log'}</button>
           <button className="btn btn-clear" onClick={() => setShowCode(!showCode)}>{showCode ? '💻 Hide Code' : '💻 Show Code'}</button>
           {openSettings && <button className="btn btn-clear" onClick={openSettings}>⚙ Settings</button>}
@@ -796,6 +1325,9 @@ const SortSearchVisualizer = ({ onBack, openSettings, initialTab = 'Sort', initi
       {isMobile && (
         <div className="mobile-tabs-container">
           <button className={`mobile-tab-btn ${mobileTab === 'vis' ? 'active' : ''}`} onClick={() => setMobileTab('vis')}>📊 Visualizer</button>
+          {(currentDisplayedAlgo === 'Heap Sort' || currentDisplayedAlgo === 'Binary Search') && (
+            <button className={`mobile-tab-btn ${mobileTab === 'tree' ? 'active' : ''}`} onClick={() => { setMobileTab('tree'); setShowTreePanel(true); }}>🌳 Tree</button>
+          )}
           <button className={`mobile-tab-btn ${mobileTab === 'code' ? 'active' : ''}`} onClick={() => { setMobileTab('code'); setShowCode(true); }}>💻 Code</button>
           <button className={`mobile-tab-btn ${mobileTab === 'log' ? 'active' : ''}`} onClick={() => { setMobileTab('log'); setShowLogPanel(true); }}>📋 Logs</button>
         </div>
@@ -840,6 +1372,52 @@ const SortSearchVisualizer = ({ onBack, openSettings, initialTab = 'Sort', initi
             })}
           </div>
           
+          {selectedSort === 'Counting Sort' && frame.counts && (
+            <div style={{ 
+              marginTop: '1.2rem', 
+              background: 'var(--glass-bg)', 
+              borderRadius: '14px', 
+              border: '1px solid var(--glass-border)', 
+              padding: '1rem',
+              display: 'flex',
+              flexDirection: 'column',
+              gap: '10px',
+              flexShrink: 0
+            }}>
+              <h4 style={{ margin: 0, color: 'var(--text-secondary)', fontSize: '0.9rem', fontWeight: 'bold' }}>
+                🧮 Counting Sort Frequency / Cumulative Counts Array
+              </h4>
+              <div style={{ display: 'flex', gap: '6px', overflowX: 'auto', paddingBottom: '6px' }}>
+                {frame.counts.map((cnt, idx) => {
+                  const numVal = idx + frame.minVal;
+                  return (
+                    <div 
+                      key={idx} 
+                      style={{ 
+                        background: 'rgba(255,255,255,0.03)', 
+                        border: '1px solid var(--glass-border)', 
+                        borderRadius: '8px', 
+                        minWidth: '55px',
+                        display: 'flex',
+                        flexDirection: 'column',
+                        alignItems: 'center',
+                        padding: '4px',
+                        boxShadow: 'inset 0 0 10px rgba(0,0,0,0.1)'
+                      }}
+                    >
+                      <span style={{ fontSize: '0.75rem', fontWeight: 'bold', color: '#fbbf24', borderBottom: '1px solid var(--glass-border)', width: '100%', textAlign: 'center', paddingBottom: '3px' }}>
+                        Val: {numVal}
+                      </span>
+                      <span style={{ fontSize: '1.1rem', fontWeight: 'bold', color: '#fff', paddingTop: '4px' }}>
+                        {cnt}
+                      </span>
+                    </div>
+                  );
+                })}
+              </div>
+            </div>
+          )}
+
           {selectedSort === 'Radix Sort' && frame.buckets && (
             <div style={{ 
               marginTop: '1.2rem', 
@@ -1064,6 +1642,9 @@ const SortSearchVisualizer = ({ onBack, openSettings, initialTab = 'Sort', initi
                                 if (i !== -1) details.push({ label: 'Current index', val: getValStr(i), color: '#fbbf24' });
                                 if (j !== -1) details.push({ label: 'Reassemble index', val: getValStr(j), color: '#60a5fa' });
                                 if (k !== -1) details.push({ label: 'Digit place', val: `${k}s place`, color: '#10b981' });
+                              } else if (currentDisplayedAlgo === 'Counting Sort') {
+                                if (i !== -1) details.push({ label: 'Input Index', val: getValStr(i), color: '#fbbf24' });
+                                if (j !== -1) details.push({ label: 'Placed Index', val: getValStr(j), color: '#60a5fa' });
                               } else if (currentDisplayedAlgo === 'Linear Search') {
                                 if (i !== -1) details.push({ label: 'Current index', val: getValStr(i), color: '#fbbf24' });
                                 if (k !== -1) details.push({ label: 'Found index', val: getValStr(k), color: '#10b981' });
@@ -1165,6 +1746,88 @@ const SortSearchVisualizer = ({ onBack, openSettings, initialTab = 'Sort', initi
               </div>
             </div>
           )}
+
+          {showTreePanel && !isMobile && (currentDisplayedAlgo === 'Heap Sort' || currentDisplayedAlgo === 'Binary Search') && (
+            <div
+              style={{
+                position: 'fixed',
+                left: `${Math.max(0, Math.min(treePanelPosition.x, window.innerWidth - treePanelSize.width))}px`,
+                top: `${Math.max(0, Math.min(treePanelPosition.y, window.innerHeight - treePanelSize.height))}px`,
+                width: `${treePanelSize.width}px`,
+                height: `${treePanelSize.height}px`,
+                background: 'rgba(15, 23, 42, 0.95)',
+                backdropFilter: 'blur(12px)',
+                border: '1px solid var(--glass-border)',
+                borderRadius: '12px',
+                boxShadow: '0 15px 30px rgba(0,0,0,0.5)',
+                display: 'flex',
+                flexDirection: 'column',
+                zIndex: 99,
+                overflow: 'hidden'
+              }}
+            >
+              {/* Drag Handle Header */}
+              <div
+                className="tree-panel-drag-handle"
+                onMouseDown={handleTreePanelMouseDown}
+                onTouchStart={handleTreePanelMouseDown}
+                style={{
+                  padding: '8px 12px',
+                  background: 'rgba(255, 255, 255, 0.04)',
+                  borderBottom: '1px solid var(--glass-border)',
+                  cursor: 'move',
+                  display: 'flex',
+                  justifyContent: 'space-between',
+                  alignItems: 'center',
+                  userSelect: 'none',
+                  flexShrink: 0,
+                  touchAction: 'none'
+                }}
+              >
+                <span style={{ fontWeight: 600, fontSize: '0.85rem', color: 'var(--text-primary)', display: 'flex', alignItems: 'center', gap: '6px' }}>
+                  🌳 {currentDisplayedAlgo === 'Heap Sort' ? 'Heap Tree Visualizer' : 'BST Recursion Tree'}
+                </span>
+                <button
+                  onClick={() => setShowTreePanel(false)}
+                  style={{
+                    background: 'transparent',
+                    border: 'none',
+                    color: 'var(--text-secondary)',
+                    cursor: 'pointer',
+                    fontSize: '1.1rem',
+                    padding: '0 4px',
+                    lineHeight: 1
+                  }}
+                  title="Hide Tree"
+                >
+                  ×
+                </button>
+              </div>
+
+              {/* Tree Content Body */}
+              <div style={{ flex: 1, position: 'relative', overflow: 'hidden', padding: '10px' }}>
+                {renderTreeSVG(600, 400)}
+              </div>
+
+              {/* Resize Handle */}
+              <div
+                style={{
+                  position: 'absolute',
+                  right: '4px',
+                  bottom: '4px',
+                  width: '12px',
+                  height: '12px',
+                  cursor: 'se-resize',
+                  background: 'linear-gradient(135deg, transparent 60%, rgba(255,255,255,0.3) 60%)',
+                  zIndex: 100,
+                  touchAction: 'none'
+                }}
+                onMouseDown={handleTreePanelResizeMouseDown}
+                onTouchStart={handleTreePanelResizeMouseDown}
+                title="Drag to resize panel"
+              />
+            </div>
+          )}
         </div>
 
         {/* Inline Mobile Log Panel */}
@@ -1201,6 +1864,9 @@ const SortSearchVisualizer = ({ onBack, openSettings, initialTab = 'Sort', initi
                     if (j !== -1) details.push({ label: 'Min Index', val: getValStr(j), color: '#60a5fa' });
                   } else if (currentDisplayedAlgo === 'Insertion Sort') {
                     if (i !== -1) details.push({ label: 'Active Key Index', val: getValStr(i), color: '#fbbf24' });
+                  } else if (currentDisplayedAlgo === 'Counting Sort') {
+                    if (i !== -1) details.push({ label: 'Input Index', val: getValStr(i), color: '#fbbf24' });
+                    if (j !== -1) details.push({ label: 'Placed Index', val: getValStr(j), color: '#60a5fa' });
                   } else if (currentDisplayedAlgo === 'Binary Search') {
                     if (i !== -1) details.push({ label: 'Mid Index', val: getValStr(i), color: '#fbbf24' });
                     if (j !== -1) details.push({ label: 'Left Index', val: getValStr(j), color: '#60a5fa' });
@@ -1228,6 +1894,20 @@ const SortSearchVisualizer = ({ onBack, openSettings, initialTab = 'Sort', initi
           </div>
         )}
 
+        {/* Inline Mobile Tree Panel */}
+        {isMobile && mobileTab === 'tree' && (currentDisplayedAlgo === 'Heap Sort' || currentDisplayedAlgo === 'Binary Search') && (
+          <div style={{ flex: 1, background: 'var(--bg-secondary)', borderRadius: '14px', border: '1px solid var(--glass-border)', display: 'flex', flexDirection: 'column', padding: '0.85rem', overflow: 'hidden', height: '100%', width: '100%' }}>
+            <div style={{ padding: '6px 12px', background: 'rgba(255, 255, 255, 0.04)', borderBottom: '1px solid var(--glass-border)', display: 'flex', justifyContent: 'space-between', alignItems: 'center', flexShrink: 0 }}>
+              <span style={{ fontWeight: 600, fontSize: '0.85rem', color: 'var(--text-primary)' }}>
+                🌳 {currentDisplayedAlgo === 'Heap Sort' ? 'Heap Tree Visualizer' : 'BST Recursion Tree'}
+              </span>
+            </div>
+            <div style={{ flex: 1, display: 'flex', alignItems: 'center', justifyContent: 'center', background: 'rgba(0,0,0,0.2)', borderRadius: '10px', marginTop: '10px', overflow: 'hidden', padding: '5px' }}>
+              {renderTreeSVG(600, 400)}
+            </div>
+          </div>
+        )}
+ 
         {/* Right Column: Code Sidebar */}
         {showCode && (isMobile ? mobileTab === 'code' : true) && (
         <>

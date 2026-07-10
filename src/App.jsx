@@ -7,6 +7,7 @@ import SortSearchVisualizer from './SortSearchVisualizer.jsx';
 import GeneralDSVisualizer from './GeneralDSVisualizer.jsx';
 import GraphVisualizer from './GraphVisualizer.jsx';
 import CodeRunnerModal from './CodeRunnerModal.jsx';
+import DPGreedyVisualizer from './DPGreedyVisualizer.jsx';
 
 // ─── Tree Node ───────────────────────────────────────────────────────────────
 class TreeNode {
@@ -784,6 +785,7 @@ function App() {
   const [globalSearch, setGlobalSearch] = useState('Linear Search');
   const [globalSortSearchTab, setGlobalSortSearchTab] = useState('Sort');
   const [globalGraphAlgo, setGlobalGraphAlgo] = useState('Dijkstra');
+  const [globalDpTab, setGlobalDpTab] = useState('LCS');
 
   const bTreeRef     = useRef(new BTreeEngine(4, false, 'MEDIAN'));
   const bPlusTreeRef = useRef(new BTreeEngine(4, true, 'MEDIAN'));
@@ -1861,7 +1863,7 @@ function App() {
       const hash = window.location.hash.replace('#', '');
       if (hash === '') {
         setAppMode(null);
-      } else if (['MAIN_VIS', 'CODE_VAL_VIS', 'LINE_BY_LINE_VIS', 'SORT_SEARCH_VIS', 'GENERAL_DSA_VIS', 'GRAPH_VIS'].includes(hash)) {
+      } else if (['MAIN_VIS', 'CODE_VAL_VIS', 'LINE_BY_LINE_VIS', 'SORT_SEARCH_VIS', 'GENERAL_DSA_VIS', 'GRAPH_VIS', 'DP_GREEDY_VIS'].includes(hash)) {
         setAppMode(hash);
         // Do not force setupComplete here, so modals can open if needed.
       }
@@ -3139,6 +3141,7 @@ function App() {
                 { id: 'GENERAL_DSA_VIS', icon: '📦', title: 'General DSA Visualizer', desc: 'Explore foundational data structures: Stacks, Queues, Linked Lists, and Hash Tables.' },
                 { id: 'MAIN_VIS', icon: '🚀', title: 'Tree Visualizer Studio', desc: 'Build BST / AVL / Heaps / B-Tree / Segment trees step-by-step with live code generation.' },
                 { id: 'GRAPH_VIS', icon: '🕸️', title: 'Graph Visualizer Studio', desc: 'Construct customized weighted graphs. Animate BFS, DFS, Dijkstra, and Greedy best-first traversals.' },
+                { id: 'DP_GREEDY_VIS', icon: '🧠', title: 'DP & Greedy Visualizer', desc: 'Visualize LCS, LIS, Knapsack, and Coin Change DP vs. Greedy side-by-side.' },
                 { id: 'CODE_VAL_VIS', icon: '💻', title: 'Code Validator & Runner', desc: 'Write or paste code in 4 languages. Enhanced syntax validation, error detection, and native cloud execution.' },
                 { id: 'LINE_BY_LINE_VIS', icon: '🐞', title: 'Line-by-Line Debugger', desc: 'PythonTutor-style execution tracing. Step through code, track variables, frames, and output.' }
               ].map(card => (
@@ -3193,8 +3196,13 @@ function App() {
                 { id: 'COCKTAIL_SORT', mode: 'SORT_SEARCH_VIS', title: 'Cocktail Shaker Sort', icon: '🍹', desc: 'Sort & Search Visualizer', tab: 'Sort', algo: 'Cocktail Shaker Sort' },
                 { id: 'QUICK_SORT', mode: 'SORT_SEARCH_VIS', title: 'Quick Sort', icon: '⚡', desc: 'Sort & Search Visualizer', tab: 'Sort', algo: 'Quick Sort' },
                 { id: 'RADIX_SORT', mode: 'SORT_SEARCH_VIS', title: 'Radix Sort', icon: '🔢', desc: 'Sort & Search Visualizer', tab: 'Sort', algo: 'Radix Sort' },
+                { id: 'COUNTING_SORT', mode: 'SORT_SEARCH_VIS', title: 'Counting Sort', icon: '🧮', desc: 'Sort & Search Visualizer', tab: 'Sort', algo: 'Counting Sort' },
                 { id: 'LINEAR_SEARCH', mode: 'SORT_SEARCH_VIS', title: 'Linear Search', icon: '🔍', desc: 'Sort & Search Visualizer', tab: 'Search', algo: 'Linear Search' },
-                { id: 'BINARY_SEARCH', mode: 'SORT_SEARCH_VIS', title: 'Binary Search', icon: '🎯', desc: 'Sort & Search Visualizer', tab: 'Search', algo: 'Binary Search' }
+                { id: 'BINARY_SEARCH', mode: 'SORT_SEARCH_VIS', title: 'Binary Search', icon: '🎯', desc: 'Sort & Search Visualizer', tab: 'Search', algo: 'Binary Search' },
+                { id: 'DP_LCS', mode: 'DP_GREEDY_VIS', title: 'Longest Common Subsequence (LCS)', icon: '🧬', desc: 'DP & Greedy Visualizer', tab: 'LCS' },
+                { id: 'DP_LIS', mode: 'DP_GREEDY_VIS', title: 'Longest Increasing Subsequence (LIS)', icon: '📈', desc: 'DP & Greedy Visualizer', tab: 'LIS' },
+                { id: 'DP_KNAPSACK', mode: 'DP_GREEDY_VIS', title: 'Knapsack (0/1 & Fractional)', icon: '🎒', desc: 'DP & Greedy Visualizer', tab: 'Knapsack' },
+                { id: 'DP_COIN_CHANGE', mode: 'DP_GREEDY_VIS', title: 'Coin Change (Greedy vs DP)', icon: '🪙', desc: 'DP & Greedy Visualizer', tab: 'CoinChange' }
               ].filter(c => c.title.toLowerCase().includes(homeSearchQuery.toLowerCase()) || c.desc.toLowerCase().includes(homeSearchQuery.toLowerCase())).map(card => (
                 <div key={card.id} className="option-card" onClick={() => setPendingModule(card)} onMouseEnter={e => gsap.to(e.currentTarget, { scale: 1.05, duration: 0.2 })} onMouseLeave={e => gsap.to(e.currentTarget, { scale: 1, duration: 0.2 })}>
                   <div className="option-icon">{card.icon}</div>
@@ -3267,6 +3275,25 @@ function App() {
         )}
       </div>
 
+      {/* DP & Greedy Visualizer Studio */}
+      <div style={{ display: appMode === 'DP_GREEDY_VIS' ? 'block' : 'none' }}>
+        {mountedModes['DP_GREEDY_VIS'] && (
+          <DPGreedyVisualizer 
+            onBack={goBack} 
+            openSettings={() => setIsSettingsOpen(true)} 
+            initialTab={globalDpTab} 
+            onCopyCode={handleCopyTrigger}
+            onCodeChange={(code, lang) => {
+              setActiveCodeForChat(code);
+              setActiveLangForChat(lang);
+            }}
+            fontSize={editorFontSize}
+            wordWrap={editorWordWrap}
+            onShowUpcomingFeatures={() => setIsUpcomingOpen(true)}
+          />
+        )}
+      </div>
+
       {/* Pending Module (Language Setup via Search) */}
       {pendingModule && (
         <div className="modal-overlay">
@@ -3302,6 +3329,9 @@ function App() {
                 }
                 if (pendingModule.mode === 'GRAPH_VIS') {
                   setGlobalGraphAlgo(pendingModule.algo);
+                }
+                if (pendingModule.mode === 'DP_GREEDY_VIS') {
+                  setGlobalDpTab(pendingModule.tab);
                 }
                 setAppMode(pendingModule.mode);
                 setSetupComplete(true);
@@ -4433,7 +4463,7 @@ function App() {
                 <p style={{ color: 'var(--text-secondary)', fontSize: '0.85rem', margin: '0 0 1rem 0' }}>
                   Monitor and inspect user-submitted ratings, emails, and bug reports from the PostgreSQL database server.
                 </p>
-
+                
                 {/* Filter / Search Bar */}
                 <div style={{ display: 'flex', gap: '0.5rem', marginBottom: '1rem', flexShrink: 0 }}>
                   <input 

@@ -1,17 +1,16 @@
+/* eslint-disable react/prop-types */
 import React, { useState, useEffect, useRef } from 'react';
 
 const CodeRunnerModal = ({ isOpen, onClose, code, language }) => {
   const [stdin, setStdin] = useState('');
   const [output, setOutput] = useState('');
   const [isRunning, setIsRunning] = useState(false);
-  const [executionTime, setExecutionTime] = useState(null);
   const [exitCode, setExitCode] = useState(null);
   const outputEndRef = useRef(null);
 
   useEffect(() => {
     if (isOpen) {
       setOutput('Terminal initialized. Click "Run Code" to execute...\n');
-      setExecutionTime(null);
       setExitCode(null);
     }
   }, [isOpen, code, language]);
@@ -27,7 +26,6 @@ const CodeRunnerModal = ({ isOpen, onClose, code, language }) => {
   const runCode = async () => {
     setIsRunning(true);
     setOutput('Compiling & running code on sandboxed cloud server...\n');
-    setExecutionTime(null);
     setExitCode(null);
 
     // Map language to Piston identifiers
@@ -121,10 +119,10 @@ const CodeRunnerModal = ({ isOpen, onClose, code, language }) => {
           };
           
           // Execute code
-          const startTime = performance.now();
+          const startTime = window.performance.now();
           const runLocal = new Function(code);
           runLocal();
-          const duration = (performance.now() - startTime).toFixed(2);
+          const duration = (window.performance.now() - startTime).toFixed(2);
           
           console.log = originalLog;
           

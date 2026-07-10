@@ -1,3 +1,4 @@
+/* eslint-disable no-undef */
 const CACHE_NAME = 'algoflow-v2';
 const ASSETS = [
   '/',

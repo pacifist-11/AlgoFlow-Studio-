@@ -252,6 +252,37 @@ ${execBlock}    radixSort(arr, n);
     return 0;
 }`;
 
+    if (algo === 'Counting Sort') return `#include <iostream>
+#include <vector>
+#include <algorithm>
+using namespace std;
+
+void countingSort(int arr[], int n) {
+    if (n <= 0) return;
+    int maxVal = arr[0];
+    int minVal = arr[0];
+    for (int i = 1; i < n; i++) {
+        if (arr[i] > maxVal) maxVal = arr[i];
+        if (arr[i] < minVal) minVal = arr[i];
+    }
+    int range = maxVal - minVal + 1;
+    vector<int> count(range, 0);
+    vector<int> output(n);
+    for (int i = 0; i < n; i++) count[arr[i] - minVal]++;
+    for (int i = 1; i < range; i++) count[i] += count[i - 1];
+    for (int i = n - 1; i >= 0; i--) {
+        output[count[arr[i] - minVal] - 1] = arr[i];
+        count[arr[i] - minVal]--;
+    }
+    for (int i = 0; i < n; i++) arr[i] = output[i];
+}
+
+int main() {
+${execBlock}    countingSort(arr, n);
+    for (int i = 0; i < n; i++) cout << arr[i] << " ";
+    return 0;
+}`;
+
     if (algo === 'Linear Search') return `#include <iostream>
 using namespace std;
 
@@ -529,6 +560,35 @@ ${execBlock}        radixSort(arr, arr.length);
     }
 }`;
 
+    if (algo === 'Counting Sort') return `import java.util.Arrays;
+
+public class Main {
+    static void countingSort(int[] arr) {
+        int n = arr.length;
+        if (n <= 0) return;
+        int maxVal = arr[0];
+        int minVal = arr[0];
+        for (int i = 1; i < n; i++) {
+            if (arr[i] > maxVal) maxVal = arr[i];
+            if (arr[i] < minVal) minVal = arr[i];
+        }
+        int range = maxVal - minVal + 1;
+        int[] count = new int[range];
+        int[] output = new int[n];
+        for (int i = 0; i < n; i++) count[arr[i] - minVal]++;
+        for (int i = 1; i < range; i++) count[i] += count[i - 1];
+        for (int i = n - 1; i >= 0; i--) {
+            output[count[arr[i] - minVal] - 1] = arr[i];
+            count[arr[i] - minVal]--;
+        }
+        for (int i = 0; i < n; i++) arr[i] = output[i];
+    }
+    public static void main(String[] args) {
+${execBlock}        countingSort(arr);
+        System.out.println(Arrays.toString(arr));
+    }
+}`;
+
     if (algo === 'Linear Search') return `public class Main {
     static int search(int arr[], int x) {
         int n = arr.length;
@@ -743,6 +803,31 @@ def radixSort(arr):
 
 if __name__ == "__main__":
 ${execBlock}    radixSort(arr)
+    print(arr)`;
+
+    if (algo === 'Counting Sort') return `def countingSort(arr):
+    n = len(arr)
+    if n <= 0: return arr
+    maxVal = max(arr)
+    minVal = min(arr)
+    rangeVal = maxVal - minVal + 1
+    count = [0] * rangeVal
+    output = [0] * n
+    for i in range(0, n):
+        count[arr[i] - minVal] += 1
+    for i in range(1, rangeVal):
+        count[i] += count[i - 1]
+    i = n - 1
+    while i >= 0:
+        output[count[arr[i] - minVal] - 1] = arr[i]
+        count[arr[i] - minVal] -= 1
+        i -= 1
+    for i in range(0, n):
+        arr[i] = output[i]
+    return arr
+
+if __name__ == "__main__":
+${execBlock}    countingSort(arr)
     print(arr)`;
 
     if (algo === 'Linear Search') return `def search(arr, n, x):
@@ -962,6 +1047,27 @@ function radixSort(arr, n) {
 }
 
 ${execBlock}radixSort(arr, arr.length);
+console.log(arr);`;
+
+    if (algo === 'Counting Sort') return `function countingSort(arr) {
+  let n = arr.length;
+  if (n <= 0) return arr;
+  let maxVal = Math.max(...arr);
+  let minVal = Math.min(...arr);
+  let range = maxVal - minVal + 1;
+  let count = new Array(range).fill(0);
+  let output = new Array(n).fill(0);
+  for (let i = 0; i < n; i++) count[arr[i] - minVal]++;
+  for (let i = 1; i < range; i++) count[i] += count[i - 1];
+  for (let i = n - 1; i >= 0; i--) {
+    output[count[arr[i] - minVal] - 1] = arr[i];
+    count[arr[i] - minVal]--;
+  }
+  for (let i = 0; i < n; i++) arr[i] = output[i];
+  return arr;
+}
+
+${execBlock}countingSort(arr);
 console.log(arr);`;
 
     if (algo === 'Linear Search') return `function search(arr, n, x) {

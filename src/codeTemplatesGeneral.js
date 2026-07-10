@@ -1,4 +1,3 @@
-/* eslint-disable no-unused-vars */
 export const getGeneralCodeTemplate = (lang, type, variety, operations) => {
   // Normalize language first
   if (lang) {
@@ -46,7 +45,11 @@ export const getGeneralCodeTemplate = (lang, type, variety, operations) => {
       } else if (type === 'QUEUE') {
         execBlock = `    Queue q(100);\n` + ops.map(op => `    q.${op};`).join('\n') + `\n    q.display();`;
       } else if (type === 'LINKED_LIST') {
-        execBlock = `    LinkedList list;\n` + ops.map(op => `    list.${op};`).join('\n') + `\n    list.printList();`;
+        if (variety === 'LL_POLYNOMIAL') {
+          execBlock = `    PolynomialSolver solver;\n` + ops.map(op => `    solver.${op};`).join('\n');
+        } else {
+          execBlock = `    LinkedList list;\n` + ops.map(op => `    list.${op};`).join('\n') + `\n    list.printList();`;
+        }
       } else if (type === 'HASH_TABLE') {
         execBlock = `    HashTable ht(7);\n` + ops.map(op => `    ht.${op};`).join('\n') + `\n    ht.display();`;
       }
@@ -69,7 +72,11 @@ export const getGeneralCodeTemplate = (lang, type, variety, operations) => {
       } else if (type === 'QUEUE') {
         execBlock = `        Queue q = new Queue(100);\n` + ops.map(op => `        q.${op};`).join('\n') + `\n        q.display();`;
       } else if (type === 'LINKED_LIST') {
-        execBlock = `        LinkedList list = new LinkedList();\n` + ops.map(op => `        list.${op};`).join('\n') + `\n        list.printList();`;
+        if (variety === 'LL_POLYNOMIAL') {
+          execBlock = `        PolynomialSolver solver = new PolynomialSolver();\n` + ops.map(op => `        solver.${op};`).join('\n');
+        } else {
+          execBlock = `        LinkedList list = new LinkedList();\n` + ops.map(op => `        list.${op};`).join('\n') + `\n        list.printList();`;
+        }
       } else if (type === 'HASH_TABLE') {
         execBlock = `        HashTable ht = new HashTable(7);\n` + ops.map(op => `        ht.${op};`).join('\n') + `\n        ht.printTable();`;
       }
@@ -91,7 +98,11 @@ export const getGeneralCodeTemplate = (lang, type, variety, operations) => {
       } else if (type === 'QUEUE') {
         execBlock = `    q = Queue()\n` + ops.map(op => `    q.${op}`).join('\n') + `\n    q.display()`;
       } else if (type === 'LINKED_LIST') {
-        execBlock = `    list = LinkedList()\n` + ops.map(op => `    list.${op}`).join('\n') + `\n    list.print_list()`;
+        if (variety === 'LL_POLYNOMIAL') {
+          execBlock = `    solver = PolynomialSolver()\n` + ops.map(op => `    solver.${op}`).join('\n');
+        } else {
+          execBlock = `    list = LinkedList()\n` + ops.map(op => `    list.${op}`).join('\n') + `\n    list.print_list()`;
+        }
       } else if (type === 'HASH_TABLE') {
         execBlock = `    ht = HashTable(7)\n` + ops.map(op => `    ht.${op}`).join('\n') + `\n    ht.display()`;
       }
@@ -114,7 +125,11 @@ export const getGeneralCodeTemplate = (lang, type, variety, operations) => {
       } else if (type === 'QUEUE') {
         execBlock = `  const q = new Queue(100);\n` + ops.map(op => `  q.${op};`).join('\n') + `\n  q.display();`;
       } else if (type === 'LINKED_LIST') {
-        execBlock = `  const list = new LinkedList();\n` + ops.map(op => `  list.${op};`).join('\n') + `\n  list.printList();`;
+        if (variety === 'LL_POLYNOMIAL') {
+          execBlock = `  const solver = new PolynomialSolver();\n` + ops.map(op => `  solver.${op};`).join('\n');
+        } else {
+          execBlock = `  const list = new LinkedList();\n` + ops.map(op => `  list.${op};`).join('\n') + `\n  list.printList();`;
+        }
       } else if (type === 'HASH_TABLE') {
         execBlock = `  const ht = new HashTable(7);\n` + ops.map(op => `  ht.${op};`).join('\n') + `\n  ht.display();`;
       }
@@ -728,6 +743,411 @@ class LinkedList {
 }
 // Execution
 ${execBlock}`;
+    } else if (variety === 'LL_POLYNOMIAL') {
+      if (lang === 'Java') return `class Term {
+    int coeff, exp;
+    Term next;
+    Term(int c, int e) { coeff = c; exp = e; next = null; }
+}
+class Polynomial {
+    Term head;
+    void insert(int coeff, int exp) {
+        if (coeff == 0) return;
+        Term n = new Term(coeff, exp);
+        if (head == null || head.exp < exp) {
+            n.next = head; head = n; return;
+        }
+        Term curr = head;
+        while (curr.next != null && curr.next.exp >= exp) {
+            curr = curr.next;
+        }
+        if (curr.exp == exp) {
+            curr.coeff += coeff;
+        } else if (curr.next != null && curr.next.exp == exp) {
+            curr.next.coeff += coeff;
+        } else {
+            n.next = curr.next; curr.next = n;
+        }
+    }
+    void print() {
+        Term t = head;
+        boolean first = true;
+        while (t != null) {
+            if (t.coeff != 0) {
+                if (t.coeff > 0 && !first) System.out.print("+");
+                System.out.print(t.coeff + "x^" + t.exp + " ");
+                first = false;
+            }
+            t = t.next;
+        }
+        System.out.println();
+    }
+}
+class PolynomialSolver {
+    Polynomial parse(String str) {
+        Polynomial p = new Polynomial();
+        String clean = str.replaceAll("\\\\s+", "");
+        String[] parts = clean.replace("-", "+-").split("\\\\+");
+        for (String part : parts) {
+            if (part.isEmpty()) continue;
+            int coeff = 1, exp = 0;
+            if (part.contains("x")) {
+                String[] sides = part.split("x");
+                String coeffStr = sides[0];
+                String expStr = sides.length > 1 ? sides[1] : "";
+                if (coeffStr.equals("")) coeff = 1;
+                else if (coeffStr.equals("-")) coeff = -1;
+                else coeff = Integer.parseInt(coeffStr);
+                if (expStr.startsWith("^")) exp = Integer.parseInt(expStr.substring(1));
+                else exp = 1;
+            } else {
+                coeff = Integer.parseInt(part);
+                exp = 0;
+            }
+            p.insert(coeff, exp);
+        }
+        return p;
+    }
+    void addPolynomials(String polyA, String polyB) {
+        Polynomial pA = parse(polyA);
+        Polynomial pB = parse(polyB);
+        Polynomial result = new Polynomial();
+        Term a = pA.head, b = pB.head;
+        while (a != null || b != null) {
+            if (a != null && (b == null || a.exp > b.exp)) {
+                result.insert(a.coeff, a.exp);
+                a = a.next;
+            } else if (b != null && (a == null || b.exp > a.exp)) {
+                result.insert(b.coeff, b.exp);
+                b = b.next;
+            } else {
+                result.insert(a.coeff + b.coeff, a.exp);
+                a = a.next; b = b.next;
+            }
+        }
+        System.out.print("Result: "); result.print();
+    }
+    void multiplyPolynomials(String polyA, String polyB) {
+        Polynomial pA = parse(polyA);
+        Polynomial pB = parse(polyB);
+        Polynomial result = new Polynomial();
+        for (Term a = pA.head; a != null; a = a.next) {
+            for (Term b = pB.head; b != null; b = b.next) {
+                result.insert(a.coeff * b.coeff, a.exp + b.exp);
+            }
+        }
+        System.out.print("Result: "); result.print();
+    }
+}
+public class Main {
+    public static void main(String[] args) {
+\${execBlock}
+    }
+}`;
+      if (lang === 'C++') return `#include <iostream>
+#include <string>
+#include <vector>
+#include <sstream>
+using namespace std;
+struct Term {
+    int coeff, exp;
+    Term* next;
+    Term(int c, int e) : coeff(c), exp(e), next(nullptr) {}
+};
+class Polynomial {
+public:
+    Term* head = nullptr;
+    void insert(int coeff, int exp) {
+        if (coeff == 0) return;
+        Term* n = new Term(coeff, exp);
+        if (!head || head->exp < exp) {
+            n->next = head; head = n; return;
+        }
+        Term* curr = head;
+        while (curr->next && curr->next->exp >= exp) {
+            curr = curr->next;
+        }
+        if (curr->exp == exp) {
+            curr->coeff += coeff;
+            delete n;
+        } else if (curr->next && curr->next->exp == exp) {
+            curr->next->coeff += coeff;
+            delete n;
+        } else {
+            n->next = curr->next; curr->next = n;
+        }
+    }
+    void print() {
+        Term* t = head;
+        bool first = true;
+        while (t) {
+            if (t->coeff != 0) {
+                if (t->coeff > 0 && !first) cout << "+";
+                cout << t->coeff << "x^" << t->exp << " ";
+                first = false;
+            }
+            t = t->next;
+        }
+        cout << "\\n";
+    }
+};
+class PolynomialSolver {
+public:
+    Polynomial parse(string str) {
+        Polynomial p;
+        string clean = "";
+        for(char c : str) if(c != ' ') clean += c;
+        string withPluses = "";
+        for(char c : clean) {
+            if(c == '-') withPluses += "+-";
+            else withPluses += c;
+        }
+        stringstream ss(withPluses);
+        string part;
+        while(getline(ss, part, '+')) {
+            if(part.empty()) continue;
+            int coeff = 1, exp = 0;
+            size_t xPos = part.find('x');
+            if(xPos != string::npos) {
+                string coeffStr = part.substr(0, xPos);
+                string expStr = part.substr(xPos + 1);
+                if(coeffStr.empty()) coeff = 1;
+                else if(coeffStr == "-") coeff = -1;
+                else coeff = stoi(coeffStr);
+                if(!expStr.empty() && expStr[0] == '^') exp = stoi(expStr.substr(1));
+                else exp = 1;
+            } else {
+                coeff = stoi(part);
+                exp = 0;
+            }
+            p.insert(coeff, exp);
+        }
+        return p;
+    }
+    void addPolynomials(string polyA, string polyB) {
+        Polynomial pA = parse(polyA);
+        Polynomial pB = parse(polyB);
+        Polynomial result;
+        Term *a = pA.head, *b = pB.head;
+        while(a || b) {
+            if(a && (!b || a->exp > b->exp)) {
+                result.insert(a->coeff, a->exp);
+                a = a->next;
+            } else if(b && (!a || b->exp > a->exp)) {
+                result.insert(b->coeff, b->exp);
+                b = b->next;
+            } else {
+                result.insert(a->coeff + b->coeff, a->exp);
+                a = a->next; b = b->next;
+            }
+        }
+        cout << "Result: "; result.print();
+    }
+    void multiplyPolynomials(string polyA, string polyB) {
+        Polynomial pA = parse(polyA);
+        Polynomial pB = parse(polyB);
+        Polynomial result;
+        for(Term* a = pA.head; a != nullptr; a = a->next) {
+            for(Term* b = pB.head; b != nullptr; b = b->next) {
+                result.insert(a->coeff * b->coeff, a->exp + b->exp);
+            }
+        }
+        cout << "Result: "; result.print();
+    }
+};
+int main() {
+\${execBlock}
+    return 0;
+}`;
+      if (lang === 'Python') return `class Term:
+    def __init__(self, c, e):
+        self.coeff = c
+        self.exp = e
+        self.next = None
+class Polynomial:
+    def __init__(self):
+        self.head = None
+    def insert(self, coeff, exp):
+        if coeff == 0: return
+        n = Term(coeff, exp)
+        if not self.head or self.head.exp < exp:
+            n.next = self.head
+            self.head = n
+            return
+        curr = self.head
+        while curr.next and curr.next.exp >= exp:
+            curr = curr.next
+        if curr.exp == exp:
+            curr.coeff += coeff
+        elif curr.next and curr.next.exp == exp:
+            curr.next.coeff += coeff
+        else:
+            n.next = curr.next
+            curr.next = n
+    def print_poly(self):
+        t = self.head
+        first = True
+        out = []
+        while t:
+            if t.coeff != 0:
+                coeff_str = ""
+                if t.coeff > 0 and not first:
+                    coeff_str = "+"
+                out.append(f"{coeff_str}{t.coeff}x^{t.exp}")
+                first = False
+            t = t.next
+        print("Result:", " ".join(out))
+class PolynomialSolver:
+    def parse(self, s):
+        p = Polynomial()
+        clean = s.replace(" ", "")
+        parts = clean.replace("-", "+-").split("+")
+        for part in parts:
+            if not part: continue
+            coeff, exp = 1, 0
+            if "x" in part:
+                sides = part.split("x")
+                coeff_str = sides[0]
+                exp_str = sides[1] if len(sides) > 1 else ""
+                if coeff_str == "": coeff = 1
+                elif coeff_str == "-": coeff = -1
+                else: coeff = int(coeff_str)
+                if exp_str.startswith("^"): exp = int(exp_str[1:])
+                else: exp = 1
+            else:
+                coeff = int(part)
+                exp = 0
+            p.insert(coeff, exp)
+        return p
+    def addPolynomials(self, polyA, polyB):
+        pA = self.parse(polyA)
+        pB = self.parse(polyB)
+        result = Polynomial()
+        a, b = pA.head, pB.head
+        while a or b:
+            if a and (not b or a.exp > b.exp):
+                result.insert(a.coeff, a.exp)
+                a = a.next
+            elif b and (not a or b.exp > a.exp):
+                result.insert(b.coeff, b.exp)
+                b = b.next
+            else:
+                result.insert(a.coeff + b.coeff, a.exp)
+                a = a.next
+                b = b.next
+        result.print_poly()
+    def multiplyPolynomials(self, polyA, polyB):
+        pA = self.parse(polyA)
+        pB = self.parse(polyB)
+        result = Polynomial()
+        a = pA.head
+        while a:
+            b = pB.head
+            while b:
+                result.insert(a.coeff * b.coeff, a.exp + b.exp)
+                b = b.next
+            a = a.next
+        result.print_poly()
+if __name__ == "__main__":
+\${execBlock}`;
+      if (lang === 'JS') return `class Term {
+    constructor(c, e) {
+        this.coeff = c;
+        this.exp = e;
+        this.next = null;
+    }
+}
+class Polynomial {
+    constructor() { this.head = null; }
+    insert(coeff, exp) {
+        if (coeff === 0) return;
+        let n = new Term(coeff, exp);
+        if (!this.head || this.head.exp < exp) {
+            n.next = this.head; this.head = n; return;
+        }
+        let curr = this.head;
+        while (curr.next && curr.next.exp >= exp) {
+            curr = curr.next;
+        }
+        if (curr.exp === exp) {
+            curr.coeff += coeff;
+        } else if (curr.next && curr.next.exp === exp) {
+            curr.next.coeff += coeff;
+        } else {
+            n.next = curr.next; curr.next = n;
+        }
+    }
+    print() {
+        let t = this.head, first = true, out = [];
+        while (t) {
+            if (t.coeff !== 0) {
+                let sign = (t.coeff > 0 && !first) ? "+" : "";
+                out.push(sign + t.coeff + "x^" + t.exp);
+                first = false;
+            }
+            t = t.next;
+        }
+        console.log("Result:", out.join(" "));
+    }
+}
+class PolynomialSolver {
+    parse(str) {
+        let p = new Polynomial();
+        let clean = str.replace(/\\s+/g, "");
+        let parts = clean.replace(/-/g, "+-").split("+");
+        for (let part of parts) {
+            if (!part) continue;
+            let coeff = 1, exp = 0;
+            if (part.includes("x")) {
+                let sides = part.split("x");
+                let coeffStr = sides[0];
+                let expStr = sides[1] || "";
+                if (coeffStr === "") coeff = 1;
+                else if (coeffStr === "-") coeff = -1;
+                else coeff = parseInt(coeffStr, 10);
+                if (expStr.startsWith("^")) exp = parseInt(expStr.substring(1), 10);
+                else exp = 1;
+            } else {
+                coeff = parseInt(part, 10);
+                exp = 0;
+            }
+            p.insert(coeff, exp);
+        }
+        return p;
+    }
+    addPolynomials(polyA, polyB) {
+        let pA = this.parse(polyA);
+        let pB = this.parse(polyB);
+        let result = new Polynomial();
+        let a = pA.head, b = pB.head;
+        while (a || b) {
+            if (a && (!b || a.exp > b.exp)) {
+                result.insert(a.coeff, a.exp);
+                a = a.next;
+            } else if (b && (!a || b.exp > a.exp)) {
+                result.insert(b.coeff, b.exp);
+                b = b.next;
+            } else {
+                result.insert(a.coeff + b.coeff, a.exp);
+                a = a.next; b = b.next;
+            }
+        }
+        result.print();
+    }
+    multiplyPolynomials(polyA, polyB) {
+        let pA = this.parse(polyA);
+        let pB = this.parse(polyB);
+        let result = new Polynomial();
+        for (let a = pA.head; a !== null; a = a.next) {
+            for (let b = pB.head; b !== null; b = b.next) {
+                result.insert(a.coeff * b.coeff, a.exp + b.exp);
+            }
+        }
+        result.print();
+    }
+}
+// Execution
+\${execBlock}`;
     }
   }
 

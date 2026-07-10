@@ -48,6 +48,139 @@ const copyToClipboard = (text) => {
 };
 
 
+const isPrime = (n) => {
+  if (n <= 1) return false;
+  if (n <= 3) return true;
+  if (n % 2 === 0 || n % 3 === 0) return false;
+  for (let i = 5; i * i <= n; i += 6) {
+    if (n % i === 0 || n % (i + 2) === 0) return false;
+  }
+  return true;
+};
+const nextPrime = (n) => {
+  if (n <= 1) return 2;
+  let prime = n;
+  let found = false;
+  while (!found) {
+    prime++;
+    if (isPrime(prime)) found = true;
+  }
+  return prime;
+};
+const getHTElementCount = (table, isChaining) => {
+  if (!table) return 0;
+  if (isChaining) {
+    return table.reduce((sum, bucket) => sum + (Array.isArray(bucket) ? bucket.length : 0), 0);
+  } else {
+    return table.filter(v => v !== null && v !== 'TOMBSTONE').length;
+  }
+};
+const getComplexityInfo = (type, variety) => {
+  switch (type) {
+    case 'STACK':
+      if (variety === 'STACK_ARRAY' || variety === 'STACK_LL') {
+        return {
+          title: 'Stack (Array/LL)',
+          operations: [
+            { op: 'Push', time: 'O(1)', space: 'O(1)' },
+            { op: 'Pop', time: 'O(1)', space: 'O(1)' },
+            { op: 'Peek', time: 'O(1)', space: 'O(1)' },
+            { op: 'Search', time: 'O(N)', space: 'O(1)' }
+          ]
+        };
+      }
+      return {
+        title: 'Stack Apps',
+        operations: [
+          { op: 'Expr Eval', time: 'O(N)', space: 'O(N)' },
+          { op: 'Bracket Check', time: 'O(N)', space: 'O(N)' },
+          { op: 'Infix Converter', time: 'O(N)', space: 'O(N)' }
+        ]
+      };
+    case 'QUEUE':
+      return {
+        title: `Queue (${variety === 'QUEUE_CIRCULAR' ? 'Circular' : variety === 'QUEUE_DEQUE' ? 'Deque' : variety === 'QUEUE_PRIORITY' ? 'Priority' : 'Simple'})`,
+        operations: [
+          { op: 'Enqueue', time: variety === 'QUEUE_PRIORITY' ? 'O(log N)' : 'O(1)', space: 'O(1)' },
+          { op: 'Dequeue', time: 'O(1)', space: 'O(1)' },
+          { op: 'Search', time: 'O(N)', space: 'O(1)' }
+        ]
+      };
+    case 'LINKED_LIST':
+      if (variety === 'LL_POLYNOMIAL') {
+        return {
+          title: 'Polynomial (LL)',
+          operations: [
+            { op: 'Addition', time: 'O(N + M)', space: 'O(N + M)' },
+            { op: 'Multiplication', time: 'O(N * M)', space: 'O(N * M)' }
+          ]
+        };
+      }
+      return {
+        title: `Linked List (${variety === 'LL_DOUBLY' ? 'Doubly' : variety === 'LL_CIRCULAR' ? 'Circular' : 'Singly'})`,
+        operations: [
+          { op: 'Insert Head', time: 'O(1)', space: 'O(1)' },
+          { op: 'Insert Tail', time: variety === 'LL_CIRCULAR' || variety === 'LL_DOUBLY' ? 'O(1)' : 'O(N)', space: 'O(1)' },
+          { op: 'Delete Value', time: 'O(N)', space: 'O(1)' },
+          { op: 'Search', time: 'O(N)', space: 'O(1)' }
+        ]
+      };
+    case 'HASH_TABLE':
+      return {
+        title: `Hash Table (${variety === 'HASH_CHAINING' ? 'Chaining' : 'Probing'})`,
+        operations: [
+          { op: 'Insert', time: 'O(1) avg / O(N) worst', space: 'O(1)' },
+          { op: 'Search', time: 'O(1) avg / O(N) worst', space: 'O(1)' },
+          { op: 'Delete', time: 'O(1) avg / O(N) worst', space: 'O(1)' },
+          { op: 'Rehash', time: 'O(N) (resize)', space: 'O(N)' }
+        ]
+      };
+    default:
+      return null;
+  }
+};
+const parsePolynomial = (str) => {
+  if (!str) return [];
+  const terms = [];
+  const cleanStr = str.replace(/\s+/g, '');
+  const parts = cleanStr.replace(/-/g, '+-').split('+');
+  for (let part of parts) {
+    if (!part) continue;
+    let coeff = 1;
+    let exp = 0;
+    if (part.includes('x')) {
+      const sides = part.split('x');
+      const coeffStr = sides[0];
+      const expStr = sides[1] || '';
+      if (coeffStr === '') coeff = 1;
+      else if (coeffStr === '-') coeff = -1;
+      else coeff = parseInt(coeffStr, 10);
+      if (expStr.startsWith('^')) {
+        exp = parseInt(expStr.substring(1), 10);
+      } else {
+        exp = 1;
+      }
+    } else {
+      coeff = parseInt(part, 10);
+      exp = 0;
+    }
+    if (!isNaN(coeff) && !isNaN(exp) && coeff !== 0) {
+      terms.push({ coeff, exp });
+    }
+  }
+  terms.sort((a, b) => b.exp - a.exp);
+  const merged = [];
+  for (let term of terms) {
+    let existing = merged.find(t => t.exp === term.exp);
+    if (existing) {
+      existing.coeff += term.coeff;
+    } else {
+      merged.push({ ...term });
+    }
+  }
+  return merged.filter(t => t.coeff !== 0);
+};
+
 const GeneralDSVisualizer = ({ onBack, openSettings, initialType = 'HASH_TABLE', initialVariety = 'HASH_LINEAR', onCopyCode, onCodeChange, fontSize = 14, wordWrap = 'off', onShowUpcomingFeatures }) => {
   const [dsType, setDsType] = useState(initialType);
   const [dsVariety, setDsVariety] = useState(initialVariety);
@@ -209,6 +342,13 @@ const GeneralDSVisualizer = ({ onBack, openSettings, initialType = 'HASH_TABLE',
   const [cqState, setCqState] = useState({ arr: Array(5).fill(null), f: -1, r: -1 });
   const [operationsLog, setOperationsLog] = useState([]);
   const [poppedElements, setPoppedElements] = useState([]);
+  const [polyA, setPolyA] = useState([]);
+  const [polyB, setPolyB] = useState([]);
+  const [polyResult, setPolyResult] = useState([]);
+  const [polyAInput, setPolyAInput] = useState('3x^2 + 2x + 1');
+  const [polyBInput, setPolyBInput] = useState('4x^2 + 5');
+  const [polyOp, setPolyOp] = useState('+');
+  const [showComplexity, setShowComplexity] = useState(true);
 
   // Declare currentCode here so it's initialized before hooks run
   const currentCode = getGeneralCodeTemplate(codeLanguage, dsType, dsVariety, operationsLog);
@@ -261,6 +401,9 @@ const GeneralDSVisualizer = ({ onBack, openSettings, initialType = 'HASH_TABLE',
     setElements([]);
     setOperationsLog([]);
     setPoppedElements([]);
+    setPolyA([]);
+    setPolyB([]);
+    setPolyResult([]);
     if (overrideVariety === 'HASH_CHAINING') {
       setHashTable(Array.from({length: overrideSize}, () => []));
     } else if (overrideVariety?.startsWith('HASH_')) {
@@ -924,27 +1067,30 @@ const GeneralDSVisualizer = ({ onBack, openSettings, initialType = 'HASH_TABLE',
     let bucket = absVal % tableSize;
     let h_k = `h(${val}) = ${absVal} % ${tableSize} = ${bucket}`;
     
+    let currHt;
+    let inserted = false;
+    let duplicate = false;
+    
     if (dsVariety === 'HASH_CHAINING') {
       let safeHt = Array.isArray(ht) && Array.isArray(ht[0]) ? ht : Array.from({length: tableSize}, () => []);
       frames.push({ ht: safeHt.map(b => [...b]), activeBucket: -1, activeNode: -1, msg: `Compute Hash: ${h_k}`, activeLineText: 'key % tableSize' });
       frames.push({ ht: safeHt.map(b => [...b]), activeBucket: bucket, activeNode: -1, msg: `Accessing Bucket ${bucket}`, activeLineText: 'table[index].contains(key)' });
       
-      let nextHt = safeHt.map(b => [...b]);
-      if(!nextHt[bucket].includes(val)) {
-          nextHt[bucket].push(val);
-          frames.push({ ht: nextHt, activeBucket: bucket, activeNode: nextHt[bucket].length - 1, msg: `Inserted ${val} into Bucket ${bucket} chain.`, activeLineText: 'table[index].add(key)' });
-          setOperationsLog(prev => [...prev, { op: 'insert', val }]);
+      currHt = safeHt.map(b => [...b]);
+      if(!currHt[bucket].includes(val)) {
+          currHt[bucket].push(val);
+          frames.push({ ht: currHt.map(b => [...b]), activeBucket: bucket, activeNode: currHt[bucket].length - 1, msg: `Inserted ${val} into Bucket ${bucket} chain.`, activeLineText: 'table[index].add(key)' });
+          inserted = true;
       } else {
-          frames.push({ ht: nextHt, activeBucket: bucket, activeNode: nextHt[bucket].indexOf(val), msg: `Collision! ${val} already exists in chain.`, isCollision: true });
+          duplicate = true;
+          frames.push({ ht: currHt.map(b => [...b]), activeBucket: bucket, activeNode: currHt[bucket].indexOf(val), msg: `Collision! ${val} already exists in chain.`, isCollision: true });
       }
-      setHashTable(nextHt);
     } else {
       let safeHt = Array.isArray(ht) && ht.length === tableSize && !Array.isArray(ht[0]) ? ht : Array(tableSize).fill(null);
-      let currHt = [...safeHt];
+      currHt = [...safeHt];
       frames.push({ ht: [...currHt], activeBucket: -1, msg: `Compute Hash: ${h_k}`, activeLineText: 'key % size' });
       
       let i = 0;
-      let inserted = false;
       while (i < tableSize) {
         let probeBucket = dsVariety === 'HASH_LINEAR' ? (bucket + i) % tableSize : (bucket + i * i) % tableSize;
         let formula = dsVariety === 'HASH_LINEAR' ? `(${bucket} + ${i}) % ${tableSize}` : `(${bucket} + ${i}²) % ${tableSize}`;
@@ -954,9 +1100,9 @@ const GeneralDSVisualizer = ({ onBack, openSettings, initialType = 'HASH_TABLE',
           currHt[probeBucket] = val;
           frames.push({ ht: [...currHt], activeBucket: probeBucket, msg: `Inserted ${val} at slot ${probeBucket}`, activeLineText: 'table[probe] = key' });
           inserted = true;
-          setOperationsLog(prev => [...prev, { op: 'insert', val }]);
           break;
         } else if (currHt[probeBucket] === val) {
+          duplicate = true;
           frames.push({ ht: [...currHt], activeBucket: probeBucket, msg: `Collision! ${val} already exists at slot ${probeBucket}`, isCollision: true, activeLineText: 'table[probe] == key' });
           inserted = true;
           break;
@@ -968,9 +1114,128 @@ const GeneralDSVisualizer = ({ onBack, openSettings, initialType = 'HASH_TABLE',
       if (!inserted) {
         frames.push({ ht: [...currHt], activeBucket: -1, msg: `Table Overflow! Cannot insert ${val}` });
       }
+    }
+    
+    if (inserted && !duplicate) {
+      setOperationsLog(prev => [...prev, { op: 'insert', val }]);
+      
+      const isChaining = dsVariety === 'HASH_CHAINING';
+      const elementCount = getHTElementCount(currHt, isChaining);
+      const loadFactor = elementCount / tableSize;
+      
+      if (loadFactor > 0.7) {
+        const newSize = nextPrime(tableSize * 2);
+        frames.push({
+          ht: currHt,
+          activeBucket: -1,
+          msg: `Load Factor = ${elementCount}/${tableSize} = ${loadFactor.toFixed(2)} > 0.7. Triggering Rehashing!`,
+          activeLineText: 'if (loadFactor > 0.7)'
+        });
+        
+        const oldElements = [];
+        if (isChaining) {
+          currHt.forEach(bucket => {
+            oldElements.push(...bucket);
+          });
+        } else {
+          currHt.forEach(el => {
+            if (el !== null && el !== 'TOMBSTONE') {
+              oldElements.push(el);
+            }
+          });
+        }
+        
+        let newHt = isChaining 
+          ? Array.from({ length: newSize }, () => [])
+          : Array(newSize).fill(null);
+          
+        frames.push({
+          ht: newHt,
+          activeBucket: -1,
+          msg: `Created new Hash Table of size ${newSize}. Beginning to rehash all ${oldElements.length} elements.`,
+          activeLineText: 'resize(newSize)'
+        });
+        
+        oldElements.forEach(el => {
+          let newBucket = Math.abs(el) % newSize;
+          let newH_k = `h(${el}) = ${Math.abs(el)} % ${newSize} = ${newBucket}`;
+          
+          if (isChaining) {
+            frames.push({
+              ht: newHt.map(b => [...b]),
+              activeBucket: newBucket,
+              msg: `Rehashing ${el} ➔ Compute new Hash: ${newH_k}`,
+              activeLineText: 'int index = hash(key)'
+            });
+            newHt[newBucket].push(el);
+            frames.push({
+              ht: newHt.map(b => [...b]),
+              activeBucket: newBucket,
+              activeNode: newHt[newBucket].length - 1,
+              msg: `Placed ${el} in new Bucket ${newBucket}.`,
+              activeLineText: 'newTable[index].add(key)'
+            });
+          } else {
+            frames.push({
+              ht: [...newHt],
+              activeBucket: -1,
+              msg: `Rehashing ${el} ➔ Compute new Hash: ${newH_k}`,
+              activeLineText: 'int index = hash(key)'
+            });
+            
+            let k = 0;
+            while (k < newSize) {
+              let probeBucket = dsVariety === 'HASH_LINEAR' ? (newBucket + k) % newSize : (newBucket + k * k) % newSize;
+              let formula = dsVariety === 'HASH_LINEAR' ? `(${newBucket} + ${k}) % ${newSize}` : `(${newBucket} + ${k}²) % ${newSize}`;
+              frames.push({
+                ht: [...newHt],
+                activeBucket: probeBucket,
+                msg: `Probing slot ${probeBucket} ➔ Formula: ${formula}`,
+                activeLineText: 'int probe ='
+              });
+              if (newHt[probeBucket] === null) {
+                newHt[probeBucket] = el;
+                frames.push({
+                  ht: [...newHt],
+                  activeBucket: probeBucket,
+                  msg: `Placed ${el} at slot ${probeBucket} in new table.`,
+                  activeLineText: 'newTable[probe] = key'
+                });
+                break;
+              } else {
+                frames.push({
+                  ht: [...newHt],
+                  activeBucket: probeBucket,
+                  msg: `Collision! Slot ${probeBucket} occupied.`,
+                  isCollision: true
+                });
+              }
+              k++;
+            }
+          }
+        });
+        
+        frames.push({
+          ht: newHt,
+          activeBucket: -1,
+          msg: `Rehashing completed successfully. New size is ${newSize}.`,
+          activeLineText: 'table = newTable'
+        });
+        
+        setTableSize(newSize);
+        setHashTable(newHt);
+      } else {
+        setHashTable(currHt);
+      }
+    } else {
       setHashTable(currHt);
     }
-    setTimeline(frames); setCurrentStep(0); setIsPlaying(true); setInputValue(''); triggerFocus();
+    
+    setTimeline(frames);
+    setCurrentStep(0);
+    setIsPlaying(true);
+    setInputValue('');
+    triggerFocus();
   };
 
   const hashSearch = () => {
@@ -1074,6 +1339,278 @@ const GeneralDSVisualizer = ({ onBack, openSettings, initialType = 'HASH_TABLE',
       setHashTable(safeHt);
     }
     setTimeline(frames); setCurrentStep(0); setIsPlaying(true); setInputValue(''); triggerFocus();
+  };
+
+  const runPolynomialAdd = () => {
+    const pA = parsePolynomial(polyAInput);
+    const pB = parsePolynomial(polyBInput);
+    setPolyA(pA);
+    setPolyB(pB);
+    
+    const frames = [];
+    const result = [];
+    
+    let i = 0, j = 0;
+    frames.push({
+      polyA: pA,
+      polyB: pB,
+      polyResult: [],
+      activeIdxA: 0,
+      activeIdxB: 0,
+      msg: `Start polynomial addition: Pointers set to heads of Poly A and Poly B.`,
+      activeLineText: 'addPolynomials'
+    });
+    
+    while (i < pA.length || j < pB.length) {
+      const termA = pA[i];
+      const termB = pB[j];
+      
+      if (termA && (!termB || termA.exp > termB.exp)) {
+        result.push({ ...termA });
+        frames.push({
+          polyA: pA,
+          polyB: pB,
+          polyResult: [...result],
+          activeIdxA: i,
+          activeIdxB: j < pB.length ? j : -1,
+          activeIdxResult: result.length - 1,
+          msg: `Poly A term has higher exponent (${termA.exp} > ${termB ? termB.exp : -1}). Copy ${termA.coeff}x^${termA.exp} to result.`,
+          activeLineText: 'pA.exp > pB.exp'
+        });
+        i++;
+      } else if (termB && (!termA || termB.exp > termA.exp)) {
+        result.push({ ...termB });
+        frames.push({
+          polyA: pA,
+          polyB: pB,
+          polyResult: [...result],
+          activeIdxA: i < pA.length ? i : -1,
+          activeIdxB: j,
+          activeIdxResult: result.length - 1,
+          msg: `Poly B term has higher exponent (${termB.exp} > ${termA ? termA.exp : -1}). Copy ${termB.coeff}x^${termB.exp} to result.`,
+          activeLineText: 'pB.exp > pA.exp'
+        });
+        j++;
+      } else if (termA && termB && termA.exp === termB.exp) {
+        const sumCoeff = termA.coeff + termB.coeff;
+        if (sumCoeff !== 0) {
+          result.push({ coeff: sumCoeff, exp: termA.exp });
+        }
+        frames.push({
+          polyA: pA,
+          polyB: pB,
+          polyResult: [...result],
+          activeIdxA: i,
+          activeIdxB: j,
+          activeIdxResult: sumCoeff !== 0 ? result.length - 1 : -1,
+          msg: `Exponents match (${termA.exp} === ${termB.exp}). Add coefficients: ${termA.coeff} + ${termB.coeff} = ${sumCoeff}. ${sumCoeff !== 0 ? `Add ${sumCoeff}x^${termA.exp} to result.` : 'Coefficients cancel out, no term added.'}`,
+          activeLineText: 'pA.exp == pB.exp'
+        });
+        i++;
+        j++;
+      }
+    }
+    
+    frames.push({
+      polyA: pA,
+      polyB: pB,
+      polyResult: [...result],
+      activeIdxA: -1,
+      activeIdxB: -1,
+      msg: `Polynomial addition completed.`,
+      activeLineText: 'return result'
+    });
+    
+    setPolyResult(result);
+    setTimeline(frames);
+    setCurrentStep(0);
+    setIsPlaying(true);
+    setOperationsLog(prev => [...prev, { op: 'addPolynomials', val: `"${polyAInput}", "${polyBInput}"` }]);
+  };
+
+  const runPolynomialMult = () => {
+    const pA = parsePolynomial(polyAInput);
+    const pB = parsePolynomial(polyBInput);
+    setPolyA(pA);
+    setPolyB(pB);
+    
+    const frames = [];
+    const result = [];
+    
+    frames.push({
+      polyA: pA,
+      polyB: pB,
+      polyResult: [],
+      activeIdxA: 0,
+      activeIdxB: 0,
+      msg: `Start polynomial multiplication: Multiply each term of Poly A by each term of Poly B.`,
+      activeLineText: 'multiplyPolynomials'
+    });
+    
+    for (let i = 0; i < pA.length; i++) {
+      const termA = pA[i];
+      for (let j = 0; j < pB.length; j++) {
+        const termB = pB[j];
+        const newCoeff = termA.coeff * termB.coeff;
+        const newExp = termA.exp + termB.exp;
+        
+        frames.push({
+          polyA: pA,
+          polyB: pB,
+          polyResult: [...result.map(t => ({ ...t }))],
+          activeIdxA: i,
+          activeIdxB: j,
+          msg: `Multiply Poly A term ${termA.coeff}x^${termA.exp} by Poly B term ${termB.coeff}x^${termB.exp} ➔ Result: ${newCoeff}x^${newExp}`,
+          activeLineText: 'coeff = termA.coeff * termB.coeff'
+        });
+        
+        let existingIdx = result.findIndex(t => t.exp === newExp);
+        if (existingIdx !== -1) {
+          result[existingIdx].coeff += newCoeff;
+          frames.push({
+            polyA: pA,
+            polyB: pB,
+            polyResult: [...result.map(t => ({ ...t }))],
+            activeIdxA: i,
+            activeIdxB: j,
+            activeIdxResult: existingIdx,
+            msg: `Exponent ${newExp} already exists in result. Add coefficients: new coeff = ${result[existingIdx].coeff}`,
+            activeLineText: 'existing.coeff += newCoeff'
+          });
+        } else {
+          result.push({ coeff: newCoeff, exp: newExp });
+          result.sort((a, b) => b.exp - a.exp);
+          let insertedIdx = result.findIndex(t => t.exp === newExp);
+          frames.push({
+            polyA: pA,
+            polyB: pB,
+            polyResult: [...result.map(t => ({ ...t }))],
+            activeIdxA: i,
+            activeIdxB: j,
+            activeIdxResult: insertedIdx,
+            msg: `Insert new term ${newCoeff}x^${newExp} in sorted order.`,
+            activeLineText: 'insertSorted'
+          });
+        }
+      }
+    }
+    
+    const finalResult = result.filter(t => t.coeff !== 0);
+    frames.push({
+      polyA: pA,
+      polyB: pB,
+      polyResult: finalResult,
+      activeIdxA: -1,
+      activeIdxB: -1,
+      msg: `Polynomial multiplication completed.`,
+      activeLineText: 'return result'
+    });
+    
+    setPolyResult(finalResult);
+    setTimeline(frames);
+    setCurrentStep(0);
+    setIsPlaying(true);
+    setOperationsLog(prev => [...prev, { op: 'multiplyPolynomials', val: `"${polyAInput}", "${polyBInput}"` }]);
+  };
+
+  const renderPolynomials = (frame) => {
+    const pA = frame.polyA || polyA;
+    const pB = frame.polyB || polyB;
+    const pRes = frame.polyResult || polyResult;
+    
+    const renderList = (list, activeIdx, label, color) => {
+      return (
+        <div style={{ display: 'flex', flexDirection: 'column', gap: '8px', width: '100%' }}>
+          <div style={{ fontSize: '0.85rem', color: color, fontWeight: 'bold', textTransform: 'uppercase', letterSpacing: '1px' }}>
+            {label}
+          </div>
+          <div style={{ display: 'flex', alignItems: 'center', gap: '12px', flexWrap: 'wrap', minHeight: '60px' }}>
+            {list.length === 0 && <span style={{ color: 'var(--text-secondary)', fontStyle: 'italic', fontSize: '0.9rem' }}>empty</span>}
+            {list.map((term, idx) => {
+              const isActive = idx === activeIdx;
+              return (
+                <React.Fragment key={idx}>
+                  <div style={{
+                    display: 'flex', 
+                    border: isActive ? `2px solid ${color}` : '1px solid var(--glass-border)', 
+                    borderRadius: '10px', 
+                    overflow: 'hidden',
+                    background: isActive ? 'rgba(255, 255, 255, 0.05)' : 'rgba(0, 0, 0, 0.2)',
+                    boxShadow: isActive ? `0 0 15px ${color}` : '0 4px 8px rgba(0,0,0,0.2)',
+                    transform: isActive ? 'scale(1.1)' : 'scale(1)',
+                    transition: 'all 0.3s cubic-bezier(0.175, 0.885, 0.32, 1.275)'
+                  }}>
+                    <div style={{ 
+                      padding: '8px 12px', 
+                      background: isActive ? color : 'var(--accent-primary)', 
+                      color: 'white', 
+                      fontWeight: 'bold', 
+                      fontSize: '1rem',
+                      display: 'flex',
+                      flexDirection: 'column',
+                      alignItems: 'center',
+                      justifyContent: 'center',
+                      minWidth: '40px'
+                    }}>
+                      <span style={{ fontSize: '0.7rem', opacity: 0.8 }}>coeff</span>
+                      <span>{term.coeff}</span>
+                    </div>
+                    <div style={{ 
+                      padding: '8px 12px', 
+                      background: 'rgba(255,255,255,0.05)', 
+                      color: 'var(--text-primary)', 
+                      fontWeight: 'bold', 
+                      fontSize: '1rem',
+                      display: 'flex',
+                      flexDirection: 'column',
+                      alignItems: 'center',
+                      justifyContent: 'center',
+                      minWidth: '40px'
+                    }}>
+                      <span style={{ fontSize: '0.7rem', color: 'var(--text-secondary)' }}>exp</span>
+                      <span>{term.exp}</span>
+                    </div>
+                    <div style={{ 
+                      padding: '8px 8px', 
+                      background: 'rgba(255,255,255,0.02)', 
+                      display: 'flex', 
+                      alignItems: 'center', 
+                      justifyContent: 'center', 
+                      color: 'var(--text-secondary)', 
+                      fontSize: '0.7rem', 
+                      borderLeft: '1px solid var(--glass-border)' 
+                    }}>
+                      •
+                    </div>
+                  </div>
+                  {idx < list.length - 1 ? (
+                    <svg width="24" height="12" style={{ overflow: 'visible' }}>
+                      <defs>
+                        <marker id={`arrow-${label}`} viewBox="0 0 10 10" refX="9" refY="5" markerWidth="6" markerHeight="6" orient="auto">
+                          <path d="M 0 0 L 10 5 L 0 10 z" fill={isActive ? color : 'var(--text-secondary)'} />
+                        </marker>
+                      </defs>
+                      <line x1="0" y1="6" x2="20" y2="6" stroke={isActive ? color : 'var(--text-secondary)'} strokeWidth="2" markerEnd={`url(#arrow-${label})`} />
+                    </svg>
+                  ) : (
+                    <span style={{ fontFamily: 'monospace', fontSize: '0.9rem', color: 'var(--text-secondary)' }}>/</span>
+                  )}
+                </React.Fragment>
+              );
+            })}
+          </div>
+        </div>
+      );
+    };
+
+    return (
+      <div style={{ display: 'flex', flexDirection: 'column', gap: '24px', padding: '1.5rem', width: '100%', maxWidth: '900px', margin: '0 auto' }}>
+        {renderList(pA, frame.activeIdxA, 'Polynomial A', '#3b82f6')}
+        {renderList(pB, frame.activeIdxB, 'Polynomial B', '#a855f7')}
+        <div style={{ height: '1px', background: 'var(--glass-border)', margin: '8px 0' }} />
+        {renderList(pRes, frame.activeIdxResult, 'Result Polynomial', '#10b981')}
+      </div>
+    );
   };
 
   // RENDERERS
@@ -1366,6 +1903,7 @@ const GeneralDSVisualizer = ({ onBack, openSettings, initialType = 'HASH_TABLE',
                 <option value="LL_SINGLY">Singly Linked List</option>
                 <option value="LL_DOUBLY">Doubly Linked List</option>
                 <option value="LL_CIRCULAR">Circular Linked List</option>
+                <option value="LL_POLYNOMIAL">Polynomial ADT</option>
             </>}
             {dsType === 'HASH_TABLE' && <>
                 <option value="HASH_CHAINING">Separate Chaining</option>
@@ -1383,18 +1921,30 @@ const GeneralDSVisualizer = ({ onBack, openSettings, initialType = 'HASH_TABLE',
              </div>
           )}
 
-          <input ref={inputRef} type={(dsVariety === 'STACK_EXPRESSION' || dsVariety === 'STACK_BRACKETS' || dsVariety === 'STACK_CONVERSION') ? 'text' : 'number'} className="styled-input" style={{ width: isMobile ? '80px' : ((dsVariety === 'STACK_EXPRESSION' || dsVariety === 'STACK_BRACKETS' || dsVariety === 'STACK_CONVERSION') ? '180px' : '90px'), opacity: isPlaying ? 0.7 : 1, fontSize: '1rem', fontWeight: 'bold' }} placeholder={isMobile ? "Val" : (dsVariety === 'STACK_EXPRESSION' ? "e.g. 2 3 + 4 *" : dsVariety === 'STACK_BRACKETS' ? "e.g. {[()]}" : dsVariety === 'STACK_CONVERSION' ? "e.g. ( A + B ) * C" : "Value")} value={inputValue} onChange={e=>setInputValue(e.target.value)} onKeyDown={e => {
-            if(e.key === 'Enter' && !isPlaying && inputValue) {
-              if(dsType==='STACK') {
-                if (dsVariety === 'STACK_EXPRESSION') evaluateExpression();
-                else if (dsVariety === 'STACK_BRACKETS') evaluateBrackets();
-                else if (dsVariety === 'STACK_CONVERSION') infixToPostfix();
-                else stackPush();
-              } else if(dsType==='QUEUE') queueEnqueue();
-              else if(dsType==='LINKED_LIST') sllInsertTail();
-              else if(dsType==='HASH_TABLE') hashInsert();
-            }
-          }} disabled={isPlaying}/>
+          {dsVariety === 'LL_POLYNOMIAL' ? (
+             <div style={{ display: 'flex', alignItems: 'center', gap: '6px' }}>
+               <input type="text" className="styled-input" style={{ width: isMobile ? '95px' : '150px', fontSize: '0.9rem' }} placeholder="Poly A (e.g. 3x^2+2x+1)" value={polyAInput} onChange={e => setPolyAInput(e.target.value)} disabled={isPlaying}/>
+               <select className="styled-select" style={{ width: '45px', padding: '0.3rem', fontSize: '0.9rem' }} value={polyOp} onChange={e => setPolyOp(e.target.value)} disabled={isPlaying}>
+                 <option value="+">+</option>
+                 <option value="*">*</option>
+               </select>
+               <input type="text" className="styled-input" style={{ width: isMobile ? '95px' : '150px', fontSize: '0.9rem' }} placeholder="Poly B (e.g. 4x^2+5)" value={polyBInput} onChange={e => setPolyBInput(e.target.value)} disabled={isPlaying}/>
+               <button className="btn btn-insert" onClick={polyOp === '+' ? runPolynomialAdd : runPolynomialMult} disabled={isPlaying || !polyAInput || !polyBInput}>Compute</button>
+             </div>
+          ) : (
+             <input ref={inputRef} type={(dsVariety === 'STACK_EXPRESSION' || dsVariety === 'STACK_BRACKETS' || dsVariety === 'STACK_CONVERSION') ? 'text' : 'number'} className="styled-input" style={{ width: isMobile ? '80px' : ((dsVariety === 'STACK_EXPRESSION' || dsVariety === 'STACK_BRACKETS' || dsVariety === 'STACK_CONVERSION') ? '180px' : '90px'), opacity: isPlaying ? 0.7 : 1, fontSize: '1rem', fontWeight: 'bold' }} placeholder={isMobile ? "Val" : (dsVariety === 'STACK_EXPRESSION' ? "e.g. 2 3 + 4 *" : dsVariety === 'STACK_BRACKETS' ? "e.g. {[()]}" : dsVariety === 'STACK_CONVERSION' ? "e.g. ( A + B ) * C" : "Value")} value={inputValue} onChange={e=>setInputValue(e.target.value)} onKeyDown={e => {
+               if(e.key === 'Enter' && !isPlaying && inputValue) {
+                 if(dsType==='STACK') {
+                   if (dsVariety === 'STACK_EXPRESSION') evaluateExpression();
+                   else if (dsVariety === 'STACK_BRACKETS') evaluateBrackets();
+                   else if (dsVariety === 'STACK_CONVERSION') infixToPostfix();
+                   else stackPush();
+                 } else if(dsType==='QUEUE') queueEnqueue();
+                 else if(dsType==='LINKED_LIST') sllInsertTail();
+                 else if(dsType==='HASH_TABLE') hashInsert();
+               }
+             }} disabled={isPlaying}/>
+          )}
           
           {dsType === 'STACK' && <>
             {(dsVariety === 'STACK_EXPRESSION' || dsVariety === 'STACK_BRACKETS') ? (
@@ -1432,7 +1982,7 @@ const GeneralDSVisualizer = ({ onBack, openSettings, initialType = 'HASH_TABLE',
             )}
           </>}
 
-          {dsType === 'LINKED_LIST' && <>
+          {dsType === 'LINKED_LIST' && dsVariety !== 'LL_POLYNOMIAL' && <>
             <button className="btn btn-insert" onClick={sllInsertHead} disabled={isPlaying || !inputValue}>{isMobile ? '+H' : 'Insert Head'}</button>
             <button className="btn btn-insert" onClick={sllInsertTail} disabled={isPlaying || !inputValue} style={{background: '#8b5cf6'}}>{isMobile ? '+T' : 'Insert Tail'}</button>
             <button className="btn btn-clear" style={{background: '#10b981', color:'white', border:'none', opacity: isPlaying || !inputValue ? 0.5:1}} onClick={sllSearch} disabled={isPlaying || !inputValue}>{isMobile ? '🔍' : 'Search'}</button>
@@ -1496,8 +2046,58 @@ const GeneralDSVisualizer = ({ onBack, openSettings, initialType = 'HASH_TABLE',
             <div style={{ flex: 1, display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', background: 'var(--glass-bg)', borderRadius: '16px', border: '1px solid var(--glass-border)', overflow: 'auto', position: 'relative', boxShadow: 'inset 0 0 40px rgba(0,0,0,0.2)', width: '100%', height: '100%' }}>
             {dsType === 'STACK' && renderStack(frame)}
             {dsType === 'QUEUE' && renderQueue(frame)}
-            {dsType === 'LINKED_LIST' && renderLinkedList(frame)}
+            {dsType === 'LINKED_LIST' && (dsVariety === 'LL_POLYNOMIAL' ? renderPolynomials(frame) : renderLinkedList(frame))}
             {dsType === 'HASH_TABLE' && renderHashTable(frame)}
+
+            {/* Complexity Info Overlay Card */}
+            {(() => {
+              const comp = getComplexityInfo(dsType, dsVariety);
+              if (!comp) return null;
+              return (
+                <div style={{
+                  position: 'absolute',
+                  top: '15px',
+                  right: '15px',
+                  background: 'rgba(15, 23, 42, 0.85)',
+                  backdropFilter: 'blur(10px)',
+                  border: '1px solid var(--glass-border)',
+                  borderRadius: '12px',
+                  padding: showComplexity ? '12px 16px' : '6px 12px',
+                  width: showComplexity ? '260px' : 'auto',
+                  boxShadow: '0 8px 32px 0 rgba(0, 0, 0, 0.4)',
+                  zIndex: 20,
+                  transition: 'all 0.3s ease',
+                  color: 'white'
+                }}>
+                  <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', cursor: 'pointer' }} onClick={() => setShowComplexity(!showComplexity)}>
+                    <span style={{ fontWeight: 'bold', fontSize: '0.85rem', display: 'flex', alignItems: 'center', gap: '6px', color: 'var(--accent-primary)' }}>
+                      📊 {comp.title} Big-O
+                    </span>
+                    <span style={{ fontSize: '0.8rem', opacity: 0.7 }}>{showComplexity ? '▼' : '▲'}</span>
+                  </div>
+                  {showComplexity && (
+                    <table style={{ width: '100%', borderCollapse: 'collapse', marginTop: '10px', fontSize: '0.75rem' }}>
+                      <thead>
+                        <tr style={{ borderBottom: '1px solid rgba(255,255,255,0.1)', color: 'var(--text-secondary)' }}>
+                          <th style={{ textAlign: 'left', padding: '4px 0' }}>Operation</th>
+                          <th style={{ textAlign: 'center', padding: '4px 0' }}>Time</th>
+                          <th style={{ textAlign: 'center', padding: '4px 0' }}>Space</th>
+                        </tr>
+                      </thead>
+                      <tbody>
+                        {comp.operations.map((op, idx) => (
+                          <tr key={idx} style={{ borderBottom: idx < comp.operations.length - 1 ? '1px solid rgba(255,255,255,0.05)' : 'none' }}>
+                            <td style={{ padding: '6px 0', fontWeight: 'bold', color: 'var(--text-primary)' }}>{op.op}</td>
+                            <td style={{ padding: '6px 0', textAlign: 'center', fontFamily: 'monospace', color: '#fbbf24' }}>{op.time}</td>
+                            <td style={{ padding: '6px 0', textAlign: 'center', fontFamily: 'monospace', color: '#60a5fa' }}>{op.space}</td>
+                          </tr>
+                        ))}
+                      </tbody>
+                    </table>
+                  )}
+                </div>
+              );
+            })()}
 
              {showLogPanel && !isMobile && (
                <div

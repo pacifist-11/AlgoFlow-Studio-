@@ -16,6 +16,7 @@ export default defineConfig({
     'process.env': {}
   },
   server: {
+    port: 9988,
     open: true,
     proxy: {
       '/api': {

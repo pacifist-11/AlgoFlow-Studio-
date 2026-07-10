@@ -5,6 +5,7 @@ import nodemailer from 'nodemailer';
 import dotenv from 'dotenv';
 import path from 'path';
 import { fileURLToPath } from 'url';
+import fs from 'fs';
 
 // Load environment variables
 dotenv.config();
@@ -36,6 +37,135 @@ const pool = process.env.DATABASE_URL
 // Cache map for pending OTPs (key: email, value: { otp, expires })
 const otpStore = new Map();
 
+// Local Database Fallback Variables and Helpers
+const __filename = fileURLToPath(import.meta.url);
+const __dirname = path.dirname(__filename);
+let usePostgres = false;
+const localDbPath = path.join(__dirname, 'local_db.json');
+
+const initLocalDb = () => {
+  try {
+    if (!fs.existsSync(localDbPath)) {
+      const initialData = {
+        feedbacks: [],
+        users: [
+          {
+            id: 1,
+            email: 'pothalayeswanth11@gmail.com',
+            password: 'Irctc@11',
+            role: 'admin',
+            created_at: new Date().toISOString()
+          }
+        ],
+        user_states: []
+      };
+      fs.writeFileSync(localDbPath, JSON.stringify(initialData, null, 2), 'utf-8');
+      console.log('📄 Created new local database file: local_db.json');
+    }
+  } catch (err) {
+    console.error('❌ Failed to initialize local JSON database:', err.message);
+  }
+};
+
+const db = {
+  query: async (text, params = []) => {
+    if (usePostgres) {
+      return pool.query(text, params);
+    }
+    
+    // Fallback logic
+    initLocalDb();
+    let data;
+    try {
+      data = JSON.parse(fs.readFileSync(localDbPath, 'utf-8'));
+    } catch (e) {
+      console.error('❌ Error parsing local_db.json, recreating empty DB:', e.message);
+      data = { feedbacks: [], users: [{ id: 1, email: 'pothalayeswanth11@gmail.com', password: 'Irctc@11', role: 'admin', created_at: new Date().toISOString() }], user_states: [] };
+    }
+    
+    const cleanText = text.replace(/\s+/g, ' ').trim();
+    
+    if (cleanText.startsWith('INSERT INTO feedbacks')) {
+      const [email, rating, category, feedback_text] = params;
+      const newFeedback = {
+        id: data.feedbacks.length + 1,
+        email,
+        rating: parseInt(rating),
+        category: category || 'UI/UX Design',
+        feedback_text: feedback_text || '',
+        created_at: new Date().toISOString()
+      };
+      data.feedbacks.push(newFeedback);
+      fs.writeFileSync(localDbPath, JSON.stringify(data, null, 2), 'utf-8');
+      return { rows: [newFeedback] };
+    }
+    
+    if (cleanText.startsWith('INSERT INTO users')) {
+      const [email, role] = params;
+      const cleanEmail = email.toLowerCase().trim();
+      const exists = data.users.some(u => u.email === cleanEmail);
+      let userRecord = null;
+      if (!exists) {
+        userRecord = {
+          id: data.users.length + 1,
+          email: cleanEmail,
+          password: null,
+          role: role || 'user',
+          created_at: new Date().toISOString()
+        };
+        data.users.push(userRecord);
+        fs.writeFileSync(localDbPath, JSON.stringify(data, null, 2), 'utf-8');
+      } else {
+        userRecord = data.users.find(u => u.email === cleanEmail);
+      }
+      return { rows: [userRecord] };
+    }
+    
+    if (cleanText.startsWith('SELECT * FROM users WHERE email =')) {
+      const email = params[0].toLowerCase().trim();
+      const matched = data.users.filter(u => u.email === email);
+      return { rows: matched };
+    }
+    
+    if (cleanText.startsWith('INSERT INTO user_states')) {
+      const [email, state_data] = params;
+      const cleanEmail = email.toLowerCase().trim();
+      const existingIdx = data.user_states.findIndex(s => s.email === cleanEmail);
+      const newState = {
+        email: cleanEmail,
+        state_data,
+        updated_at: new Date().toISOString()
+      };
+      if (existingIdx >= 0) {
+        data.user_states[existingIdx] = newState;
+      } else {
+        data.user_states.push(newState);
+      }
+      fs.writeFileSync(localDbPath, JSON.stringify(data, null, 2), 'utf-8');
+      return { rows: [newState] };
+    }
+    
+    if (cleanText.startsWith('SELECT * FROM user_states WHERE email =')) {
+      const email = params[0].toLowerCase().trim();
+      const matched = data.user_states.filter(s => s.email === email);
+      return { rows: matched };
+    }
+    
+    if (cleanText.startsWith('SELECT * FROM feedbacks')) {
+      const sorted = [...data.feedbacks].sort((a, b) => new Date(b.created_at) - new Date(a.created_at));
+      return { rows: sorted };
+    }
+    
+    if (cleanText.startsWith('TRUNCATE TABLE feedbacks')) {
+      data.feedbacks = [];
+      fs.writeFileSync(localDbPath, JSON.stringify(data, null, 2), 'utf-8');
+      return { message: 'Truncated' };
+    }
+    
+    throw new Error(`Unsupported local query: ${text}`);
+  }
+};
+
 // Verify PostgreSQL connection and initialize table automatically
 pool.connect((err, client, release) => {
   if (err) {
@@ -49,8 +179,11 @@ pool.connect((err, client, release) => {
       database: process.env.PGDATABASE || 'AlgoFlow-Studio',
       port: process.env.PGPORT || '5432',
     });
+    console.log('📂 Initializing file-based database fallback (local_db.json)...');
+    initLocalDb();
   } else {
     console.log('🔌 Successfully connected to PostgreSQL database!');
+    usePostgres = true;
     release();
 
     // Auto-create database tables if not exist
@@ -213,7 +346,7 @@ app.post('/api/auth/verify-otp', async (req, res) => {
 
   try {
     // Create user if not exists
-    await pool.query(
+    await db.query(
       'INSERT INTO users (email, role) VALUES ($1, $2) ON CONFLICT (email) DO NOTHING',
       [cleanEmail, 'user']
     );
@@ -239,7 +372,7 @@ app.post('/api/auth/login-admin', async (req, res) => {
   }
 
   try {
-    const userResult = await pool.query('SELECT * FROM users WHERE email = $1', [cleanEmail]);
+    const userResult = await db.query('SELECT * FROM users WHERE email = $1', [cleanEmail]);
     if (userResult.rows.length === 0) {
       return res.status(401).json({ error: 'Admin account not seeded.' });
     }
@@ -253,6 +386,47 @@ app.post('/api/auth/login-admin', async (req, res) => {
   } catch (dbError) {
     console.error('❌ Database error during admin password check:', dbError.message);
     res.status(500).json({ error: 'Internal database error.' });
+  }
+});
+
+// ── Auth API 4: Get Google Client ID Config ──
+app.get('/api/auth/config', (req, res) => {
+  res.json({ googleClientId: process.env.GOOGLE_CLIENT_ID || "" });
+});
+
+// ── Auth API 5: Verify and Login Google User ──
+app.post('/api/auth/google', async (req, res) => {
+  const { credential } = req.body;
+  if (!credential) {
+    return res.status(400).json({ error: 'Missing Google credential token.' });
+  }
+
+  try {
+    const parts = credential.split('.');
+    if (parts.length !== 3) {
+      return res.status(400).json({ error: 'Invalid Google credential token format.' });
+    }
+    const payloadBuffer = Buffer.from(parts[1], 'base64');
+    const payload = JSON.parse(payloadBuffer.toString('utf-8'));
+    
+    if (!payload.email || !payload.email.includes('@')) {
+      return res.status(400).json({ error: 'Invalid email in Google credential payload.' });
+    }
+    
+    const cleanEmail = payload.email.toLowerCase().trim();
+    const isDeveloper = cleanEmail === 'pothalayeswanth11@gmail.com';
+    const role = isDeveloper ? 'admin' : 'user';
+
+    // Insert user if not exists
+    await db.query(
+      'INSERT INTO users (email, role) VALUES ($1, $2) ON CONFLICT (email) DO NOTHING',
+      [cleanEmail, role]
+    );
+
+    res.json({ success: true, email: cleanEmail, role });
+  } catch (error) {
+    console.error('❌ Google credential verification error:', error.message);
+    res.status(500).json({ error: 'Failed to process Google authentication.' });
   }
 });
 
@@ -273,7 +447,7 @@ app.post('/api/user/save-state', async (req, res) => {
       DO UPDATE SET state_data = $2, updated_at = CURRENT_TIMESTAMP
       RETURNING *;
     `;
-    const dbResult = await pool.query(query, [cleanEmail, state_data]);
+    const dbResult = await db.query(query, [cleanEmail, state_data]);
     res.json({ success: true, updated: dbResult.rows[0] });
   } catch (dbError) {
     console.error('❌ Failed to save user state:', dbError.message);
@@ -291,7 +465,7 @@ app.get('/api/user/load-state', async (req, res) => {
   const cleanEmail = email.toLowerCase().trim();
 
   try {
-    const dbResult = await pool.query('SELECT * FROM user_states WHERE email = $1', [cleanEmail]);
+    const dbResult = await db.query('SELECT * FROM user_states WHERE email = $1', [cleanEmail]);
     if (dbResult.rows.length > 0) {
       res.json({ success: true, state_data: dbResult.rows[0].state_data });
     } else {
@@ -325,7 +499,7 @@ app.post('/api/feedback/submit-direct', async (req, res) => {
   const values = [cleanEmail, ratingInt, category || 'UI/UX Design', text || ''];
 
   try {
-    const dbResult = await pool.query(insertQuery, values);
+    const dbResult = await db.query(insertQuery, values);
     console.log('💾 Successfully saved direct user feedback to database!', dbResult.rows[0]);
 
     // Send copy to admin (in background, do not await to avoid delaying the user response)
@@ -460,7 +634,7 @@ app.post('/api/feedback/verify-and-submit', async (req, res) => {
   const values = [cleanEmail, ratingInt, category || 'UI/UX Design', text || ''];
 
   try {
-    const dbResult = await pool.query(insertQuery, values);
+    const dbResult = await db.query(insertQuery, values);
     console.log('💾 Successfully saved user feedback to PostgreSQL database!', dbResult.rows[0]);
 
     // Send email copy to developer pothalayeswanth11@gmail.com
@@ -525,7 +699,7 @@ app.get('/api/admin/feedbacks', async (req, res) => {
   const query = 'SELECT * FROM feedbacks ORDER BY created_at DESC;';
 
   try {
-    const dbResult = await pool.query(query);
+    const dbResult = await db.query(query);
     res.json(dbResult.rows);
   } catch (dbError) {
     console.error('❌ Failed to retrieve feedbacks from database:', dbError.message);
@@ -545,7 +719,7 @@ app.delete('/api/admin/clear', async (req, res) => {
   const query = 'TRUNCATE TABLE feedbacks RESTART IDENTITY;';
 
   try {
-    await pool.query(query);
+    await db.query(query);
     console.log('🗑️ PostgreSQL "feedbacks" table truncated successfully.');
     res.json({ message: 'All feedback logs cleared successfully!' });
   } catch (dbError) {
@@ -553,9 +727,6 @@ app.delete('/api/admin/clear', async (req, res) => {
     res.status(500).json({ error: 'Failed to delete records from database.', details: dbError.message });
   }
 });
-
-const __filename = fileURLToPath(import.meta.url);
-const __dirname = path.dirname(__filename);
 
 // Serve static assets in production (after building with `npm run build`)
 app.use(express.static(path.join(__dirname, '../dist')));
