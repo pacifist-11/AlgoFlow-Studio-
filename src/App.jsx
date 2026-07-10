@@ -1464,38 +1464,10 @@ function App() {
     }
   };
 
-  // ── OTP & Database Admin verification states ──
+  // ── Feedback submission — no OTP, direct save to Neon ──
   const sendFeedbackOtp = async () => {
-    if (!feedbackEmail.trim()) {
-      setFeedbackError("Please enter your email address.");
-      return;
-    }
-    if (!feedbackEmail.includes('@') || !feedbackEmail.includes('.')) {
-      setFeedbackError("Please enter a valid email address.");
-      return;
-    }
-    if (checkRestrictedWords(feedbackText)) {
-      setFeedbackError("You are using restricted words. Please rectify them and send again.");
-      return;
-    }
-
-    setFeedbackError('');
-    setIsFeedbackSendingOtp(true);
-    try {
-      await safeFetchJson('/api/feedback/send-otp', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ email: feedbackEmail.trim() })
-      });
-      setIsOtpVerifying(true);
-    } catch (err) {
-      console.warn("Feedback OTP sending failed (running in static mode). Bypassing OTP check.", err);
-      // Fallback: directly submit direct feedback!
-      setIsFeedbackSendingOtp(false);
-      await submitDirectFeedback();
-    } finally {
-      setIsFeedbackSendingOtp(false);
-    }
+    // Skip OTP entirely — just submit directly
+    await submitDirectFeedback();
   };
 
   const verifyOtpAndSubmit = async () => {

@@ -2,14 +2,11 @@ import sql from './_db.js';
 import { cors } from './_cors.js';
 
 /**
- * ONE-TIME SETUP ENDPOINT
- * Creates only the tables needed:
- *   - feedbacks  → stores user feedback (the main DB purpose)
- *   - otps       → temporary OTP codes for email verification (serverless-safe)
+ * ONE-TIME SETUP — Creates the Neon feedbacks table.
  *
- * Call once after first deploy:
+ * Run once after first deploy:
  *   curl -X POST https://your-vercel-url/api/setup-db \
- *     -H "Authorization: YOUR_ADMIN_PIN"
+ *     -H "Authorization: Irctc@11"
  */
 export default async function handler(req, res) {
   cors(res);
@@ -19,42 +16,29 @@ export default async function handler(req, res) {
   const configPin = process.env.ADMIN_PIN || 'Irctc@11';
 
   if (!authHeader || authHeader !== configPin) {
-    return res.status(403).json({ error: 'Unauthorized. Provide ADMIN_PIN in Authorization header.' });
+    return res.status(403).json({ error: 'Unauthorized. Send ADMIN_PIN in Authorization header.' });
   }
 
   try {
-    // 1. Feedbacks — the primary purpose of Neon in this project
+    // feedbacks — the ONLY table in Neon
     await sql`
       CREATE TABLE IF NOT EXISTS feedbacks (
         id SERIAL PRIMARY KEY,
-        email VARCHAR(255) NOT NULL,
+        email VARCHAR(255) NOT NULL DEFAULT 'anonymous',
         rating INT NOT NULL CHECK (rating BETWEEN 1 AND 5),
-        category VARCHAR(100) NOT NULL DEFAULT 'UI/UX Design',
+        category VARCHAR(100) NOT NULL DEFAULT 'General',
         feedback_text TEXT,
         created_at TIMESTAMPTZ DEFAULT NOW()
       )
     `;
 
-    // 2. OTPs — temporary storage for email verification codes (serverless-safe)
-    await sql`
-      CREATE TABLE IF NOT EXISTS otps (
-        email VARCHAR(255) PRIMARY KEY,
-        otp VARCHAR(6) NOT NULL,
-        expires_at TIMESTAMPTZ NOT NULL
-      )
-    `;
-
-    console.log('✅ Neon tables initialized: feedbacks, otps');
+    console.log('✅ Neon feedbacks table ready.');
     return res.json({
       success: true,
-      message: 'Neon database ready!',
-      tables: {
-        feedbacks: 'Stores user feedback — main purpose',
-        otps: 'Temporary OTP codes for email login (auto-cleared after use)',
-      },
+      message: 'Neon database ready! feedbacks table created.',
     });
   } catch (err) {
-    console.error('❌ DB init error:', err.message);
+    console.error('❌ DB setup error:', err.message);
     return res.status(500).json({ error: 'Failed to initialize database.', details: err.message });
   }
 }
