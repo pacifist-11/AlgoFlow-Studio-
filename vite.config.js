@@ -18,12 +18,7 @@ export default defineConfig({
   server: {
     port: 9988,
     open: true,
-    proxy: {
-      '/api': {
-        target: 'http://localhost:5000',
-        changeOrigin: true,
-        secure: false,
-      }
-    }
+    // No local proxy — API calls go through Vercel serverless functions
+    // Use `vercel dev` to run API routes locally
   }
 })
