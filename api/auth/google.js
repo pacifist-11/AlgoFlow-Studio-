@@ -1,8 +1,8 @@
-import sql from '../_db.js';
 import { cors } from '../_cors.js';
 
 const ADMIN_EMAIL = (process.env.ADMIN_EMAIL || 'pothalayeswanth11@gmail.com').toLowerCase();
 
+// Google login — no DB record stored. Identity is handled client-side.
 export default async function handler(req, res) {
   cors(res);
   if (req.method === 'OPTIONS') return res.status(200).end();
@@ -27,11 +27,7 @@ export default async function handler(req, res) {
     const cleanEmail = payload.email.toLowerCase().trim();
     const role = cleanEmail === ADMIN_EMAIL ? 'admin' : 'user';
 
-    await sql`
-      INSERT INTO users (email, role) VALUES (${cleanEmail}, ${role})
-      ON CONFLICT (email) DO NOTHING
-    `;
-
+    // No DB insert — user identity stored client-side in localStorage
     console.log(`✅ Google login: ${cleanEmail} (${role})`);
     return res.json({ success: true, email: cleanEmail, role });
   } catch (err) {

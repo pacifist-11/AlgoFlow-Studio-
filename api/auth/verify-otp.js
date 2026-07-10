@@ -1,6 +1,7 @@
 import sql from '../_db.js';
 import { cors } from '../_cors.js';
 
+// OTP verified → clean up. No users table needed.
 export default async function handler(req, res) {
   cors(res);
   if (req.method === 'OPTIONS') return res.status(200).end();
@@ -31,14 +32,10 @@ export default async function handler(req, res) {
       return res.status(400).json({ error: 'Incorrect verification code. Please check your email and try again.' });
     }
 
-    // OTP verified — delete it and upsert user
+    // OTP verified — delete it (no user record stored in DB)
     await sql`DELETE FROM otps WHERE email = ${cleanEmail}`;
-    await sql`
-      INSERT INTO users (email, role) VALUES (${cleanEmail}, 'user')
-      ON CONFLICT (email) DO NOTHING
-    `;
 
-    console.log(`✅ OTP verified and user upserted: ${cleanEmail}`);
+    console.log(`✅ OTP verified for: ${cleanEmail}`);
     return res.json({ success: true, email: cleanEmail, role: 'user' });
   } catch (err) {
     console.error('❌ DB error during OTP verify:', err.message);
