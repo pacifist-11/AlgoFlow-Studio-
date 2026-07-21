@@ -1,4 +1,13 @@
-// Code templates for Dynamic Programming & Greedy Visualizer
+const toCCode = (cppCode) => {
+  if (!cppCode) return cppCode;
+  return cppCode
+    .replace('#include <iostream>\n#include <string>\n#include <vector>\n#include <algorithm>\nusing namespace std;', '#include <stdio.h>\n#include <string.h>\n#include <stdlib.h>')
+    .replace('#include <iostream>\nusing namespace std;', '#include <stdio.h>\n#include <stdlib.h>')
+    .replace('#include <iostream>', '#include <stdio.h>\n#include <stdlib.h>')
+    .replace(/using namespace std;/g, '')
+    .replace(/cout\s*<<\s*([^<]+)\s*<<\s*endl;/g, 'printf("%d\\n", $1);')
+    .replace(/cout\s*<<\s*([^;]+);/g, 'printf("%s\\n", $1);');
+};
 
 export const getDPCodeTemplate = (lang, algo) => {
   // Normalize language first
@@ -9,6 +18,11 @@ export const getDPCodeTemplate = (lang, algo) => {
     else if (l === 'cpp' || l === 'c++') lang = 'C++';
     else if (l === 'python') lang = 'Python';
     else if (l === 'js' || l === 'javascript') lang = 'JS';
+  }
+
+  if (lang === 'C') {
+    const cppRes = getDPCodeTemplate('C++', algo);
+    return toCCode(cppRes);
   }
   
   if (algo === 'LCS') {

@@ -1,4 +1,22 @@
+const toCCode = (cppCode) => {
+  if (!cppCode) return cppCode;
+  return cppCode
+    .replace('#include <iostream>\nusing namespace std;', '#include <stdio.h>\n#include <stdbool.h>\n#include <stdlib.h>\n\nvoid swap(int* a, int* b) {\n    int temp = *a;\n    *a = *b;\n    *b = temp;\n}')
+    .replace('#include <iostream>', '#include <stdio.h>\n#include <stdbool.h>\n#include <stdlib.h>')
+    .replace(/using namespace std;/g, '')
+    .replace(/swap\(([^,]+),\s*([^)]+)\);/g, 'swap(&$1, &$2);')
+    .replace(/cout\s*<<\s*arr\[i\]\s*<<\s*" ";/g, 'printf("%d ", arr[i]);')
+    .replace(/cout\s*<<\s*"Element found at index: "\s*<<\s*(\w+)\s*<<\s*endl;/g, 'printf("Element found at index: %d\\n", $1);')
+    .replace(/cout\s*<<\s*"Element not present in array"\s*<<\s*endl;/g, 'printf("Element not present in array\\n");')
+    .replace(/cout\s*<<\s*([^<]+)\s*<<\s*endl;/g, 'printf("%d\\n", $1);');
+};
+
 export const getSortSearchCode = (algo, lang, arr, target) => {
+  if (lang === 'C') {
+    const cppRes = getSortSearchCode(algo, 'C++', arr, target);
+    return toCCode(cppRes);
+  }
+
   const arrStr = arr.join(', ');
   let execBlock = '';
   

@@ -1,4 +1,18 @@
+const toCCode = (cppCode) => {
+  if (!cppCode) return cppCode;
+  return cppCode
+    .replace('#include <iostream>\nusing namespace std;', '#include <stdio.h>\n#include <stdbool.h>\n#include <stdlib.h>')
+    .replace('#include <iostream>', '#include <stdio.h>\n#include <stdbool.h>\n#include <stdlib.h>')
+    .replace(/using namespace std;/g, '')
+    .replace(/cout\s*<<\s*([^<]+)\s*<<\s*endl;/g, 'printf("%d\\n", $1);')
+    .replace(/cout\s*<<\s*([^;]+);/g, 'printf("%s\\n", $1);');
+};
+
 export const getFullCodeTemplate = (lang, type, operations) => {
+  if (lang === 'C') {
+    const cppRes = getFullCodeTemplate('C++', type, operations);
+    return toCCode(cppRes);
+  }
   let execBlock = '';
 
   if (!operations || !operations.length) {

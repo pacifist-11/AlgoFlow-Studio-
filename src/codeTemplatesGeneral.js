@@ -1,3 +1,14 @@
+const toCCode = (cppCode) => {
+  if (!cppCode) return cppCode;
+  return cppCode
+    .replace('#include <iostream>\nusing namespace std;', '#include <stdio.h>\n#include <stdbool.h>\n#include <stdlib.h>')
+    .replace('#include <iostream>', '#include <stdio.h>\n#include <stdbool.h>\n#include <stdlib.h>')
+    .replace(/using namespace std;/g, '')
+    .replace(/std::/g, '')
+    .replace(/cout\s*<<\s*([^<]+)\s*<<\s*endl;/g, 'printf("%d\\n", $1);')
+    .replace(/cout\s*<<\s*([^;]+);/g, 'printf("%s\\n", $1);');
+};
+
 export const getGeneralCodeTemplate = (lang, type, variety, operations) => {
   // Normalize language first
   if (lang) {
@@ -7,6 +18,11 @@ export const getGeneralCodeTemplate = (lang, type, variety, operations) => {
     else if (l === 'cpp' || l === 'c++') lang = 'C++';
     else if (l === 'python') lang = 'Python';
     else if (l === 'js' || l === 'javascript') lang = 'JS';
+  }
+
+  if (lang === 'C') {
+    const cppRes = getGeneralCodeTemplate('C++', type, variety, operations);
+    return toCCode(cppRes);
   }
 
   let execBlock = '';

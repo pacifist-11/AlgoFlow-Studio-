@@ -5,6 +5,17 @@ import CodeRunnerModal from './CodeRunnerModal.jsx';
 import TopicInfoModal from './TopicInfoModal.jsx';
 
 // Multilingual Code Templates for Graph Algorithms
+const toCCode = (cppCode) => {
+  if (!cppCode) return cppCode;
+  return cppCode
+    .replace('#include <iostream>\n#include <vector>\n#include <queue>\nusing namespace std;', '#include <stdio.h>\n#include <stdbool.h>\n#include <stdlib.h>')
+    .replace('#include <iostream>\nusing namespace std;', '#include <stdio.h>\n#include <stdbool.h>\n#include <stdlib.h>')
+    .replace('#include <iostream>', '#include <stdio.h>\n#include <stdbool.h>\n#include <stdlib.h>')
+    .replace(/using namespace std;/g, '')
+    .replace(/cout\s*<<\s*([^<]+)\s*<<\s*endl;/g, 'printf("%d\\n", $1);')
+    .replace(/cout\s*<<\s*([^;]+);/g, 'printf("%s\\n", $1);');
+};
+
 const getGraphCodeTemplate = (lang, algo, startNode = '0', endNode = '4') => {
   // Normalize language
   let l = lang ? lang.toLowerCase() : 'c';
@@ -13,6 +24,11 @@ const getGraphCodeTemplate = (lang, algo, startNode = '0', endNode = '4') => {
   else if (l === 'cpp' || l === 'c++') lang = 'C++';
   else if (l === 'python') lang = 'Python';
   else if (l === 'js' || l === 'javascript') lang = 'JS';
+
+  if (lang === 'C') {
+    const cppRes = getGraphCodeTemplate('C++', algo, startNode, endNode);
+    return toCCode(cppRes);
+  }
 
   if (lang === 'C++') {
     if (algo === 'BFS') return `#include <iostream>
