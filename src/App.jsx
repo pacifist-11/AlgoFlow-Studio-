@@ -556,6 +556,86 @@ const LineDebugger = ({ initialCode, lang: initialLang, fontSize, wordWrap, onBa
     else if (code.includes('console.log') || code.includes('document.') || /let\s+\w+/.test(code) || /const\s+\w+/.test(code)) setDetectedLang('JS');
   }, [localCode]);
 
+  const getUnsupportedInfo = () => {
+    if (!localCode || localCode.trim().length === 0) return null;
+    const byteLen = encodeURIComponent(localCode.trim()).length;
+    if (byteLen > 5500) {
+      return {
+        title: "Code Size Limit Exceeded",
+        reason: `Your code size (${byteLen} bytes) exceeds PythonTutor's max limit of 5,500 bytes.`,
+        solution: "Remove comments, blank lines, or extra boilerplate code to reduce size below 5,500 bytes."
+      };
+    }
+
+    if (detectedLang === 'C') {
+      if (localCode.includes('<vector>') || localCode.includes('<iostream>') || localCode.includes('using namespace std') || localCode.includes('<queue>') || localCode.includes('<stack>') || localCode.includes('<algorithm>') || localCode.includes('<string>') || localCode.includes('<map>') || localCode.includes('<set>')) {
+        return {
+          title: "C++ Header in C Language Mode",
+          reason: "C++ STL headers (like <vector>, <iostream>, <queue>) are unsupported in standard C compilers (GCC).",
+          solution: "Switch to C++ Mode or replace C++ headers with native C structures & <stdio.h>."
+        };
+      }
+      if (localCode.includes('<pthread.h>') || localCode.includes('<unistd.h>') || localCode.includes('<sys/')) {
+        return {
+          title: "Unsupported POSIX System Header",
+          reason: "POSIX multithreading and system headers are blocked in sandboxed cloud tracing.",
+          solution: "Use standard single-threaded C code."
+        };
+      }
+    }
+
+    if (detectedLang === 'C++') {
+      if (localCode.includes('<thread>') || localCode.includes('<future>') || localCode.includes('<filesystem>') || localCode.includes('<chrono>')) {
+        return {
+          title: "Unsupported C++ System Header",
+          reason: "C++ multithreading, async futures, and filesystem operations cannot be traced in PythonTutor sandboxes.",
+          solution: "Use standard single-threaded C++ algorithmic logic."
+        };
+      }
+    }
+
+    if (detectedLang === 'Java') {
+      if (localCode.includes('javax.swing') || localCode.includes('java.awt')) {
+        return {
+          title: "Unsupported Java GUI Package",
+          reason: "Java Swing/AWT GUI packages cannot render in terminal trace sandboxes.",
+          solution: "Use console output with System.out.println()."
+        };
+      }
+      if (localCode.includes('java.io.File') || localCode.includes('java.net.')) {
+        return {
+          title: "Blocked Java System I/O",
+          reason: "Disk file operations and network sockets are disabled in cloud sandboxes.",
+          solution: "Use in-memory data structures."
+        };
+      }
+    }
+
+    if (detectedLang === 'Python') {
+      if (localCode.includes('import numpy') || localCode.includes('import pandas') || localCode.includes('import matplotlib') || localCode.includes('import requests') || localCode.includes('import scipy')) {
+        return {
+          title: "Unsupported External Python Package",
+          reason: "Third-party libraries (numpy, pandas, matplotlib, requests) are not installed on PythonTutor core.",
+          solution: "Use standard Python data structures (lists, dicts, math, collections)."
+        };
+      }
+    }
+
+    if (detectedLang === 'JS') {
+      if (localCode.includes('document.') || localCode.includes('window.') || localCode.includes('fetch(') || localCode.includes('require(')) {
+        return {
+          title: "Unsupported JavaScript DOM / Node.js API",
+          reason: "DOM methods (document, window), fetch(), and Node.js require() are unavailable in PythonTutor JS engine.",
+          solution: "Use pure JavaScript ES6 algorithmic code with console.log()."
+        };
+      }
+    }
+
+    return null;
+  };
+
+  const unsupportedInfo = getUnsupportedInfo();
+
   return (
     <div style={{ height: '100vh', display: 'flex', flexDirection: 'column', overflow: 'hidden', background: 'var(--bg-primary)' }}>
       <header className="header-glass">
@@ -595,17 +675,22 @@ const LineDebugger = ({ initialCode, lang: initialLang, fontSize, wordWrap, onBa
         </div>
       </header>
 
-      {detectedLang === 'C' && (localCode.includes('<vector>') || localCode.includes('<iostream>') || localCode.includes('using namespace std') || localCode.includes('<queue>') || localCode.includes('<stack>') || localCode.includes('<algorithm>')) && (
-        <div style={{ background: 'rgba(239, 68, 68, 0.1)', borderBottom: '1px solid rgba(239, 68, 68, 0.3)', padding: '10px 16px', display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: '12px', flexShrink: 0 }}>
+      {unsupportedInfo && (
+        <div style={{ background: 'rgba(239, 68, 68, 0.12)', borderBottom: '1px solid rgba(239, 68, 68, 0.3)', padding: '10px 16px', display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: '16px', flexShrink: 0 }}>
           <div style={{ fontSize: '0.82rem', color: '#f87171', lineHeight: '1.4' }}>
-            <strong>🙏 We apologize for the inconvenience!</strong> Standard C compiler (GCC) does not support C++ STL headers like <code>&lt;vector&gt;</code> or <code>&lt;iostream&gt;</code>.
+            <strong>🙏 We apologize for the inconvenience! ({unsupportedInfo.title})</strong>
+            <div style={{ color: 'var(--text-primary)', marginTop: '2px' }}>
+              {unsupportedInfo.reason} <span style={{ color: '#fbbf24', marginLeft: '6px' }}>💡 Suggestion: {unsupportedInfo.solution}</span>
+            </div>
           </div>
           <div style={{ display: 'flex', gap: '8px', flexShrink: 0 }}>
-            <button className="btn btn-insert" style={{ fontSize: '0.75rem', padding: '3px 10px', whiteSpace: 'nowrap' }} onClick={() => setDetectedLang('C++')}>
-              Switch to C++ Mode
-            </button>
-            <button className="btn btn-clear" style={{ fontSize: '0.75rem', padding: '3px 10px', whiteSpace: 'nowrap' }} onClick={() => setLocalCode(prev => prev.replace(/#include\s*<vector>/g, '').replace(/#include\s*<queue>/g, '').replace(/#include\s*<stack>/g, '').replace(/#include\s*<algorithm>/g, '').replace(/#include\s*<iostream>/g, '#include <stdio.h>\n#include <stdbool.h>\n#include <stdlib.h>').replace(/using namespace std;/g, ''))}>
-              Auto-Fix for C
+            {detectedLang === 'C' && unsupportedInfo.title.includes('C++') && (
+              <button className="btn btn-insert" style={{ fontSize: '0.78rem', padding: '4px 12px', whiteSpace: 'nowrap' }} onClick={() => setDetectedLang('C++')}>
+                Switch to C++ Mode
+              </button>
+            )}
+            <button className="btn btn-clear" style={{ fontSize: '0.78rem', padding: '4px 12px', whiteSpace: 'nowrap', background: 'rgba(16,185,129,0.2)', color: '#34d399', border: '1px solid rgba(16,185,129,0.3)' }} onClick={() => setIsRunnerOpen(true)}>
+              ▶ Run in Sandboxed Code Runner
             </button>
           </div>
         </div>
