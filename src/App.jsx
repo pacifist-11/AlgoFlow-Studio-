@@ -3215,81 +3215,73 @@ function App() {
 
       {/* Sort Search Visualizer */}
       <div style={{ display: appMode === 'SORT_SEARCH_VIS' ? 'block' : 'none' }}>
-        {mountedModes['SORT_SEARCH_VIS'] && (
-          <SortSearchVisualizer 
-            onBack={goBack} 
-            openSettings={() => setIsSettingsOpen(true)} 
-            initialTab={globalSortSearchTab} 
-            initialSort={globalSort} 
-            initialSearch={globalSearch} 
-            onCopyCode={handleCopyTrigger}
-            onCodeChange={(code, lang) => {
-              setActiveCodeForChat(code);
-              setActiveLangForChat(lang);
-            }}
-            fontSize={editorFontSize}
-            wordWrap={editorWordWrap}
-            onShowUpcomingFeatures={() => setIsUpcomingOpen(true)}
-          />
-        )}
+        <SortSearchVisualizer 
+          onBack={goBack} 
+          openSettings={() => setIsSettingsOpen(true)} 
+          initialTab={globalSortSearchTab} 
+          initialSort={globalSort} 
+          initialSearch={globalSearch} 
+          onCopyCode={handleCopyTrigger}
+          onCodeChange={(code, lang) => {
+            setActiveCodeForChat(code);
+            setActiveLangForChat(lang);
+          }}
+          fontSize={editorFontSize}
+          wordWrap={editorWordWrap}
+          onShowUpcomingFeatures={() => setIsUpcomingOpen(true)}
+        />
       </div>
 
       {/* General DSA Visualizer */}
       <div style={{ display: appMode === 'GENERAL_DSA_VIS' ? 'block' : 'none' }}>
-        {mountedModes['GENERAL_DSA_VIS'] && (
-          <GeneralDSVisualizer 
-            onBack={goBack} 
-            openSettings={() => setIsSettingsOpen(true)} 
-            initialType={globalDsType} 
-            initialVariety={globalDsVariety} 
-            onCopyCode={handleCopyTrigger}
-            onCodeChange={(code, lang) => {
-              setActiveCodeForChat(code);
-              setActiveLangForChat(lang);
-            }}
-            fontSize={editorFontSize}
-            wordWrap={editorWordWrap}
-            onShowUpcomingFeatures={() => setIsUpcomingOpen(true)}
-          />
-        )}
+        <GeneralDSVisualizer 
+          onBack={goBack} 
+          openSettings={() => setIsSettingsOpen(true)} 
+          initialType={globalDsType} 
+          initialVariety={globalDsVariety} 
+          onCopyCode={handleCopyTrigger}
+          onCodeChange={(code, lang) => {
+            setActiveCodeForChat(code);
+            setActiveLangForChat(lang);
+          }}
+          fontSize={editorFontSize}
+          wordWrap={editorWordWrap}
+          onShowUpcomingFeatures={() => setIsUpcomingOpen(true)}
+        />
       </div>
 
       {/* Graph Visualizer Studio */}
       <div style={{ display: appMode === 'GRAPH_VIS' ? 'block' : 'none' }}>
-        {mountedModes['GRAPH_VIS'] && (
-          <GraphVisualizer 
-            onBack={goBack} 
-            openSettings={() => setIsSettingsOpen(true)} 
-            initialAlgo={globalGraphAlgo} 
-            onCopyCode={handleCopyTrigger}
-            onCodeChange={(code, lang) => {
-              setActiveCodeForChat(code);
-              setActiveLangForChat(lang);
-            }}
-            fontSize={editorFontSize}
-            wordWrap={editorWordWrap}
-            onShowUpcomingFeatures={() => setIsUpcomingOpen(true)}
-          />
-        )}
+        <GraphVisualizer 
+          onBack={goBack} 
+          openSettings={() => setIsSettingsOpen(true)} 
+          initialAlgo={globalGraphAlgo} 
+          onCopyCode={handleCopyTrigger}
+          onCodeChange={(code, lang) => {
+            setActiveCodeForChat(code);
+            setActiveLangForChat(lang);
+          }}
+          fontSize={editorFontSize}
+          wordWrap={editorWordWrap}
+          onShowUpcomingFeatures={() => setIsUpcomingOpen(true)}
+        />
       </div>
 
       {/* DP & Greedy Visualizer Studio */}
       <div style={{ display: appMode === 'DP_GREEDY_VIS' ? 'block' : 'none' }}>
-        {mountedModes['DP_GREEDY_VIS'] && (
-          <DPGreedyVisualizer 
-            onBack={goBack} 
-            openSettings={() => setIsSettingsOpen(true)} 
-            initialTab={globalDpTab} 
-            onCopyCode={handleCopyTrigger}
-            onCodeChange={(code, lang) => {
-              setActiveCodeForChat(code);
-              setActiveLangForChat(lang);
-            }}
-            fontSize={editorFontSize}
-            wordWrap={editorWordWrap}
-            onShowUpcomingFeatures={() => setIsUpcomingOpen(true)}
-          />
-        )}
+        <DPGreedyVisualizer 
+          onBack={goBack} 
+          openSettings={() => setIsSettingsOpen(true)} 
+          initialTab={globalDpTab || 'LCS'} 
+          onCopyCode={handleCopyTrigger}
+          onCodeChange={(code, lang) => {
+            setActiveCodeForChat(code);
+            setActiveLangForChat(lang);
+          }}
+          fontSize={editorFontSize}
+          wordWrap={editorWordWrap}
+          onShowUpcomingFeatures={() => setIsUpcomingOpen(true)}
+        />
       </div>
 
       {/* Pending Module (Language Setup via Search) */}
