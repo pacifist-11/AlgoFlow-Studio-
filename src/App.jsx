@@ -405,345 +405,43 @@ const THEMES = {
   }
 };
 
-// ─── Enhanced LLM AI ChatBot ──────────────────────────────────────────────────
-const ChatBot = ({ customCode, codeLang, isChatOpen, setIsChatOpen, chatMessages, setChatMessages, apiKey, setApiKey, model, setModel }) => {
-  const [chatInput, setChatInput] = useState('');
-  const [isLoading, setIsLoading] = useState(false);
-  const [showSettings, setShowSettings] = useState(!apiKey);
-  const [tempApiKey, setTempApiKey] = useState(apiKey || '');
-  const chatEndRef = useRef(null);
-
-  useEffect(() => {
-    chatEndRef.current?.scrollIntoView({ behavior: 'smooth' });
-  }, [chatMessages, isLoading, isChatOpen]);
-
-  const handleSend = async (overrideText) => {
-    const textToSend = typeof overrideText === 'string' ? overrideText : chatInput;
-    if (!textToSend.trim() || isLoading) return;
-    const userMsg = textToSend.trim();
-    if (typeof overrideText !== 'string') setChatInput('');
-    
-    setChatMessages(prev => [...prev, { sender: 'user', text: userMsg }]);
-    setIsLoading(true);
-
-    try {
-      if (!apiKey) {
-        setChatMessages(prev => [...prev, { 
-          sender: 'bot', 
-          text: '⚠️ Please click ⚙️ Settings above and enter your Google Gemini API Key to enable AI responses.' 
-        }]);
-        setShowSettings(true);
-        setIsLoading(false);
-        return;
-      }
-
-      const systemPrompt = `You are AlgoFlow AI, an expert computer science tutor and interactive AI coding assistant embedded in AlgoFlow-Studio.
-Your goal is to guide students in algorithms, data structures, debugging, Big-O complexity, and competitive programming.
-Current context:
-- Programming Language: ${codeLang || 'C++'}
-- User Active Code / Template:
-${customCode ? customCode.substring(0, 1500) : '(No active code)'}
-
-Instructions:
-1. Provide accurate, clear, and structured answers.
-2. Use markdown formatting with standard code blocks for code snippets.
-3. Be encouraging, precise, and concise.`;
-
-      const chatHistory = chatMessages.filter(m => m.sender === 'user' || m.sender === 'bot');
-      const firstUserIdx = chatHistory.findIndex(m => m.sender === 'user');
-      let relevantHistory = firstUserIdx !== -1 ? chatHistory.slice(firstUserIdx) : [];
-      if (relevantHistory.length > 10) relevantHistory = relevantHistory.slice(-10);
-
-      let activeModel = model || 'gemini-2.0-flash';
-      if (!activeModel || activeModel.includes('1.5')) {
-        activeModel = 'gemini-2.0-flash';
-      }
-
-      const makeRequest = async (selectedModel) => {
-        return await fetch(`https://generativelanguage.googleapis.com/v1beta/models/${selectedModel}:generateContent?key=${apiKey}`, {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({
-            system_instruction: { parts: [{ text: systemPrompt }] },
-            contents: [
-              ...relevantHistory.map(m => ({
-                role: m.sender === 'user' ? 'user' : 'model',
-                parts: [{ text: m.text }]
-              })),
-              { role: 'user', parts: [{ text: userMsg }] }
-            ]
-          })
-        });
-      };
-
-      let response = await makeRequest(activeModel);
-      let data = await response.json();
-
-      // If rate limit / quota exceeded (429) or not found (404), try fallback models
-      if (data.error && (data.error.code === 429 || data.error.code === 404 || data.error.status === 'RESOURCE_EXHAUSTED')) {
-        console.warn(`Gemini active model (${activeModel}) failed with ${data.error.code}. Trying fallback model...`);
-        
-        // Define list of fallbacks in preference order
-        const fallbacks = ['gemini-2.0-flash-lite', 'gemini-flash-latest', 'gemini-2.5-pro'].filter(m => m !== activeModel);
-        
-        let success = false;
-        for (const fallbackModel of fallbacks) {
-          try {
-            const fallbackResponse = await makeRequest(fallbackModel);
-            const fallbackData = await fallbackResponse.json();
-            if (!fallbackData.error) {
-              data = fallbackData;
-              success = true;
-              // Update settings so the user is switched to the working model
-              setModel(fallbackModel);
-              break;
-            }
-          } catch (e) {
-            console.error(`Fallback to ${fallbackModel} failed:`, e);
-          }
-        }
-
-        if (!success) {
-          // If all fallbacks failed, format the error nicely for the user
-          let friendlyError = data.error.message;
-          if (data.error.code === 429) {
-            friendlyError = `⚠️ Gemini API limit reached (Rate Limit Exceeded).\n\nPlease try again in 10-20 seconds. If this keeps happening, you may want to check your limits in Google AI Studio or use a different API key.`;
-          }
-          setChatMessages(prev => [...prev, { sender: 'bot', text: friendlyError }]);
-          return;
-        }
-      }
-
-      if (data.error) {
-        setChatMessages(prev => [...prev, { sender: 'bot', text: `⚠️ Gemini API Error: ${data.error.message}\nCheck your API Key in Settings.` }]);
-      } else {
-        const botText = data.candidates?.[0]?.content?.parts?.[0]?.text || 'No response received from model.';
-        setChatMessages(prev => [...prev, { sender: 'bot', text: botText }]);
-      }
-    } catch (err) {
-      setChatMessages(prev => [...prev, { sender: 'bot', text: `⚠️ Connection Error: Could not connect to Gemini API.` }]);
-    } finally {
-      setIsLoading(false);
-    }
-  };
-
-  const handleSaveSettings = (e) => {
-    e.preventDefault();
-    setApiKey(tempApiKey.trim());
-    setShowSettings(false);
-  };
-
+// ─── Enhanced AI ChatBot ──────────────────────────────────────────────────────
+const ChatBot = ({ customCode, codeLang, isChatOpen, setIsChatOpen, chatMessages, setChatMessages, apiKey, setApiKey, model, setModel, onShowUpcomingFeatures }) => {
   return (
-    <div style={{ position: 'fixed', bottom: '20px', right: '20px', zIndex: 9999, display: 'flex', flexDirection: 'column', alignItems: 'flex-end' }}>
+    <div style={{ position: 'fixed', bottom: '20px', right: '20px', zIndex: 1000, display: 'flex', flexDirection: 'column', alignItems: 'flex-end' }}>
       {isChatOpen && (
         <div style={{
-          width: '380px',
-          maxWidth: 'calc(100vw - 30px)',
-          height: '540px',
-          maxHeight: 'calc(100vh - 100px)',
-          background: 'rgba(15, 23, 42, 0.95)',
+          width: '320px',
+          height: '240px',
+          background: 'var(--bg-secondary)',
           border: '1px solid var(--accent-primary)',
-          borderRadius: '20px',
+          borderRadius: '16px',
           marginBottom: '1rem',
           display: 'flex',
           flexDirection: 'column',
-          boxShadow: '0 25px 70px rgba(0,0,0,0.7)',
-          overflow: 'hidden',
-          backdropFilter: 'blur(16px)',
-          animation: 'fadeIn 0.25s ease'
+          justifyContent: 'center',
+          alignItems: 'center',
+          padding: '2rem',
+          boxShadow: '0 20px 60px rgba(0,0,0,0.7)',
+          textAlign: 'center',
+          position: 'relative',
+          backdropFilter: 'blur(10px)',
+          animation: 'fadeIn 0.3s ease'
         }}>
-          {/* Header */}
-          <div style={{ padding: '0.8rem 1.2rem', background: 'rgba(255, 255, 255, 0.04)', borderBottom: '1px solid var(--glass-border)', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-            <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
-              <span style={{ fontSize: '1.4rem' }}>🤖</span>
-              <div>
-                <h4 style={{ margin: 0, color: 'var(--text-primary)', fontSize: '0.95rem', fontWeight: 800 }}>AlgoFlow AI</h4>
-                <span style={{ fontSize: '0.7rem', color: apiKey ? '#10b981' : '#f59e0b', fontWeight: 'bold' }}>
-                  {apiKey ? '● Gemini LLM Connected' : '○ API Key Required'}
-                </span>
-              </div>
-            </div>
-            <div style={{ display: 'flex', gap: '6px', alignItems: 'center' }}>
-              <button 
-                onClick={() => setShowSettings(!showSettings)} 
-                style={{ background: showSettings ? 'rgba(59,130,246,0.3)' : 'transparent', border: '1px solid var(--glass-border)', color: 'var(--text-primary)', cursor: 'pointer', borderRadius: '8px', padding: '4px 8px', fontSize: '0.85rem' }}
-                title="AI Settings"
-              >
-                ⚙️
-              </button>
-              <button 
-                onClick={() => setChatMessages([{ sender: 'bot', text: 'Chat cleared! Ask me anything about algorithms or code.' }])} 
-                style={{ background: 'transparent', border: '1px solid var(--glass-border)', color: 'var(--text-secondary)', cursor: 'pointer', borderRadius: '8px', padding: '4px 8px', fontSize: '0.85rem' }}
-                title="Clear Chat"
-              >
-                🧹
-              </button>
-              <button 
-                onClick={() => setIsChatOpen(false)} 
-                style={{ background: 'transparent', border: 'none', color: 'var(--text-secondary)', cursor: 'pointer', fontSize: '1.2rem', padding: '0 4px', lineHeight: 1 }}
-                title="Close"
-              >
-                ×
-              </button>
-            </div>
-          </div>
-
-          {/* Settings Modal Body */}
-          {showSettings ? (
-            <div style={{ padding: '1.2rem', display: 'flex', flexDirection: 'column', gap: '1rem', flex: 1, overflowY: 'auto' }}>
-              <h4 style={{ margin: 0, color: 'var(--text-primary)', fontSize: '0.95rem', fontWeight: 700 }}>⚙️ Gemini LLM Configuration</h4>
-              <p style={{ margin: 0, fontSize: '0.8rem', color: 'var(--text-secondary)', lineHeight: '1.4' }}>
-                Enter your free Google Gemini API key from <a href="https://aistudio.google.com/" target="_blank" rel="noreferrer" style={{ color: 'var(--accent-primary)' }}>Google AI Studio</a>.
-              </p>
-              
-              <form onSubmit={handleSaveSettings} style={{ display: 'flex', flexDirection: 'column', gap: '0.8rem' }}>
-                <div style={{ display: 'flex', flexDirection: 'column', gap: '4px' }}>
-                  <label style={{ fontSize: '0.8rem', fontWeight: 700, color: 'var(--text-primary)' }}>API Key:</label>
-                  <input 
-                    type="password"
-                    value={tempApiKey} 
-                    onChange={e => setTempApiKey(e.target.value)} 
-                    placeholder="AIzaSy..." 
-                    className="styled-input"
-                    style={{ fontSize: '0.85rem', padding: '0.55rem' }}
-                  />
-                </div>
-
-                <div style={{ display: 'flex', flexDirection: 'column', gap: '4px' }}>
-                  <label style={{ fontSize: '0.8rem', fontWeight: 700, color: 'var(--text-primary)' }}>Model:</label>
-                  <select 
-                    value={model || 'gemini-2.0-flash'} 
-                    onChange={e => setModel(e.target.value)}
-                    className="styled-select"
-                    style={{ fontSize: '0.85rem', padding: '0.55rem' }}
-                  >
-                    <option value="gemini-2.0-flash">Gemini 2.0 Flash (Fast & Recommended)</option>
-                    <option value="gemini-flash-latest">Gemini Flash Latest (Auto-Updated)</option>
-                    <option value="gemini-2.5-pro">Gemini 2.5 Pro (Deep Reasoning)</option>
-                    <option value="gemini-2.0-flash-lite">Gemini 2.0 Flash Lite (Lightweight)</option>
-                  </select>
-                </div>
-
-                <div style={{ display: 'flex', gap: '8px', marginTop: '0.5rem' }}>
-                  <button type="submit" className="btn btn-start" style={{ flex: 1, padding: '0.6rem', fontSize: '0.85rem' }}>Save & Connect</button>
-                  <button type="button" className="btn btn-clear" style={{ padding: '0.6rem', fontSize: '0.85rem' }} onClick={() => setShowSettings(false)}>Cancel</button>
-                </div>
-              </form>
-            </div>
-          ) : (
-            <>
-              {/* Quick Prompt Pills */}
-              <div style={{ display: 'flex', gap: '6px', padding: '8px 12px', overflowX: 'auto', background: 'rgba(0,0,0,0.2)', borderBottom: '1px solid var(--glass-border)', flexShrink: 0 }}>
-                {[
-                  { icon: '💡', label: 'Explain Code', prompt: 'Please explain how this active code works step-by-step.' },
-                  { icon: '🐞', label: 'Find Bugs', prompt: 'Can you inspect this code for potential edge-case bugs or errors?' },
-                  { icon: '⏱️', label: 'Big-O Time', prompt: 'What is the Time and Space complexity of this algorithm?' },
-                  { icon: '❓', label: 'Quiz Me', prompt: 'Give me a 1-question quiz on this topic to test my understanding!' }
-                ].map((pill, idx) => (
-                  <button 
-                    key={idx}
-                    onClick={() => handleSend(pill.prompt)}
-                    style={{
-                      background: 'rgba(255,255,255,0.05)',
-                      border: '1px solid var(--glass-border)',
-                      borderRadius: '14px',
-                      color: 'var(--text-primary)',
-                      padding: '4px 10px',
-                      fontSize: '0.75rem',
-                      fontWeight: 600,
-                      cursor: 'pointer',
-                      whiteSpace: 'nowrap',
-                      display: 'flex',
-                      alignItems: 'center',
-                      gap: '4px',
-                      transition: 'all 0.2s'
-                    }}
-                  >
-                    <span>{pill.icon}</span> {pill.label}
-                  </button>
-                ))}
-              </div>
-
-              {/* Chat Message List */}
-              <div style={{ flex: 1, overflowY: 'auto', padding: '1rem', display: 'flex', flexDirection: 'column', gap: '12px' }}>
-                {chatMessages.map((msg, idx) => (
-                  <div key={idx} style={{ display: 'flex', justifyContent: msg.sender === 'user' ? 'flex-end' : 'flex-start' }}>
-                    <div style={{
-                      maxWidth: '85%',
-                      padding: '0.7rem 0.9rem',
-                      borderRadius: msg.sender === 'user' ? '14px 14px 2px 14px' : '14px 14px 14px 2px',
-                      background: msg.sender === 'user' ? 'linear-gradient(135deg, var(--accent-primary), #2563eb)' : 'rgba(255,255,255,0.06)',
-                      border: `1px solid ${msg.sender === 'user' ? 'transparent' : 'var(--glass-border)'}`,
-                      color: msg.sender === 'user' ? '#ffffff' : 'var(--text-primary)',
-                      fontSize: '0.85rem',
-                      lineHeight: '1.5',
-                      whiteSpace: 'pre-wrap',
-                      wordBreak: 'break-word'
-                    }}>
-                      {msg.text}
-                    </div>
-                  </div>
-                ))}
-                {isLoading && (
-                  <div style={{ display: 'flex', justifyContent: 'flex-start' }}>
-                    <div style={{ padding: '0.6rem 1rem', borderRadius: '14px', background: 'rgba(255,255,255,0.06)', border: '1px solid var(--glass-border)', color: 'var(--text-secondary)', fontSize: '0.8rem', fontStyle: 'italic' }}>
-                      🤖 Thinking...
-                    </div>
-                  </div>
-                )}
-                <div ref={chatEndRef} />
-              </div>
-
-              {/* Chat Input Bar */}
-              <div style={{ padding: '0.75rem', background: 'rgba(0,0,0,0.3)', borderTop: '1px solid var(--glass-border)', display: 'flex', gap: '8px' }}>
-                <input 
-                  type="text" 
-                  value={chatInput} 
-                  onChange={e => setChatInput(e.target.value)} 
-                  onKeyDown={e => { if (e.key === 'Enter') handleSend(); }} 
-                  placeholder="Ask AlgoFlow AI anything..." 
-                  className="styled-input" 
-                  style={{ flex: 1, padding: '0.55rem 0.85rem', fontSize: '0.85rem' }} 
-                  disabled={isLoading}
-                />
-                <button 
-                  className="btn btn-start" 
-                  style={{ width: '42px', padding: 0, display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: '1rem' }} 
-                  onClick={() => handleSend()}
-                  disabled={isLoading || !chatInput.trim()}
-                >
-                  🚀
-                </button>
-              </div>
-            </>
-          )}
+          <button onClick={() => setIsChatOpen(false)} style={{ position: 'absolute', top: '12px', right: '12px', background: 'rgba(255,255,255,0.1)', border: 'none', color: 'white', cursor: 'pointer', width: '24px', height: '24px', borderRadius: '50%', fontSize: '0.85rem', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>×</button>
+          <div style={{ fontSize: '3rem', marginBottom: '0.5rem', filter: 'drop-shadow(0 0 10px var(--accent-primary))' }}>🤖</div>
+          <h3 style={{ margin: '0 0 6px 0', color: 'var(--text-primary)', fontSize: '1.25rem', fontWeight: 'bold' }}>AI Assistant</h3>
+          <span style={{ fontSize: '0.75rem', background: 'linear-gradient(135deg, var(--accent-primary), var(--accent-secondary))', color: 'white', padding: '3px 10px', borderRadius: '20px', fontWeight: 'bold', textTransform: 'uppercase', marginBottom: '12px' }}>Coming Soon</span>
+          <p style={{ margin: 0, color: 'var(--text-secondary)', fontSize: '0.82rem', lineHeight: '1.4' }}>
+            We're building a Gemini-powered AI helper to explain code, generate quiz cards, and guide your learning in real-time!
+          </p>
         </div>
       )}
-
-      {/* Floating Toggle Trigger Button */}
-      <button 
-        onClick={() => setIsChatOpen(!isChatOpen)}
-        style={{ 
-          width: '58px', 
-          height: '58px', 
-          borderRadius: '50%', 
-          background: 'linear-gradient(135deg, var(--accent-primary), var(--accent-secondary))', 
-          border: 'none', 
-          color: 'white', 
-          fontSize: '1.5rem', 
-          cursor: 'pointer', 
-          boxShadow: '0 8px 25px rgba(0,229,255,0.4)', 
-          display: 'flex', 
-          justifyContent: 'center', 
-          alignItems: 'center', 
-          transition: 'all 0.3s cubic-bezier(0.4, 0, 0.2, 1)' 
-        }}
+      <button onClick={() => onShowUpcomingFeatures ? onShowUpcomingFeatures() : setIsChatOpen(!isChatOpen)}
+        style={{ width: '60px', height: '60px', borderRadius: '50%', background: 'linear-gradient(135deg, var(--accent-primary), var(--accent-secondary))', border: 'none', color: 'white', fontSize: '1.5rem', cursor: 'pointer', boxShadow: '0 6px 20px rgba(0,0,0,0.4)', display: 'flex', justifyContent: 'center', alignItems: 'center', transition: 'transform 0.3s' }}
         onMouseOver={e => e.currentTarget.style.transform = 'scale(1.1)'}
         onMouseOut={e => e.currentTarget.style.transform = 'scale(1)'}
-        title="Open AlgoFlow AI Assistant"
-      >
-        💬
-      </button>
+        title="AI Coding Assistant">💬</button>
     </div>
   );
 };
