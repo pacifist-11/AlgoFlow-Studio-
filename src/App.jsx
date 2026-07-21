@@ -846,6 +846,7 @@ function App() {
 
   const [isFeedbackOpen, setIsFeedbackOpen] = useState(false);
   const [rating, setRating] = useState(0);
+  const [feedbackName, setFeedbackName] = useState('');
   const [feedbackText, setFeedbackText] = useState('');
   const [feedbackEmail, setFeedbackEmail] = useState('');
   const [feedbackCategory, setFeedbackCategory] = useState('UI/UX');
@@ -1416,10 +1417,19 @@ function App() {
 
   // Submit feedback directly
   const submitDirectFeedback = async () => {
+    const nameTrimmed = feedbackName.trim();
     const emailTrimmed = feedbackEmail.trim();
     const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
     if (rating === 0) {
       triggerFeedbackError("Selecting a star rating is compulsory. Please select a rating (1-5 stars).");
+      return;
+    }
+    if (!nameTrimmed) {
+      triggerFeedbackError("Please enter your name.");
+      return;
+    }
+    if (checkRestrictedWords(nameTrimmed)) {
+      triggerFeedbackError("Your name contains restricted words. Please rectify it and submit again.");
       return;
     }
     if (!emailTrimmed) {
@@ -1435,7 +1445,7 @@ function App() {
       return;
     }
     if (checkRestrictedWords(feedbackText)) {
-      triggerFeedbackError("You are using restricted words. Please rectify them and send again.");
+      triggerFeedbackError("You are using restricted words in your message. Please rectify them and send again.");
       return;
     }
 
@@ -1443,6 +1453,7 @@ function App() {
     setIsFeedbackSubmitted(true); // Optimistically show success screen instantly
     
     const payload = {
+      name: nameTrimmed,
       email: feedbackEmail.trim(),
       rating,
       category: feedbackCategory,
@@ -3572,7 +3583,7 @@ function App() {
 
                     <div style={{ display: 'flex', alignItems: 'center', gap: '5px' }}>
                       <span style={{ fontSize: '0.75rem', color: 'var(--text-secondary)' }}>Speed</span>
-                      <input type="range" min={80} max={1200} step={80} value={animationSpeed} onChange={e => setAnimationSpeed(Number(e.target.value))} style={{ width: '64px', accentColor: 'var(--accent-primary)' }} />
+                      <input type="range" min={80} max={3500} step={50} value={animationSpeed} onChange={e => setAnimationSpeed(Number(e.target.value))} style={{ width: '85px', accentColor: 'var(--accent-primary)', cursor: 'pointer' }} title={`Speed: ${animationSpeed}ms delay`} />
                     </div>
 
                     {(treeType === 'B_TREE' || treeType === 'B_PLUS_TREE') && (
@@ -4293,6 +4304,20 @@ function App() {
                         </span>
                       ))}
                     </div>
+                  </div>
+
+                  {/* Name input */}
+                  <div className="select-group" style={{ marginBottom: '1.2rem' }}>
+                    <label style={{ fontSize: '0.95rem', color: 'var(--text-primary)', fontWeight: 600, display: 'block', marginBottom: '4px' }}>Your Name</label>
+                    <input 
+                      type="text"
+                      className="styled-input" 
+                      style={{ width: '100%', padding: '0.65rem 0.85rem', fontSize: '0.95rem', borderRadius: '8px', border: '1px solid var(--glass-border)', background: 'rgba(0,0,0,0.2)', color: '#fff' }} 
+                      placeholder="Enter your name" 
+                      value={feedbackName} 
+                      onChange={e => setFeedbackName(e.target.value)}
+                      required
+                    />
                   </div>
 
                   {/* Email verification input */}

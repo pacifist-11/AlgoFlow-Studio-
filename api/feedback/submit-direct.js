@@ -80,11 +80,19 @@ export default async function handler(req, res) {
   if (req.method === 'OPTIONS') return res.status(200).end();
   if (req.method !== 'POST') return res.status(405).json({ error: 'Method not allowed' });
 
-  const { email, rating, category, text } = req.body;
+  const { name, email, rating, category, text } = req.body;
 
   const ratingInt = parseInt(rating);
   if (isNaN(ratingInt) || ratingInt < 1 || ratingInt > 5) {
     return res.status(400).json({ error: 'Please select a star rating (1-5).' });
+  }
+
+  const cleanName = (name || '').trim();
+  if (!cleanName) {
+    return res.status(400).json({ error: 'Please enter your name.' });
+  }
+  if (checkRestrictedWords(cleanName)) {
+    return res.status(400).json({ error: 'Your name contains restricted words. Please rectify it.' });
   }
 
   const cleanEmail = (email || '').toLowerCase().trim();
@@ -106,8 +114,8 @@ export default async function handler(req, res) {
 
   try {
     const rows = await sql`
-      INSERT INTO feedbacks (email, rating, category, feedback_text)
-      VALUES (${cleanEmail}, ${ratingInt}, ${feedbackCategory}, ${feedbackText})
+      INSERT INTO feedbacks (name, email, rating, category, feedback_text)
+      VALUES (${cleanName}, ${cleanEmail}, ${ratingInt}, ${feedbackCategory}, ${feedbackText})
       RETURNING *
     `;
 

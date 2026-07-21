@@ -24,6 +24,7 @@ export default async function handler(req, res) {
     await sql`
       CREATE TABLE IF NOT EXISTS feedbacks (
         id SERIAL PRIMARY KEY,
+        name VARCHAR(255) NOT NULL DEFAULT 'Anonymous',
         email VARCHAR(255) NOT NULL DEFAULT 'anonymous',
         rating INT NOT NULL CHECK (rating BETWEEN 1 AND 5),
         category VARCHAR(100) NOT NULL DEFAULT 'General',

@@ -1750,13 +1750,17 @@ const JavaOOPVisualizer = ({ onBack, openSettings, onCopyCode, onCodeChange, fon
         </div>
 
         {/* Speed slider */}
-        <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
-          <span style={{ fontSize: '0.8rem', color: 'var(--text-secondary)' }}>Speed:</span>
+        <div style={{ display: 'flex', alignItems: 'center', gap: '8px', flexWrap: 'wrap' }}>
+          <span style={{ fontSize: '0.8rem', color: 'var(--text-secondary)' }}>Speed ({speed}ms):</span>
           <input 
-            type="range" min="100" max="1500" step="100" 
+            type="range" min="100" max="3500" step="50" 
             value={speed} onChange={e => setSpeed(parseInt(e.target.value))}
-            style={{ width: '80px', accentColor: 'var(--accent-primary)', cursor: 'pointer' }}
+            style={{ width: '85px', accentColor: 'var(--accent-primary)', cursor: 'pointer' }}
+            title={`Delay: ${speed}ms`}
           />
+          <button type="button" className="btn btn-clear" style={{ padding: '2px 6px', fontSize: '0.75rem' }} onClick={() => setSpeed(2500)}>🐢 Very Slow</button>
+          <button type="button" className="btn btn-clear" style={{ padding: '2px 6px', fontSize: '0.75rem' }} onClick={() => setSpeed(1200)}>🚶 Slow</button>
+          <button type="button" className="btn btn-clear" style={{ padding: '2px 6px', fontSize: '0.75rem' }} onClick={() => setSpeed(300)}>⚡ Fast</button>
         </div>
       </div>
 
