@@ -447,7 +447,7 @@ const ChatBot = ({ customCode, codeLang, isChatOpen, setIsChatOpen, chatMessages
 };
 
 // ─── PythonTutor-Style Debugger ───────────────────────────────────────────────
-const ptLangMap = { 'Java': 'java', 'C++': 'c_cpp', 'Python': '3', 'JS': 'js' };
+const ptLangMap = { 'C': 'c', 'Java': 'java', 'C++': 'c_cpp', 'Python': '3', 'JS': 'js' };
 const loadingQuotes = [
   { text: "\"First, solve the problem. Then, write the code.\"", color: "#3b82f6" },
   { text: "\"Code is like humor. When you have to explain it, it’s bad.\"", color: "#ec4899" },
@@ -471,7 +471,7 @@ const LineDebugger = ({ initialCode, lang: initialLang, fontSize, wordWrap, onBa
   const [isIframeLoading, setIsIframeLoading] = useState(false);
   const [quoteIndex, setQuoteIndex] = useState(() => Math.floor(Math.random() * loadingQuotes.length));
   const [localCode, setLocalCode] = useState(initialCode || '');
-  const [detectedLang, setDetectedLang] = useState(initialLang);
+  const [detectedLang, setDetectedLang] = useState(initialLang || 'C');
   const lineNumbersRef = useRef(null);
 
   useEffect(() => {
@@ -480,7 +480,7 @@ const LineDebugger = ({ initialCode, lang: initialLang, fontSize, wordWrap, onBa
   }, [initialCode]);
 
   useEffect(() => {
-    setDetectedLang(initialLang);
+    setDetectedLang(initialLang || 'C');
   }, [initialLang]);
 
   const handleScroll = (e) => {
@@ -515,6 +515,12 @@ const LineDebugger = ({ initialCode, lang: initialLang, fontSize, wordWrap, onBa
         }
       }
       setLocalCode(codeToRun);
+    } else if (detectedLang === 'C') {
+      const hasMain = /\bmain\s*\(/.test(codeToRun);
+      if (!hasMain) {
+        codeToRun = `#include <stdio.h>\n#include <stdlib.h>\n\nint main() {\n  ${codeToRun.split('\n').join('\n  ')}\n  return 0;\n}`;
+        setLocalCode(codeToRun);
+      }
     } else if (detectedLang === 'C++') {
       const hasMain = /\bmain\s*\(/.test(codeToRun);
       if (!hasMain) {
@@ -543,7 +549,9 @@ const LineDebugger = ({ initialCode, lang: initialLang, fontSize, wordWrap, onBa
     if (localCode.length < 10) return;
     const code = localCode;
     if (code.includes('public static void main') || code.includes('System.out.print') || /import\s+java/.test(code) || code.includes('public class ')) setDetectedLang('Java');
-    else if (code.includes('#include') || code.includes('cout <<') || code.includes('std::') || code.includes('using namespace std') || code.includes('int main(')) setDetectedLang('C++');
+    else if (code.includes('#include <stdio.h>') || code.includes('printf(') || code.includes('scanf(')) setDetectedLang('C');
+    else if (code.includes('#include <iostream>') || code.includes('cout <<') || code.includes('std::') || code.includes('using namespace std')) setDetectedLang('C++');
+    else if (code.includes('#include') || code.includes('int main(')) setDetectedLang('C');
     else if ((/def\s+\w+\(/.test(code) || /print\(/.test(code)) && !code.includes(';') && !code.includes('{')) setDetectedLang('Python');
     else if (code.includes('console.log') || code.includes('document.') || /let\s+\w+/.test(code) || /const\s+\w+/.test(code)) setDetectedLang('JS');
   }, [localCode]);
@@ -555,8 +563,9 @@ const LineDebugger = ({ initialCode, lang: initialLang, fontSize, wordWrap, onBa
           <div style={{ display: 'flex', alignItems: 'center', gap: '0.8rem' }}>
             <h1 className="title-gradient" style={{ fontSize: '1.55rem', margin: 0 }}>🐞 Line-by-Line Debugger</h1>
             <select className="styled-select" value={detectedLang} onChange={(e) => setDetectedLang(e.target.value)} style={{ padding: '4px 24px 4px 8px', borderRadius: '6px', fontSize: '0.85rem', fontWeight: 600, outline: 'none', cursor: 'pointer', height: 'auto', width: 'auto', backgroundPosition: 'right 6px center', backgroundSize: '10px' }}>
-              <option value="Java">Java</option>
+              <option value="C">C</option>
               <option value="C++">C++</option>
+              <option value="Java">Java</option>
               <option value="Python">Python</option>
               <option value="JS">JavaScript</option>
             </select>
@@ -600,6 +609,7 @@ const LineDebugger = ({ initialCode, lang: initialLang, fontSize, wordWrap, onBa
                 <textarea className="code-textarea" value={localCode} onChange={e => setLocalCode(e.target.value)} onScroll={handleScroll}
                   style={{ flex: 1, padding: '1rem', fontSize: `${fontSize}px`, lineHeight: '1.6', whiteSpace: wordWrap === 'on' ? 'pre-wrap' : 'pre', border: 'none', borderRadius: 0, height: '100%', background: 'transparent', color: 'var(--text-primary)', outline: 'none', resize: 'none', overflow: 'auto' }}
                   placeholder={
+                    detectedLang === 'C' ? `Write C code here...\n\nExample:\n\n#include <stdio.h>\n\nint main() {\n  int x = 10;\n  printf("%d\\n", x);\n  return 0;\n}` :
                     detectedLang === 'Java' ? `Write Java code here...\n\nIMPORTANT: Java requires a public class.\nExample:\n\npublic class Main {\n  public static void main(String[] args) {\n    int x = 10;\n    System.out.println(x);\n  }\n}` :
                     detectedLang === 'C++' ? `Write C++ code here...\n\nExample:\n\n#include <iostream>\nusing namespace std;\n\nint main() {\n  int x = 10;\n  cout << x << endl;\n  return 0;\n}` :
                     detectedLang === 'Python' ? `Write Python code here...\n\nExample:\n\nx = 10\nprint(x)` :

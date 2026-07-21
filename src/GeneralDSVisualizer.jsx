@@ -2628,8 +2628,9 @@ const GeneralDSVisualizer = ({ onBack, openSettings, initialType = 'HASH_TABLE',
               </button>
             </div>
             <select className="styled-select" style={{ width: '120px', padding: '0.3rem' }} value={codeLanguage} onChange={(e) => setCodeLanguage(e.target.value)}>
-              <option value="Java">Java</option>
+              <option value="C">C</option>
               <option value="C++">C++</option>
+              <option value="Java">Java</option>
               <option value="Python">Python</option>
               <option value="JS">JavaScript</option>
             </select>

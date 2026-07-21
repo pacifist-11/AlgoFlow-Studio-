@@ -128,7 +128,7 @@ const SortSearchVisualizer = ({ onBack, openSettings, initialTab = 'Sort', initi
   const [selectedSearch, setSelectedSearch] = useState(initialSearch);
   const [activeTab, setActiveTab] = useState(initialTab); // 'Sort' or 'Search'
   const currentDisplayedAlgo = activeTab === 'Sort' ? selectedSort : selectedSearch;
-  const [codeLang, setCodeLang] = useState('C++');
+  const [codeLang, setCodeLang] = useState('C');
   const [showCode, setShowCode] = useState(false);
   const [showTopicInfo, setShowTopicInfo] = useState(false);
   const [isRunnerOpen, setIsRunnerOpen] = useState(false);
@@ -1942,6 +1942,7 @@ const SortSearchVisualizer = ({ onBack, openSettings, initialTab = 'Sort', initi
                 </button>
               </div>
               <select className="styled-select" style={{ padding: '4px 8px', fontSize: '0.8rem', width: '100px' }} value={codeLang} onChange={e => setCodeLang(e.target.value)}>
+                <option value="C">C</option>
                 <option value="C++">C++</option>
                 <option value="Java">Java</option>
                 <option value="Python">Python</option>

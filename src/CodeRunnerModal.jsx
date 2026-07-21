@@ -33,7 +33,10 @@ const CodeRunnerModal = ({ isOpen, onClose, code, language }) => {
     let filename = 'main.js';
     const langLower = language.toLowerCase();
     
-    if (langLower.includes('c++') || langLower.includes('cpp')) {
+    if (langLower === 'c') {
+      pistonLang = 'c';
+      filename = 'main.c';
+    } else if (langLower.includes('c++') || langLower.includes('cpp')) {
       pistonLang = 'cpp';
       filename = 'main.cpp';
     } else if (langLower.includes('java')) {

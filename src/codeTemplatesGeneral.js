@@ -2,7 +2,8 @@ export const getGeneralCodeTemplate = (lang, type, variety, operations) => {
   // Normalize language first
   if (lang) {
     let l = lang.toLowerCase();
-    if (l === 'java') lang = 'Java';
+    if (l === 'c') lang = 'C';
+    else if (l === 'java') lang = 'Java';
     else if (l === 'cpp' || l === 'c++') lang = 'C++';
     else if (l === 'python') lang = 'Python';
     else if (l === 'js' || l === 'javascript') lang = 'JS';

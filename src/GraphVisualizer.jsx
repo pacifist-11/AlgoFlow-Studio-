@@ -7,8 +7,9 @@ import TopicInfoModal from './TopicInfoModal.jsx';
 // Multilingual Code Templates for Graph Algorithms
 const getGraphCodeTemplate = (lang, algo, startNode = '0', endNode = '4') => {
   // Normalize language
-  let l = lang ? lang.toLowerCase() : 'java';
-  if (l === 'java') lang = 'Java';
+  let l = lang ? lang.toLowerCase() : 'c';
+  if (l === 'c') lang = 'C';
+  else if (l === 'java') lang = 'Java';
   else if (l === 'cpp' || l === 'c++') lang = 'C++';
   else if (l === 'python') lang = 'Python';
   else if (l === 'js' || l === 'javascript') lang = 'JS';
@@ -1429,7 +1430,7 @@ const GraphVisualizer = ({ onBack, openSettings, initialAlgo = 'Dijkstra', onCop
   const [speed, setSpeed] = useState(400);
 
   // Side-by-side Code
-  const [codeLang, setCodeLang] = useState('Java');
+  const [codeLang, setCodeLang] = useState('C');
   const [showCode, setShowCode] = useState(false);
 
   const [copied, setCopied] = useState(false);
@@ -3112,8 +3113,9 @@ const GraphVisualizer = ({ onBack, openSettings, initialAlgo = 'Dijkstra', onCop
                   </button>
                 </div>
                 <select className="styled-select" style={{ width: '120px', padding: '0.3rem' }} value={codeLang} onChange={e => setCodeLang(e.target.value)}>
-                  <option value="Java">Java</option>
+                  <option value="C">C</option>
                   <option value="C++">C++</option>
+                  <option value="Java">Java</option>
                   <option value="Python">Python</option>
                   <option value="JS">JavaScript</option>
                 </select>

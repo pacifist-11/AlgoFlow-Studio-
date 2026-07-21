@@ -1799,7 +1799,7 @@ const DPGreedyVisualizer = ({ onBack, openSettings, initialTab = 'LCS', onCopyCo
             {/* Header controls for language selection */}
             <div style={{ padding: '10px 15px', borderBottom: '1px solid var(--glass-border)', display: 'flex', justifyContent: 'space-between', alignItems: 'center', gap: '8px', flexWrap: 'wrap' }}>
               <div style={{ display: 'flex', gap: '4px' }}>
-                {['C++', 'Java', 'Python', 'JS'].map(lang => (
+                {['C', 'C++', 'Java', 'Python', 'JS'].map(lang => (
                   <button
                     key={lang}
                     className={`code-tab ${codeLanguage === lang ? 'active' : ''}`}
