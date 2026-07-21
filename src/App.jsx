@@ -493,16 +493,34 @@ const LineDebugger = ({ initialCode, lang: initialLang, fontSize, wordWrap, onBa
     let codeToRun = localCode.trim();
     if (codeToRun.length === 0) return;
 
-    if (detectedLang === 'Java' && !codeToRun.includes('public class')) {
-      if (codeToRun.includes('public static void main')) {
-        codeToRun = `public class Main {\n${codeToRun}\n}`;
+    if (detectedLang === 'Java') {
+      const hasClass = /\bclass\s+(\w+)/.test(codeToRun);
+      const hasMain = /\bvoid\s+main\b/.test(codeToRun);
+
+      if (!hasClass) {
+        if (hasMain) {
+          codeToRun = `public class Main {\n${codeToRun}\n}`;
+        } else {
+          codeToRun = `public class Main {\n  public static void main(String[] args) {\n    ${codeToRun.split('\n').join('\n    ')}\n  }\n}`;
+        }
       } else {
-        codeToRun = `public class Main {\n  public static void main(String[] args) {\n    ${codeToRun.split('\n').join('\n    ')}\n  }\n}`;
+        // Find existing class name and replace with Main for PythonTutor compatibility
+        const match = codeToRun.match(/\bclass\s+(\w+)/);
+        if (match && match[1] !== 'Main') {
+          codeToRun = codeToRun.replace(new RegExp(`\\bclass\\s+${match[1]}\\b`, 'g'), 'class Main');
+        }
+        // Ensure the Main class is public
+        if (codeToRun.includes('class Main') && !codeToRun.includes('public class Main')) {
+          codeToRun = codeToRun.replace(/\bclass\s+Main\b/, 'public class Main');
+        }
       }
       setLocalCode(codeToRun);
-    } else if (detectedLang === 'C++' && !codeToRun.includes('main(')) {
-      codeToRun = `#include <iostream>\nusing namespace std;\n\nint main() {\n  ${codeToRun.split('\n').join('\n  ')}\n  return 0;\n}`;
-      setLocalCode(codeToRun);
+    } else if (detectedLang === 'C++') {
+      const hasMain = /\bmain\s*\(/.test(codeToRun);
+      if (!hasMain) {
+        codeToRun = `#include <iostream>\nusing namespace std;\n\nint main() {\n  ${codeToRun.split('\n').join('\n  ')}\n  return 0;\n}`;
+        setLocalCode(codeToRun);
+      }
     }
 
     if (encodeURIComponent(codeToRun).length > 5500) {
