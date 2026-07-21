@@ -595,6 +595,22 @@ const LineDebugger = ({ initialCode, lang: initialLang, fontSize, wordWrap, onBa
         </div>
       </header>
 
+      {detectedLang === 'C' && (localCode.includes('<vector>') || localCode.includes('<iostream>') || localCode.includes('using namespace std') || localCode.includes('<queue>') || localCode.includes('<stack>') || localCode.includes('<algorithm>')) && (
+        <div style={{ background: 'rgba(239, 68, 68, 0.1)', borderBottom: '1px solid rgba(239, 68, 68, 0.3)', padding: '10px 16px', display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: '12px', flexShrink: 0 }}>
+          <div style={{ fontSize: '0.82rem', color: '#f87171', lineHeight: '1.4' }}>
+            <strong>🙏 We apologize for the inconvenience!</strong> Standard C compiler (GCC) does not support C++ STL headers like <code>&lt;vector&gt;</code> or <code>&lt;iostream&gt;</code>.
+          </div>
+          <div style={{ display: 'flex', gap: '8px', flexShrink: 0 }}>
+            <button className="btn btn-insert" style={{ fontSize: '0.75rem', padding: '3px 10px', whiteSpace: 'nowrap' }} onClick={() => setDetectedLang('C++')}>
+              Switch to C++ Mode
+            </button>
+            <button className="btn btn-clear" style={{ fontSize: '0.75rem', padding: '3px 10px', whiteSpace: 'nowrap' }} onClick={() => setLocalCode(prev => prev.replace(/#include\s*<vector>/g, '').replace(/#include\s*<queue>/g, '').replace(/#include\s*<stack>/g, '').replace(/#include\s*<algorithm>/g, '').replace(/#include\s*<iostream>/g, '#include <stdio.h>\n#include <stdbool.h>\n#include <stdlib.h>').replace(/using namespace std;/g, ''))}>
+              Auto-Fix for C
+            </button>
+          </div>
+        </div>
+      )}
+
       <div style={{ display: 'flex', flexDirection: isMobile ? 'column' : 'row', flex: 1, overflow: 'hidden' }}>
         {!isDebugStarted ? (
           <>
@@ -619,10 +635,20 @@ const LineDebugger = ({ initialCode, lang: initialLang, fontSize, wordWrap, onBa
               </div>
             </div>
             {!isMobile && (
-              <div style={{ flex: 1, display: 'flex', flexDirection: 'column', overflow: 'hidden', background: '#e8ecf0', minWidth: '350px' }}>
-                <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', height: '100%', color: '#888', fontStyle: 'italic', fontSize: '0.9rem', padding: '2rem' }}>
-                  <div style={{ fontSize: '2.5rem', marginBottom: '10px' }}>🔍</div>
-                  Click "Start Debug" to trace execution
+              <div style={{ flex: 1, display: 'flex', flexDirection: 'column', overflow: 'hidden', background: '#e8ecf0', minWidth: '350px', padding: '2rem', alignItems: 'center', justifyContent: 'center' }}>
+                <div style={{ fontSize: '3rem', marginBottom: '10px' }}>🔍</div>
+                <h3 style={{ color: '#334155', margin: '0 0 8px 0', fontSize: '1.2rem', fontWeight: 'bold' }}>Line-by-Line Execution Engine</h3>
+                <p style={{ color: '#64748b', fontSize: '0.88rem', textAlign: 'center', maxWidth: '380px', margin: '0 0 1.5rem 0', lineHeight: '1.5' }}>
+                  Click <strong>"▶ Start Debug"</strong> above to trace your C/C++/Java/Python/JS code line-by-line!
+                </p>
+
+                <div style={{ background: '#ffffff', border: '1px solid #cbd5e1', borderRadius: '10px', padding: '14px 18px', maxWidth: '420px', boxShadow: '0 4px 12px rgba(0,0,0,0.05)' }}>
+                  <div style={{ display: 'flex', alignItems: 'center', gap: '8px', color: '#1e293b', fontWeight: 'bold', fontSize: '0.88rem', marginBottom: '6px' }}>
+                    <span>ℹ️</span> Execution Engine Guidance
+                  </div>
+                  <p style={{ color: '#475569', fontSize: '0.8rem', margin: 0, lineHeight: '1.5' }}>
+                    We apologize for any inconvenience if a specific complex code snippet cannot be visualised line-by-line due to cloud execution limits (e.g. C++ headers in C mode or 5,500 bytes max limit). You can always copy full C/C++ code or execute it in our <strong>Sandboxed Code Runner</strong>!
+                  </p>
                 </div>
               </div>
             )}
