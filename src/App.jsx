@@ -1862,17 +1862,18 @@ function App() {
 
   useEffect(() => {
     const handleHashChange = () => {
-      const hash = window.location.hash.replace('#', '');
-      if (hash === '') {
-        setAppMode(null);
-      } else if (['MAIN_VIS', 'CODE_VAL_VIS', 'LINE_BY_LINE_VIS', 'SORT_SEARCH_VIS', 'GENERAL_DSA_VIS', 'GRAPH_VIS', 'DP_GREEDY_VIS'].includes(hash)) {
+      const hash = window.location.hash.replace('#', '').replace(/^\//, '').trim();
+      const validModes = ['MAIN_VIS', 'CODE_VAL_VIS', 'LINE_BY_LINE_VIS', 'SORT_SEARCH_VIS', 'GENERAL_DSA_VIS', 'GRAPH_VIS', 'DP_GREEDY_VIS'];
+      if (validModes.includes(hash)) {
         setAppMode(hash);
         const isStandalone = ['SORT_SEARCH_VIS', 'GENERAL_DSA_VIS', 'GRAPH_VIS', 'DP_GREEDY_VIS'].includes(hash);
         if (isStandalone) setSetupComplete(true);
+      } else {
+        setAppMode(null);
       }
     };
     window.addEventListener('hashchange', handleHashChange);
-    if (window.location.hash) handleHashChange();
+    handleHashChange();
     return () => window.removeEventListener('hashchange', handleHashChange);
   }, []);
 
