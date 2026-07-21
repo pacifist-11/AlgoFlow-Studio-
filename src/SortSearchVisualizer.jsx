@@ -1487,12 +1487,9 @@ const SortSearchVisualizer = ({ onBack, openSettings, initialTab = 'Sort', initi
               <span style={{ fontSize: '0.85rem', color: 'var(--text-secondary)', marginLeft: isMobile ? '5px' : '15px', fontWeight: 'bold', fontFamily: 'monospace' }}>Step: {timeline.length ? currentStep + 1 : 0}/{timeline.length}</span>
             </div>
 
-            <div style={{ display: 'flex', alignItems: 'center', gap: '8px', width: isMobile ? '100%' : 'auto', justifyContent: 'center', flexWrap: 'wrap' }}>
+            <div style={{ display: 'flex', alignItems: 'center', gap: '8px', width: isMobile ? '100%' : 'auto', justifyContent: 'center' }}>
               <span style={{ color: 'var(--text-secondary)', fontWeight: 600, fontSize: '0.82rem', whiteSpace: 'nowrap' }}>Speed ({speed}ms)</span>
-              <input type="range" min={50} max={3500} step={50} value={3550 - speed} onChange={e => setSpeed(3550 - Number(e.target.value))} style={{ width: isMobile ? '100%' : '140px', accentColor: 'var(--accent-primary)', cursor: 'pointer' }} title={`Delay: ${speed}ms`}/>
-              <button type="button" className="btn btn-clear" style={{ padding: '2px 6px', fontSize: '0.75rem' }} onClick={() => setSpeed(2500)}>🐢 Very Slow</button>
-              <button type="button" className="btn btn-clear" style={{ padding: '2px 6px', fontSize: '0.75rem' }} onClick={() => setSpeed(1200)}>🚶 Slow</button>
-              <button type="button" className="btn btn-clear" style={{ padding: '2px 6px', fontSize: '0.75rem' }} onClick={() => setSpeed(300)}>⚡ Fast</button>
+              <input type="range" min={50} max={3500} step={50} value={3550 - speed} onChange={e => setSpeed(3550 - Number(e.target.value))} style={{ width: isMobile ? '100%' : '160px', accentColor: 'var(--accent-primary)', cursor: 'pointer' }} title={`Delay: ${speed}ms`}/>
             </div>
           </div>
 

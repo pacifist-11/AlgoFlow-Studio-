@@ -282,7 +282,7 @@ const DPGreedyVisualizer = ({ onBack, openSettings, initialTab = 'LCS', onCopyCo
       const currentX = ev.type.startsWith('touch') ? ev.touches[0].clientX : ev.clientX;
       setCodeWidth(Math.max(200, Math.min(startW + (startX - currentX), window.innerWidth - 300)));
     };
-    const end  = () => {
+    const end = () => {
       document.removeEventListener('mousemove', drag);
       document.removeEventListener('mouseup', end);
       document.removeEventListener('touchmove', drag);
@@ -306,13 +306,13 @@ const DPGreedyVisualizer = ({ onBack, openSettings, initialTab = 'LCS', onCopyCo
     }
     const m = s2.length; // rows (Y)
     const n = s1.length; // cols (X)
-    
+
     // dp initialized
     let dp = Array.from({ length: m + 1 }, () => Array(n + 1).fill(0));
     let arrows = Array.from({ length: m + 1 }, () => Array(n + 1).fill(null));
     let frames = [];
     let logs = ["Initial DP table of size (S2.length + 1) x (S1.length + 1) filled with 0."];
-    
+
     frames.push({
       dp: Array.from(dp, r => [...r]),
       arrows: Array.from(arrows, r => [...r]),
@@ -327,17 +327,17 @@ const DPGreedyVisualizer = ({ onBack, openSettings, initialTab = 'LCS', onCopyCo
 
     for (let i = 1; i <= m; i++) {
       for (let j = 1; j <= n; j++) {
-        logs.push(`Comparing X[${j-1}]='${s1[j-1]}' with Y[${i-1}]='${s2[i-1]}'`);
-        
-        let match = s1[j-1] === s2[i-1];
+        logs.push(`Comparing X[${j - 1}]='${s1[j - 1]}' with Y[${i - 1}]='${s2[i - 1]}'`);
+
+        let match = s1[j - 1] === s2[i - 1];
         if (match) {
           dp[i][j] = dp[i - 1][j - 1] + 1;
           arrows[i][j] = 'diag';
-          logs.push(`➜ Match! dp[${i}][${j}] = dp[${i-1}][${j-1}] + 1 = ${dp[i][j]}`);
+          logs.push(`➜ Match! dp[${i}][${j}] = dp[${i - 1}][${j - 1}] + 1 = ${dp[i][j]}`);
         } else {
           dp[i][j] = Math.max(dp[i - 1][j], dp[i][j - 1]);
           arrows[i][j] = dp[i - 1][j] >= dp[i][j - 1] ? 'top' : 'left';
-          logs.push(`➜ Mismatch. dp[${i}][${j}] = max(dp[${i-1}][${j}], dp[${i}][${j-1}]) = ${dp[i][j]}`);
+          logs.push(`➜ Mismatch. dp[${i}][${j}] = max(dp[${i - 1}][${j}], dp[${i}][${j - 1}]) = ${dp[i][j]}`);
         }
 
         frames.push({
@@ -349,9 +349,9 @@ const DPGreedyVisualizer = ({ onBack, openSettings, initialTab = 'LCS', onCopyCo
           backtrackPath: [],
           lcsStr: '',
           logs: [...logs],
-          msg: match 
-            ? `Characters match! Increment diagonal: dp[${i}][${j}] = dp[${i-1}][${j-1}] + 1 = ${dp[i][j]}`
-            : `Characters mismatch. Take max of Top and Left: dp[${i}][${j}] = max(${dp[i-1][j]}, ${dp[i][j-1]}) = ${dp[i][j]}`
+          msg: match
+            ? `Characters match! Increment diagonal: dp[${i}][${j}] = dp[${i - 1}][${j - 1}] + 1 = ${dp[i][j]}`
+            : `Characters mismatch. Take max of Top and Left: dp[${i}][${j}] = max(${dp[i - 1][j]}, ${dp[i][j - 1]}) = ${dp[i][j]}`
         });
       }
     }
@@ -367,7 +367,7 @@ const DPGreedyVisualizer = ({ onBack, openSettings, initialTab = 'LCS', onCopyCo
       path.push([r, c]);
       if (s2[r - 1] === s1[c - 1]) {
         lcsResult.unshift(s1[c - 1]);
-        logs.push(`➜ Match '${s1[c-1]}' at Y[${r-1}], X[${c-1}]. Add to LCS. Move Diagonally Up-Left.`);
+        logs.push(`➜ Match '${s1[c - 1]}' at Y[${r - 1}], X[${c - 1}]. Add to LCS. Move Diagonally Up-Left.`);
         frames.push({
           dp: Array.from(dp, row => [...row]),
           arrows: Array.from(arrows, row => [...row]),
@@ -377,13 +377,13 @@ const DPGreedyVisualizer = ({ onBack, openSettings, initialTab = 'LCS', onCopyCo
           backtrackPath: [...path],
           lcsStr: lcsResult.join(''),
           logs: [...logs],
-          msg: `Match '${s1[c-1]}'! Move to diagonal cell dp[${r-1}][${c-1}].`
+          msg: `Match '${s1[c - 1]}'! Move to diagonal cell dp[${r - 1}][${c - 1}].`
         });
         r--;
         c--;
       } else {
         if (dp[r - 1][c] >= dp[r][c - 1]) {
-          logs.push(`➜ dp[${r-1}][${c}] (${dp[r-1][c]}) >= dp[${r}][${c-1}] (${dp[r][c-1]}). Move Up.`);
+          logs.push(`➜ dp[${r - 1}][${c}] (${dp[r - 1][c]}) >= dp[${r}][${c - 1}] (${dp[r][c - 1]}). Move Up.`);
           frames.push({
             dp: Array.from(dp, row => [...row]),
             arrows: Array.from(arrows, row => [...row]),
@@ -393,11 +393,11 @@ const DPGreedyVisualizer = ({ onBack, openSettings, initialTab = 'LCS', onCopyCo
             backtrackPath: [...path],
             lcsStr: lcsResult.join(''),
             logs: [...logs],
-            msg: `Mismatch. Value at Top (${dp[r-1][c]}) >= Left (${dp[r][c-1]}). Move Up.`
+            msg: `Mismatch. Value at Top (${dp[r - 1][c]}) >= Left (${dp[r][c - 1]}). Move Up.`
           });
           r--;
         } else {
-          logs.push(`➜ dp[${r-1}][${c}] (${dp[r-1][c]}) < dp[${r}][${c-1}] (${dp[r][c-1]}). Move Left.`);
+          logs.push(`➜ dp[${r - 1}][${c}] (${dp[r - 1][c]}) < dp[${r}][${c - 1}] (${dp[r][c - 1]}). Move Left.`);
           frames.push({
             dp: Array.from(dp, row => [...row]),
             arrows: Array.from(arrows, row => [...row]),
@@ -407,7 +407,7 @@ const DPGreedyVisualizer = ({ onBack, openSettings, initialTab = 'LCS', onCopyCo
             backtrackPath: [...path],
             lcsStr: lcsResult.join(''),
             logs: [...logs],
-            msg: `Mismatch. Value at Left (${dp[r][c-1]}) > Top (${dp[r-1][c]}). Move Left.`
+            msg: `Mismatch. Value at Left (${dp[r][c - 1]}) > Top (${dp[r - 1][c]}). Move Left.`
           });
           c--;
         }
@@ -461,10 +461,10 @@ const DPGreedyVisualizer = ({ onBack, openSettings, initialTab = 'LCS', onCopyCo
       logs.push(`Computing LIS for element arr[${i}] = ${raw[i]}`);
       for (let j = 0; j < i; j++) {
         logs.push(`  Comparing with arr[${j}] = ${raw[j]}`);
-        
+
         let possibleUpdate = false;
         let didUpdate = false;
-        
+
         if (raw[i] > raw[j]) {
           possibleUpdate = true;
           if (dp[j] + 1 > dp[i]) {
@@ -475,7 +475,7 @@ const DPGreedyVisualizer = ({ onBack, openSettings, initialTab = 'LCS', onCopyCo
         }
 
         logs.push(
-          possibleUpdate 
+          possibleUpdate
             ? `  ➜ arr[i] > arr[j] (${raw[i]} > ${raw[j]}). ` + (didUpdate ? `Update dp[${i}] = dp[${j}] + 1 = ${dp[i]}` : `No update, dp[${i}] already >= dp[${j}]+1`)
             : `  ➜ arr[i] <= arr[j] (${raw[i]} <= ${raw[j]}). No sequence possible.`
         );
@@ -488,9 +488,9 @@ const DPGreedyVisualizer = ({ onBack, openSettings, initialTab = 'LCS', onCopyCo
           backtrackPath: [],
           logs: [...logs],
           msg: possibleUpdate
-            ? (didUpdate 
-                ? `Since ${raw[i]} > ${raw[j]}, LIS ending at index ${i} is updated using index ${j}: dp[${i}] = ${dp[i]}`
-                : `Checked index ${j}. No update since current dp[${i}] (${dp[i]}) is already optimal.`)
+            ? (didUpdate
+              ? `Since ${raw[i]} > ${raw[j]}, LIS ending at index ${i} is updated using index ${j}: dp[${i}] = ${dp[i]}`
+              : `Checked index ${j}. No update since current dp[${i}] (${dp[i]}) is already optimal.`)
             : `Cannot append ${raw[i]} after ${raw[j]} since it is not strictly increasing.`
         });
       }
@@ -507,7 +507,7 @@ const DPGreedyVisualizer = ({ onBack, openSettings, initialTab = 'LCS', onCopyCo
     }
 
     logs.push(`Maximum LIS length found is ${maxLen} ending at index ${maxIdx}. Reconstructing path...`);
-    
+
     let path = [];
     let curr = maxIdx;
     while (curr !== -1) {
@@ -581,10 +581,10 @@ const DPGreedyVisualizer = ({ onBack, openSettings, initialTab = 'LCS', onCopyCo
           let incl = item.val + dp[i - 1][w - item.wt];
           let excl = dp[i - 1][w];
           dp[i][w] = Math.max(incl, excl);
-          logs.push(`  dp[${i}][${w}] = max(Value(${item.val}) + dp[${i-1}][${w - item.wt}] (${dp[i-1][w - item.wt]}), dp[${i-1}][${w}] (${excl})) = ${dp[i][w]}`);
+          logs.push(`  dp[${i}][${w}] = max(Value(${item.val}) + dp[${i - 1}][${w - item.wt}] (${dp[i - 1][w - item.wt]}), dp[${i - 1}][${w}] (${excl})) = ${dp[i][w]}`);
         } else {
           dp[i][w] = dp[i - 1][w];
-          logs.push(`  Weight (${item.wt}) > capacity (${w}). Carry over top cell dp[${i-1}][${w}] = ${dp[i][w]}`);
+          logs.push(`  Weight (${item.wt}) > capacity (${w}). Carry over top cell dp[${i - 1}][${w}] = ${dp[i][w]}`);
         }
 
         frames.push({
@@ -597,9 +597,9 @@ const DPGreedyVisualizer = ({ onBack, openSettings, initialTab = 'LCS', onCopyCo
           greedyValue: 0,
           backtrackPath01: [],
           logs: [...logs],
-          msg: item.wt <= w 
+          msg: item.wt <= w
             ? `Evaluate inclusion vs exclusion for capacity ${w}. dp[${i}][${w}] = max(${item.val} + ${dp[i - 1][w - item.wt]}, ${dp[i - 1][w]}) = ${dp[i][w]}`
-            : `Item is too heavy (${item.wt} > ${w}) for this sub-capacity. Copy top cell: dp[${i}][${w}] = ${dp[i-1][w]}`
+            : `Item is too heavy (${item.wt} > ${w}) for this sub-capacity. Copy top cell: dp[${i}][${w}] = ${dp[i - 1][w]}`
         });
       }
     }
@@ -611,12 +611,12 @@ const DPGreedyVisualizer = ({ onBack, openSettings, initialTab = 'LCS', onCopyCo
     for (let i = n; i > 0; i--) {
       if (dp[i][wtLeft] !== dp[i - 1][wtLeft]) {
         chosen01.push(i - 1);
-        logs.push(`➜ Included Item ${i} (Value: ${knapItems[i-1].val}, Weight: ${knapItems[i-1].wt})`);
+        logs.push(`➜ Included Item ${i} (Value: ${knapItems[i - 1].val}, Weight: ${knapItems[i - 1].wt})`);
         wtLeft -= knapItems[i - 1].wt;
         frames.push({
           dp: Array.from(dp, r => [...r]),
           i,
-          w: wtLeft + knapItems[i-1].wt,
+          w: wtLeft + knapItems[i - 1].wt,
           activeCell: null,
           greedyItems: [],
           greedyWeight: 0,
@@ -676,7 +676,7 @@ const DPGreedyVisualizer = ({ onBack, openSettings, initialTab = 'LCS', onCopyCo
         greedyVisualList[i].fraction = 1;
         greedyVisualList[i].selected = true;
         logs.push(`➜ Fits fully! Total Value: ${currentValue.toFixed(1)}, Weight: ${currentWeight}/${cap}`);
-        
+
         frames.push({
           dp: Array.from(dp, r => [...r]),
           i: -1,
@@ -697,7 +697,7 @@ const DPGreedyVisualizer = ({ onBack, openSettings, initialTab = 'LCS', onCopyCo
           greedyVisualList[i].fraction = fraction;
           greedyVisualList[i].selected = true;
           logs.push(`➜ Fits partially! Taken fraction: ${fraction.toFixed(2)} (${remain}/${item.wt}). Total Value: ${currentValue.toFixed(1)}, Weight: ${currentWeight}/${cap}`);
-          
+
           frames.push({
             dp: Array.from(dp, r => [...r]),
             i: -1,
@@ -770,8 +770,8 @@ const DPGreedyVisualizer = ({ onBack, openSettings, initialTab = 'LCS', onCopyCo
   // -------------------------------------------------------------
   const solveCoinChange = () => {
     const target = parseInt(coinTarget);
-    const coins = coinInput.split(',').map(v => parseInt(v.trim())).filter(v => !isNaN(v)).sort((a,b)=>a-b);
-    
+    const coins = coinInput.split(',').map(v => parseInt(v.trim())).filter(v => !isNaN(v)).sort((a, b) => a - b);
+
     if (isNaN(target) || target <= 0) {
       alert("Please enter a valid target amount.");
       return;
@@ -821,7 +821,7 @@ const DPGreedyVisualizer = ({ onBack, openSettings, initialTab = 'LCS', onCopyCo
             greedyCoins: [],
             greedyRemaining: target,
             logs: [...logs],
-            msg: updated 
+            msg: updated
               ? `Sub-amount ${a} updated! Coin ${coin} fits. dp[${a}] = min(${current}, dp[${a - coin}] + 1) = ${dp[a]}`
               : `Checked coin ${coin} for amount ${a}. Current dp[${a}] (${current}) is already optimal.`
           });
@@ -846,7 +846,7 @@ const DPGreedyVisualizer = ({ onBack, openSettings, initialTab = 'LCS', onCopyCo
     let sortedCoins = [...coins].sort((a, b) => b - a); // descending
     let remain = target;
     let greedyCoinsSelected = [];
-    
+
     frames.push({
       dp: [...dp],
       currAmount: -1,
@@ -963,16 +963,16 @@ const DPGreedyVisualizer = ({ onBack, openSettings, initialTab = 'LCS', onCopyCo
             </div>
           )}
         </div>
-        
+
         <div style={{ display: 'inline-block', margin: 'auto' }}>
           <table style={{ borderCollapse: 'collapse', color: 'white', fontFamily: 'sans-serif' }}>
             <thead>
               <tr>
                 <th style={{ width: '45px', height: '45px', border: '1px solid var(--glass-border)' }}></th>
                 {s1.split('').map((char, idx) => (
-                  <th key={idx} style={{ 
-                    width: '45px', height: '45px', 
-                    border: '1px solid var(--glass-border)', 
+                  <th key={idx} style={{
+                    width: '45px', height: '45px',
+                    border: '1px solid var(--glass-border)',
                     background: idx === currentFrame.j ? 'rgba(59, 130, 246, 0.3)' : 'rgba(255,255,255,0.02)',
                     color: idx === currentFrame.j ? '#3b82f6' : 'var(--text-secondary)',
                     fontWeight: 'bold', fontSize: '1rem'
@@ -985,9 +985,9 @@ const DPGreedyVisualizer = ({ onBack, openSettings, initialTab = 'LCS', onCopyCo
             <tbody>
               {s2.split('').map((char, r) => (
                 <tr key={r}>
-                  <td style={{ 
-                    width: '45px', height: '45px', 
-                    border: '1px solid var(--glass-border)', 
+                  <td style={{
+                    width: '45px', height: '45px',
+                    border: '1px solid var(--glass-border)',
                     background: r === currentFrame.i ? 'rgba(236, 72, 153, 0.3)' : 'rgba(255,255,255,0.02)',
                     color: r === currentFrame.i ? '#ec4899' : 'var(--text-secondary)',
                     fontWeight: 'bold', textAlign: 'center', fontSize: '1rem'
@@ -1014,16 +1014,16 @@ const DPGreedyVisualizer = ({ onBack, openSettings, initialTab = 'LCS', onCopyCo
                     }
 
                     return (
-                      <td key={c} style={{ 
-                        width: '45px', height: '45px', 
-                        border, background: bg, 
+                      <td key={c} style={{
+                        width: '45px', height: '45px',
+                        border, background: bg,
                         textAlign: 'center', position: 'relative',
                         transition: 'all 0.2s ease', transform: scale
                       }}>
                         <div style={{ fontWeight: 600, fontSize: '1.05rem', color: inPath ? '#34d399' : 'white' }}>{cellVal}</div>
                         {arrow && (
-                          <div style={{ 
-                            position: 'absolute', top: '2px', left: '2px', 
+                          <div style={{
+                            position: 'absolute', top: '2px', left: '2px',
                             fontSize: '0.65rem', opacity: inPath ? 1 : 0.4,
                             color: inPath ? '#34d399' : 'var(--text-secondary)'
                           }}>
@@ -1093,8 +1093,8 @@ const DPGreedyVisualizer = ({ onBack, openSettings, initialTab = 'LCS', onCopyCo
 
               return (
                 <div key={idx} style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: '6px' }}>
-                  <div style={{ 
-                    width: '60px', height: '60px', 
+                  <div style={{
+                    width: '60px', height: '60px',
                     borderRadius: '12px', border, background: bg,
                     display: 'flex', alignItems: 'center', justifyContent: 'center',
                     fontSize: '1.2rem', fontWeight: 'bold', color: inPath ? '#34d399' : 'white',
@@ -1131,8 +1131,8 @@ const DPGreedyVisualizer = ({ onBack, openSettings, initialTab = 'LCS', onCopyCo
                 }
 
                 return (
-                  <div key={idx} style={{ 
-                    width: '60px', height: '40px', 
+                  <div key={idx} style={{
+                    width: '60px', height: '40px',
                     borderRadius: '8px', border, background: bg,
                     display: 'flex', alignItems: 'center', justifyContent: 'center',
                     fontSize: '1.1rem', fontWeight: 600, color, transition: 'all 0.2s'
@@ -1161,7 +1161,7 @@ const DPGreedyVisualizer = ({ onBack, openSettings, initialTab = 'LCS', onCopyCo
 
     return (
       <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', height: '100%', gap: '1.5rem', padding: '1rem', overflowY: 'auto' }}>
-        
+
         {/* Left Side: 0/1 Knapsack (DP Table) */}
         <div style={{ display: 'flex', flexDirection: 'column', background: 'rgba(255,255,255,0.01)', border: '1px solid var(--glass-border)', borderRadius: '12px', padding: '1rem' }}>
           <h3 className="title-gradient" style={{ fontSize: '1.1rem', marginBottom: '0.8rem', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
@@ -1179,8 +1179,8 @@ const DPGreedyVisualizer = ({ onBack, openSettings, initialTab = 'LCS', onCopyCo
                 <tr>
                   <th style={{ border: '1px solid var(--glass-border)', padding: '6px', color: 'var(--text-secondary)' }}>Item</th>
                   {Array.from({ length: knapCapacity + 1 }, (_, capIdx) => (
-                    <th key={capIdx} style={{ 
-                      border: '1px solid var(--glass-border)', padding: '6px', 
+                    <th key={capIdx} style={{
+                      border: '1px solid var(--glass-border)', padding: '6px',
                       background: capIdx === w ? 'rgba(59, 130, 246, 0.2)' : 'transparent',
                       color: capIdx === w ? '#3b82f6' : 'var(--text-secondary)', width: '32px', textAlign: 'center'
                     }}>
@@ -1194,8 +1194,8 @@ const DPGreedyVisualizer = ({ onBack, openSettings, initialTab = 'LCS', onCopyCo
                   const it = r > 0 ? knapItems[r - 1] : null;
                   return (
                     <tr key={r}>
-                      <td style={{ 
-                        border: '1px solid var(--glass-border)', padding: '6px', 
+                      <td style={{
+                        border: '1px solid var(--glass-border)', padding: '6px',
                         background: r === i ? 'rgba(236, 72, 153, 0.2)' : 'transparent',
                         color: r === i ? '#ec4899' : 'var(--text-secondary)',
                         whiteSpace: 'nowrap'
@@ -1217,8 +1217,8 @@ const DPGreedyVisualizer = ({ onBack, openSettings, initialTab = 'LCS', onCopyCo
                         }
 
                         return (
-                          <td key={c} style={{ 
-                            border, padding: '6px', background: cellBg, 
+                          <td key={c} style={{
+                            border, padding: '6px', background: cellBg,
                             textAlign: 'center', fontWeight: (isActive || isChosen) ? 'bold' : 'normal',
                             color: isChosen ? '#34d399' : 'white'
                           }}>
@@ -1256,8 +1256,8 @@ const DPGreedyVisualizer = ({ onBack, openSettings, initialTab = 'LCS', onCopyCo
                     bg = 'rgba(16, 185, 129, 0.15)';
                   }
                   return (
-                    <div key={idx} style={{ 
-                      border, background: bg, borderRadius: '8px', 
+                    <div key={idx} style={{
+                      border, background: bg, borderRadius: '8px',
                       padding: '6px', textAlign: 'center', fontSize: '0.78rem',
                       display: 'flex', flexDirection: 'column', gap: '2px'
                     }}>
@@ -1282,15 +1282,15 @@ const DPGreedyVisualizer = ({ onBack, openSettings, initialTab = 'LCS', onCopyCo
                   {greedyWeight.toFixed(1)} / {knapCapacity}
                 </strong>
               </div>
-              <div style={{ 
-                height: '35px', width: '100%', 
-                background: 'rgba(0,0,0,0.2)', border: '1.5px solid var(--glass-border)', 
+              <div style={{
+                height: '35px', width: '100%',
+                background: 'rgba(0,0,0,0.2)', border: '1.5px solid var(--glass-border)',
                 borderRadius: '10px', display: 'flex', overflow: 'hidden', position: 'relative'
               }}>
                 {greedyItems.filter(i => i.fraction > 0).map((item, idx) => {
                   const widthPct = ((item.wt * item.fraction) / knapCapacity) * 100;
                   return (
-                    <div key={idx} style={{ 
+                    <div key={idx} style={{
                       width: `${widthPct}%`, height: '100%',
                       background: `linear-gradient(to right, rgba(59, 130, 246, 0.7), rgba(139, 92, 246, 0.7))`,
                       borderRight: '1px solid rgba(255,255,255,0.2)',
@@ -1331,7 +1331,7 @@ const DPGreedyVisualizer = ({ onBack, openSettings, initialTab = 'LCS', onCopyCo
 
     return (
       <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', height: '100%', gap: '1.5rem', padding: '1rem', overflowY: 'auto' }}>
-        
+
         {/* Left Side: Dynamic Programming array */}
         <div style={{ display: 'flex', flexDirection: 'column', background: 'rgba(255,255,255,0.01)', border: '1px solid var(--glass-border)', borderRadius: '12px', padding: '1.2rem' }}>
           <h3 className="title-gradient" style={{ fontSize: '1.1rem', marginBottom: '0.8rem', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
@@ -1358,8 +1358,8 @@ const DPGreedyVisualizer = ({ onBack, openSettings, initialTab = 'LCS', onCopyCo
               }
 
               return (
-                <div key={idx} style={{ 
-                  width: '42px', height: '55px', 
+                <div key={idx} style={{
+                  width: '42px', height: '55px',
                   borderRadius: '8px', border, background: bg,
                   display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center',
                   transition: 'all 0.15s ease'
@@ -1390,9 +1390,9 @@ const DPGreedyVisualizer = ({ onBack, openSettings, initialTab = 'LCS', onCopyCo
             </div>
 
             {isSuboptimal && (
-              <div style={{ 
-                background: 'rgba(239, 68, 68, 0.15)', border: '1.5px solid rgba(239, 68, 68, 0.3)', 
-                borderRadius: '8px', padding: '8px 12px', color: '#f87171', fontSize: '0.78rem', lineHeight: '1.4' 
+              <div style={{
+                background: 'rgba(239, 68, 68, 0.15)', border: '1.5px solid rgba(239, 68, 68, 0.3)',
+                borderRadius: '8px', padding: '8px 12px', color: '#f87171', fontSize: '0.78rem', lineHeight: '1.4'
               }}>
                 ⚠️ <strong>Sub-optimal greedy result!</strong> Greedy picked {greedyOptimalCount} coins, but the optimal DP solution only needs {dpOptimalCount} coins.
               </div>
@@ -1400,15 +1400,15 @@ const DPGreedyVisualizer = ({ onBack, openSettings, initialTab = 'LCS', onCopyCo
 
             <div style={{ display: 'flex', flexDirection: 'column', gap: '6px' }}>
               <div style={{ fontSize: '0.8rem', color: 'var(--text-secondary)', fontWeight: 600 }}>Selected Coins in Bag:</div>
-              <div style={{ 
-                minHeight: '75px', width: '100%', 
-                background: 'rgba(0,0,0,0.2)', border: '1.5px dashed var(--glass-border)', 
+              <div style={{
+                minHeight: '75px', width: '100%',
+                background: 'rgba(0,0,0,0.2)', border: '1.5px dashed var(--glass-border)',
                 borderRadius: '12px', display: 'flex', flexWrap: 'wrap', gap: '8px', padding: '10px',
                 alignItems: 'center', justifyContent: 'center'
               }}>
                 {greedyCoins.map((coin, idx) => (
-                  <div key={idx} style={{ 
-                    width: '35px', height: '35px', 
+                  <div key={idx} style={{
+                    width: '35px', height: '35px',
                     borderRadius: '50%', background: 'linear-gradient(135deg, #fcd34d, #fbbf24)',
                     border: '1px solid #d97706', display: 'flex', alignItems: 'center', justifyContent: 'center',
                     color: '#78350f', fontWeight: 'bold', fontSize: '0.9rem',
@@ -1431,7 +1431,7 @@ const DPGreedyVisualizer = ({ onBack, openSettings, initialTab = 'LCS', onCopyCo
 
   return (
     <div className="app-container" style={{ height: '100vh', display: 'flex', flexDirection: 'column', overflow: 'hidden' }}>
-      
+
       {/* HEADER SECTION */}
       <header className="header-glass">
         <div style={{ display: 'flex', alignItems: 'center', gap: '15px' }}>
@@ -1447,7 +1447,7 @@ const DPGreedyVisualizer = ({ onBack, openSettings, initialTab = 'LCS', onCopyCo
             { id: 'Knapsack', name: '🎒 Knapsack' },
             { id: 'CoinChange', name: '🪙 Coin Change' }
           ].map(tab => (
-            <button 
+            <button
               key={tab.id}
               onClick={() => setActiveTab(tab.id)}
               style={{
@@ -1461,6 +1461,15 @@ const DPGreedyVisualizer = ({ onBack, openSettings, initialTab = 'LCS', onCopyCo
               {tab.name}
             </button>
           ))}
+          <button 
+            type="button" 
+            className="btn btn-clear" 
+            style={{ padding: '4px 10px', fontSize: '0.85rem', fontWeight: 'bold', display: 'flex', alignItems: 'center', gap: '4px', background: 'rgba(0, 229, 255, 0.1)', border: '1px solid var(--accent-primary)', color: 'var(--accent-primary)', borderRadius: '8px', cursor: 'pointer' }}
+            onClick={() => setShowTopicInfo(true)}
+            title="Learn about this algorithm (Beginner Guide)"
+          >
+            ℹ️ Info
+          </button>
         </div>
 
         {/* Action Controls */}
@@ -1477,10 +1486,10 @@ const DPGreedyVisualizer = ({ onBack, openSettings, initialTab = 'LCS', onCopyCo
 
       {/* INPUT PANEL AND RUN BUTTONS */}
       <div style={{ display: 'flex', padding: '10px 20px', background: 'rgba(15, 23, 42, 0.3)', borderBottom: '1px solid var(--glass-border)', alignItems: 'center', justifyContent: 'space-between', gap: '15px', flexShrink: 0 }}>
-        
+
         {/* Dynamic Inputs based on selected Tab */}
         <div style={{ display: 'flex', gap: '12px', alignItems: 'center', flex: 1 }}>
-          
+
           {activeTab === 'LCS' && (
             <>
               <div style={{ display: 'flex', alignItems: 'center', gap: '6px' }}>
@@ -1511,7 +1520,7 @@ const DPGreedyVisualizer = ({ onBack, openSettings, initialTab = 'LCS', onCopyCo
                 <span style={{ fontSize: '0.82rem', color: 'var(--text-secondary)' }}>Capacity:</span>
                 <input type="number" className="styled-input" style={{ width: '65px', padding: '5px 8px', fontSize: '0.88rem' }} value={knapCapacity} onChange={e => { setKnapCapacity(parseInt(e.target.value) || 0); handleReset(); }} />
               </div>
-              
+
               {/* Item Manager */}
               <div style={{ display: 'flex', gap: '5px', alignItems: 'center', borderRight: '1px solid var(--glass-border)', paddingRight: '15px' }}>
                 <input type="number" className="styled-input" style={{ width: '70px', padding: '5px 8px', fontSize: '0.85rem' }} placeholder="Val" value={newItemVal} onChange={e => setNewItemVal(e.target.value)} />
@@ -1522,9 +1531,9 @@ const DPGreedyVisualizer = ({ onBack, openSettings, initialTab = 'LCS', onCopyCo
               {/* Items Pill List */}
               <div style={{ display: 'flex', gap: '6px', overflowX: 'auto', flex: 1, maxWidth: '400px' }}>
                 {knapItems.map(item => (
-                  <div key={item.id} style={{ 
-                    display: 'flex', alignItems: 'center', gap: '4px', background: 'rgba(255,255,255,0.04)', 
-                    border: '1px solid var(--glass-border)', borderRadius: '20px', padding: '2px 8px', fontSize: '0.75rem' 
+                  <div key={item.id} style={{
+                    display: 'flex', alignItems: 'center', gap: '4px', background: 'rgba(255,255,255,0.04)',
+                    border: '1px solid var(--glass-border)', borderRadius: '20px', padding: '2px 8px', fontSize: '0.75rem'
                   }}>
                     <span>I{item.id} (W:{item.wt}, V:{item.val})</span>
                     <button style={{ background: 'transparent', border: 'none', color: '#f87171', cursor: 'pointer', fontWeight: 'bold' }} onClick={() => handleRemoveItem(item.id)}>✕</button>
@@ -1553,28 +1562,25 @@ const DPGreedyVisualizer = ({ onBack, openSettings, initialTab = 'LCS', onCopyCo
         </div>
 
         {/* Speed / Media control summary */}
-        <div style={{ display: 'flex', alignItems: 'center', gap: '8px', flexWrap: 'wrap' }}>
+        <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
           <span style={{ fontSize: '0.8rem', color: 'var(--text-secondary)' }}>Speed ({speed}ms):</span>
-          <input 
-            type="range" min="100" max="3500" step="50" 
+          <input
+            type="range" min="100" max="3500" step="50"
             value={speed} onChange={e => setSpeed(parseInt(e.target.value))}
-            style={{ width: '85px', accentColor: 'var(--accent-primary)', cursor: 'pointer' }}
+            style={{ width: '120px', accentColor: 'var(--accent-primary)', cursor: 'pointer' }}
             title={`Delay: ${speed}ms`}
           />
-          <button type="button" className="btn btn-clear" style={{ padding: '2px 6px', fontSize: '0.75rem' }} onClick={() => setSpeed(2500)}>🐢 Very Slow</button>
-          <button type="button" className="btn btn-clear" style={{ padding: '2px 6px', fontSize: '0.75rem' }} onClick={() => setSpeed(1200)}>🚶 Slow</button>
-          <button type="button" className="btn btn-clear" style={{ padding: '2px 6px', fontSize: '0.75rem' }} onClick={() => setSpeed(300)}>⚡ Fast</button>
         </div>
       </div>
 
       {/* MAIN CONTENT BLOCK */}
       <div style={{ display: 'flex', flex: 1, overflow: 'hidden', position: 'relative' }}>
-        
+
         {/* VISUALIZER GRID AREA */}
         <div style={{ flex: 1, display: 'flex', flexDirection: 'column', background: 'rgba(10, 15, 30, 0.3)', position: 'relative', overflow: 'hidden' }}>
-          
+
           <div style={{ flex: 1, position: 'relative', overflow: 'hidden' }}>
-            
+
             {activeTab === 'LCS' && renderLCSGrid()}
             {activeTab === 'LIS' && renderLISGrid()}
             {activeTab === 'Knapsack' && renderKnapsackGrid()}
@@ -1582,7 +1588,7 @@ const DPGreedyVisualizer = ({ onBack, openSettings, initialTab = 'LCS', onCopyCo
 
             {/* FLOATING COMPLEXITY CARD OVERLAY */}
             {showComplexity && (
-              <div style={{ 
+              <div style={{
                 position: 'absolute', top: '15px', right: '15px', zIndex: 30,
                 width: '250px', background: 'rgba(15, 23, 42, 0.88)', border: '1.5px solid var(--glass-border)',
                 borderRadius: '12px', padding: '12px', backdropFilter: 'blur(10px)',
@@ -1619,7 +1625,7 @@ const DPGreedyVisualizer = ({ onBack, openSettings, initialTab = 'LCS', onCopyCo
 
           {/* PLAYBACK CONTROL BAR AT THE BOTTOM */}
           <div style={{ display: 'flex', padding: '12px 20px', background: 'var(--glass-bg)', borderTop: '1px solid var(--glass-border)', alignItems: 'center', justifyContent: 'space-between', gap: '15px', zIndex: 10, flexShrink: 0 }}>
-            
+
             <div style={{ display: 'flex', gap: '8px', alignItems: 'center' }}>
               <button className="btn btn-clear" style={{ padding: '6px 12px', fontSize: '0.8rem' }} onClick={() => { handleReset(); }} disabled={timeline.length === 0}>
                 🔄 Restart
@@ -1627,9 +1633,9 @@ const DPGreedyVisualizer = ({ onBack, openSettings, initialTab = 'LCS', onCopyCo
               <button className="btn btn-clear" style={{ padding: '6px 12px', fontSize: '0.8rem' }} onClick={() => { setCurrentStep(p => Math.max(0, p - 1)); }} disabled={timeline.length === 0 || currentStep === 0}>
                 ◀ Prev Step
               </button>
-              <button 
-                className="btn btn-insert" 
-                style={{ padding: '6px 16px', fontSize: '0.85rem' }} 
+              <button
+                className="btn btn-insert"
+                style={{ padding: '6px 16px', fontSize: '0.85rem' }}
                 onClick={() => setIsPlaying(!isPlaying)}
                 disabled={timeline.length === 0}
               >
@@ -1653,7 +1659,7 @@ const DPGreedyVisualizer = ({ onBack, openSettings, initialTab = 'LCS', onCopyCo
 
         {/* DRAGGABLE EXECUTION LOG PANEL OVERLAY */}
         {showLogPanel && timeline.length > 0 && (
-          <div 
+          <div
             onMouseDown={handleLogMouseDown}
             onTouchStart={handleLogMouseDown}
             style={{
@@ -1674,7 +1680,7 @@ const DPGreedyVisualizer = ({ onBack, openSettings, initialTab = 'LCS', onCopyCo
             }}
           >
             {/* Log Header handle */}
-            <div className="log-drag-handle" style={{ 
+            <div className="log-drag-handle" style={{
               padding: '10px 15px', background: 'rgba(255,255,255,0.03)', borderBottom: '1px solid var(--glass-border)',
               cursor: 'move', display: 'flex', justifyContent: 'space-between', alignItems: 'center', userSelect: 'none'
             }}>
@@ -1688,7 +1694,7 @@ const DPGreedyVisualizer = ({ onBack, openSettings, initialTab = 'LCS', onCopyCo
 
             {/* Split panel: Left for Active State Values, Right for chronological text logs */}
             <div style={{ display: 'flex', flex: 1, overflow: 'hidden' }}>
-              
+
               {/* Active State Values */}
               <div style={{ width: `${activeStateWidth}px`, borderRight: '1px solid var(--glass-border)', background: 'rgba(0,0,0,0.12)', display: 'flex', flexDirection: 'column', overflow: 'hidden' }}>
                 <div style={{ padding: '8px 12px', fontSize: '0.78rem', color: 'var(--text-secondary)', fontWeight: 600, borderBottom: '1px solid var(--glass-border)' }}>
@@ -1734,7 +1740,7 @@ const DPGreedyVisualizer = ({ onBack, openSettings, initialTab = 'LCS', onCopyCo
               </div>
 
               {/* Col Resize bar */}
-              <div 
+              <div
                 onMouseDown={handleActiveStateColDragStart}
                 onTouchStart={handleActiveStateColDragStart}
                 style={{ width: '4px', cursor: 'col-resize', background: 'transparent', hover: { background: 'var(--accent-primary)' } }}
@@ -1747,7 +1753,7 @@ const DPGreedyVisualizer = ({ onBack, openSettings, initialTab = 'LCS', onCopyCo
                 </div>
                 <div ref={logContainerRef} style={{ flex: 1, overflowY: 'auto', padding: '12px', display: 'flex', flexDirection: 'column', gap: '6px' }}>
                   {currentFrame.logs?.map((log, idx) => (
-                    <div key={idx} className="execution-log-item" style={{ 
+                    <div key={idx} className="execution-log-item" style={{
                       color: idx === currentFrame.logs.length - 1 ? 'var(--accent-primary)' : 'var(--text-primary)',
                       fontWeight: idx === currentFrame.logs.length - 1 ? 'bold' : 'normal',
                       fontSize: '0.8rem'
@@ -1769,7 +1775,7 @@ const DPGreedyVisualizer = ({ onBack, openSettings, initialTab = 'LCS', onCopyCo
             </div>
 
             {/* Resize Handle */}
-            <div 
+            <div
               onMouseDown={handleResizeMouseDown}
               onTouchStart={handleResizeMouseDown}
               style={{
@@ -1778,7 +1784,7 @@ const DPGreedyVisualizer = ({ onBack, openSettings, initialTab = 'LCS', onCopyCo
                 display: 'flex', alignItems: 'flex-end', justifyContent: 'flex-end', padding: '2px'
               }}
             >
-              <svg width="8" height="8" viewBox="0 0 8 8"><path d="M6 0 L8 0 L8 8 L0 8 L0 6 L4 6 L4 4 L6 4 Z" fill="rgba(255,255,255,0.3)"/></svg>
+              <svg width="8" height="8" viewBox="0 0 8 8"><path d="M6 0 L8 0 L8 8 L0 8 L0 6 L4 6 L4 4 L6 4 Z" fill="rgba(255,255,255,0.3)" /></svg>
             </div>
 
           </div>
@@ -1787,13 +1793,13 @@ const DPGreedyVisualizer = ({ onBack, openSettings, initialTab = 'LCS', onCopyCo
         {/* CODE PANELS / MULTILANGUAGE CODE TEMPLATES ON RIGHT */}
         {showCode && (
           <div style={{ width: `${codeWidth}px`, borderLeft: '1px solid var(--glass-border)', display: 'flex', flexDirection: 'column', background: 'var(--bg-secondary)', flexShrink: 0 }}>
-            
+
             {/* Header controls for language selection */}
             <div style={{ padding: '10px 15px', borderBottom: '1px solid var(--glass-border)', display: 'flex', justifyContent: 'space-between', alignItems: 'center', gap: '8px', flexWrap: 'wrap' }}>
               <div style={{ display: 'flex', gap: '4px' }}>
                 {['C++', 'Java', 'Python', 'JS'].map(lang => (
-                  <button 
-                    key={lang} 
+                  <button
+                    key={lang}
                     className={`code-tab ${codeLanguage === lang ? 'active' : ''}`}
                     onClick={() => setCodeLanguage(lang)}
                   >
@@ -1801,11 +1807,11 @@ const DPGreedyVisualizer = ({ onBack, openSettings, initialTab = 'LCS', onCopyCo
                   </button>
                 ))}
               </div>
-              
+
               <div style={{ display: 'flex', gap: '6px' }}>
-                <button 
+                <button
                   onClick={() => setIsRunnerOpen(true)}
-                  className="btn btn-clear" 
+                  className="btn btn-clear"
                   style={{ padding: '2px 8px', fontSize: '0.78rem', whiteSpace: 'nowrap', display: 'inline-flex', alignItems: 'center', background: 'rgba(16,185,129,0.2)', color: '#34d399', border: '1px solid rgba(16,185,129,0.3)', borderRadius: '6px' }}
                 >
                   ▶ Run Code
@@ -1818,10 +1824,10 @@ const DPGreedyVisualizer = ({ onBack, openSettings, initialTab = 'LCS', onCopyCo
 
             {/* Code Box displaying the template */}
             <div className="code-box" style={{ flex: 1, borderRadius: 0, border: 'none', margin: 0, overflowY: 'auto' }}>
-              <pre style={{ 
-                margin: 0, 
-                color: 'var(--text-primary)', 
-                fontFamily: "'Fira Code', monospace", 
+              <pre style={{
+                margin: 0,
+                color: 'var(--text-primary)',
+                fontFamily: "'Fira Code', monospace",
                 lineHeight: '1.5',
                 fontSize: `${fontSize}px`,
                 whiteSpace: wordWrap === 'on' ? 'pre-wrap' : 'pre'
@@ -1831,7 +1837,7 @@ const DPGreedyVisualizer = ({ onBack, openSettings, initialTab = 'LCS', onCopyCo
             </div>
 
             {/* Drag column resize */}
-            <div 
+            <div
               onMouseDown={handleColDragStart}
               onTouchStart={handleColDragStart}
               style={{
@@ -1846,13 +1852,17 @@ const DPGreedyVisualizer = ({ onBack, openSettings, initialTab = 'LCS', onCopyCo
       </div>
 
       {/* Code Runner Modal integration */}
-      <CodeRunnerModal 
+      <CodeRunnerModal
         isOpen={isRunnerOpen}
         onClose={() => setIsRunnerOpen(false)}
         code={currentCode}
         language={codeLanguage}
       />
-
+      <TopicInfoModal
+        topicKey={activeTab}
+        isOpen={showTopicInfo}
+        onClose={() => setShowTopicInfo(false)}
+      />
     </div>
   );
 };

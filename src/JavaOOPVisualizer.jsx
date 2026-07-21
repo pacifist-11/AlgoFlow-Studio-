@@ -1,6 +1,7 @@
 /* eslint-disable react/prop-types, react-hooks/exhaustive-deps, no-unused-vars, react-hooks/set-state-in-effect */
 import React, { useState, useEffect, useRef } from 'react';
 import CodeRunnerModal from './CodeRunnerModal.jsx';
+import TopicInfoModal from './TopicInfoModal.jsx';
 
 // Fallback Copy to Clipboard
 const copyToClipboard = (text) => {
@@ -291,6 +292,7 @@ public class CollectionsAndStreams {
 
 const JavaOOPVisualizer = ({ onBack, openSettings, onCopyCode, onCodeChange, fontSize = 14, wordWrap = 'off', onShowUpcomingFeatures }) => {
   const [activeTab, setActiveTab] = useState('Basics'); // 'Basics' | 'Arrays' | 'Recursion' | 'OOP' | 'Exceptions' | 'Collections'
+  const [showTopicInfo, setShowTopicInfo] = useState(false);
   const [showCode, setShowCode] = useState(false);
   const [showComplexity, setShowComplexity] = useState(true);
   const [speed, setSpeed] = useState(400);
@@ -1750,17 +1752,14 @@ const JavaOOPVisualizer = ({ onBack, openSettings, onCopyCode, onCodeChange, fon
         </div>
 
         {/* Speed slider */}
-        <div style={{ display: 'flex', alignItems: 'center', gap: '8px', flexWrap: 'wrap' }}>
+        <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
           <span style={{ fontSize: '0.8rem', color: 'var(--text-secondary)' }}>Speed ({speed}ms):</span>
           <input 
             type="range" min="100" max="3500" step="50" 
             value={speed} onChange={e => setSpeed(parseInt(e.target.value))}
-            style={{ width: '85px', accentColor: 'var(--accent-primary)', cursor: 'pointer' }}
+            style={{ width: '120px', accentColor: 'var(--accent-primary)', cursor: 'pointer' }}
             title={`Delay: ${speed}ms`}
           />
-          <button type="button" className="btn btn-clear" style={{ padding: '2px 6px', fontSize: '0.75rem' }} onClick={() => setSpeed(2500)}>🐢 Very Slow</button>
-          <button type="button" className="btn btn-clear" style={{ padding: '2px 6px', fontSize: '0.75rem' }} onClick={() => setSpeed(1200)}>🚶 Slow</button>
-          <button type="button" className="btn btn-clear" style={{ padding: '2px 6px', fontSize: '0.75rem' }} onClick={() => setSpeed(300)}>⚡ Fast</button>
         </div>
       </div>
 
@@ -2046,7 +2045,11 @@ const JavaOOPVisualizer = ({ onBack, openSettings, onCopyCode, onCodeChange, fon
         code={currentCode}
         language="Java"
       />
-
+      <TopicInfoModal
+        topicKey={activeTab === 'OOP' ? 'OOP_CLASSES' : activeTab}
+        isOpen={showTopicInfo}
+        onClose={() => setShowTopicInfo(false)}
+      />
     </div>
   );
 };

@@ -8,6 +8,7 @@ import GeneralDSVisualizer from './GeneralDSVisualizer.jsx';
 import GraphVisualizer from './GraphVisualizer.jsx';
 import CodeRunnerModal from './CodeRunnerModal.jsx';
 import DPGreedyVisualizer from './DPGreedyVisualizer.jsx';
+import TopicInfoModal from './TopicInfoModal.jsx';
 
 // ─── Tree Node ───────────────────────────────────────────────────────────────
 class TreeNode {
@@ -799,6 +800,7 @@ function App() {
   const [homeSearchQuery,setHomeSearchQuery]= useState('');
   const [analysisResult, setAnalysisResult]= useState(null);
   const [animationSpeed, setAnimationSpeed]= useState(400);
+  const [showTopicInfo, setShowTopicInfo]  = useState(false);
 
   const [timeline,    setTimeline]    = useState([]);
   const [currentStep, setCurrentStep] = useState(0);
@@ -3522,10 +3524,19 @@ function App() {
         {mountedModes['MAIN_VIS'] && (
           <div className="app-container" style={{ height: '100vh', display: 'flex', flexDirection: 'column', overflow: 'hidden' }}>
             <header className="header-glass">
-              <div>
-                <h1 className="title-gradient" style={{ fontSize: '1.7rem' }}>{treeType.replace(/_/g, ' ')} Studio</h1>
+              <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
+                <h1 className="title-gradient" style={{ fontSize: '1.7rem', margin: 0 }}>{treeType.replace(/_/g, ' ')} Studio</h1>
+                <button 
+                  type="button" 
+                  className="btn btn-clear" 
+                  style={{ padding: '4px 10px', fontSize: '0.85rem', fontWeight: 'bold', display: 'flex', alignItems: 'center', gap: '4px', background: 'rgba(0, 229, 255, 0.1)', border: '1px solid var(--accent-primary)', color: 'var(--accent-primary)', borderRadius: '8px', cursor: 'pointer' }}
+                  onClick={() => setShowTopicInfo(true)}
+                  title="Learn about this topic (Beginner Guide)"
+                >
+                  ℹ️ Info
+                </button>
                 {frame.rotation && (
-                  <div style={{ background: 'linear-gradient(135deg, #ef4444, #f97316)', color: 'white', padding: '4px 14px', borderRadius: '20px', marginTop: '0.4rem', fontSize: '0.95rem', fontWeight: 800, animation: 'fadeIn 0.3s ease', boxShadow: '0 4px 12px rgba(239,68,68,0.4)', display: 'inline-block' }}>
+                  <div style={{ background: 'linear-gradient(135deg, #ef4444, #f97316)', color: 'white', padding: '4px 14px', borderRadius: '20px', fontSize: '0.95rem', fontWeight: 800, animation: 'fadeIn 0.3s ease', boxShadow: '0 4px 12px rgba(239,68,68,0.4)', display: 'inline-block' }}>
                     ⚡ {frame.rotation}
                   </div>
                 )}
@@ -4630,6 +4641,11 @@ function App() {
         onClose={() => setIsRunnerOpen(false)}
         code={runnerCode}
         language={runnerLang}
+      />
+      <TopicInfoModal
+        topicKey={treeType}
+        isOpen={showTopicInfo}
+        onClose={() => setShowTopicInfo(false)}
       />
     </>
   );

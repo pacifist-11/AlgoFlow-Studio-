@@ -1358,7 +1358,7 @@ const GraphVisualizer = ({ onBack, openSettings, initialAlgo = 'Dijkstra', onCop
       const currentX = ev.type.startsWith('touch') ? ev.touches[0].clientX : ev.clientX;
       setCodeWidth(Math.max(200, Math.min(startW + (startX - currentX), window.innerWidth - 300)));
     };
-    const end  = () => {
+    const end = () => {
       document.removeEventListener('mousemove', drag);
       document.removeEventListener('mouseup', end);
       document.removeEventListener('touchmove', drag);
@@ -1493,7 +1493,7 @@ const GraphVisualizer = ({ onBack, openSettings, initialAlgo = 'Dijkstra', onCop
     const rect = containerRef.current.getBoundingClientRect();
     const x = e.clientX - rect.left;
     const y = e.clientY - rect.top;
-    
+
     // Check if clicked too close to existing node
     const close = nodes.some(n => Math.hypot(n.x - x, n.y - y) < 60);
     if (close) return;
@@ -1627,7 +1627,7 @@ const GraphVisualizer = ({ onBack, openSettings, initialAlgo = 'Dijkstra', onCop
     } else if (algoMode === 'DFS') {
       const visited = {};
       const stack = [startNode];
-      
+
       frames.push({
         visited: { ...visited },
         active: startNode,
@@ -1676,7 +1676,7 @@ const GraphVisualizer = ({ onBack, openSettings, initialAlgo = 'Dijkstra', onCop
       const parent = {};
       nodes.forEach(n => dist[n.id] = Infinity);
       dist[startNode] = 0;
-      
+
       const q = [...nodes.map(n => n.id)];
       frames.push({
         dist: { ...dist },
@@ -1690,7 +1690,7 @@ const GraphVisualizer = ({ onBack, openSettings, initialAlgo = 'Dijkstra', onCop
         // Extract minimum distance node
         q.sort((a, b) => dist[a] - dist[b]);
         const u = q.shift();
-        
+
         if (dist[u] === Infinity) break;
         if (u === targetNode) {
           frames.push({
@@ -1737,7 +1737,7 @@ const GraphVisualizer = ({ onBack, openSettings, initialAlgo = 'Dijkstra', onCop
           }
         }
       }
-      
+
       // Trace path
       let curr = targetNode;
       const pathEdges = [];
@@ -1758,7 +1758,7 @@ const GraphVisualizer = ({ onBack, openSettings, initialAlgo = 'Dijkstra', onCop
       // Greedy Best-First Search using Euclidean distance heuristics
       const visited = {};
       const pq = [{ id: startNode, h: nodes.find(n => n.id === startNode)?.h || 0 }];
-      
+
       frames.push({
         visited: { ...visited },
         active: startNode,
@@ -1768,7 +1768,7 @@ const GraphVisualizer = ({ onBack, openSettings, initialAlgo = 'Dijkstra', onCop
       });
 
       while (pq.length > 0) {
-        pq.sort((a,b) => a.h - b.h);
+        pq.sort((a, b) => a.h - b.h);
         const { id: u } = pq.shift();
         if (visited[u]) continue;
         visited[u] = true;
@@ -1815,7 +1815,7 @@ const GraphVisualizer = ({ onBack, openSettings, initialAlgo = 'Dijkstra', onCop
       const keys = {};
       nodes.forEach(n => keys[n.id] = Infinity);
       keys[startNode] = 0;
-      
+
       const q = [...nodes.map(n => n.id)];
       const pathHighlight = [];
 
@@ -1839,7 +1839,7 @@ const GraphVisualizer = ({ onBack, openSettings, initialAlgo = 'Dijkstra', onCop
         }
 
         visited[u] = true;
-        
+
         // If u has a parent, add edge parent[u]➔u to MST pathHighlight
         if (parent[u] !== undefined) {
           const edgeKey1 = `${parent[u]}-${u}`;
@@ -1981,8 +1981,8 @@ const GraphVisualizer = ({ onBack, openSettings, initialAlgo = 'Dijkstra', onCop
           visitedTrace[curr] = true;
           let prev = null;
           for (let n of nodes) {
-            const edge = edges.find(e => 
-              (e.from === n.id && e.to === curr) || 
+            const edge = edges.find(e =>
+              (e.from === n.id && e.to === curr) ||
               (!isDirected && e.from === curr && e.to === n.id)
             );
             if (edge) {
@@ -2013,7 +2013,7 @@ const GraphVisualizer = ({ onBack, openSettings, initialAlgo = 'Dijkstra', onCop
       // Floyd-Warshall All-Pairs Shortest Path
       const V = nodes.length;
       const nodeIds = nodes.map(n => n.id);
-      
+
       const distMatrix = {};
       nodeIds.forEach(u => {
         distMatrix[u] = {};
@@ -2049,12 +2049,12 @@ const GraphVisualizer = ({ onBack, openSettings, initialAlgo = 'Dijkstra', onCop
           const i = nodeIds[iIndex];
           for (let jIndex = 0; jIndex < V; jIndex++) {
             const j = nodeIds[jIndex];
-            
+
             if (distMatrix[i][k] !== Infinity && distMatrix[k][j] !== Infinity) {
               const newDist = distMatrix[i][k] + distMatrix[k][j];
               if (newDist < distMatrix[i][j]) {
                 distMatrix[i][j] = newDist;
-                
+
                 const edgesToHighlight = [];
                 edgesToHighlight.push(`${i}-${k}`);
                 edgesToHighlight.push(`${k}-${j}`);
@@ -2083,7 +2083,7 @@ const GraphVisualizer = ({ onBack, openSettings, initialAlgo = 'Dijkstra', onCop
       // Kahn's Topological Sort Algorithm
       const inDegrees = {};
       nodes.forEach(n => inDegrees[n.id] = 0);
-      
+
       edges.forEach(edge => {
         inDegrees[edge.to]++;
       });
@@ -2155,7 +2155,7 @@ const GraphVisualizer = ({ onBack, openSettings, initialAlgo = 'Dijkstra', onCop
         inDegrees: { ...inDegrees },
         queue: [...q],
         active: -1,
-        msg: hasCycle 
+        msg: hasCycle
           ? `⚠️ Topological Sort completed: Graph has a cycle (not a DAG)! Only sorted: [${topoOrder.join(', ')}]`
           : `Topological Sort complete! Order: [${topoOrder.join(', ')}]`,
         activeLine: 'return topoOrder;'
@@ -2191,7 +2191,7 @@ const GraphVisualizer = ({ onBack, openSettings, initialAlgo = 'Dijkstra', onCop
 
       const sortedEdges = [...edges].sort((a, b) => a.weight - b.weight);
       const pathHighlight = [];
-      
+
       frames.push({
         parent: { ...parent },
         active: -1,
@@ -2206,7 +2206,7 @@ const GraphVisualizer = ({ onBack, openSettings, initialAlgo = 'Dijkstra', onCop
         const v = edge.to;
         const rootU = find(u);
         const rootV = find(v);
-        
+
         frames.push({
           parent: { ...parent },
           active: -1,
@@ -2280,7 +2280,7 @@ const GraphVisualizer = ({ onBack, openSettings, initialAlgo = 'Dijkstra', onCop
 
   return (
     <div style={{ display: 'flex', flexDirection: 'column', height: '100vh', background: 'var(--bg-primary, #0f172a)', overflow: 'hidden' }}>
-      
+
       {/* Top Header */}
       <div style={{ textAlign: 'center', padding: '1rem 0 0.5rem 0', background: 'rgba(15,23,42,0.4)', borderBottom: '1px solid var(--glass-border)' }}>
         <h1 className="title-gradient" style={{ fontSize: '2.2rem', fontWeight: 800, margin: 0, textShadow: '0 0 25px rgba(59,130,246,0.3)' }}>
@@ -2289,26 +2289,26 @@ const GraphVisualizer = ({ onBack, openSettings, initialAlgo = 'Dijkstra', onCop
       </div>
 
       {/* Control Bar matching user screenshot exact design */}
-      <div className="controls-glass" style={{ 
-        display: 'flex', 
-        alignItems: 'center', 
-        justifyContent: 'center', 
-        gap: '12px', 
-        padding: '0.8rem 1.5rem', 
-        background: 'rgba(15,23,42,0.6)', 
+      <div className="controls-glass" style={{
+        display: 'flex',
+        alignItems: 'center',
+        justifyContent: 'center',
+        gap: '12px',
+        padding: '0.8rem 1.5rem',
+        background: 'rgba(15,23,42,0.6)',
         borderBottom: '1px solid var(--glass-border)',
         flexWrap: 'wrap'
       }}>
         {(!isMobile || showEditControls) && (
           <>
             {/* Node controls */}
-            <input 
-              type="text" 
-              className="styled-input" 
-              style={{ width: '110px', fontSize: '0.9rem', padding: '0.35rem 0.6rem' }} 
-              placeholder="Node Label" 
-              value={nodeLabel} 
-              onChange={e => setNodeLabel(e.target.value)} 
+            <input
+              type="text"
+              className="styled-input"
+              style={{ width: '110px', fontSize: '0.9rem', padding: '0.35rem 0.6rem' }}
+              placeholder="Node Label"
+              value={nodeLabel}
+              onChange={e => setNodeLabel(e.target.value)}
               onKeyDown={e => { if (e.key === 'Enter') handleAddNode(); }}
             />
             <button className="btn btn-insert" style={{ padding: '0.4rem 1rem' }} onClick={handleAddNode}>
@@ -2318,35 +2318,35 @@ const GraphVisualizer = ({ onBack, openSettings, initialAlgo = 'Dijkstra', onCop
             <div style={{ width: '1px', height: '22px', background: 'var(--glass-border)' }} />
 
             {/* Edge links */}
-            <select 
-              className="styled-select" 
-              style={{ width: '100px', padding: '0.35rem' }} 
-              value={edgeFrom} 
+            <select
+              className="styled-select"
+              style={{ width: '100px', padding: '0.35rem' }}
+              value={edgeFrom}
               onChange={e => setEdgeFrom(e.target.value)}
             >
               <option value="">From...</option>
               {nodes.map(n => <option key={n.id} value={n.id}>{n.label}</option>)}
             </select>
-            
+
             <span style={{ color: 'var(--text-secondary)', fontWeight: 'bold' }}>➔</span>
 
-            <select 
-              className="styled-select" 
-              style={{ width: '100px', padding: '0.35rem' }} 
-              value={edgeTo} 
+            <select
+              className="styled-select"
+              style={{ width: '100px', padding: '0.35rem' }}
+              value={edgeTo}
               onChange={e => setEdgeTo(e.target.value)}
             >
               <option value="">To...</option>
               {nodes.map(n => <option key={n.id} value={n.id}>{n.label}</option>)}
             </select>
 
-            <input 
-              type="number" 
-              className="styled-input" 
-              style={{ width: '60px', padding: '0.35rem' }} 
-              placeholder="Wt" 
-              value={edgeWeight} 
-              onChange={e => setEdgeWeight(Math.max(1, parseInt(e.target.value) || 1))} 
+            <input
+              type="number"
+              className="styled-input"
+              style={{ width: '60px', padding: '0.35rem' }}
+              placeholder="Wt"
+              value={edgeWeight}
+              onChange={e => setEdgeWeight(Math.max(1, parseInt(e.target.value) || 1))}
               onKeyDown={e => { if (e.key === 'Enter') handleAddEdge(); }}
               title="Edge Weight"
             />
@@ -2358,10 +2358,10 @@ const GraphVisualizer = ({ onBack, openSettings, initialAlgo = 'Dijkstra', onCop
             <div style={{ width: '1px', height: '22px', background: 'var(--glass-border)' }} />
 
             {/* Delete controls */}
-            <select 
-              className="styled-select" 
-              style={{ width: '90px', padding: '0.35rem' }} 
-              value={nodeToDelete} 
+            <select
+              className="styled-select"
+              style={{ width: '90px', padding: '0.35rem' }}
+              value={nodeToDelete}
               onChange={e => setNodeToDelete(e.target.value)}
             >
               <option value="">Node...</option>
@@ -2371,10 +2371,10 @@ const GraphVisualizer = ({ onBack, openSettings, initialAlgo = 'Dijkstra', onCop
               Delete Node
             </button>
 
-            <select 
-              className="styled-select" 
-              style={{ width: '110px', padding: '0.35rem' }} 
-              value={edgeToDelete} 
+            <select
+              className="styled-select"
+              style={{ width: '110px', padding: '0.35rem' }}
+              value={edgeToDelete}
               onChange={e => setEdgeToDelete(e.target.value)}
             >
               <option value="">Edge...</option>
@@ -2393,59 +2393,59 @@ const GraphVisualizer = ({ onBack, openSettings, initialAlgo = 'Dijkstra', onCop
         )}
 
         {/* Graph directed/undirected toggle */}
-        <button 
-          className="btn btn-clear" 
-          style={{ 
-            background: isDirected ? 'rgba(59,130,246,0.2)' : 'rgba(255,255,255,0.03)', 
+        <button
+          className="btn btn-clear"
+          style={{
+            background: isDirected ? 'rgba(59,130,246,0.2)' : 'rgba(255,255,255,0.03)',
             border: `1.5px solid ${isDirected ? 'var(--accent-primary)' : 'var(--glass-border)'}`,
             color: isDirected ? 'var(--accent-primary)' : 'var(--text-primary)',
             fontWeight: 800,
             padding: '0.4rem 1.1rem'
-          }} 
+          }}
           onClick={() => setIsDirected(!isDirected)}
         >
           {isDirected ? 'Directed Graph' : 'Undirected Graph'}
         </button>
 
         {isMobile && (
-          <button 
-            className="btn btn-clear" 
-            style={{ 
-              background: showEditControls ? 'rgba(139,92,246,0.2)' : 'rgba(255,255,255,0.03)', 
+          <button
+            className="btn btn-clear"
+            style={{
+              background: showEditControls ? 'rgba(139,92,246,0.2)' : 'rgba(255,255,255,0.03)',
               border: `1.5px solid ${showEditControls ? 'var(--accent-primary)' : 'var(--glass-border)'}`,
               color: showEditControls ? 'var(--accent-primary)' : 'var(--text-primary)',
               fontWeight: 800,
               padding: '0.4rem 1.1rem'
-            }} 
+            }}
             onClick={() => setShowEditControls(!showEditControls)}
           >
             🔧 Edit Graph
           </button>
         )}
 
-        <button 
-          className="btn btn-clear" 
-          style={{ 
-            background: showLogPanel ? 'rgba(59,130,246,0.2)' : 'rgba(255,255,255,0.03)', 
+        <button
+          className="btn btn-clear"
+          style={{
+            background: showLogPanel ? 'rgba(59,130,246,0.2)' : 'rgba(255,255,255,0.03)',
             border: `1.5px solid ${showLogPanel ? 'var(--accent-primary)' : 'var(--glass-border)'}`,
             color: showLogPanel ? 'var(--accent-primary)' : 'var(--text-primary)',
             fontWeight: 800,
             padding: '0.4rem 1.1rem'
-          }} 
+          }}
           onClick={() => setShowLogPanel(!showLogPanel)}
         >
           📋 Log
         </button>
 
-        <button 
-          className="btn btn-clear" 
-          style={{ 
-            background: showCode ? 'rgba(59,130,246,0.2)' : 'rgba(255,255,255,0.03)', 
+        <button
+          className="btn btn-clear"
+          style={{
+            background: showCode ? 'rgba(59,130,246,0.2)' : 'rgba(255,255,255,0.03)',
             border: `1.5px solid ${showCode ? 'var(--accent-primary)' : 'var(--glass-border)'}`,
             color: showCode ? 'var(--accent-primary)' : 'var(--text-primary)',
             fontWeight: 800,
             padding: '0.4rem 1.1rem'
-          }} 
+          }}
           onClick={() => setShowCode(!showCode)}
         >
           💻 Code
@@ -2454,7 +2454,7 @@ const GraphVisualizer = ({ onBack, openSettings, initialAlgo = 'Dijkstra', onCop
         <div style={{ width: '1px', height: '22px', background: 'var(--glass-border)' }} />
 
         {/* Action controls */}
-        <span 
+        <span
           style={{ color: '#94a3b8', cursor: 'pointer', fontSize: '0.9rem', fontWeight: 600, textDecoration: 'underline', transition: 'color 0.2s' }}
           onClick={handleResetAnimation}
           onMouseOver={e => e.currentTarget.style.color = '#fff'}
@@ -2462,8 +2462,8 @@ const GraphVisualizer = ({ onBack, openSettings, initialAlgo = 'Dijkstra', onCop
         >
           Reset
         </span>
-        
-        <span 
+
+        <span
           style={{ color: '#ef4444', cursor: 'pointer', fontSize: '0.9rem', fontWeight: 600, textDecoration: 'underline', transition: 'color 0.2s' }}
           onClick={handleClear}
           onMouseOver={e => e.currentTarget.style.color = '#f87171'}
@@ -2496,19 +2496,19 @@ const GraphVisualizer = ({ onBack, openSettings, initialAlgo = 'Dijkstra', onCop
 
       {/* Main Workspace split */}
       <div style={{ flex: 1, display: 'flex', flexDirection: isMobile ? 'column' : 'row', overflow: 'hidden' }}>
-        
+
         {/* Left Side: Visualizer and Animation Controls */}
         <div style={{ display: (isMobile && mobileTab !== 'vis') ? 'none' : 'flex', flex: 1, flexDirection: 'column', padding: isMobile ? '0.35rem' : '1.2rem', overflow: 'hidden' }}>
-          
+
           {/* Active step message bar */}
           <div style={{ textAlign: 'center', marginBottom: '1rem', height: '38px', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
-            <span style={{ 
-              fontSize: '1.2rem', 
-              color: 'var(--text-primary)', 
-              fontWeight: 'bold', 
-              background: 'rgba(255,255,255,0.04)', 
-              padding: '5px 22px', 
-              borderRadius: '20px', 
+            <span style={{
+              fontSize: '1.2rem',
+              color: 'var(--text-primary)',
+              fontWeight: 'bold',
+              background: 'rgba(255,255,255,0.04)',
+              padding: '5px 22px',
+              borderRadius: '20px',
               border: '1px solid var(--glass-border)',
               boxShadow: '0 4px 15px rgba(0,0,0,0.15)'
             }}>
@@ -2535,17 +2535,17 @@ const GraphVisualizer = ({ onBack, openSettings, initialAlgo = 'Dijkstra', onCop
           </div>
 
           {/* Graph Canvas */}
-          <div 
+          <div
             ref={containerRef}
             onClick={handleCanvasClick}
             onMouseMove={handleCanvasMouseMove}
             onMouseUp={handleCanvasMouseUp}
-            style={{ 
-              flex: 1, 
-              background: 'rgba(15,23,42,0.4)', 
-              borderRadius: '16px', 
-              border: '1px solid var(--glass-border)', 
-              position: 'relative', 
+            style={{
+              flex: 1,
+              background: 'rgba(15,23,42,0.4)',
+              borderRadius: '16px',
+              border: '1px solid var(--glass-border)',
+              position: 'relative',
               overflow: 'hidden',
               cursor: draggingNode !== null ? 'grabbing' : 'crosshair',
               boxShadow: 'inset 0 0 40px rgba(0,0,0,0.2)'
@@ -2586,12 +2586,12 @@ const GraphVisualizer = ({ onBack, openSettings, initialAlgo = 'Dijkstra', onCop
 
                 return (
                   <g key={edge.id}>
-                    <line 
-                      x1={fromNode.x} 
-                      y1={fromNode.y} 
-                      x2={toNode.x} 
-                      y2={toNode.y} 
-                      stroke={color} 
+                    <line
+                      x1={fromNode.x}
+                      y1={fromNode.y}
+                      x2={toNode.x}
+                      y2={toNode.y}
+                      stroke={color}
                       strokeWidth={strokeWidth}
                       markerEnd={isDirected ? (isPath ? 'url(#arrow-path)' : isActive ? 'url(#arrow-active)' : 'url(#arrow') : undefined}
                       style={{ transition: 'stroke 0.3s, stroke-width 0.3s' }}
@@ -2607,7 +2607,7 @@ const GraphVisualizer = ({ onBack, openSettings, initialAlgo = 'Dijkstra', onCop
             {nodes.map(node => {
               const isVisited = currentFrame.visited && currentFrame.visited[node.id];
               const isActive = currentFrame.active === node.id;
-              
+
               let bg = 'linear-gradient(135deg, var(--accent-primary), var(--accent-secondary))';
               let border = '2px solid var(--glass-border)';
               let glow = '0 0 10px rgba(99,102,241,0.2)';
@@ -2638,7 +2638,7 @@ const GraphVisualizer = ({ onBack, openSettings, initialAlgo = 'Dijkstra', onCop
               }
 
               return (
-                <div 
+                <div
                   key={node.id}
                   ref={el => nodeCircleRefs.current[node.id] = el}
                   onMouseDown={(e) => { e.stopPropagation(); handleNodeMouseDown(node.id); }}
@@ -2667,13 +2667,13 @@ const GraphVisualizer = ({ onBack, openSettings, initialAlgo = 'Dijkstra', onCop
                 >
                   <span>{node.label}</span>
                   {distText !== '' && (
-                    <span style={{ 
-                      position: 'absolute', 
-                      top: '-18px', 
-                      fontSize: '0.75rem', 
-                      background: 'rgba(30,41,59,0.9)', 
-                      padding: '2px 6px', 
-                      borderRadius: '8px', 
+                    <span style={{
+                      position: 'absolute',
+                      top: '-18px',
+                      fontSize: '0.75rem',
+                      background: 'rgba(30,41,59,0.9)',
+                      padding: '2px 6px',
+                      borderRadius: '8px',
                       border: '1px solid var(--glass-border)',
                       color: '#fbbf24',
                       fontWeight: 800
@@ -2692,246 +2692,246 @@ const GraphVisualizer = ({ onBack, openSettings, initialAlgo = 'Dijkstra', onCop
               </div>
             )}
 
-             {showLogPanel && !isMobile && (
-               <div
-                 style={{
-                   position: 'fixed',
-                   left: `${Math.max(0, Math.min(logPosition.x, window.innerWidth - logSize.width))}px`,
-                   top: `${Math.max(0, Math.min(logPosition.y, window.innerHeight - logSize.height))}px`,
-                   width: `${logSize.width}px`,
-                   height: `${logSize.height}px`,
-                   background: 'rgba(15, 23, 42, 0.95)',
-                   backdropFilter: 'blur(12px)',
-                   border: '1px solid var(--glass-border)',
-                   borderRadius: '12px',
-                   boxShadow: '0 15px 30px rgba(0,0,0,0.5)',
-                   display: 'flex',
-                   flexDirection: 'column',
-                   zIndex: 99,
-                   overflow: 'hidden'
-                 }}
-               >
-                 {/* Drag Handle Header */}
-                 <div
-                   className="log-drag-handle"
-                   onMouseDown={handleLogMouseDown}
-                   onTouchStart={handleLogMouseDown}
-                   style={{
-                     padding: '8px 12px',
-                     background: 'rgba(255, 255, 255, 0.04)',
-                     borderBottom: '1px solid var(--glass-border)',
-                     cursor: 'move',
-                     display: 'flex',
-                     justifyContent: 'space-between',
-                     alignItems: 'center',
-                     userSelect: 'none',
-                     flexShrink: 0,
-                     touchAction: 'none'
-                   }}
-                 >
-                   <span style={{ fontWeight: 600, fontSize: '0.85rem', color: 'var(--text-primary)', display: 'flex', alignItems: 'center', gap: '6px' }}>
-                     📋 Execution Log & Active State
-                   </span>
-                   <button
-                     onClick={() => setShowLogPanel(false)}
-                     style={{
-                       background: 'transparent',
-                       border: 'none',
-                       color: 'var(--text-secondary)',
-                       cursor: 'pointer',
-                       fontSize: '1.1rem',
-                       padding: '0 4px',
-                       lineHeight: 1
-                     }}
-                     title="Hide Log"
-                   >
-                     ×
-                   </button>
-                 </div>
+            {showLogPanel && !isMobile && (
+              <div
+                style={{
+                  position: 'fixed',
+                  left: `${Math.max(0, Math.min(logPosition.x, window.innerWidth - logSize.width))}px`,
+                  top: `${Math.max(0, Math.min(logPosition.y, window.innerHeight - logSize.height))}px`,
+                  width: `${logSize.width}px`,
+                  height: `${logSize.height}px`,
+                  background: 'rgba(15, 23, 42, 0.95)',
+                  backdropFilter: 'blur(12px)',
+                  border: '1px solid var(--glass-border)',
+                  borderRadius: '12px',
+                  boxShadow: '0 15px 30px rgba(0,0,0,0.5)',
+                  display: 'flex',
+                  flexDirection: 'column',
+                  zIndex: 99,
+                  overflow: 'hidden'
+                }}
+              >
+                {/* Drag Handle Header */}
+                <div
+                  className="log-drag-handle"
+                  onMouseDown={handleLogMouseDown}
+                  onTouchStart={handleLogMouseDown}
+                  style={{
+                    padding: '8px 12px',
+                    background: 'rgba(255, 255, 255, 0.04)',
+                    borderBottom: '1px solid var(--glass-border)',
+                    cursor: 'move',
+                    display: 'flex',
+                    justifyContent: 'space-between',
+                    alignItems: 'center',
+                    userSelect: 'none',
+                    flexShrink: 0,
+                    touchAction: 'none'
+                  }}
+                >
+                  <span style={{ fontWeight: 600, fontSize: '0.85rem', color: 'var(--text-primary)', display: 'flex', alignItems: 'center', gap: '6px' }}>
+                    📋 Execution Log & Active State
+                  </span>
+                  <button
+                    onClick={() => setShowLogPanel(false)}
+                    style={{
+                      background: 'transparent',
+                      border: 'none',
+                      color: 'var(--text-secondary)',
+                      cursor: 'pointer',
+                      fontSize: '1.1rem',
+                      padding: '0 4px',
+                      lineHeight: 1
+                    }}
+                    title="Hide Log"
+                  >
+                    ×
+                  </button>
+                </div>
 
-                 {/* Dual Column Content Body */}
-                 <div style={{ display: 'flex', flex: 1, overflow: 'hidden' }}>
+                {/* Dual Column Content Body */}
+                <div style={{ display: 'flex', flex: 1, overflow: 'hidden' }}>
 
-                   {/* Left Column: Graph Variables & Traversal state */}
-                   <div
-                     style={{
-                       width: `${activeStateWidth}px`,
-                       background: 'rgba(0, 0, 0, 0.25)',
-                       borderRight: '1px solid var(--glass-border)',
-                       padding: '10px 12px',
-                       display: 'flex',
-                       flexDirection: 'column',
-                       gap: '10px',
-                       fontSize: '0.8rem',
-                       color: 'var(--text-secondary)',
-                       overflowY: 'auto',
-                       flexShrink: 0
-                     }}
-                   >
-                     <div style={{ fontSize: '0.75rem', color: 'var(--accent-primary)', textTransform: 'uppercase', fontWeight: 'bold', borderBottom: '1px solid rgba(255,255,255,0.06)', paddingBottom: '4px' }}>
-                       Active State
-                     </div>
-                     <div>
-                       <span style={{ color: 'var(--text-secondary)' }}>Algorithm: </span>
-                       <span style={{ color: 'var(--text-primary)', fontWeight: 'bold' }}>{algoMode}</span>
-                     </div>
+                  {/* Left Column: Graph Variables & Traversal state */}
+                  <div
+                    style={{
+                      width: `${activeStateWidth}px`,
+                      background: 'rgba(0, 0, 0, 0.25)',
+                      borderRight: '1px solid var(--glass-border)',
+                      padding: '10px 12px',
+                      display: 'flex',
+                      flexDirection: 'column',
+                      gap: '10px',
+                      fontSize: '0.8rem',
+                      color: 'var(--text-secondary)',
+                      overflowY: 'auto',
+                      flexShrink: 0
+                    }}
+                  >
+                    <div style={{ fontSize: '0.75rem', color: 'var(--accent-primary)', textTransform: 'uppercase', fontWeight: 'bold', borderBottom: '1px solid rgba(255,255,255,0.06)', paddingBottom: '4px' }}>
+                      Active State
+                    </div>
+                    <div>
+                      <span style={{ color: 'var(--text-secondary)' }}>Algorithm: </span>
+                      <span style={{ color: 'var(--text-primary)', fontWeight: 'bold' }}>{algoMode}</span>
+                    </div>
 
-                     {(() => {
-                       const frame = timeline[currentStep] || {};
-                       return (
-                         <>
-                           <div>
-                             <span style={{ color: 'var(--text-secondary)' }}>Active Node: </span>
-                             <span style={{ color: '#fbbf24', fontWeight: 'bold' }}>
-                               {frame.active !== undefined && frame.active !== null && frame.active !== -1 ? `Node ${nodes.find(n => n.id === frame.active)?.label || frame.active}` : 'None'}
-                             </span>
-                           </div>
+                    {(() => {
+                      const frame = timeline[currentStep] || {};
+                      return (
+                        <>
+                          <div>
+                            <span style={{ color: 'var(--text-secondary)' }}>Active Node: </span>
+                            <span style={{ color: '#fbbf24', fontWeight: 'bold' }}>
+                              {frame.active !== undefined && frame.active !== null && frame.active !== -1 ? `Node ${nodes.find(n => n.id === frame.active)?.label || frame.active}` : 'None'}
+                            </span>
+                          </div>
 
-                           <div>
-                             <div style={{ marginBottom: '2px', fontSize: '0.75rem' }}>Visited / Resolved Nodes:</div>
-                             <div style={{ background: 'rgba(0,0,0,0.18)', padding: '4px 6px', borderRadius: '4px', fontFamily: 'monospace', color: '#34d399', wordBreak: 'break-all', fontWeight: 'bold' }}>
-                               {frame.visited ? (
-                                 Object.keys(frame.visited).length > 0 ? Object.keys(frame.visited).join(', ') : 'None'
-                               ) : frame.dist ? (
-                                 Object.keys(frame.dist).filter(k => frame.dist[k] !== Infinity).join(', ') || 'None'
-                               ) : 'None'}
-                             </div>
-                           </div>
+                          <div>
+                            <div style={{ marginBottom: '2px', fontSize: '0.75rem' }}>Visited / Resolved Nodes:</div>
+                            <div style={{ background: 'rgba(0,0,0,0.18)', padding: '4px 6px', borderRadius: '4px', fontFamily: 'monospace', color: '#34d399', wordBreak: 'break-all', fontWeight: 'bold' }}>
+                              {frame.visited ? (
+                                Object.keys(frame.visited).length > 0 ? Object.keys(frame.visited).join(', ') : 'None'
+                              ) : frame.dist ? (
+                                Object.keys(frame.dist).filter(k => frame.dist[k] !== Infinity).join(', ') || 'None'
+                              ) : 'None'}
+                            </div>
+                          </div>
 
-                           <div>
-                             <div style={{ marginBottom: '2px', fontSize: '0.75rem' }}>
-                               {algoMode === 'DFS' ? 'Stack State:' : 'Queue State:'}
-                             </div>
-                             <div style={{ background: 'rgba(0,0,0,0.18)', padding: '4px 6px', borderRadius: '4px', fontFamily: 'monospace', color: '#60a5fa', wordBreak: 'break-all' }}>
-                               {frame.queue ? (
-                                 `[${frame.queue.map(item => typeof item === 'object' ? item.id : item).join(', ')}]`
-                               ) : frame.stack ? (
-                                 `[${frame.stack.join(', ')}]`
-                               ) : '[]'}
-                             </div>
-                           </div>
+                          <div>
+                            <div style={{ marginBottom: '2px', fontSize: '0.75rem' }}>
+                              {algoMode === 'DFS' ? 'Stack State:' : 'Queue State:'}
+                            </div>
+                            <div style={{ background: 'rgba(0,0,0,0.18)', padding: '4px 6px', borderRadius: '4px', fontFamily: 'monospace', color: '#60a5fa', wordBreak: 'break-all' }}>
+                              {frame.queue ? (
+                                `[${frame.queue.map(item => typeof item === 'object' ? item.id : item).join(', ')}]`
+                              ) : frame.stack ? (
+                                `[${frame.stack.join(', ')}]`
+                              ) : '[]'}
+                            </div>
+                          </div>
 
-                           {frame.dsuState && (
-                             <div>
-                               <div style={{ marginBottom: '2px', fontSize: '0.75rem', color: '#fbbf24', marginTop: '8px' }}>Union-Find Parents:</div>
-                               <div style={{ background: 'rgba(0,0,0,0.18)', padding: '6px 8px', borderRadius: '4px', fontFamily: 'monospace', color: '#10b981', fontSize: '0.72rem', display: 'flex', flexDirection: 'column', gap: '3px' }}>
-                                 {Object.keys(frame.dsuState).map(k => {
-                                   const nodeLabel = nodes.find(n => n.id === parseInt(k))?.label || k;
-                                   const parentLabel = nodes.find(n => n.id === frame.dsuState[k])?.label || frame.dsuState[k];
-                                   return (
-                                     <div key={k} style={{ display: 'flex', justifyContent: 'space-between' }}>
-                                       <span>{nodeLabel}:</span>
-                                       <span style={{ color: 'white', fontWeight: 'bold' }}>parent ➔ {parentLabel}</span>
-                                     </div>
-                                   );
-                                 })}
-                               </div>
-                             </div>
-                           )}
+                          {frame.dsuState && (
+                            <div>
+                              <div style={{ marginBottom: '2px', fontSize: '0.75rem', color: '#fbbf24', marginTop: '8px' }}>Union-Find Parents:</div>
+                              <div style={{ background: 'rgba(0,0,0,0.18)', padding: '6px 8px', borderRadius: '4px', fontFamily: 'monospace', color: '#10b981', fontSize: '0.72rem', display: 'flex', flexDirection: 'column', gap: '3px' }}>
+                                {Object.keys(frame.dsuState).map(k => {
+                                  const nodeLabel = nodes.find(n => n.id === parseInt(k))?.label || k;
+                                  const parentLabel = nodes.find(n => n.id === frame.dsuState[k])?.label || frame.dsuState[k];
+                                  return (
+                                    <div key={k} style={{ display: 'flex', justifyContent: 'space-between' }}>
+                                      <span>{nodeLabel}:</span>
+                                      <span style={{ color: 'white', fontWeight: 'bold' }}>parent ➔ {parentLabel}</span>
+                                    </div>
+                                  );
+                                })}
+                              </div>
+                            </div>
+                          )}
 
-                           <div style={{ borderTop: '1px solid rgba(255,255,255,0.06)', paddingTop: '6px', marginTop: '4px' }}>
-                             <div style={{ fontSize: '0.72rem', textTransform: 'uppercase', fontWeight: 'bold', marginBottom: '4px', color: 'var(--accent-secondary)' }}>Trace Variables</div>
-                             <div style={{ display: 'flex', flexDirection: 'column', gap: '4px' }}>
-                               {frame.activeEdge && (
-                                 <div style={{ display: 'flex', justifyContent: 'space-between' }}>
-                                   <span>Active Edge:</span>
-                                   <span style={{ color: 'var(--text-primary)', fontFamily: 'monospace' }}>
-                                     {frame.activeEdge}
-                                   </span>
-                                 </div>
-                               )}
-                               {frame.activeLine && (
-                                 <div style={{ marginTop: '8px' }}>
-                                   <div style={{ fontSize: '0.65rem', color: 'var(--text-secondary)' }}>Snippet:</div>
-                                   <div style={{ fontSize: '0.72rem', color: '#60a5fa', fontFamily: 'monospace', background: 'rgba(0,0,0,0.2)', padding: '2px 4px', borderRadius: '4px', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }} title={frame.activeLine}>
-                                     {frame.activeLine}
-                                   </div>
-                                 </div>
-                               )}
-                             </div>
-                           </div>
-                         </>
-                       );
-                     })()}
-                   </div>
+                          <div style={{ borderTop: '1px solid rgba(255,255,255,0.06)', paddingTop: '6px', marginTop: '4px' }}>
+                            <div style={{ fontSize: '0.72rem', textTransform: 'uppercase', fontWeight: 'bold', marginBottom: '4px', color: 'var(--accent-secondary)' }}>Trace Variables</div>
+                            <div style={{ display: 'flex', flexDirection: 'column', gap: '4px' }}>
+                              {frame.activeEdge && (
+                                <div style={{ display: 'flex', justifyContent: 'space-between' }}>
+                                  <span>Active Edge:</span>
+                                  <span style={{ color: 'var(--text-primary)', fontFamily: 'monospace' }}>
+                                    {frame.activeEdge}
+                                  </span>
+                                </div>
+                              )}
+                              {frame.activeLine && (
+                                <div style={{ marginTop: '8px' }}>
+                                  <div style={{ fontSize: '0.65rem', color: 'var(--text-secondary)' }}>Snippet:</div>
+                                  <div style={{ fontSize: '0.72rem', color: '#60a5fa', fontFamily: 'monospace', background: 'rgba(0,0,0,0.2)', padding: '2px 4px', borderRadius: '4px', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }} title={frame.activeLine}>
+                                    {frame.activeLine}
+                                  </div>
+                                </div>
+                              )}
+                            </div>
+                          </div>
+                        </>
+                      );
+                    })()}
+                  </div>
 
-                   {/* Vertical Column split resize handle */}
-                   <div 
-                      onMouseDown={handleActiveStateColDragStart}
-                      onTouchStart={handleActiveStateColDragStart}
-                      style={{
-                        width: '8px',
-                        cursor: 'col-resize',
-                        background: 'rgba(255, 255, 255, 0.05)',
-                        borderLeft: '1px solid var(--glass-border)',
-                        borderRight: '1px solid var(--glass-border)',
-                        alignSelf: 'stretch',
-                        transition: 'background 0.2s',
-                        borderRadius: '3px',
-                        flexShrink: 0,
-                        touchAction: 'none'
-                      }}
-                      onMouseOver={e => e.currentTarget.style.background = 'rgba(96,165,250,0.5)'}
-                      onMouseOut={e => e.currentTarget.style.background = 'rgba(255, 255, 255, 0.05)'}
-                      title="Drag to resize columns"
-                   />
+                  {/* Vertical Column split resize handle */}
+                  <div
+                    onMouseDown={handleActiveStateColDragStart}
+                    onTouchStart={handleActiveStateColDragStart}
+                    style={{
+                      width: '8px',
+                      cursor: 'col-resize',
+                      background: 'rgba(255, 255, 255, 0.05)',
+                      borderLeft: '1px solid var(--glass-border)',
+                      borderRight: '1px solid var(--glass-border)',
+                      alignSelf: 'stretch',
+                      transition: 'background 0.2s',
+                      borderRadius: '3px',
+                      flexShrink: 0,
+                      touchAction: 'none'
+                    }}
+                    onMouseOver={e => e.currentTarget.style.background = 'rgba(96,165,250,0.5)'}
+                    onMouseOut={e => e.currentTarget.style.background = 'rgba(255, 255, 255, 0.05)'}
+                    title="Drag to resize columns"
+                  />
 
-                   {/* Right Column: Log list container */}
-                   <div
-                     ref={logContainerRef}
-                     style={{
-                       padding: '10px 12px',
-                       overflowY: 'auto',
-                       flex: 1,
-                       fontFamily: 'monospace',
-                       fontSize: '0.82rem'
-                     }}
-                   >
-                     <div style={{ display: 'flex', flexDirection: 'column', gap: '5px' }}>
-                       {timeline.length === 0 && (
-                         <div style={{ color: 'var(--text-secondary)', fontStyle: 'italic', textAlign: 'center', marginTop: '20px' }}>
-                           No simulation logs yet. Run traversal to start.
-                         </div>
-                       )}
-                       {timeline.slice(0, currentStep + 1).map((frame, idx) => (
-                         <div key={idx} style={{ display: 'flex', gap: '6px', lineHeight: '1.4' }}>
-                           <span style={{ color: 'var(--text-secondary)', userSelect: 'none', minWidth: '15px' }}>
-                             {idx === currentStep ? '➔' : `${idx + 1}.`}
-                           </span>
-                           <span style={{ color: idx === currentStep ? '#fbbf24' : 'var(--text-primary)' }}>
-                             {frame.msg}
-                           </span>
-                         </div>
-                       ))}
-                     </div>
-                   </div>
+                  {/* Right Column: Log list container */}
+                  <div
+                    ref={logContainerRef}
+                    style={{
+                      padding: '10px 12px',
+                      overflowY: 'auto',
+                      flex: 1,
+                      fontFamily: 'monospace',
+                      fontSize: '0.82rem'
+                    }}
+                  >
+                    <div style={{ display: 'flex', flexDirection: 'column', gap: '5px' }}>
+                      {timeline.length === 0 && (
+                        <div style={{ color: 'var(--text-secondary)', fontStyle: 'italic', textAlign: 'center', marginTop: '20px' }}>
+                          No simulation logs yet. Run traversal to start.
+                        </div>
+                      )}
+                      {timeline.slice(0, currentStep + 1).map((frame, idx) => (
+                        <div key={idx} style={{ display: 'flex', gap: '6px', lineHeight: '1.4' }}>
+                          <span style={{ color: 'var(--text-secondary)', userSelect: 'none', minWidth: '15px' }}>
+                            {idx === currentStep ? '➔' : `${idx + 1}.`}
+                          </span>
+                          <span style={{ color: idx === currentStep ? '#fbbf24' : 'var(--text-primary)' }}>
+                            {frame.msg}
+                          </span>
+                        </div>
+                      ))}
+                    </div>
+                  </div>
 
-                    {/* Resize Handle */}
-                    <div
-                      style={{
-                        position: 'absolute',
-                        right: '4px',
-                        bottom: '4px',
-                        width: '12px',
-                        height: '12px',
-                        cursor: 'se-resize',
-                        background: 'linear-gradient(135deg, transparent 60%, rgba(255,255,255,0.3) 60%)',
-                        zIndex: 100,
-                        touchAction: 'none'
-                      }}
-                      onMouseDown={handleResizeMouseDown}
-                      onTouchStart={handleResizeMouseDown}
-                      title="Drag to resize panel"
-                    />
+                  {/* Resize Handle */}
+                  <div
+                    style={{
+                      position: 'absolute',
+                      right: '4px',
+                      bottom: '4px',
+                      width: '12px',
+                      height: '12px',
+                      cursor: 'se-resize',
+                      background: 'linear-gradient(135deg, transparent 60%, rgba(255,255,255,0.3) 60%)',
+                      zIndex: 100,
+                      touchAction: 'none'
+                    }}
+                    onMouseDown={handleResizeMouseDown}
+                    onTouchStart={handleResizeMouseDown}
+                    title="Drag to resize panel"
+                  />
 
-                 </div>
-               </div>
-             )}
+                </div>
+              </div>
+            )}
           </div>
 
           {/* Bottom animation steps & algorithm configuration bar */}
           <div style={{ display: 'flex', flexDirection: isMobile ? 'column' : 'row', gap: '10px', marginTop: '1.2rem', background: 'var(--glass-bg)', padding: isMobile ? '10px 14px' : '12px 24px', borderRadius: '16px', border: '1px solid var(--glass-border)', alignItems: 'center', flexWrap: 'wrap', justifyContent: 'space-between' }}>
-            
+
             <div style={{ display: 'flex', alignItems: 'center', gap: isMobile ? '4px' : '8px', flexWrap: 'wrap', justifyContent: 'center' }}>
               <select className="styled-select" style={{ width: isMobile ? '110px' : '130px', fontWeight: 'bold' }} value={algoMode} onChange={e => { setAlgoMode(e.target.value); handleResetAnimation(); }} disabled={isPlaying}>
                 <option value="Dijkstra">Dijkstra</option>
@@ -2980,12 +2980,9 @@ const GraphVisualizer = ({ onBack, openSettings, initialAlgo = 'Dijkstra', onCop
               <span style={{ fontSize: '0.85rem', color: 'var(--text-secondary)', fontFamily: 'monospace', marginLeft: '5px' }}>{timeline.length ? currentStep + 1 : 0}/{timeline.length}</span>
             </div>
 
-            <div style={{ display: 'flex', alignItems: 'center', gap: '8px', width: isMobile ? '100%' : 'auto', justifyContent: 'center', flexWrap: 'wrap' }}>
+            <div style={{ display: 'flex', alignItems: 'center', gap: '8px', width: isMobile ? '100%' : 'auto', justifyContent: 'center' }}>
               <span style={{ color: 'var(--text-secondary)', fontSize: '0.8rem', fontWeight: 'bold' }}>Speed ({speed}ms)</span>
-              <input type="range" min={100} max={3500} step={50} value={3600 - speed} onChange={e => setSpeed(3600 - Number(e.target.value))} style={{ width: isMobile ? '100%' : '110px', cursor: 'pointer', accentColor: 'var(--accent-primary)' }} title={`Delay: ${speed}ms`} />
-              <button type="button" className="btn btn-clear" style={{ padding: '2px 6px', fontSize: '0.75rem' }} onClick={() => setSpeed(2500)}>🐢 Very Slow</button>
-              <button type="button" className="btn btn-clear" style={{ padding: '2px 6px', fontSize: '0.75rem' }} onClick={() => setSpeed(1200)}>🚶 Slow</button>
-              <button type="button" className="btn btn-clear" style={{ padding: '2px 6px', fontSize: '0.75rem' }} onClick={() => setSpeed(300)}>⚡ Fast</button>
+              <input type="range" min={100} max={3500} step={50} value={3600 - speed} onChange={e => setSpeed(3600 - Number(e.target.value))} style={{ width: isMobile ? '100%' : '140px', cursor: 'pointer', accentColor: 'var(--accent-primary)' }} title={`Delay: ${speed}ms`} />
             </div>
 
           </div>
@@ -3000,7 +2997,7 @@ const GraphVisualizer = ({ onBack, openSettings, initialAlgo = 'Dijkstra', onCop
                 📋 Execution Log & Active State
               </span>
             </div>
-            
+
             <div style={{ display: 'flex', flex: 1, flexDirection: 'column', overflowY: 'auto', gap: '10px', marginTop: '10px' }}>
               {/* Active State Details */}
               <div style={{ background: 'rgba(0,0,0,0.25)', border: '1px solid var(--glass-border)', borderRadius: '8px', padding: '10px 12px', display: 'flex', flexDirection: 'column', gap: '8px', fontSize: '0.8rem', color: 'var(--text-secondary)' }}>
@@ -3085,84 +3082,84 @@ const GraphVisualizer = ({ onBack, openSettings, initialAlgo = 'Dijkstra', onCop
 
         {/* Right Side Code Panel */}
         {showCode && (isMobile ? mobileTab === 'code' : true) && (
-        <>
-          {/* Vertical Drag Handle for column resizing */}
-          {!isMobile && (
-            <div onMouseDown={handleColDragStart} onTouchStart={handleColDragStart} style={{ width: '8px', background: 'var(--glass-border)', borderRadius: '4px', cursor: 'col-resize', flexShrink: 0, transition: 'background 0.2s', touchAction: 'none' }}
-              onMouseOver={e => e.currentTarget.style.background = 'rgba(96,165,250,0.5)'}
-              onMouseOut={e => e.currentTarget.style.background = 'var(--glass-border)'}
-              title="Drag to resize columns" />
-          )}
+          <>
+            {/* Vertical Drag Handle for column resizing */}
+            {!isMobile && (
+              <div onMouseDown={handleColDragStart} onTouchStart={handleColDragStart} style={{ width: '8px', background: 'var(--glass-border)', borderRadius: '4px', cursor: 'col-resize', flexShrink: 0, transition: 'background 0.2s', touchAction: 'none' }}
+                onMouseOver={e => e.currentTarget.style.background = 'rgba(96,165,250,0.5)'}
+                onMouseOut={e => e.currentTarget.style.background = 'var(--glass-border)'}
+                title="Drag to resize columns" />
+            )}
 
-          <div style={{ width: isMobile ? '100%' : `${codeWidth}px`, background: 'var(--bg-secondary)', borderLeft: isMobile ? 'none' : '1px solid var(--glass-border)', display: 'flex', flexDirection: 'column', overflow: 'hidden', minWidth: isMobile ? '100%' : '200px' }}>
-            <div style={{ padding: '1rem', borderBottom: '1px solid var(--glass-border)', display: 'flex', justifyContent: 'space-between', alignItems: 'center', background: 'var(--glass-bg)', gap: '10px' }}>
-              <h3 style={{ margin: 0, fontSize: '1.1rem', color: 'var(--text-primary)', fontWeight: 'bold', flex: 1 }}>Algorithm Code</h3>
-              <div style={{ display: 'flex', gap: '6px' }}>
-                <button 
-                  onClick={() => onShowUpcomingFeatures ? onShowUpcomingFeatures() : setIsRunnerOpen(true)}
-                  className="btn btn-clear"  
-                  style={{ padding: '0.3rem 0.6rem', fontSize: '0.85rem', whiteSpace: 'nowrap', display: 'inline-flex', alignItems: 'center', background: 'rgba(16,185,129,0.2)', color: '#34d399', border: '1px solid rgba(16,185,129,0.3)' }}
-                >
-                  ▶ Run Code
-                </button>
-                <button 
-                  onClick={handleCopyCode} 
-                  className="btn btn-clear" 
-                  style={{ padding: '0.3rem 0.6rem', fontSize: '0.85rem', whiteSpace: 'nowrap' }}
-                >
-                  {copied ? '✓ Copied' : '📋 Copy'}
-                </button>
+            <div style={{ width: isMobile ? '100%' : `${codeWidth}px`, background: 'var(--bg-secondary)', borderLeft: isMobile ? 'none' : '1px solid var(--glass-border)', display: 'flex', flexDirection: 'column', overflow: 'hidden', minWidth: isMobile ? '100%' : '200px' }}>
+              <div style={{ padding: '1rem', borderBottom: '1px solid var(--glass-border)', display: 'flex', justifyContent: 'space-between', alignItems: 'center', background: 'var(--glass-bg)', gap: '10px' }}>
+                <h3 style={{ margin: 0, fontSize: '1.1rem', color: 'var(--text-primary)', fontWeight: 'bold', flex: 1 }}>Algorithm Code</h3>
+                <div style={{ display: 'flex', gap: '6px' }}>
+                  <button
+                    onClick={() => onShowUpcomingFeatures ? onShowUpcomingFeatures() : setIsRunnerOpen(true)}
+                    className="btn btn-clear"
+                    style={{ padding: '0.3rem 0.6rem', fontSize: '0.85rem', whiteSpace: 'nowrap', display: 'inline-flex', alignItems: 'center', background: 'rgba(16,185,129,0.2)', color: '#34d399', border: '1px solid rgba(16,185,129,0.3)' }}
+                  >
+                    ▶ Run Code
+                  </button>
+                  <button
+                    onClick={handleCopyCode}
+                    className="btn btn-clear"
+                    style={{ padding: '0.3rem 0.6rem', fontSize: '0.85rem', whiteSpace: 'nowrap' }}
+                  >
+                    {copied ? '✓ Copied' : '📋 Copy'}
+                  </button>
+                </div>
+                <select className="styled-select" style={{ width: '120px', padding: '0.3rem' }} value={codeLang} onChange={e => setCodeLang(e.target.value)}>
+                  <option value="Java">Java</option>
+                  <option value="C++">C++</option>
+                  <option value="Python">Python</option>
+                  <option value="JS">JavaScript</option>
+                </select>
               </div>
-              <select className="styled-select" style={{ width: '120px', padding: '0.3rem' }} value={codeLang} onChange={e => setCodeLang(e.target.value)}>
-                <option value="Java">Java</option>
-                <option value="C++">C++</option>
-                <option value="Python">Python</option>
-                <option value="JS">JavaScript</option>
-              </select>
-            </div>
-            
-            <div style={{ flex: 1, padding: '1rem 0', overflowY: 'auto', background: 'var(--bg-secondary)' }}>
-              <pre style={{ 
-                margin: 0, 
-                color: 'var(--text-primary)', 
-                fontFamily: "'Fira Code', monospace", 
-                fontSize: `${fontSize}px`, 
-                whiteSpace: wordWrap === 'on' ? 'pre-wrap' : 'pre', 
-                lineHeight: '1.55' 
-              }}>
-                <code>
-                  {getGraphCodeTemplate(codeLang, algoMode, String(startNode), String(targetNode)).split('\n').map((line, i) => {
-                    const isMatch = currentFrame.activeLine && line.includes(currentFrame.activeLine);
-                    return (
-                      <div key={i} style={{ 
-                        background: isMatch ? 'rgba(16, 185, 129, 0.15)' : 'transparent',
-                        borderLeft: isMatch ? '4px solid #10b981' : '4px solid transparent',
-                        padding: '1px 1rem',
-                        display: 'flex'
-                      }}>
-                        <span style={{ width: '25px', color: isMatch ? '#10b981' : 'var(--text-secondary)', userSelect: 'none', marginRight: '10px', textAlign: 'right' }}>
-                          {isMatch ? '➔' : i + 1}
-                        </span>
-                        <span>{line}</span>
-                      </div>
-                    );
-                  })}
-                </code>
-              </pre>
-            </div>
 
-            <div style={{ padding: '0.8rem', borderTop: '1px solid var(--glass-border)', display: 'flex', justifyContent: 'space-between', background: 'var(--glass-bg)' }}>
-              <button className="btn btn-clear" style={{ width: '100%' }} onClick={() => setShowCode(false)}>💻 Hide Panel</button>
+              <div style={{ flex: 1, padding: '1rem 0', overflowY: 'auto', background: 'var(--bg-secondary)' }}>
+                <pre style={{
+                  margin: 0,
+                  color: 'var(--text-primary)',
+                  fontFamily: "'Fira Code', monospace",
+                  fontSize: `${fontSize}px`,
+                  whiteSpace: wordWrap === 'on' ? 'pre-wrap' : 'pre',
+                  lineHeight: '1.55'
+                }}>
+                  <code>
+                    {getGraphCodeTemplate(codeLang, algoMode, String(startNode), String(targetNode)).split('\n').map((line, i) => {
+                      const isMatch = currentFrame.activeLine && line.includes(currentFrame.activeLine);
+                      return (
+                        <div key={i} style={{
+                          background: isMatch ? 'rgba(16, 185, 129, 0.15)' : 'transparent',
+                          borderLeft: isMatch ? '4px solid #10b981' : '4px solid transparent',
+                          padding: '1px 1rem',
+                          display: 'flex'
+                        }}>
+                          <span style={{ width: '25px', color: isMatch ? '#10b981' : 'var(--text-secondary)', userSelect: 'none', marginRight: '10px', textAlign: 'right' }}>
+                            {isMatch ? '➔' : i + 1}
+                          </span>
+                          <span>{line}</span>
+                        </div>
+                      );
+                    })}
+                  </code>
+                </pre>
+              </div>
+
+              <div style={{ padding: '0.8rem', borderTop: '1px solid var(--glass-border)', display: 'flex', justifyContent: 'space-between', background: 'var(--glass-bg)' }}>
+                <button className="btn btn-clear" style={{ width: '100%' }} onClick={() => setShowCode(false)}>💻 Hide Panel</button>
+              </div>
             </div>
-          </div>
-        </>
+          </>
         )}
 
       </div>
-      
+
       {/* Floating workspace buttons */}
       {!showCode && !isMobile && (
-        <button 
+        <button
           style={{ position: 'absolute', right: '20px', bottom: '80px', background: 'var(--accent-primary)', color: 'white', border: 'none', borderRadius: '50%', width: '50px', height: '50px', cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: '1.4rem', boxShadow: '0 4px 15px rgba(59,130,246,0.4)', zIndex: 100 }}
           onClick={() => setShowCode(true)}
           title="Show Code Panel"
