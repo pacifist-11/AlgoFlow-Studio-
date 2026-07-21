@@ -489,48 +489,102 @@ const LineDebugger = ({ initialCode, lang: initialLang, fontSize, wordWrap, onBa
     }
   };
 
-  const handleStartDebug = () => {
-    let codeToRun = localCode.trim();
-    if (codeToRun.length === 0) return;
+const makeCodePythonTutorRunnable = (code, lang) => {
+  if (!code) return '';
+  let src = code.trim();
 
-    if (detectedLang === 'Java') {
-      const hasClass = /\bclass\s+(\w+)/.test(codeToRun);
-      const hasMain = /\bvoid\s+main\b/.test(codeToRun);
+  // Helper: Strip comments and compress excess blank lines if code is long
+  const sanitizeLength = (str) => {
+    if (encodeURIComponent(str).length <= 5400) return str;
+    let cleaned = str.replace(/\/\*[\s\S]*?\*\//g, '');
+    cleaned = cleaned.split('\n')
+      .map(line => {
+        if (lang === 'Python') return line.replace(/#.*$/, '');
+        return line.replace(/\/\/.*$/, '');
+      })
+      .filter(line => line.trim().length > 0)
+      .join('\n');
+    return cleaned;
+  };
 
-      if (!hasClass) {
-        if (hasMain) {
-          codeToRun = `public class Main {\n${codeToRun}\n}`;
-        } else {
-          codeToRun = `public class Main {\n  public static void main(String[] args) {\n    ${codeToRun.split('\n').join('\n    ')}\n  }\n}`;
-        }
-      } else {
-        // Find existing class name and replace with Main for PythonTutor compatibility
-        const match = codeToRun.match(/\bclass\s+(\w+)/);
-        if (match && match[1] !== 'Main') {
-          codeToRun = codeToRun.replace(new RegExp(`\\bclass\\s+${match[1]}\\b`, 'g'), 'class Main');
-        }
-        // Ensure the Main class is public
-        if (codeToRun.includes('class Main') && !codeToRun.includes('public class Main')) {
-          codeToRun = codeToRun.replace(/\bclass\s+Main\b/, 'public class Main');
-        }
-      }
-      setLocalCode(codeToRun);
-    } else if (detectedLang === 'C') {
-      const hasMain = /\bmain\s*\(/.test(codeToRun);
-      if (!hasMain) {
-        codeToRun = `#include <stdio.h>\n#include <stdlib.h>\n\nint main() {\n  ${codeToRun.split('\n').join('\n  ')}\n  return 0;\n}`;
-        setLocalCode(codeToRun);
-      }
-    } else if (detectedLang === 'C++') {
-      const hasMain = /\bmain\s*\(/.test(codeToRun);
-      if (!hasMain) {
-        codeToRun = `#include <iostream>\nusing namespace std;\n\nint main() {\n  ${codeToRun.split('\n').join('\n  ')}\n  return 0;\n}`;
-        setLocalCode(codeToRun);
-      }
+  if (lang === 'C') {
+    // Convert C++ STL headers & using namespace std to pure C
+    src = src
+      .replace(/#include\s*<vector>/g, '')
+      .replace(/#include\s*<queue>/g, '')
+      .replace(/#include\s*<stack>/g, '')
+      .replace(/#include\s*<algorithm>/g, '')
+      .replace(/#include\s*<iostream>/g, '#include <stdio.h>\n#include <stdbool.h>\n#include <stdlib.h>')
+      .replace(/using namespace std;/g, '')
+      .replace(/std::/g, '');
+
+    if (!src.includes('<stdio.h>')) {
+      src = `#include <stdio.h>\n#include <stdbool.h>\n#include <stdlib.h>\n\n${src}`;
     }
 
+    src = src
+      .replace(/cout\s*<<\s*arr\[i\]\s*<<\s*" ";/g, 'printf("%d ", arr[i]);')
+      .replace(/cout\s*<<\s*"Element found at index: "\s*<<\s*(\w+)\s*<<\s*endl;/g, 'printf("Element found at index: %d\\n", $1);')
+      .replace(/cout\s*<<\s*"Element not present in array"\s*<<\s*endl;/g, 'printf("Element not present in array\\n");')
+      .replace(/cout\s*<<\s*([^<]+)\s*<<\s*endl;/g, 'printf("%d\\n", $1);')
+      .replace(/cout\s*<<\s*([^;]+);/g, 'printf("%s\\n", $1);');
+
+    const hasMain = /\bmain\s*\(/.test(src);
+    if (!hasMain) {
+      src = `#include <stdio.h>\n#include <stdbool.h>\n#include <stdlib.h>\n\nint main() {\n  ${src.split('\n').join('\n  ')}\n  return 0;\n}`;
+    }
+  } else if (lang === 'C++') {
+    if (!src.includes('<iostream>')) {
+      src = `#include <iostream>\nusing namespace std;\n\n${src}`;
+    } else if (!src.includes('using namespace std')) {
+      src = src.replace('#include <iostream>', '#include <iostream>\nusing namespace std;');
+    }
+    const hasMain = /\bmain\s*\(/.test(src);
+    if (!hasMain) {
+      src = `int main() {\n  ${src.split('\n').join('\n  ')}\n  return 0;\n}`;
+    }
+  } else if (lang === 'Java') {
+    const hasClass = /\bclass\s+(\w+)/.test(src);
+    const hasMain = /\bvoid\s+main\b/.test(src);
+
+    if (!hasClass) {
+      if (hasMain) {
+        src = `public class Main {\n${src}\n}`;
+      } else {
+        src = `public class Main {\n  public static void main(String[] args) {\n    ${src.split('\n').join('\n    ')}\n  }\n}`;
+      }
+    } else {
+      const match = src.match(/\bclass\s+(\w+)/);
+      if (match && match[1] !== 'Main') {
+        src = src.replace(new RegExp(`\\bclass\\s+${match[1]}\\b`, 'g'), 'class Main');
+      }
+      if (src.includes('class Main') && !src.includes('public class Main')) {
+        src = src.replace(/\bclass\s+Main\b/, 'public class Main');
+      }
+    }
+  } else if (lang === 'Python') {
+    src = src
+      .replace(/import numpy as np/g, '')
+      .replace(/import pandas as pd/g, '')
+      .replace(/np\.array\(([^)]+)\)/g, '$1')
+      .replace(/np\.zeros\(([^)]+)\)/g, '[0]*$1');
+  } else if (lang === 'JS') {
+    src = src
+      .replace(/document\.write\(([^)]+)\)/g, 'console.log($1)')
+      .replace(/alert\(([^)]+)\)/g, 'console.log($1)');
+  }
+
+  return sanitizeLength(src);
+};
+
+  const handleStartDebug = () => {
+    let codeToRun = makeCodePythonTutorRunnable(localCode, detectedLang);
+    if (codeToRun.length === 0) return;
+
+    setLocalCode(codeToRun);
+
     if (encodeURIComponent(codeToRun).length > 5500) {
-      alert("⚠️ Your code is too long for the Line-by-Line visualizer!\n\nPythonTutor has a strict limit of 5,500 bytes. Please remove comments, empty lines, and boilerplate.");
+      alert("🙏 We apologize for the inconvenience!\n\nYour code is too long (exceeds PythonTutor's 5,500 byte limit) even after auto-cleaning comments.\n\nPlease reduce size or execute it directly in our Sandboxed Code Runner!");
       return;
     }
     
