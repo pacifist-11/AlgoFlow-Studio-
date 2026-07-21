@@ -454,7 +454,7 @@ Instructions:
       let relevantHistory = firstUserIdx !== -1 ? chatHistory.slice(firstUserIdx) : [];
       if (relevantHistory.length > 10) relevantHistory = relevantHistory.slice(-10);
 
-      const activeModel = model || 'gemini-1.5-flash';
+      const activeModel = model || 'gemini-2.0-flash';
       const response = await fetch(`https://generativelanguage.googleapis.com/v1beta/models/${activeModel}:generateContent?key=${apiKey}`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
@@ -569,15 +569,15 @@ Instructions:
                 <div style={{ display: 'flex', flexDirection: 'column', gap: '4px' }}>
                   <label style={{ fontSize: '0.8rem', fontWeight: 700, color: 'var(--text-primary)' }}>Model:</label>
                   <select 
-                    value={model || 'gemini-1.5-flash'} 
+                    value={model || 'gemini-2.0-flash'} 
                     onChange={e => setModel(e.target.value)}
                     className="styled-select"
                     style={{ fontSize: '0.85rem', padding: '0.55rem' }}
                   >
-                    <option value="gemini-1.5-flash">Gemini 1.5 Flash (Fast & Balanced)</option>
-                    <option value="gemini-2.0-flash">Gemini 2.0 Flash (Recommended & Fast)</option>
-                    <option value="gemini-1.5-pro">Gemini 1.5 Pro (Deep Reasoning)</option>
-                    <option value="gemini-2.0-flash-exp">Gemini 2.0 Flash (Experimental)</option>
+                    <option value="gemini-2.0-flash">Gemini 2.0 Flash (Fast & Recommended)</option>
+                    <option value="gemini-flash-latest">Gemini Flash Latest (Auto-Updated)</option>
+                    <option value="gemini-2.5-pro">Gemini 2.5 Pro (Deep Reasoning)</option>
+                    <option value="gemini-2.0-flash-lite">Gemini 2.0 Flash Lite (Lightweight)</option>
                   </select>
                 </div>
 
@@ -1001,7 +1001,7 @@ function App() {
     return () => window.removeEventListener('resize', handleResize);
   }, []);
   const [globalApiKey,  setGlobalApiKey]  = useState(() => safeLocalStorage.getItem('gemini_api_key') || import.meta.env.VITE_GEMINI_API_KEY || '');
-  const [globalModel,   setGlobalModel]   = useState(() => safeLocalStorage.getItem('gemini_model') || import.meta.env.VITE_GEMINI_MODEL || 'gemini-1.5-flash');
+  const [globalModel,   setGlobalModel]   = useState(() => safeLocalStorage.getItem('gemini_model') || import.meta.env.VITE_GEMINI_MODEL || 'gemini-2.0-flash');
 
   const [globalSort, setGlobalSort] = useState('Bubble Sort');
   const [globalSearch, setGlobalSearch] = useState('Linear Search');
