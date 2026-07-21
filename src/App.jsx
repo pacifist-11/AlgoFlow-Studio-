@@ -454,7 +454,10 @@ Instructions:
       let relevantHistory = firstUserIdx !== -1 ? chatHistory.slice(firstUserIdx) : [];
       if (relevantHistory.length > 10) relevantHistory = relevantHistory.slice(-10);
 
-      const activeModel = model || 'gemini-2.0-flash';
+      let activeModel = model || 'gemini-2.0-flash';
+      if (!activeModel || activeModel.includes('1.5')) {
+        activeModel = 'gemini-2.0-flash';
+      }
       const response = await fetch(`https://generativelanguage.googleapis.com/v1beta/models/${activeModel}:generateContent?key=${apiKey}`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
@@ -1001,7 +1004,14 @@ function App() {
     return () => window.removeEventListener('resize', handleResize);
   }, []);
   const [globalApiKey,  setGlobalApiKey]  = useState(() => safeLocalStorage.getItem('gemini_api_key') || import.meta.env.VITE_GEMINI_API_KEY || '');
-  const [globalModel,   setGlobalModel]   = useState(() => safeLocalStorage.getItem('gemini_model') || import.meta.env.VITE_GEMINI_MODEL || 'gemini-2.0-flash');
+  const [globalModel,   setGlobalModel]   = useState(() => {
+    const saved = safeLocalStorage.getItem('gemini_model');
+    if (!saved || saved.includes('1.5')) {
+      safeLocalStorage.setItem('gemini_model', 'gemini-2.0-flash');
+      return import.meta.env.VITE_GEMINI_MODEL || 'gemini-2.0-flash';
+    }
+    return saved;
+  });
 
   const [globalSort, setGlobalSort] = useState('Bubble Sort');
   const [globalSearch, setGlobalSearch] = useState('Linear Search');
