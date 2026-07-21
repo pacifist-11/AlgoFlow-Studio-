@@ -3421,19 +3421,80 @@ ${execBlock}`;
 }
 // Execution
 ${execBlock}`;
-    } else if (variety === 'HASH_LINEAR' || variety === 'HASH_QUADRATIC') {
+    } else if (variety === 'HASH_LINEAR' || variety === 'HASH_QUADRATIC' || variety === 'HASH_MULTIPLICATION' || variety === 'HASH_FOLDING') {
       let isQuad = variety === 'HASH_QUADRATIC';
+      let isMult = variety === 'HASH_MULTIPLICATION';
+      let isFold = variety === 'HASH_FOLDING';
+
       let probeCodeC = isQuad ? 'int probe = (index + i * i) % tableSize;' : 'int probe = (index + i) % tableSize;';
       let probeCodeJ = isQuad ? 'int probe = (index + i * i) % tableSize;' : 'int probe = (index + i) % tableSize;';
       let probeCodeP = isQuad ? 'probe = (index + i * i) % self.size' : 'probe = (index + i) % self.size';
       let probeCodeJS = isQuad ? 'let probe = (index + i * i) % this.size;' : 'let probe = (index + i) % this.size;';
 
+      let hashCalcJ = isMult 
+        ? 'int index = (int) Math.floor(tableSize * ((Math.abs(key) * 0.6180339887) % 1));' 
+        : isFold 
+        ? 'int index = foldKey(key) % tableSize;' 
+        : 'int index = Math.abs(key) % tableSize;';
+      
+      let hashCalcC = isMult 
+        ? 'int index = (int)(tableSize * fmod(abs(key) * 0.6180339887, 1.0));' 
+        : isFold 
+        ? 'int index = foldKey(key) % tableSize;' 
+        : 'int index = abs(key) % tableSize;';
+      
+      let hashCalcP = isMult 
+        ? 'index = int(self.size * ((abs(key) * 0.6180339887) % 1))' 
+        : isFold 
+        ? 'index = self.fold_key(key) % self.size' 
+        : 'index = abs(key) % self.size';
+
+      let hashCalcJS = isMult 
+        ? 'let index = Math.floor(this.size * ((Math.abs(key) * 0.6180339887) % 1));' 
+        : isFold 
+        ? 'let index = this.foldKey(key) % this.size;' 
+        : 'let index = Math.abs(key) % this.size;';
+
+      let foldHelperJ = isFold ? `
+    int foldKey(int key) {
+        String s = String.valueOf(Math.abs(key));
+        int sum = 0;
+        for (int i = 0; i < s.length(); i += 2) {
+            sum += Integer.parseInt(s.substring(i, Math.min(i + 2, s.length())));
+        }
+        return sum;
+    }` : '';
+
+      let foldHelperC = isFold ? `
+    int foldKey(int key) {
+        string s = to_string(abs(key));
+        int sum = 0;
+        for (size_t i = 0; i < s.length(); i += 2) {
+            sum += stoi(s.substr(i, 2));
+        }
+        return sum;
+    }` : '';
+
+      let foldHelperP = isFold ? `
+    def fold_key(self, key):
+        s = str(abs(key))
+        return sum(int(s[i:i+2]) for i in range(0, len(s), 2))` : '';
+
+      let foldHelperJS = isFold ? `
+    foldKey(key) {
+        let s = Math.abs(key).toString(), sum = 0;
+        for (let i = 0; i < s.length; i += 2) {
+            sum += parseInt(s.substring(i, i + 2), 10);
+        }
+        return sum;
+    }` : '';
+
       if (lang === 'Java') return `import java.util.Arrays;
 class HashTable {
     Integer[] table; int tableSize;
-    HashTable(int size) { tableSize = size; table = new Integer[size]; }
+    HashTable(int size) { tableSize = size; table = new Integer[size]; }${foldHelperJ}
     void insert(int key) {
-        int index = key % tableSize;
+        ${hashCalcJ}
         for (int i=0; i<tableSize; i++) {
             ${probeCodeJ}
             if (table[probe] == null || table[probe] == -1) { table[probe] = key; return; }
@@ -3441,7 +3502,7 @@ class HashTable {
         }
     }
     boolean search(int key) {
-        int index = key % tableSize;
+        ${hashCalcJ}
         for (int i=0; i<tableSize; i++) {
             ${probeCodeJ}
             if (table[probe] == null) return false;
@@ -3450,7 +3511,7 @@ class HashTable {
         return false;
     }
     void delete(int key) {
-        int index = key % tableSize;
+        ${hashCalcJ}
         for (int i=0; i<tableSize; i++) {
             ${probeCodeJ}
             if (table[probe] == null) return;
@@ -3466,13 +3527,15 @@ ${execBlock}
 }`;
       if (lang === 'C++') return `#include <iostream>
 #include <vector>
+#include <string>
+#include <cmath>
 using namespace std;
 class HashTable {
     vector<int> table; int tableSize;
 public:
-    HashTable(int size) { tableSize = size; table.assign(size, -1); }
+    HashTable(int size) { tableSize = size; table.assign(size, -1); }${foldHelperC}
     void insert(int key) {
-        int index = key % tableSize;
+        ${hashCalcC}
         for (int i=0; i<tableSize; i++) {
             ${probeCodeC}
             if (table[probe] == -1 || table[probe] == -2) { table[probe] = key; return; }
@@ -3480,7 +3543,7 @@ public:
         }
     }
     bool search(int key) {
-        int index = key % tableSize;
+        ${hashCalcC}
         for (int i=0; i<tableSize; i++) {
             ${probeCodeC}
             if (table[probe] == -1) return false;
@@ -3489,7 +3552,7 @@ public:
         return false;
     }
     void remove(int key) {
-        int index = key % tableSize;
+        ${hashCalcC}
         for (int i=0; i<tableSize; i++) {
             ${probeCodeC}
             if (table[probe] == -1) return;
@@ -3507,9 +3570,9 @@ ${execBlock}
 }`;
       if (lang === 'Python') return `class HashTable:
     def __init__(self, size):
-        self.size = size; self.table = [None]*size
+        self.size = size; self.table = [None]*size${foldHelperP}
     def insert(self, key):
-        index = key % self.size
+        ${hashCalcP}
         for i in range(self.size):
             ${probeCodeP}
             if self.table[probe] is None or self.table[probe] == -1:
@@ -3517,14 +3580,14 @@ ${execBlock}
                 return
             if self.table[probe] == key: return
     def search(self, key):
-        index = key % self.size
+        ${hashCalcP}
         for i in range(self.size):
             ${probeCodeP}
             if self.table[probe] is None: return False
             if self.table[probe] == key: return True
         return False
     def delete(self, key):
-        index = key % self.size
+        ${hashCalcP}
         for i in range(self.size):
             ${probeCodeP}
             if self.table[probe] is None: return
@@ -3535,9 +3598,9 @@ ${execBlock}
 if __name__ == "__main__":
 ${execBlock}`;
       if (lang === 'JS') return `class HashTable {
-    constructor(size) { this.size = size; this.table = new Array(size).fill(null); }
+    constructor(size) { this.size = size; this.table = new Array(size).fill(null); }${foldHelperJS}
     insert(key) {
-        let index = key % this.size;
+        ${hashCalcJS}
         for (let i=0; i<this.size; i++) {
             ${probeCodeJS}
             if (this.table[probe] === null || this.table[probe] === 'TOMBSTONE') { this.table[probe] = key; return; }
@@ -3545,7 +3608,7 @@ ${execBlock}`;
         }
     }
     search(key) {
-        let index = key % this.size;
+        ${hashCalcJS}
         for (let i=0; i<this.size; i++) {
             ${probeCodeJS}
             if (this.table[probe] === null) return false;
@@ -3554,7 +3617,7 @@ ${execBlock}`;
         return false;
     }
     delete(key) {
-        let index = key % this.size;
+        ${hashCalcJS}
         for (let i=0; i<this.size; i++) {
             ${probeCodeJS}
             if (this.table[probe] === null) return;

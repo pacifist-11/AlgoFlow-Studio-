@@ -126,8 +126,13 @@ const getComplexityInfo = (type, variety) => {
         ]
       };
     case 'HASH_TABLE':
+      const modeLabel = variety === 'HASH_CHAINING' ? 'Chaining'
+        : variety === 'HASH_QUADRATIC' ? 'Quadratic'
+        : variety === 'HASH_MULTIPLICATION' ? 'Multiplication'
+        : variety === 'HASH_FOLDING' ? 'Folding'
+        : 'Linear';
       return {
-        title: `Hash Table (${variety === 'HASH_CHAINING' ? 'Chaining' : 'Probing'})`,
+        title: `Hash Table (${modeLabel})`,
         operations: [
           { op: 'Insert', time: 'O(1) avg / O(N) worst', space: 'O(1)' },
           { op: 'Search', time: 'O(1) avg / O(N) worst', space: 'O(1)' },
@@ -1056,6 +1061,45 @@ const GeneralDSVisualizer = ({ onBack, openSettings, initialType = 'HASH_TABLE',
     setOperationsLog(prev => [...prev, { op: 'search', val }]);
   };
 
+  const getHashInfo = (val, size, variety) => {
+    let absVal = Math.abs(val);
+    let bucket = 0;
+    let h_k = '';
+
+    if (variety === 'HASH_MULTIPLICATION') {
+      const A = 0.6180339887;
+      const frac = (absVal * A) % 1;
+      bucket = Math.floor(size * frac);
+      h_k = `h(${val}) = ⌊${size} × ((${absVal} × 0.618034) mod 1)⌋ = ${bucket}`;
+    } else if (variety === 'HASH_FOLDING') {
+      const str = absVal.toString();
+      const parts = [];
+      for (let k = 0; k < str.length; k += 2) {
+        parts.push(parseInt(str.substring(k, Math.min(k + 2, str.length)), 10));
+      }
+      const sum = parts.reduce((a, b) => a + b, 0);
+      bucket = sum % size;
+      h_k = `h(${val}) = (${parts.join(' + ')}) % ${size} = ${sum} % ${size} = ${bucket}`;
+    } else {
+      bucket = absVal % size;
+      h_k = `h(${val}) = ${absVal} % ${size} = ${bucket}`;
+    }
+    return { absVal, bucket, h_k };
+  };
+
+  const getProbeInfo = (bucket, i, size, variety) => {
+    let probeBucket = 0;
+    let formula = '';
+    if (variety === 'HASH_QUADRATIC') {
+      probeBucket = (bucket + i * i) % size;
+      formula = `(${bucket} + ${i}²) % ${size} = ${probeBucket}`;
+    } else {
+      probeBucket = (bucket + i) % size;
+      formula = `(${bucket} + ${i}) % ${size} = ${probeBucket}`;
+    }
+    return { probeBucket, formula };
+  };
+
   // Operations for Hash Table
   const hashInsert = () => {
     let val = parseInt(inputValue);
@@ -1063,9 +1107,7 @@ const GeneralDSVisualizer = ({ onBack, openSettings, initialType = 'HASH_TABLE',
     let frames = [];
     let ht = timeline.length > 0 ? timeline[timeline.length-1].ht : hashTable;
     
-    let absVal = Math.abs(val);
-    let bucket = absVal % tableSize;
-    let h_k = `h(${val}) = ${absVal} % ${tableSize} = ${bucket}`;
+    let { bucket, h_k } = getHashInfo(val, tableSize, dsVariety);
     
     let currHt;
     let inserted = false;
@@ -1092,8 +1134,7 @@ const GeneralDSVisualizer = ({ onBack, openSettings, initialType = 'HASH_TABLE',
       
       let i = 0;
       while (i < tableSize) {
-        let probeBucket = dsVariety === 'HASH_LINEAR' ? (bucket + i) % tableSize : (bucket + i * i) % tableSize;
-        let formula = dsVariety === 'HASH_LINEAR' ? `(${bucket} + ${i}) % ${tableSize}` : `(${bucket} + ${i}²) % ${tableSize}`;
+        let { probeBucket, formula } = getProbeInfo(bucket, i, tableSize, dsVariety);
         frames.push({ ht: [...currHt], activeBucket: probeBucket, msg: `Probing slot ${probeBucket} ➔ Formula: ${formula}`, activeLineText: 'int probe =' });
         
         if (currHt[probeBucket] === null || currHt[probeBucket] === 'TOMBSTONE') {
@@ -1133,9 +1174,7 @@ const GeneralDSVisualizer = ({ onBack, openSettings, initialType = 'HASH_TABLE',
     if(isNaN(val)) return;
     let frames = [];
     let ht = timeline.length > 0 ? timeline[timeline.length-1].ht : hashTable;
-    let absVal = Math.abs(val);
-    let bucket = absVal % tableSize;
-    let h_k = `h(${val}) = ${absVal} % ${tableSize} = ${bucket}`;
+    let { bucket, h_k } = getHashInfo(val, tableSize, dsVariety);
     
     if (dsVariety === 'HASH_CHAINING') {
       let safeHt = Array.isArray(ht) && Array.isArray(ht[0]) ? ht : Array.from({length: tableSize}, () => []);
@@ -1154,8 +1193,8 @@ const GeneralDSVisualizer = ({ onBack, openSettings, initialType = 'HASH_TABLE',
       let i = 0;
       let found = false;
       while (i < tableSize) {
-        let probeBucket = dsVariety === 'HASH_LINEAR' ? (bucket + i) % tableSize : (bucket + i * i) % tableSize;
-        frames.push({ ht: [...safeHt], activeBucket: probeBucket, msg: `Checking slot ${probeBucket}`, activeLineText: 'int probe =' });
+        let { probeBucket, formula } = getProbeInfo(bucket, i, tableSize, dsVariety);
+        frames.push({ ht: [...safeHt], activeBucket: probeBucket, msg: `Checking slot ${probeBucket} ➔ Formula: ${formula}`, activeLineText: 'int probe =' });
         
         if (safeHt[probeBucket] === val) {
           frames.push({ ht: [...safeHt], activeBucket: probeBucket, msg: `Found ${val} at slot ${probeBucket}!`, activeLineText: 'table[probe] == key' });
@@ -1180,9 +1219,7 @@ const GeneralDSVisualizer = ({ onBack, openSettings, initialType = 'HASH_TABLE',
     if(isNaN(val)) return;
     let frames = [];
     let ht = timeline.length > 0 ? timeline[timeline.length-1].ht : hashTable;
-    let absVal = Math.abs(val);
-    let bucket = absVal % tableSize;
-    let h_k = `h(${val}) = ${absVal} % ${tableSize} = ${bucket}`;
+    let { bucket, h_k } = getHashInfo(val, tableSize, dsVariety);
     
     if (dsVariety === 'HASH_CHAINING') {
       let safeHt = ht.map(b => [...b]);
@@ -1206,8 +1243,8 @@ const GeneralDSVisualizer = ({ onBack, openSettings, initialType = 'HASH_TABLE',
       let i = 0;
       let found = false;
       while (i < tableSize) {
-        let probeBucket = dsVariety === 'HASH_LINEAR' ? (bucket + i) % tableSize : (bucket + i * i) % tableSize;
-        frames.push({ ht: [...safeHt], activeBucket: probeBucket, msg: `Checking slot ${probeBucket}`, activeLineText: 'int probe =' });
+        let { probeBucket, formula } = getProbeInfo(bucket, i, tableSize, dsVariety);
+        frames.push({ ht: [...safeHt], activeBucket: probeBucket, msg: `Checking slot ${probeBucket} ➔ Formula: ${formula}`, activeLineText: 'int probe =' });
         
         if (safeHt[probeBucket] === val) {
           frames.push({ ht: [...safeHt], activeBucket: probeBucket, msg: `Found ${val} at slot ${probeBucket}!`, activeLineText: 'table[probe] == key' });
@@ -1799,6 +1836,8 @@ const GeneralDSVisualizer = ({ onBack, openSettings, initialType = 'HASH_TABLE',
                 <option value="HASH_CHAINING">Separate Chaining</option>
                 <option value="HASH_LINEAR">Linear Probing</option>
                 <option value="HASH_QUADRATIC">Quadratic Probing</option>
+                <option value="HASH_MULTIPLICATION">Multiplication Hashing</option>
+                <option value="HASH_FOLDING">Folding Method Hashing</option>
             </>}
           </select>
 

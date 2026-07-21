@@ -3159,6 +3159,8 @@ function App() {
                 { id: 'QUEUE_DEQUE', mode: 'GENERAL_DSA_VIS', title: 'Deque', icon: '↔️', desc: 'General DSA', type: 'QUEUE', variety: 'QUEUE_DEQUE' },
                 { id: 'HASH_LINEAR', mode: 'GENERAL_DSA_VIS', title: 'Hash Table (Linear Probing)', icon: '#️⃣', desc: 'General DSA', type: 'HASH_TABLE', variety: 'HASH_LINEAR' },
                 { id: 'HASH_QUADRATIC', mode: 'GENERAL_DSA_VIS', title: 'Hash Table (Quadratic Probing)', icon: '2️⃣', desc: 'General DSA', type: 'HASH_TABLE', variety: 'HASH_QUADRATIC' },
+                { id: 'HASH_MULTIPLICATION', mode: 'GENERAL_DSA_VIS', title: 'Hash Table (Multiplication Hashing)', icon: '✖️', desc: 'General DSA', type: 'HASH_TABLE', variety: 'HASH_MULTIPLICATION' },
+                { id: 'HASH_FOLDING', mode: 'GENERAL_DSA_VIS', title: 'Hash Table (Folding Method)', icon: '📁', desc: 'General DSA', type: 'HASH_TABLE', variety: 'HASH_FOLDING' },
                 { id: 'HASH_CHAINING', mode: 'GENERAL_DSA_VIS', title: 'Hash Table (Separate Chaining)', icon: '⛓️‍💥', desc: 'General DSA', type: 'HASH_TABLE', variety: 'HASH_CHAINING' },
                 { id: 'DIJKSTRA_GRAPH', mode: 'GRAPH_VIS', title: 'Dijkstra Algorithm', icon: '🛣️', desc: 'Graph Visualizer', algo: 'Dijkstra' },
                 { id: 'BFS_GRAPH', mode: 'GRAPH_VIS', title: 'Breadth-First Search (BFS)', icon: '🌐', desc: 'Graph Visualizer', algo: 'BFS' },
