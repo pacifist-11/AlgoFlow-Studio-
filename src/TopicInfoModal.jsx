@@ -1,3 +1,4 @@
+/* eslint-disable react/prop-types */
 import React from 'react';
 import { TOPIC_INFO } from './topicInfoData.js';
 

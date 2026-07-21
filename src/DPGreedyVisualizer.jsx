@@ -94,6 +94,7 @@ const DPGreedyVisualizer = ({ onBack, openSettings, initialTab = 'LCS', onCopyCo
   const [codeLanguage, setCodeLanguage] = useState('Java');
   const [showCode, setShowCode] = useState(false);
   const [showComplexity, setShowComplexity] = useState(true);
+  const [showTopicInfo, setShowTopicInfo] = useState(false);
   const [speed, setSpeed] = useState(400);
   const [copied, setCopied] = useState(false);
   const [isRunnerOpen, setIsRunnerOpen] = useState(false);
@@ -1431,7 +1432,7 @@ const DPGreedyVisualizer = ({ onBack, openSettings, initialTab = 'LCS', onCopyCo
   };
 
   return (
-    <div className="app-container" style={{ height: '100vh', display: 'flex', flexDirection: 'column', overflow: 'hidden' }}>
+    <div className="app-container" style={{ height: '100vh', display: 'flex', flexDirection: 'column', overflow: 'hidden', background: 'var(--bg-primary, #0f172a)' }}>
 
       {/* HEADER SECTION */}
       <header className="header-glass">
@@ -1486,7 +1487,7 @@ const DPGreedyVisualizer = ({ onBack, openSettings, initialTab = 'LCS', onCopyCo
       </header>
 
       {/* INPUT PANEL AND RUN BUTTONS */}
-      <div style={{ display: 'flex', padding: '10px 20px', background: 'rgba(15, 23, 42, 0.3)', borderBottom: '1px solid var(--glass-border)', alignItems: 'center', justifyContent: 'space-between', gap: '15px', flexShrink: 0 }}>
+      <div style={{ display: 'flex', padding: '10px 20px', background: 'var(--glass-bg)', borderBottom: '1px solid var(--glass-border)', alignItems: 'center', justifyContent: 'space-between', gap: '15px', flexShrink: 0 }}>
 
         {/* Dynamic Inputs based on selected Tab */}
         <div style={{ display: 'flex', gap: '12px', alignItems: 'center', flex: 1 }}>
@@ -1669,7 +1670,7 @@ const DPGreedyVisualizer = ({ onBack, openSettings, initialTab = 'LCS', onCopyCo
               top: `${logPosition.y}px`,
               width: `${logSize.width}px`,
               height: `${logSize.height}px`,
-              background: 'rgba(15, 23, 42, 0.9)',
+              background: 'var(--bg-secondary)',
               border: '1.5px solid var(--glass-border)',
               borderRadius: '16px',
               boxShadow: '0 20px 50px rgba(0,0,0,0.5)',

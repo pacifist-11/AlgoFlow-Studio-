@@ -2283,7 +2283,7 @@ const GraphVisualizer = ({ onBack, openSettings, initialAlgo = 'Dijkstra', onCop
     <div style={{ display: 'flex', flexDirection: 'column', height: '100vh', background: 'var(--bg-primary, #0f172a)', overflow: 'hidden' }}>
 
       {/* Top Header */}
-      <div style={{ textAlign: 'center', padding: '1rem 0 0.5rem 0', background: 'rgba(15,23,42,0.4)', borderBottom: '1px solid var(--glass-border)' }}>
+      <div style={{ textAlign: 'center', padding: '1rem 0 0.5rem 0', background: 'var(--glass-bg)', borderBottom: '1px solid var(--glass-border)' }}>
         <h1 className="title-gradient" style={{ fontSize: '2.2rem', fontWeight: 800, margin: 0, textShadow: '0 0 25px rgba(59,130,246,0.3)' }}>
           Graph Visualizer
         </h1>
@@ -2296,7 +2296,7 @@ const GraphVisualizer = ({ onBack, openSettings, initialAlgo = 'Dijkstra', onCop
         justifyContent: 'center',
         gap: '12px',
         padding: '0.8rem 1.5rem',
-        background: 'rgba(15,23,42,0.6)',
+        background: 'var(--glass-bg)',
         borderBottom: '1px solid var(--glass-border)',
         flexWrap: 'wrap'
       }}>

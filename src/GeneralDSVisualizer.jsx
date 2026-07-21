@@ -126,7 +126,7 @@ const getComplexityInfo = (type, variety) => {
           { op: 'Search', time: 'O(N)', space: 'O(1)' }
         ]
       };
-    case 'HASH_TABLE':
+    case 'HASH_TABLE': {
       const modeLabel = variety === 'HASH_CHAINING' ? 'Chaining'
         : variety === 'HASH_QUADRATIC' ? 'Quadratic'
         : variety === 'HASH_MULTIPLICATION' ? 'Multiplication'
@@ -141,6 +141,7 @@ const getComplexityInfo = (type, variety) => {
           { op: 'Rehash', time: 'O(N) (resize)', space: 'O(N)' }
         ]
       };
+    }
     default:
       return null;
   }

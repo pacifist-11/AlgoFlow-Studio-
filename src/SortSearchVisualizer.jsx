@@ -130,6 +130,7 @@ const SortSearchVisualizer = ({ onBack, openSettings, initialTab = 'Sort', initi
   const currentDisplayedAlgo = activeTab === 'Sort' ? selectedSort : selectedSearch;
   const [codeLang, setCodeLang] = useState('C++');
   const [showCode, setShowCode] = useState(false);
+  const [showTopicInfo, setShowTopicInfo] = useState(false);
   const [isRunnerOpen, setIsRunnerOpen] = useState(false);
   const [isMobile, setIsMobile] = useState(typeof window !== 'undefined' ? window.innerWidth < 768 : false);
   const [mobileTab, setMobileTab] = useState('vis'); // 'vis' | 'code' | 'log'
@@ -1265,7 +1266,7 @@ const SortSearchVisualizer = ({ onBack, openSettings, initialTab = 'Sort', initi
   const frame = timeline[currentStep] || { arr: array, i: -1, j: -1, k: -1, msg: '' };
 
   return (
-    <div style={{ display: 'flex', flexDirection: 'column', height: '100vh', background: 'var(--body-bg, #0f172a)' }}>
+    <div style={{ display: 'flex', flexDirection: 'column', height: '100vh', background: 'var(--bg-primary, #0f172a)' }}>
       <header className="header-glass" style={{ padding: '0.8rem 1.5rem', display: 'flex', justifyContent: 'space-between', alignItems: 'center', flexWrap: 'wrap', gap: '10px' }}>
         <h2 style={{ fontSize: '1.2rem', color: 'var(--text-primary)', fontWeight: 'bold', margin: 0 }}>Sort & Search Visualizer</h2>
         <div style={{ display: 'flex', gap: '8px', flexWrap: 'wrap', alignItems: 'center' }}>
@@ -1318,6 +1319,7 @@ const SortSearchVisualizer = ({ onBack, openSettings, initialTab = 'Sort', initi
           )}
           <button className="btn btn-clear" onClick={() => setShowLogPanel(!showLogPanel)}>{showLogPanel ? '📋 Hide Log' : '📋 Show Log'}</button>
           <button className="btn btn-clear" onClick={() => setShowCode(!showCode)}>{showCode ? '💻 Hide Code' : '💻 Show Code'}</button>
+          <button className="btn btn-clear" style={{ background: 'rgba(0, 229, 255, 0.1)', border: '1px solid var(--accent-primary)', color: 'var(--accent-primary)' }} onClick={() => setShowTopicInfo(true)} title="Learn about this algorithm">ℹ️ Info</button>
           {openSettings && <button className="btn btn-clear" onClick={openSettings}>⚙ Settings</button>}
           <button className="btn btn-clear" onClick={onBack}>🏠 Home</button>
         </div>
@@ -1344,7 +1346,7 @@ const SortSearchVisualizer = ({ onBack, openSettings, initialTab = 'Sort', initi
              </span>
           </div>
           
-          <div style={{ flex: 1, display: 'flex', alignItems: 'flex-end', justifyContent: 'center', gap: isMobile ? '4px' : '8px', background: 'rgba(15,23,42,0.5)', borderRadius: '14px', border: '1px solid var(--glass-border)', padding: isMobile ? '1rem 0.5rem' : '2rem 1rem', overflow: 'hidden' }}>
+          <div style={{ flex: 1, display: 'flex', alignItems: 'flex-end', justifyContent: 'center', gap: isMobile ? '4px' : '8px', background: 'var(--glass-bg)', borderRadius: '14px', border: '1px solid var(--glass-border)', padding: isMobile ? '1rem 0.5rem' : '2rem 1rem', overflow: 'hidden' }}>
             {frame.arr.map((val, idx) => {
               let bg = 'linear-gradient(to top, var(--accent-primary), var(--accent-secondary))';
               if (idx === frame.i || idx === frame.j) bg = 'linear-gradient(to top, #fbbf24, #f59e0b)'; 
@@ -1968,6 +1970,11 @@ const SortSearchVisualizer = ({ onBack, openSettings, initialTab = 'Sort', initi
         onClose={() => setIsRunnerOpen(false)}
         code={getSortSearchCode(currentDisplayedAlgo, codeLang, array, searchValue ? parseInt(searchValue) : undefined)}
         language={codeLang}
+      />
+      <TopicInfoModal
+        topicKey={currentDisplayedAlgo}
+        isOpen={showTopicInfo}
+        onClose={() => setShowTopicInfo(false)}
       />
     </div>
   );

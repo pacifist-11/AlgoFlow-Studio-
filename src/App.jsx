@@ -10,6 +10,32 @@ import CodeRunnerModal from './CodeRunnerModal.jsx';
 import DPGreedyVisualizer from './DPGreedyVisualizer.jsx';
 import TopicInfoModal from './TopicInfoModal.jsx';
 
+// ─── Safe LocalStorage Helper ────────────────────────────────────────────────
+const safeLocalStorage = {
+  getItem: (key) => {
+    try {
+      if (typeof window === 'undefined' || !window.localStorage) return null;
+      return localStorage.getItem(key);
+    } catch {
+      return null;
+    }
+  },
+  setItem: (key, val) => {
+    try {
+      if (typeof window !== 'undefined' && window.localStorage) {
+        localStorage.setItem(key, val);
+      }
+    } catch {}
+  },
+  removeItem: (key) => {
+    try {
+      if (typeof window !== 'undefined' && window.localStorage) {
+        localStorage.removeItem(key);
+      }
+    } catch {}
+  }
+};
+
 // ─── Tree Node ───────────────────────────────────────────────────────────────
 class TreeNode {
   constructor(value) {
@@ -322,10 +348,10 @@ const THEMES = {
     '--bg-secondary': '#e0f2fe',
     '--accent-primary': '#0284c7',
     '--accent-secondary': '#0ea5e9',
-    '--text-primary': '#082f49',
+    '--text-primary': '#0f172a',
     '--text-secondary': '#0369a1',
-    '--glass-bg': 'rgba(255, 255, 255, 0.65)',
-    '--glass-border': 'rgba(14, 165, 233, 0.25)',
+    '--glass-bg': 'rgba(255, 255, 255, 0.88)',
+    '--glass-border': 'rgba(2, 132, 199, 0.25)',
     '--node-fill-1': '#0284c7',
     '--node-fill-2': '#0ea5e9',
     '--edge-color': 'rgba(2, 132, 199, 0.7)',
@@ -337,10 +363,10 @@ const THEMES = {
     '--bg-secondary': '#ffe4e8',
     '--accent-primary': '#db2777',
     '--accent-secondary': '#f43f5e',
-    '--text-primary': '#4c0519',
+    '--text-primary': '#1f2937',
     '--text-secondary': '#9d174d',
-    '--glass-bg': 'rgba(255, 255, 255, 0.65)',
-    '--glass-border': 'rgba(219, 39, 119, 0.2)',
+    '--glass-bg': 'rgba(255, 255, 255, 0.88)',
+    '--glass-border': 'rgba(219, 39, 119, 0.25)',
     '--node-fill-1': '#db2777',
     '--node-fill-2': '#f43f5e',
     '--edge-color': 'rgba(219, 39, 119, 0.7)',
@@ -352,10 +378,10 @@ const THEMES = {
     '--bg-secondary': '#fef08a',
     '--accent-primary': '#ca8a04',
     '--accent-secondary': '#eab308',
-    '--text-primary': '#422006',
+    '--text-primary': '#1f2937',
     '--text-secondary': '#854d0e',
-    '--glass-bg': 'rgba(255, 255, 255, 0.65)',
-    '--glass-border': 'rgba(202, 138, 4, 0.2)',
+    '--glass-bg': 'rgba(255, 255, 255, 0.88)',
+    '--glass-border': 'rgba(202, 138, 4, 0.25)',
     '--node-fill-1': '#ca8a04',
     '--node-fill-2': '#eab308',
     '--edge-color': 'rgba(202, 138, 4, 0.75)',
@@ -367,10 +393,10 @@ const THEMES = {
     '--bg-secondary': '#dcfce7',
     '--accent-primary': '#059669',
     '--accent-secondary': '#10b981',
-    '--text-primary': '#022c22',
+    '--text-primary': '#1f2937',
     '--text-secondary': '#065f46',
-    '--glass-bg': 'rgba(255, 255, 255, 0.65)',
-    '--glass-border': 'rgba(5, 150, 105, 0.2)',
+    '--glass-bg': 'rgba(255, 255, 255, 0.88)',
+    '--glass-border': 'rgba(5, 150, 105, 0.25)',
     '--node-fill-1': '#059669',
     '--node-fill-2': '#10b981',
     '--edge-color': 'rgba(5, 150, 105, 0.7)',
@@ -379,50 +405,54 @@ const THEMES = {
   }
 };
 
-// ─── Enhanced AI ChatBot ──────────────────────────────────────────────────────
-const ChatBot = ({ customCode, codeLang, isChatOpen, setIsChatOpen, chatMessages, setChatMessages, apiKey, setApiKey, model, setModel, onShowUpcomingFeatures }) => {
+// ─── Enhanced LLM AI ChatBot ──────────────────────────────────────────────────
+const ChatBot = ({ customCode, codeLang, isChatOpen, setIsChatOpen, chatMessages, setChatMessages, apiKey, setApiKey, model, setModel }) => {
   const [chatInput, setChatInput] = useState('');
   const [isLoading, setIsLoading] = useState(false);
   const [showSettings, setShowSettings] = useState(!apiKey);
+  const [tempApiKey, setTempApiKey] = useState(apiKey || '');
   const chatEndRef = useRef(null);
 
-  useEffect(() => { chatEndRef.current?.scrollIntoView({ behavior: 'smooth' }); }, [chatMessages, isLoading]);
+  useEffect(() => {
+    chatEndRef.current?.scrollIntoView({ behavior: 'smooth' });
+  }, [chatMessages, isLoading, isChatOpen]);
 
   const handleSend = async (overrideText) => {
     const textToSend = typeof overrideText === 'string' ? overrideText : chatInput;
     if (!textToSend.trim() || isLoading) return;
     const userMsg = textToSend.trim();
     if (typeof overrideText !== 'string') setChatInput('');
+    
     setChatMessages(prev => [...prev, { sender: 'user', text: userMsg }]);
     setIsLoading(true);
 
     try {
       if (!apiKey) {
-        setChatMessages(prev => [...prev, { sender: 'bot', text: 'I am not connected! Please provide your Gemini API Key in the chat settings ⚙️ above so I can answer anything.' }]);
+        setChatMessages(prev => [...prev, { 
+          sender: 'bot', 
+          text: '⚠️ Please click ⚙️ Settings above and enter your Google Gemini API Key to enable AI responses.' 
+        }]);
+        setShowSettings(true);
         setIsLoading(false);
         return;
       }
 
-      const systemPrompt = `You are an expert AI coding assistant embedded in an Algorithm Visualizer Studio.
-You must help the user with ANYTHING they ask. This includes checking errors from the current code, creating a quiz, providing notes on how the code runs, giving real-time examples, explaining why we use certain concepts, or anything else they request. You are a general-purpose, ask-me-anything bot.
-Current context — Language: ${codeLang}. User's code: ${customCode ? customCode.substring(0, 1200) : '(none)'}.
-Be concise but thorough. Use markdown-style formatting for code blocks.`;
+      const systemPrompt = `You are AlgoFlow AI, an expert computer science tutor and interactive AI coding assistant embedded in AlgoFlow-Studio.
+Your goal is to guide students in algorithms, data structures, debugging, Big-O complexity, and competitive programming.
+Current context:
+- Programming Language: ${codeLang || 'C++'}
+- User Active Code / Template:
+${customCode ? customCode.substring(0, 1500) : '(No active code)'}
 
-      // Filter to only include user and model messages, removing greetings/warnings
+Instructions:
+1. Provide accurate, clear, and structured answers.
+2. Use markdown formatting with standard code blocks for code snippets.
+3. Be encouraging, precise, and concise.`;
+
       const chatHistory = chatMessages.filter(m => m.sender === 'user' || m.sender === 'bot');
       const firstUserIdx = chatHistory.findIndex(m => m.sender === 'user');
       let relevantHistory = firstUserIdx !== -1 ? chatHistory.slice(firstUserIdx) : [];
-      
-      if (relevantHistory.length > 10) {
-        relevantHistory = relevantHistory.slice(-10);
-      }
-      // Re-verify it starts with user after slicing
-      const slicedUserIdx = relevantHistory.findIndex(m => m.sender === 'user');
-      if (slicedUserIdx !== -1) {
-        relevantHistory = relevantHistory.slice(slicedUserIdx);
-      } else {
-        relevantHistory = [];
-      }
+      if (relevantHistory.length > 10) relevantHistory = relevantHistory.slice(-10);
 
       const activeModel = model || 'gemini-1.5-flash';
       const response = await fetch(`https://generativelanguage.googleapis.com/v1beta/models/${activeModel}:generateContent?key=${apiKey}`, {
@@ -442,53 +472,235 @@ Be concise but thorough. Use markdown-style formatting for code blocks.`;
 
       const data = await response.json();
       if (data.error) {
-         setChatMessages(prev => [...prev, { sender: 'bot', text: `API Error: ${data.error.message}\nMake sure your API key is correct.` }]);
+        setChatMessages(prev => [...prev, { sender: 'bot', text: `⚠️ Gemini API Error: ${data.error.message}\nCheck your API Key in Settings.` }]);
       } else {
-         const botText = data.candidates?.[0]?.content?.parts?.[0]?.text || 'No response received.';
-         setChatMessages(prev => [...prev, { sender: 'bot', text: botText }]);
+        const botText = data.candidates?.[0]?.content?.parts?.[0]?.text || 'No response received from model.';
+        setChatMessages(prev => [...prev, { sender: 'bot', text: botText }]);
       }
     } catch (err) {
-      setChatMessages(prev => [...prev, { sender: 'bot', text: `Connection error. Could not reach Gemini API.` }]);
+      setChatMessages(prev => [...prev, { sender: 'bot', text: `⚠️ Connection Error: Could not connect to Gemini API.` }]);
     } finally {
       setIsLoading(false);
     }
   };
 
+  const handleSaveSettings = (e) => {
+    e.preventDefault();
+    setApiKey(tempApiKey.trim());
+    setShowSettings(false);
+  };
+
   return (
-    <div style={{ position: 'fixed', bottom: '20px', right: '20px', zIndex: 1000, display: 'flex', flexDirection: 'column', alignItems: 'flex-end' }}>
+    <div style={{ position: 'fixed', bottom: '20px', right: '20px', zIndex: 9999, display: 'flex', flexDirection: 'column', alignItems: 'flex-end' }}>
       {isChatOpen && (
         <div style={{
-          width: '320px',
-          height: '240px',
-          background: 'var(--bg-secondary)',
+          width: '380px',
+          maxWidth: 'calc(100vw - 30px)',
+          height: '540px',
+          maxHeight: 'calc(100vh - 100px)',
+          background: 'rgba(15, 23, 42, 0.95)',
           border: '1px solid var(--accent-primary)',
-          borderRadius: '16px',
+          borderRadius: '20px',
           marginBottom: '1rem',
           display: 'flex',
           flexDirection: 'column',
-          justifyContent: 'center',
-          alignItems: 'center',
-          padding: '2rem',
-          boxShadow: '0 20px 60px rgba(0,0,0,0.7)',
-          textAlign: 'center',
-          position: 'relative',
-          backdropFilter: 'blur(10px)',
-          animation: 'fadeIn 0.3s ease'
+          boxShadow: '0 25px 70px rgba(0,0,0,0.7)',
+          overflow: 'hidden',
+          backdropFilter: 'blur(16px)',
+          animation: 'fadeIn 0.25s ease'
         }}>
-          <button onClick={() => setIsChatOpen(false)} style={{ position: 'absolute', top: '12px', right: '12px', background: 'rgba(255,255,255,0.1)', border: 'none', color: 'white', cursor: 'pointer', width: '24px', height: '24px', borderRadius: '50%', fontSize: '0.85rem', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>×</button>
-          <div style={{ fontSize: '3rem', marginBottom: '0.5rem', filter: 'drop-shadow(0 0 10px var(--accent-primary))' }}>🤖</div>
-          <h3 style={{ margin: '0 0 6px 0', color: 'var(--text-primary)', fontSize: '1.25rem', fontWeight: 'bold' }}>AI Assistant</h3>
-          <span style={{ fontSize: '0.75rem', background: 'linear-gradient(135deg, var(--accent-primary), var(--accent-secondary))', color: 'white', padding: '3px 10px', borderRadius: '20px', fontWeight: 'bold', textTransform: 'uppercase', marginBottom: '12px' }}>Coming Soon</span>
-          <p style={{ margin: 0, color: 'var(--text-secondary)', fontSize: '0.82rem', lineHeight: '1.4' }}>
-            We're building a Gemini-powered AI helper to explain code, generate quiz cards, and guide your learning in real-time!
-          </p>
+          {/* Header */}
+          <div style={{ padding: '0.8rem 1.2rem', background: 'rgba(255, 255, 255, 0.04)', borderBottom: '1px solid var(--glass-border)', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+            <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+              <span style={{ fontSize: '1.4rem' }}>🤖</span>
+              <div>
+                <h4 style={{ margin: 0, color: 'var(--text-primary)', fontSize: '0.95rem', fontWeight: 800 }}>AlgoFlow AI</h4>
+                <span style={{ fontSize: '0.7rem', color: apiKey ? '#10b981' : '#f59e0b', fontWeight: 'bold' }}>
+                  {apiKey ? '● Gemini LLM Connected' : '○ API Key Required'}
+                </span>
+              </div>
+            </div>
+            <div style={{ display: 'flex', gap: '6px', alignItems: 'center' }}>
+              <button 
+                onClick={() => setShowSettings(!showSettings)} 
+                style={{ background: showSettings ? 'rgba(59,130,246,0.3)' : 'transparent', border: '1px solid var(--glass-border)', color: 'var(--text-primary)', cursor: 'pointer', borderRadius: '8px', padding: '4px 8px', fontSize: '0.85rem' }}
+                title="AI Settings"
+              >
+                ⚙️
+              </button>
+              <button 
+                onClick={() => setChatMessages([{ sender: 'bot', text: 'Chat cleared! Ask me anything about algorithms or code.' }])} 
+                style={{ background: 'transparent', border: '1px solid var(--glass-border)', color: 'var(--text-secondary)', cursor: 'pointer', borderRadius: '8px', padding: '4px 8px', fontSize: '0.85rem' }}
+                title="Clear Chat"
+              >
+                🧹
+              </button>
+              <button 
+                onClick={() => setIsChatOpen(false)} 
+                style={{ background: 'transparent', border: 'none', color: 'var(--text-secondary)', cursor: 'pointer', fontSize: '1.2rem', padding: '0 4px', lineHeight: 1 }}
+                title="Close"
+              >
+                ×
+              </button>
+            </div>
+          </div>
+
+          {/* Settings Modal Body */}
+          {showSettings ? (
+            <div style={{ padding: '1.2rem', display: 'flex', flexDirection: 'column', gap: '1rem', flex: 1, overflowY: 'auto' }}>
+              <h4 style={{ margin: 0, color: 'var(--text-primary)', fontSize: '0.95rem', fontWeight: 700 }}>⚙️ Gemini LLM Configuration</h4>
+              <p style={{ margin: 0, fontSize: '0.8rem', color: 'var(--text-secondary)', lineHeight: '1.4' }}>
+                Enter your free Google Gemini API key from <a href="https://aistudio.google.com/" target="_blank" rel="noreferrer" style={{ color: 'var(--accent-primary)' }}>Google AI Studio</a>.
+              </p>
+              
+              <form onSubmit={handleSaveSettings} style={{ display: 'flex', flexDirection: 'column', gap: '0.8rem' }}>
+                <div style={{ display: 'flex', flexDirection: 'column', gap: '4px' }}>
+                  <label style={{ fontSize: '0.8rem', fontWeight: 700, color: 'var(--text-primary)' }}>API Key:</label>
+                  <input 
+                    type="password"
+                    value={tempApiKey} 
+                    onChange={e => setTempApiKey(e.target.value)} 
+                    placeholder="AIzaSy..." 
+                    className="styled-input"
+                    style={{ fontSize: '0.85rem', padding: '0.55rem' }}
+                  />
+                </div>
+
+                <div style={{ display: 'flex', flexDirection: 'column', gap: '4px' }}>
+                  <label style={{ fontSize: '0.8rem', fontWeight: 700, color: 'var(--text-primary)' }}>Model:</label>
+                  <select 
+                    value={model || 'gemini-1.5-flash'} 
+                    onChange={e => setModel(e.target.value)}
+                    className="styled-select"
+                    style={{ fontSize: '0.85rem', padding: '0.55rem' }}
+                  >
+                    <option value="gemini-1.5-flash">Gemini 1.5 Flash (Fast & Balanced)</option>
+                    <option value="gemini-2.0-flash">Gemini 2.0 Flash (Recommended & Fast)</option>
+                    <option value="gemini-1.5-pro">Gemini 1.5 Pro (Deep Reasoning)</option>
+                    <option value="gemini-2.0-flash-exp">Gemini 2.0 Flash (Experimental)</option>
+                  </select>
+                </div>
+
+                <div style={{ display: 'flex', gap: '8px', marginTop: '0.5rem' }}>
+                  <button type="submit" className="btn btn-start" style={{ flex: 1, padding: '0.6rem', fontSize: '0.85rem' }}>Save & Connect</button>
+                  <button type="button" className="btn btn-clear" style={{ padding: '0.6rem', fontSize: '0.85rem' }} onClick={() => setShowSettings(false)}>Cancel</button>
+                </div>
+              </form>
+            </div>
+          ) : (
+            <>
+              {/* Quick Prompt Pills */}
+              <div style={{ display: 'flex', gap: '6px', padding: '8px 12px', overflowX: 'auto', background: 'rgba(0,0,0,0.2)', borderBottom: '1px solid var(--glass-border)', flexShrink: 0 }}>
+                {[
+                  { icon: '💡', label: 'Explain Code', prompt: 'Please explain how this active code works step-by-step.' },
+                  { icon: '🐞', label: 'Find Bugs', prompt: 'Can you inspect this code for potential edge-case bugs or errors?' },
+                  { icon: '⏱️', label: 'Big-O Time', prompt: 'What is the Time and Space complexity of this algorithm?' },
+                  { icon: '❓', label: 'Quiz Me', prompt: 'Give me a 1-question quiz on this topic to test my understanding!' }
+                ].map((pill, idx) => (
+                  <button 
+                    key={idx}
+                    onClick={() => handleSend(pill.prompt)}
+                    style={{
+                      background: 'rgba(255,255,255,0.05)',
+                      border: '1px solid var(--glass-border)',
+                      borderRadius: '14px',
+                      color: 'var(--text-primary)',
+                      padding: '4px 10px',
+                      fontSize: '0.75rem',
+                      fontWeight: 600,
+                      cursor: 'pointer',
+                      whiteSpace: 'nowrap',
+                      display: 'flex',
+                      alignItems: 'center',
+                      gap: '4px',
+                      transition: 'all 0.2s'
+                    }}
+                  >
+                    <span>{pill.icon}</span> {pill.label}
+                  </button>
+                ))}
+              </div>
+
+              {/* Chat Message List */}
+              <div style={{ flex: 1, overflowY: 'auto', padding: '1rem', display: 'flex', flexDirection: 'column', gap: '12px' }}>
+                {chatMessages.map((msg, idx) => (
+                  <div key={idx} style={{ display: 'flex', justifyContent: msg.sender === 'user' ? 'flex-end' : 'flex-start' }}>
+                    <div style={{
+                      maxWidth: '85%',
+                      padding: '0.7rem 0.9rem',
+                      borderRadius: msg.sender === 'user' ? '14px 14px 2px 14px' : '14px 14px 14px 2px',
+                      background: msg.sender === 'user' ? 'linear-gradient(135deg, var(--accent-primary), #2563eb)' : 'rgba(255,255,255,0.06)',
+                      border: `1px solid ${msg.sender === 'user' ? 'transparent' : 'var(--glass-border)'}`,
+                      color: msg.sender === 'user' ? '#ffffff' : 'var(--text-primary)',
+                      fontSize: '0.85rem',
+                      lineHeight: '1.5',
+                      whiteSpace: 'pre-wrap',
+                      wordBreak: 'break-word'
+                    }}>
+                      {msg.text}
+                    </div>
+                  </div>
+                ))}
+                {isLoading && (
+                  <div style={{ display: 'flex', justifyContent: 'flex-start' }}>
+                    <div style={{ padding: '0.6rem 1rem', borderRadius: '14px', background: 'rgba(255,255,255,0.06)', border: '1px solid var(--glass-border)', color: 'var(--text-secondary)', fontSize: '0.8rem', fontStyle: 'italic' }}>
+                      🤖 Thinking...
+                    </div>
+                  </div>
+                )}
+                <div ref={chatEndRef} />
+              </div>
+
+              {/* Chat Input Bar */}
+              <div style={{ padding: '0.75rem', background: 'rgba(0,0,0,0.3)', borderTop: '1px solid var(--glass-border)', display: 'flex', gap: '8px' }}>
+                <input 
+                  type="text" 
+                  value={chatInput} 
+                  onChange={e => setChatInput(e.target.value)} 
+                  onKeyDown={e => { if (e.key === 'Enter') handleSend(); }} 
+                  placeholder="Ask AlgoFlow AI anything..." 
+                  className="styled-input" 
+                  style={{ flex: 1, padding: '0.55rem 0.85rem', fontSize: '0.85rem' }} 
+                  disabled={isLoading}
+                />
+                <button 
+                  className="btn btn-start" 
+                  style={{ width: '42px', padding: 0, display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: '1rem' }} 
+                  onClick={() => handleSend()}
+                  disabled={isLoading || !chatInput.trim()}
+                >
+                  🚀
+                </button>
+              </div>
+            </>
+          )}
         </div>
       )}
-      <button onClick={() => onShowUpcomingFeatures ? onShowUpcomingFeatures() : setIsChatOpen(!isChatOpen)}
-        style={{ width: '60px', height: '60px', borderRadius: '50%', background: 'linear-gradient(135deg, var(--accent-primary), var(--accent-secondary))', border: 'none', color: 'white', fontSize: '1.5rem', cursor: 'pointer', boxShadow: '0 6px 20px rgba(0,0,0,0.4)', display: 'flex', justifyContent: 'center', alignItems: 'center', transition: 'transform 0.3s' }}
+
+      {/* Floating Toggle Trigger Button */}
+      <button 
+        onClick={() => setIsChatOpen(!isChatOpen)}
+        style={{ 
+          width: '58px', 
+          height: '58px', 
+          borderRadius: '50%', 
+          background: 'linear-gradient(135deg, var(--accent-primary), var(--accent-secondary))', 
+          border: 'none', 
+          color: 'white', 
+          fontSize: '1.5rem', 
+          cursor: 'pointer', 
+          boxShadow: '0 8px 25px rgba(0,229,255,0.4)', 
+          display: 'flex', 
+          justifyContent: 'center', 
+          alignItems: 'center', 
+          transition: 'all 0.3s cubic-bezier(0.4, 0, 0.2, 1)' 
+        }}
         onMouseOver={e => e.currentTarget.style.transform = 'scale(1.1)'}
         onMouseOut={e => e.currentTarget.style.transform = 'scale(1)'}
-        title="AI Coding Assistant">💬</button>
+        title="Open AlgoFlow AI Assistant"
+      >
+        💬
+      </button>
     </div>
   );
 };
@@ -774,7 +986,9 @@ function App() {
   const [splitStrategy,  setSplitStrategy]  = useState('MEDIAN');
   const [showBoundsInfo,  setShowBoundsInfo]  = useState(false);
   const [codeLang,      setCodeLang]      = useState('C++');
-  const [currentTheme,  setCurrentTheme]  = useState('Neon Cyberpunk');
+  const [currentTheme,  setCurrentTheme]  = useState(() => {
+    return safeLocalStorage.getItem('algoflow_theme') || 'Neon Cyberpunk';
+  });
   const [isMobile, setIsMobile] = useState(typeof window !== 'undefined' ? window.innerWidth < 768 : false);
   const [mobileTab, setMobileTab] = useState('vis'); // 'vis' | 'code' | 'log'
   const [showMobileOptions, setShowMobileOptions] = useState(false);
@@ -786,8 +1000,8 @@ function App() {
     window.addEventListener('resize', handleResize);
     return () => window.removeEventListener('resize', handleResize);
   }, []);
-  const [globalApiKey,  setGlobalApiKey]  = useState(localStorage.getItem('gemini_api_key') || '');
-  const [globalModel,   setGlobalModel]   = useState(localStorage.getItem('gemini_model') || 'gemini-1.5-flash');
+  const [globalApiKey,  setGlobalApiKey]  = useState(() => safeLocalStorage.getItem('gemini_api_key') || import.meta.env.VITE_GEMINI_API_KEY || '');
+  const [globalModel,   setGlobalModel]   = useState(() => safeLocalStorage.getItem('gemini_model') || import.meta.env.VITE_GEMINI_MODEL || 'gemini-1.5-flash');
 
   const [globalSort, setGlobalSort] = useState('Bubble Sort');
   const [globalSearch, setGlobalSearch] = useState('Linear Search');
@@ -867,8 +1081,8 @@ function App() {
   const [isLoggedIn, setIsLoggedIn] = useState(true);
   const [userEmail, setUserEmail] = useState('');
   const [userRole, setUserRole] = useState(() => {
-    const savedRole = localStorage.getItem('userRole');
-    const savedTime = localStorage.getItem('loginTime');
+    const savedRole = safeLocalStorage.getItem('userRole');
+    const savedTime = safeLocalStorage.getItem('loginTime');
     if (savedRole && savedTime && Date.now() - Number(savedTime) < 3600000) {
       return savedRole;
     }
@@ -904,16 +1118,16 @@ function App() {
   };
 
   const [isAdminAuthenticated, setIsAdminAuthenticated] = useState(() => {
-    const savedRole = localStorage.getItem('userRole');
-    const savedTime = localStorage.getItem('loginTime');
+    const savedRole = safeLocalStorage.getItem('userRole');
+    const savedTime = safeLocalStorage.getItem('loginTime');
     if (savedRole && savedTime && Date.now() - Number(savedTime) < 3600000) {
       return savedRole === 'admin';
     }
     return false;
   });
   const [adminPinInput, setAdminPinInput] = useState(() => {
-    const savedRole = localStorage.getItem('userRole');
-    const savedTime = localStorage.getItem('loginTime');
+    const savedRole = safeLocalStorage.getItem('userRole');
+    const savedTime = safeLocalStorage.getItem('loginTime');
     if (savedRole && savedTime && Date.now() - Number(savedTime) < 3600000 && savedRole === 'admin') {
       return 'Irctc@11';
     }
@@ -986,11 +1200,12 @@ function App() {
     if (sd.globalSortSearchTab !== undefined) setGlobalSortSearchTab(sd.globalSortSearchTab);
     if (sd.globalGraphAlgo !== undefined) setGlobalGraphAlgo(sd.globalGraphAlgo);
     if (sd.setupComplete !== undefined) setSetupComplete(sd.setupComplete);
+    if (sd.currentTheme !== undefined && THEMES[sd.currentTheme]) setCurrentTheme(sd.currentTheme);
   };
 
   const loadStateFromLocalStorage = () => {
     try {
-      const saved = localStorage.getItem('algoflow_local_state');
+      const saved = safeLocalStorage.getItem('algoflow_local_state');
       if (saved) {
         const sd = JSON.parse(saved);
         applyState(sd);
@@ -1003,7 +1218,7 @@ function App() {
   // ── DB State Saver & Loader ──
   const saveStateToDatabase = async (email, stateData) => {
     // Always persist locally first so it works offline/statically
-    localStorage.setItem('algoflow_local_state', JSON.stringify(stateData));
+    safeLocalStorage.setItem('algoflow_local_state', JSON.stringify(stateData));
     if (!email) return;
     try {
       await fetch('/api/user/save-state', {
@@ -1033,17 +1248,17 @@ function App() {
   useEffect(() => {
     loadStateFromLocalStorage();
 
-    const savedEmail = localStorage.getItem('userEmail');
-    const savedTime = localStorage.getItem('loginTime');
+    const savedEmail = safeLocalStorage.getItem('userEmail');
+    const savedTime = safeLocalStorage.getItem('loginTime');
     if (savedEmail && savedTime && Date.now() - Number(savedTime) < 3600000) {
       loadStateFromDatabase(savedEmail);
     }
 
     // Automatically show upcoming features on first load
-    const shown = localStorage.getItem('upcoming_features_v1');
+    const shown = safeLocalStorage.getItem('upcoming_features_v1');
     if (!shown) {
       setIsUpcomingOpen(true);
-      localStorage.setItem('upcoming_features_v1', 'true');
+      safeLocalStorage.setItem('upcoming_features_v1', 'true');
     }
   }, []);
 
@@ -1052,14 +1267,15 @@ function App() {
     const fetchConfig = async () => {
       try {
         const res = await fetch('/api/auth/config');
-        if (res.ok) {
+        const contentType = res.headers.get('content-type');
+        if (res.ok && contentType && contentType.includes('application/json')) {
           const data = await res.json();
-          if (data.googleClientId) {
+          if (data && data.googleClientId) {
             setGoogleClientId(data.googleClientId);
           }
         }
-      } catch (err) {
-        console.warn("Failed to fetch Google configuration (running in static mode):", err);
+      } catch (_) {
+        // Running in static mode
       }
     };
     fetchConfig();
@@ -1612,11 +1828,21 @@ function App() {
 
   // Apply theme
   useEffect(() => {
-    const theme = THEMES[currentTheme];
+    const theme = THEMES[currentTheme] || THEMES['Neon Cyberpunk'];
     if (!theme) return;
     const root = document.documentElement;
-    Object.entries(theme).forEach(([k, v]) => { if (k !== 'bodyBg') root.style.setProperty(k, v); });
+    Object.entries(theme).forEach(([k, v]) => {
+      if (k !== 'bodyBg' && k !== 'type') {
+        root.style.setProperty(k, v);
+      }
+    });
+    root.style.setProperty('--body-bg', theme['--bg-primary']);
+    root.style.colorScheme = theme.type;
+    document.body.style.backgroundColor = theme['--bg-primary'];
     document.body.style.backgroundImage = theme.bodyBg;
+    try {
+      localStorage.setItem('algoflow_theme', currentTheme);
+    } catch (e) {}
   }, [currentTheme]);
 
   const handleDragStart = e => {
@@ -2835,7 +3061,12 @@ function App() {
             <label style={{ fontWeight: 700, fontSize: '0.95rem', color: 'var(--text-primary)' }}>🌓 Theme Mode</label>
             <div style={{ display: 'flex', gap: '10px', marginTop: '4px' }}>
               <button 
-                onClick={() => setThemeMode('dark')}
+                onClick={() => {
+                  setThemeMode('dark');
+                  if (THEMES[currentTheme]?.type !== 'dark') {
+                    setCurrentTheme('Neon Cyberpunk');
+                  }
+                }}
                 style={{
                   flex: 1, padding: '0.55rem', borderRadius: '10px', 
                   border: `2px solid ${themeMode === 'dark' ? 'var(--accent-primary)' : 'var(--glass-border)'}`,
@@ -2846,7 +3077,12 @@ function App() {
                 🌙 Dark Mode
               </button>
               <button 
-                onClick={() => setThemeMode('light')}
+                onClick={() => {
+                  setThemeMode('light');
+                  if (THEMES[currentTheme]?.type !== 'light') {
+                    setCurrentTheme('Arctic Frost');
+                  }
+                }}
                 style={{
                   flex: 1, padding: '0.55rem', borderRadius: '10px', 
                   border: `2px solid ${themeMode === 'light' ? 'var(--accent-primary)' : 'var(--glass-border)'}`,
@@ -4648,6 +4884,24 @@ function App() {
         topicKey={treeType}
         isOpen={showTopicInfo}
         onClose={() => setShowTopicInfo(false)}
+      />
+      <ChatBot
+        customCode={activeCodeForChat || customCode}
+        codeLang={activeLangForChat || codeLang}
+        isChatOpen={isChatOpen}
+        setIsChatOpen={setIsChatOpen}
+        chatMessages={chatMessages}
+        setChatMessages={setChatMessages}
+        apiKey={globalApiKey}
+        setApiKey={(k) => {
+          setGlobalApiKey(k);
+          safeLocalStorage.setItem('gemini_api_key', k);
+        }}
+        model={globalModel}
+        setModel={(m) => {
+          setGlobalModel(m);
+          safeLocalStorage.setItem('gemini_model', m);
+        }}
       />
     </>
   );
