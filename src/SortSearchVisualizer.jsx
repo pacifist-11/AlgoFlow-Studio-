@@ -3,6 +3,7 @@ import React, { useState, useEffect, useRef } from 'react';
 import gsap from 'gsap';
 import { getSortSearchCode } from './codeTemplatesSort';
 import CodeRunnerModal from './CodeRunnerModal.jsx';
+import TopicInfoModal from './TopicInfoModal.jsx';
 
 // Fallback-safe Clipboard Copy Helper
 const copyToClipboard = (text) => {

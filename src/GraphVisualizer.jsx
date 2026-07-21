@@ -2,6 +2,7 @@
 import React, { useState, useEffect, useRef } from 'react';
 import gsap from 'gsap';
 import CodeRunnerModal from './CodeRunnerModal.jsx';
+import TopicInfoModal from './TopicInfoModal.jsx';
 
 // Multilingual Code Templates for Graph Algorithms
 const getGraphCodeTemplate = (lang, algo, startNode = '0', endNode = '4') => {

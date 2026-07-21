@@ -3,6 +3,7 @@ import React, { useState, useEffect, useRef } from 'react';
 import gsap from 'gsap';
 import { getDPCodeTemplate } from './codeTemplatesDP';
 import CodeRunnerModal from './CodeRunnerModal.jsx';
+import TopicInfoModal from './TopicInfoModal.jsx';
 
 // Fallback Clipboard copy
 const copyToClipboard = (text) => {
