@@ -766,7 +766,7 @@ function App() {
   const [splitStrategy,  setSplitStrategy]  = useState('MEDIAN');
   const [showBoundsInfo,  setShowBoundsInfo]  = useState(false);
   const [codeLang,      setCodeLang]      = useState('C++');
-  const [currentTheme,  setCurrentTheme]  = useState('Cosmic Dark');
+  const [currentTheme,  setCurrentTheme]  = useState('Neon Cyberpunk');
   const [isMobile, setIsMobile] = useState(typeof window !== 'undefined' ? window.innerWidth < 768 : false);
   const [mobileTab, setMobileTab] = useState('vis'); // 'vis' | 'code' | 'log'
   const [showMobileOptions, setShowMobileOptions] = useState(false);
@@ -882,6 +882,16 @@ function App() {
   const [isFeedbackSendingOtp, setIsFeedbackSendingOtp] = useState(false);
   const [isFeedbackVerifyingOtp, setIsFeedbackVerifyingOtp] = useState(false);
   const [feedbackError, setFeedbackError] = useState('');
+  const feedbackScrollRef = useRef(null);
+
+  const triggerFeedbackError = (msg) => {
+    setFeedbackError(msg);
+    setTimeout(() => {
+      if (feedbackScrollRef.current) {
+        feedbackScrollRef.current.scrollTop = feedbackScrollRef.current.scrollHeight;
+      }
+    }, 50);
+  };
 
   const [isAdminAuthenticated, setIsAdminAuthenticated] = useState(() => {
     const savedRole = localStorage.getItem('userRole');
@@ -1409,59 +1419,58 @@ function App() {
     const emailTrimmed = feedbackEmail.trim();
     const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
     if (rating === 0) {
-      setFeedbackError("Selecting a star rating is compulsory. Please select a rating (1-5 stars).");
+      triggerFeedbackError("Selecting a star rating is compulsory. Please select a rating (1-5 stars).");
       return;
     }
     if (!emailTrimmed) {
-      setFeedbackError("Please enter your email address.");
+      triggerFeedbackError("Please enter your email address.");
       return;
     }
     if (!emailRegex.test(emailTrimmed)) {
-      setFeedbackError("Please enter a valid email address (e.g. name@example.com) so we can update you on your feedback.");
+      triggerFeedbackError("Please enter a valid email address (e.g. name@example.com) so we can update you on your feedback.");
       return;
     }
     if (!feedbackText.trim()) {
-      setFeedbackError("Please enter some feedback message.");
+      triggerFeedbackError("Please enter some feedback message.");
       return;
     }
     if (checkRestrictedWords(feedbackText)) {
-      setFeedbackError("You are using restricted words. Please rectify them and send again.");
+      triggerFeedbackError("You are using restricted words. Please rectify them and send again.");
       return;
     }
 
     setFeedbackError('');
-    setIsFeedbackVerifyingOtp(true);
+    setIsFeedbackSubmitted(true); // Optimistically show success screen instantly
+    
+    const payload = {
+      email: feedbackEmail.trim(),
+      rating,
+      category: feedbackCategory,
+      text: feedbackText.trim()
+    };
 
-    try {
-      await safeFetchJson('/api/feedback/submit-direct', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          email: feedbackEmail.trim(),
-          rating,
-          category: feedbackCategory,
-          text: feedbackText.trim()
-        })
-      });
-      setIsFeedbackSubmitted(true);
-    } catch (err) {
-      console.warn("Feedback database submission failed, saving locally:", err);
-      // Save locally as fallback
+    // Run API call in the background
+    (async () => {
       try {
-        const localFeedbacks = JSON.parse(localStorage.getItem('algoflow_feedbacks') || '[]');
-        localFeedbacks.push({
-          email: feedbackEmail.trim(),
-          rating,
-          category: feedbackCategory,
-          text: feedbackText.trim(),
-          created_at: new Date().toISOString()
+        await safeFetchJson('/api/feedback/submit-direct', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify(payload)
         });
-        localStorage.setItem('algoflow_feedbacks', JSON.stringify(localFeedbacks));
-      } catch (_) {}
-      setIsFeedbackSubmitted(true); // Treat as submitted successfully for UX
-    } finally {
-      setIsFeedbackVerifyingOtp(false);
-    }
+        console.log("💾 Background feedback saved to database successfully.");
+      } catch (err) {
+        console.warn("Background feedback database submission failed, saving locally:", err);
+        // Save locally as fallback
+        try {
+          const localFeedbacks = JSON.parse(localStorage.getItem('algoflow_feedbacks') || '[]');
+          localFeedbacks.push({
+            ...payload,
+            created_at: new Date().toISOString()
+          });
+          localStorage.setItem('algoflow_feedbacks', JSON.stringify(localFeedbacks));
+        } catch (_) {}
+      }
+    })();
   };
 
   // ── Feedback submission — no OTP, direct save to Neon ──
@@ -1472,15 +1481,15 @@ function App() {
 
   const verifyOtpAndSubmit = async () => {
     if (rating === 0) {
-      setFeedbackError("Selecting a star rating is compulsory. Please select a rating (1-5 stars).");
+      triggerFeedbackError("Selecting a star rating is compulsory. Please select a rating (1-5 stars).");
       return;
     }
     if (!feedbackOtpCode.trim()) {
-      setFeedbackError("Please enter the 6-digit verification code.");
+      triggerFeedbackError("Please enter the 6-digit verification code.");
       return;
     }
     if (checkRestrictedWords(feedbackText)) {
-      setFeedbackError("You are using restricted words. Please rectify them and send again.");
+      triggerFeedbackError("You are using restricted words. Please rectify them and send again.");
       return;
     }
 
@@ -2561,7 +2570,7 @@ function App() {
   const renderTreeSVG = (rootNode, highlightedNode) => {
     if (!rootNode) return null;
     computeLayout(rootNode);
-    const theme = THEMES[currentTheme] || THEMES['Cosmic Dark'];
+    const theme = THEMES[currentTheme] || THEMES['Neon Cyberpunk'];
     const c1 = theme['--node-fill-1'] || '#3b82f6';
     const c2 = theme['--node-fill-2'] || '#8b5cf6';
 
@@ -4104,23 +4113,36 @@ function App() {
                 className="btn btn-clear"
                 style={{ width: '100%', padding: '0.8rem', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '8px', fontSize: '0.95rem' }}
                 onClick={() => {
-                  let eclipseCode = copyModalData.code;
-                  if (copyModalData.language === 'Java') {
-                    eclipseCode = `// Eclipse IDE Compatibility Code\n// To run in Eclipse:\n// 1. Create a new Java Project\n// 2. Create a new class named Main (or name matching the public class)\n// 3. Paste this code inside Main.java\n\n` + copyModalData.code;
-                  } else if (copyModalData.language === 'C++') {
-                    eclipseCode = `// Eclipse CDT Compatibility Code\n// 1. Create a C++ project in Eclipse\n// 2. Paste this code in your main .cpp file\n\n` + copyModalData.code;
-                  } else if (copyModalData.language === 'Python') {
-                    eclipseCode = `# Eclipse PyDev Compatibility Code\n# 1. Create a PyDev Project\n# 2. Paste this code in a python module\n\n` + copyModalData.code;
+                  const isJava = copyModalData.language?.toLowerCase() === 'java';
+                  const isCpp = copyModalData.language?.toLowerCase() === 'c++';
+                  const isPython = copyModalData.language?.toLowerCase() === 'python';
+                  
+                  let formattedCode = copyModalData.code;
+                  let targetIDE = 'IDE';
+                  
+                  if (isJava) {
+                    targetIDE = 'Eclipse';
+                    formattedCode = `// Eclipse IDE Compatibility Code\n// To run in Eclipse:\n// 1. Create a new Java Project\n// 2. Create a new class named Main (or name matching the public class)\n// 3. Paste this code inside Main.java\n// 4. Note: If your file is inside a package, keep the 'package <package_name>;' declaration at the very top!\n\n` + copyModalData.code;
+                  } else if (isCpp) {
+                    targetIDE = 'Eclipse CDT';
+                    formattedCode = `// Eclipse CDT Compatibility Code\n// 1. Create a C++ project in Eclipse\n// 2. Paste this code in your main .cpp file\n\n` + copyModalData.code;
+                  } else if (isPython) {
+                    targetIDE = 'PyCharm';
+                    formattedCode = `# PyCharm IDE Compatibility Code\n# To run in PyCharm:\n# 1. Create a new Python file (e.g. main.py)\n# 2. Paste this code and run it\n\n` + copyModalData.code;
                   }
-                  copyToClipboard(eclipseCode).then(() => {
-                    alert("Formatted code copied to clipboard for Eclipse IDE!");
+                  
+                  copyToClipboard(formattedCode).then(() => {
+                    alert(`Formatted code copied to clipboard for ${targetIDE}!`);
                   }).catch(() => {
                     alert("❌ Failed to copy to clipboard.");
                   });
                   setCopyModalData(prev => ({ ...prev, isOpen: false }));
                 }}
               >
-                ☕ Copy for Eclipse IDE
+                {copyModalData.language?.toLowerCase() === 'java' && "☕ Copy for Eclipse IDE"}
+                {copyModalData.language?.toLowerCase() === 'python' && "🐍 Copy for PyCharm"}
+                {copyModalData.language?.toLowerCase() === 'c++' && "⚙️ Copy for Eclipse CDT"}
+                {copyModalData.language?.toLowerCase() !== 'java' && copyModalData.language?.toLowerCase() !== 'python' && copyModalData.language?.toLowerCase() !== 'c++' && "💻 Copy for IDE"}
               </button>
 
               <button 
@@ -4208,7 +4230,7 @@ function App() {
                   <button style={{ background: 'transparent', border: 'none', color: 'var(--text-secondary)', fontSize: '1.4rem', cursor: 'pointer', transition: 'color 0.2s' }} onClick={() => setIsFeedbackOpen(false)} onMouseEnter={e => e.currentTarget.style.color = '#fff'} onMouseLeave={e => e.currentTarget.style.color = 'var(--text-secondary)'}>✕</button>
                 </div>
 
-                <div style={{ flex: 1, overflowY: 'auto', paddingRight: '4px', display: 'flex', flexDirection: 'column', gap: '0.2rem' }}>
+                <div ref={feedbackScrollRef} style={{ flex: 1, overflowY: 'auto', paddingRight: '4px', display: 'flex', flexDirection: 'column', gap: '0.2rem' }}>
                   {/* Feedback Category selection - 2x2 grid matching user screenshot */}
                   <div className="select-group" style={{ marginBottom: '1.2rem' }}>
                     <label style={{ fontSize: '0.95rem', color: 'var(--text-primary)', fontWeight: 600, display: 'block', marginBottom: '8px' }}>Feedback Type</label>

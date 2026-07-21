@@ -1,18 +1,18 @@
 @import url('https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;500;600;700;800&family=Inter:wght@400;500;600&display=swap');
 
 :root {
-  --bg-primary: #0f172a;
-  --bg-secondary: #1e293b;
-  --accent-primary: #3b82f6;
-  --accent-secondary: #ec4899;
-  --node-bg: linear-gradient(135deg, #3b82f6, #8b5cf6);
-  --node-glow: rgba(139, 92, 246, 0.6);
-  --text-primary: #f8fafc;
-  --text-secondary: #94a3b8;
+  --bg-primary: #050510;
+  --bg-secondary: #0d0d20;
+  --accent-primary: #00e5ff;
+  --accent-secondary: #ff00ff;
+  --node-bg: linear-gradient(135deg, #0099bb, #aa00aa);
+  --node-glow: rgba(0, 229, 255, 0.6);
+  --text-primary: #e0e0ff;
+  --text-secondary: #a0a0cc;
   --warning: #fbbf24;
   --danger: #ef4444;
-  --glass-bg: rgba(30, 41, 59, 0.4);
-  --glass-border: rgba(255, 255, 255, 0.08);
+  --glass-bg: rgba(10, 10, 35, 0.5);
+  --glass-border: rgba(0, 229, 255, 0.15);
   --transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
 }
 
@@ -25,8 +25,8 @@ body {
   min-height: 100vh;
   overflow-x: hidden;
   background-image:
-    radial-gradient(circle at 10% 20%, rgba(59, 130, 246, 0.12), transparent 35%),
-    radial-gradient(circle at 90% 80%, rgba(236, 72, 153, 0.12), transparent 35%);
+    radial-gradient(circle at 20% 20%, rgba(0, 229, 255, 0.1), transparent 40%),
+    radial-gradient(circle at 80% 80%, rgba(255, 0, 255, 0.1), transparent 40%);
   background-attachment: fixed;
   overscroll-behavior: contain;
 }

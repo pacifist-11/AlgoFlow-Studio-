@@ -28,7 +28,7 @@ export default async function handler(req, res) {
         rating INT NOT NULL CHECK (rating BETWEEN 1 AND 5),
         category VARCHAR(100) NOT NULL DEFAULT 'General',
         feedback_text TEXT,
-        created_at TIMESTAMPTZ DEFAULT NOW()
+        created_at TIMESTAMP WITHOUT TIME ZONE DEFAULT (NOW() AT TIME ZONE 'Asia/Kolkata')
       )
     `;
 
