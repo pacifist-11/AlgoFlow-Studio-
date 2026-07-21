@@ -458,22 +458,62 @@ Instructions:
       if (!activeModel || activeModel.includes('1.5')) {
         activeModel = 'gemini-2.0-flash';
       }
-      const response = await fetch(`https://generativelanguage.googleapis.com/v1beta/models/${activeModel}:generateContent?key=${apiKey}`, {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          system_instruction: { parts: [{ text: systemPrompt }] },
-          contents: [
-            ...relevantHistory.map(m => ({
-              role: m.sender === 'user' ? 'user' : 'model',
-              parts: [{ text: m.text }]
-            })),
-            { role: 'user', parts: [{ text: userMsg }] }
-          ]
-        })
-      });
 
-      const data = await response.json();
+      const makeRequest = async (selectedModel) => {
+        return await fetch(`https://generativelanguage.googleapis.com/v1beta/models/${selectedModel}:generateContent?key=${apiKey}`, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            system_instruction: { parts: [{ text: systemPrompt }] },
+            contents: [
+              ...relevantHistory.map(m => ({
+                role: m.sender === 'user' ? 'user' : 'model',
+                parts: [{ text: m.text }]
+              })),
+              { role: 'user', parts: [{ text: userMsg }] }
+            ]
+          })
+        });
+      };
+
+      let response = await makeRequest(activeModel);
+      let data = await response.json();
+
+      // If rate limit / quota exceeded (429) or not found (404), try fallback models
+      if (data.error && (data.error.code === 429 || data.error.code === 404 || data.error.status === 'RESOURCE_EXHAUSTED')) {
+        console.warn(`Gemini active model (${activeModel}) failed with ${data.error.code}. Trying fallback model...`);
+        
+        // Define list of fallbacks in preference order
+        const fallbacks = ['gemini-2.0-flash-lite', 'gemini-flash-latest', 'gemini-2.5-pro'].filter(m => m !== activeModel);
+        
+        let success = false;
+        for (const fallbackModel of fallbacks) {
+          try {
+            const fallbackResponse = await makeRequest(fallbackModel);
+            const fallbackData = await fallbackResponse.json();
+            if (!fallbackData.error) {
+              data = fallbackData;
+              success = true;
+              // Update settings so the user is switched to the working model
+              setModel(fallbackModel);
+              break;
+            }
+          } catch (e) {
+            console.error(`Fallback to ${fallbackModel} failed:`, e);
+          }
+        }
+
+        if (!success) {
+          // If all fallbacks failed, format the error nicely for the user
+          let friendlyError = data.error.message;
+          if (data.error.code === 429) {
+            friendlyError = `⚠️ Gemini API limit reached (Rate Limit Exceeded).\n\nPlease try again in 10-20 seconds. If this keeps happening, you may want to check your limits in Google AI Studio or use a different API key.`;
+          }
+          setChatMessages(prev => [...prev, { sender: 'bot', text: friendlyError }]);
+          return;
+        }
+      }
+
       if (data.error) {
         setChatMessages(prev => [...prev, { sender: 'bot', text: `⚠️ Gemini API Error: ${data.error.message}\nCheck your API Key in Settings.` }]);
       } else {
