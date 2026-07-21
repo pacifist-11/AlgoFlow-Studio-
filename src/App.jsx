@@ -1838,9 +1838,10 @@ function App() {
     setTimeout(() => {
       window.location.hash = mode;
       setAppMode(mode);
-      setSetupComplete(false);
+      const isStandalone = ['SORT_SEARCH_VIS', 'GENERAL_DSA_VIS', 'GRAPH_VIS', 'DP_GREEDY_VIS'].includes(mode);
+      setSetupComplete(isStandalone);
       setIsPageLoading(false);
-    }, 3000);
+    }, 200);
   };
   const goBack    = () => {
     setIsPageLoading(true);
@@ -1849,7 +1850,7 @@ function App() {
       setAppMode(null);
       setSetupComplete(false);
       setIsPageLoading(false);
-    }, 3000);
+    }, 200);
   };
 
   useEffect(() => {
@@ -1859,7 +1860,8 @@ function App() {
         setAppMode(null);
       } else if (['MAIN_VIS', 'CODE_VAL_VIS', 'LINE_BY_LINE_VIS', 'SORT_SEARCH_VIS', 'GENERAL_DSA_VIS', 'GRAPH_VIS', 'DP_GREEDY_VIS'].includes(hash)) {
         setAppMode(hash);
-        // Do not force setupComplete here, so modals can open if needed.
+        const isStandalone = ['SORT_SEARCH_VIS', 'GENERAL_DSA_VIS', 'GRAPH_VIS', 'DP_GREEDY_VIS'].includes(hash);
+        if (isStandalone) setSetupComplete(true);
       }
     };
     window.addEventListener('hashchange', handleHashChange);
