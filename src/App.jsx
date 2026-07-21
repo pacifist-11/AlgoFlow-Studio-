@@ -2548,7 +2548,7 @@ function App() {
   };
 
   // ── Layout & SVG ──────────────────────────────────────────────────────
-  const NODE_R = 26;
+  const NODE_R = 28;
 
   const computeLayout = (rootNode) => {
     if (!rootNode) return;
@@ -2763,7 +2763,7 @@ function App() {
               return <g key={key} transform={`translate(${node.x}, ${node.y})`} style={{ transform: `translate(${node.x}px, ${node.y}px)`, transition: 'transform 0.5s cubic-bezier(0.4, 0, 0.2, 1)' }}>
                 <rect x={-kw/2} y={-18} width={kw} height={36} rx={18} fill={fill} stroke={isHL?'rgba(245,158,11,0.8)':'rgba(255,255,255,0.18)'} strokeWidth="1.5" style={{filter:`drop-shadow(0 3px 12px ${glow})`}}/>
                 {node.keys.slice(0,-1).map((_,ki)=><line key={ki} x1={-kw/2+(ki+1)*(kw/node.keys.length)} y1={-12} x2={-kw/2+(ki+1)*(kw/node.keys.length)} y2={12} stroke="rgba(255,255,255,0.25)" strokeWidth="1"/>)}
-                <text x={0} y={1} textAnchor="middle" dominantBaseline="central" fontSize="13" fontWeight="700" fill="white" fontFamily="'Outfit',sans-serif">{node.keys.join(' | ')}</text>
+                <text x={0} y={1} textAnchor="middle" dominantBaseline="central" fontSize="15" fontWeight="900" fill="#ffffff" fontFamily="sans-serif" style={{ filter: 'drop-shadow(0 2px 4px rgba(0,0,0,0.9))' }}>{node.keys.join(' | ')}</text>
               </g>;
             }
             if (isSeg) {
@@ -2773,8 +2773,8 @@ function App() {
               const ry = showBits ? -32 : -26;
               return <g key={key} transform={`translate(${node.x}, ${node.y})`} style={{ transform: `translate(${node.x}px, ${node.y}px)`, transition: 'transform 0.5s cubic-bezier(0.4, 0, 0.2, 1)' }}>
                 <rect x={-36} y={ry} width={72} height={rh} rx={10} fill={fill} stroke={isHL?'rgba(245,158,11,0.8)':'rgba(255,255,255,0.18)'} strokeWidth="1.5" style={{filter:`drop-shadow(0 3px 12px ${glow})`}}/>
-                <text x={0} y={showBits ? -14 : -8} textAnchor="middle" dominantBaseline="central" fontSize="15" fontWeight="700" fill="white" fontFamily="'Outfit',sans-serif">{node.sum}</text>
-                <text x={0} y={showBits ? 4 : 12} textAnchor="middle" dominantBaseline="central" fontSize="9" fill="rgba(255,255,255,0.7)" fontFamily="monospace">{node.range}</text>
+                <text x={0} y={showBits ? -14 : -8} textAnchor="middle" dominantBaseline="central" fontSize="16" fontWeight="900" fill="#ffffff" fontFamily="sans-serif" style={{ filter: 'drop-shadow(0 2px 4px rgba(0,0,0,0.9))' }}>{node.sum}</text>
+                <text x={0} y={showBits ? 4 : 12} textAnchor="middle" dominantBaseline="central" fontSize="9" fill="rgba(255,255,255,0.85)" fontFamily="monospace" fontWeight="700">{node.range}</text>
                 {showBits && (
                   <text x={0} y={20} textAnchor="middle" dominantBaseline="central" fontSize="11" fontWeight="bold" fill="var(--accent-primary)" fontFamily="monospace">
                     ({node.bitRep})₂
@@ -2792,7 +2792,7 @@ function App() {
 
             return <g key={key} transform={`translate(${node.x}, ${node.y})`} style={{ transform: `translate(${node.x}px, ${node.y}px)`, transition: 'transform 0.5s cubic-bezier(0.4, 0, 0.2, 1)' }}>
               <circle cx={0} cy={0} r={NODE_R} fill={fill} stroke={isHL?'rgba(245,158,11,0.85)':'rgba(255,255,255,0.18)'} strokeWidth="1.5" style={{filter:`drop-shadow(0 3px 14px ${glow})`,transform:isHL?'scale(1.12)':'scale(1)',transformOrigin:'center',transition:'all 0.3s ease'}}/>
-              <text x={0} y={1} textAnchor="middle" dominantBaseline="central" fontSize={String(node.value||'').length>2?'11':'14'} fontWeight="700" fill="white" fontFamily="'Outfit',sans-serif" style={{pointerEvents:'none'}}>{String(node.value??'')}</text>
+              <text x={0} y={1} textAnchor="middle" dominantBaseline="central" fontSize={String(node.value??'').length > 3 ? '12' : String(node.value??'').length > 2 ? '14' : '17'} fontWeight="900" fill="#ffffff" fontFamily="sans-serif" style={{ pointerEvents: 'none', filter: 'drop-shadow(0 2px 4px rgba(0,0,0,0.95))' }}>{String(node.value??'')}</text>
               {treeType==='AVL'&&<text x={0} y={-NODE_R-7} textAnchor="middle" fontSize="10" fill="#a78bfa" fontFamily="monospace">BF:{getBalance(node)}</text>}
               {treeType==='RB_TREE'&&node._color&&<circle cx={NODE_R-7} cy={-NODE_R+7} r={5} fill={node._color==='RED'?'#ef4444':'#1f2937'} stroke="white" strokeWidth="1"/>}
               {isRightRot && (
