@@ -749,6 +749,13 @@ function App() {
   const [appMode,       setAppMode]       = useState(null);
   const [setupComplete, setSetupComplete] = useState(false);
   const [isPageLoading, setIsPageLoading] = useState(false);
+
+  useEffect(() => {
+    if (isPageLoading) {
+      const timer = setTimeout(() => setIsPageLoading(false), 250);
+      return () => clearTimeout(timer);
+    }
+  }, [isPageLoading]);
   const [treeType,      setTreeType]      = useState('BST');
   const [activeStateWidth, setActiveStateWidth] = useState(260);
   const [showTreeLogPanel, setShowTreeLogPanel] = useState(true);
@@ -3328,7 +3335,7 @@ function App() {
                 setPendingModule(null);
                 setHomeSearchQuery('');
                 setIsPageLoading(false);
-              }, 3000);
+              }, 100);
             }}>Launch Visualizer</button>
             <button className="btn btn-clear" style={{ marginTop: '0.75rem', width: '100%' }} onClick={() => setPendingModule(null)}>← Cancel</button>
           </div>
