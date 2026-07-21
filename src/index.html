@@ -168,40 +168,38 @@
     }, 7000);
 
     // Hide preloader once React has mounted content into #root
+    function hidePreloader() {
+      clearInterval(quoteInterval);
+      const preloader = document.getElementById('preloader');
+      if (preloader && !preloader.classList.contains('hidden')) {
+        preloader.classList.add('hidden');
+        setTimeout(() => preloader.remove(), 650);
+      }
+    }
+
     const observer = new MutationObserver(() => {
       const root = document.getElementById('root');
       if (root && root.children.length > 0) {
-        clearInterval(quoteInterval);
-        const preloader = document.getElementById('preloader');
-        if (preloader) {
-          preloader.classList.add('hidden');
-          setTimeout(() => preloader.remove(), 650);
-        }
+        hidePreloader();
         observer.disconnect();
       }
     });
-    observer.observe(document.getElementById('root'), { childList: true });
+    const rootEl = document.getElementById('root');
+    if (rootEl) {
+      if (rootEl.children.length > 0) hidePreloader();
+      else observer.observe(rootEl, { childList: true });
+    }
 
+    // Safety fallback: force hide preloader after 1.2s max under all circumstances
+    setTimeout(hidePreloader, 1200);
+
+    // Automatically unregister stale service workers on all hosts to prevent asset caching bugs
     if ('serviceWorker' in navigator) {
-      if (window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1') {
-        // Automatically unregister service worker on localhost to prevent hijacking other projects on port 5173/9988
-        navigator.serviceWorker.getRegistrations().then((registrations) => {
-          for (let registration of registrations) {
-            registration.unregister().then((success) => {
-              if (success) {
-                console.log('Unregistered localhost service worker to prevent port hijacking.');
-              }
-            });
-          }
-        });
-      } else {
-        // Register service worker in production/deployed environment
-        window.addEventListener('load', () => {
-          navigator.serviceWorker.register('/sw.js')
-            .then(reg => console.log('Service worker registered.', reg))
-            .catch(err => console.error('Service worker registration failed.', err));
-        });
-      }
+      navigator.serviceWorker.getRegistrations().then((registrations) => {
+        for (let registration of registrations) {
+          registration.unregister();
+        }
+      });
     }
   </script>
 </body>
