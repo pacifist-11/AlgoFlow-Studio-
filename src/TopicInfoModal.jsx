@@ -30,7 +30,7 @@ const TopicInfoModal = ({ topicKey, customTitle, isOpen, onClose }) => {
         left: 0,
         width: '100vw',
         height: '100vh',
-        background: 'rgba(5, 5, 16, 0.78)',
+        background: 'var(--overlay-bg, rgba(5, 5, 16, 0.55))',
         backdropFilter: 'blur(8px)',
         zIndex: 99999,
         display: 'flex',
@@ -42,10 +42,10 @@ const TopicInfoModal = ({ topicKey, customTitle, isOpen, onClose }) => {
     >
       <div 
         style={{
-          background: 'linear-gradient(135deg, rgba(15, 23, 42, 0.98), rgba(13, 13, 32, 0.99))',
-          border: '1px solid var(--accent-primary)',
+          background: 'var(--bg-secondary, #1e293b)',
+          border: '1.5px solid var(--glass-border, var(--accent-primary))',
           borderRadius: '18px',
-          boxShadow: '0 0 35px rgba(0, 229, 255, 0.3)',
+          boxShadow: '0 15px 45px rgba(0, 0, 0, 0.25)',
           maxWidth: '580px',
           width: '100%',
           maxHeight: '90vh',
@@ -64,7 +64,7 @@ const TopicInfoModal = ({ topicKey, customTitle, isOpen, onClose }) => {
             position: 'absolute',
             top: '15px',
             right: '18px',
-            background: 'rgba(255,255,255,0.05)',
+            background: 'var(--bg-primary, rgba(255,255,255,0.05))',
             border: '1px solid var(--glass-border)',
             color: 'var(--text-secondary)',
             fontSize: '1.2rem',
@@ -84,12 +84,12 @@ const TopicInfoModal = ({ topicKey, customTitle, isOpen, onClose }) => {
             <h3 style={{ margin: 0, fontSize: '1.35rem', fontWeight: 800, background: 'linear-gradient(to right, var(--accent-primary), var(--accent-secondary))', WebkitBackgroundClip: 'text', WebkitTextFillColor: 'transparent' }}>
               {info.title}
             </h3>
-            <span style={{ fontSize: '0.8rem', color: '#60a5fa', fontWeight: 600 }}>Beginner Guide & Real-Life Uses</span>
+            <span style={{ fontSize: '0.8rem', color: 'var(--accent-primary, #60a5fa)', fontWeight: 600 }}>Beginner Guide & Real-Life Uses</span>
           </div>
         </div>
 
         {/* What it is */}
-        <div style={{ marginBottom: '1.2rem', background: 'rgba(255,255,255,0.03)', padding: '12px 14px', borderRadius: '10px', borderLeft: '4px solid var(--accent-primary)' }}>
+        <div style={{ marginBottom: '1.2rem', background: 'var(--bg-primary, rgba(0,0,0,0.03))', padding: '12px 14px', borderRadius: '10px', borderLeft: '4px solid var(--accent-primary)' }}>
           <h4 style={{ margin: '0 0 4px 0', fontSize: '0.92rem', color: 'var(--accent-primary)' }}>📌 What is this?</h4>
           <p style={{ margin: 0, fontSize: '0.88rem', color: 'var(--text-primary)', lineHeight: '1.5' }}>
             {info.summary}
@@ -98,11 +98,11 @@ const TopicInfoModal = ({ topicKey, customTitle, isOpen, onClose }) => {
 
         {/* Formula / Rule */}
         {info.formula && (
-          <div style={{ marginBottom: '1.2rem', background: 'rgba(16, 185, 129, 0.08)', padding: '12px 14px', borderRadius: '10px', border: '1px solid rgba(16, 185, 129, 0.3)' }}>
-            <h4 style={{ margin: '0 0 6px 0', fontSize: '0.92rem', color: '#10b981', display: 'flex', alignItems: 'center', gap: '6px' }}>
+          <div style={{ marginBottom: '1.2rem', background: 'var(--bg-primary, rgba(0,0,0,0.03))', padding: '12px 14px', borderRadius: '10px', border: '1px solid var(--glass-border)' }}>
+            <h4 style={{ margin: '0 0 6px 0', fontSize: '0.92rem', color: 'var(--accent-secondary, #10b981)', display: 'flex', alignItems: 'center', gap: '6px' }}>
               🧮 Formula & Core Rule
             </h4>
-            <div style={{ fontFamily: 'monospace', fontSize: '0.88rem', color: '#a7f3d0', background: 'rgba(0,0,0,0.3)', padding: '8px 12px', borderRadius: '6px', whiteSpace: 'pre-wrap', wordBreak: 'break-word', fontWeight: 'bold' }}>
+            <div style={{ fontFamily: 'monospace', fontSize: '0.88rem', color: 'var(--text-primary)', background: 'var(--bg-secondary, rgba(0,0,0,0.1))', padding: '8px 12px', borderRadius: '6px', whiteSpace: 'pre-wrap', wordBreak: 'break-word', fontWeight: 'bold', border: '1px solid var(--glass-border)' }}>
               {info.formula}
             </div>
           </div>
@@ -110,11 +110,11 @@ const TopicInfoModal = ({ topicKey, customTitle, isOpen, onClose }) => {
 
         {/* Numerical Example */}
         {info.example && (
-          <div style={{ marginBottom: '1.2rem', background: 'rgba(245, 158, 11, 0.08)', padding: '12px 14px', borderRadius: '10px', border: '1px solid rgba(245, 158, 11, 0.3)' }}>
-            <h4 style={{ margin: '0 0 6px 0', fontSize: '0.92rem', color: '#fbbf24', display: 'flex', alignItems: 'center', gap: '6px' }}>
+          <div style={{ marginBottom: '1.2rem', background: 'var(--bg-primary, rgba(0,0,0,0.03))', padding: '12px 14px', borderRadius: '10px', border: '1px solid var(--glass-border)' }}>
+            <h4 style={{ margin: '0 0 6px 0', fontSize: '0.92rem', color: 'var(--accent-primary, #fbbf24)', display: 'flex', alignItems: 'center', gap: '6px' }}>
               🔢 Step-by-Step Numerical Example
             </h4>
-            <div style={{ fontFamily: 'monospace', fontSize: '0.84rem', color: '#fef3c7', background: 'rgba(0,0,0,0.3)', padding: '10px 12px', borderRadius: '6px', whiteSpace: 'pre-wrap', lineHeight: '1.5' }}>
+            <div style={{ fontFamily: 'monospace', fontSize: '0.84rem', color: 'var(--text-primary)', background: 'var(--bg-secondary, rgba(0,0,0,0.1))', padding: '10px 12px', borderRadius: '6px', whiteSpace: 'pre-wrap', lineHeight: '1.5', border: '1px solid var(--glass-border)' }}>
               {info.example}
             </div>
           </div>
@@ -122,8 +122,8 @@ const TopicInfoModal = ({ topicKey, customTitle, isOpen, onClose }) => {
 
         {/* Real-Life Applications */}
         {info.realLife && info.realLife.length > 0 && (
-          <div style={{ marginBottom: '1.2rem', background: 'rgba(59, 130, 246, 0.08)', padding: '12px 14px', borderRadius: '10px', border: '1px solid rgba(59, 130, 246, 0.3)' }}>
-            <h4 style={{ margin: '0 0 6px 0', fontSize: '0.92rem', color: '#60a5fa', display: 'flex', alignItems: 'center', gap: '6px' }}>
+          <div style={{ marginBottom: '1.2rem', background: 'var(--bg-primary, rgba(0,0,0,0.03))', padding: '12px 14px', borderRadius: '10px', border: '1px solid var(--glass-border)' }}>
+            <h4 style={{ margin: '0 0 6px 0', fontSize: '0.92rem', color: 'var(--accent-primary)', display: 'flex', alignItems: 'center', gap: '6px' }}>
               🌍 Where is this used in Real Life?
             </h4>
             <ul style={{ margin: 0, paddingLeft: '1.2rem', fontSize: '0.86rem', color: 'var(--text-primary)', lineHeight: '1.6' }}>
@@ -137,7 +137,7 @@ const TopicInfoModal = ({ topicKey, customTitle, isOpen, onClose }) => {
         {/* How to Observe */}
         {info.howToUse && info.howToUse.length > 0 && (
           <div style={{ marginBottom: '1.2rem' }}>
-            <h4 style={{ margin: '0 0 6px 0', fontSize: '0.92rem', color: '#a78bfa' }}>🚀 How to Handle & Observe:</h4>
+            <h4 style={{ margin: '0 0 6px 0', fontSize: '0.92rem', color: 'var(--accent-secondary)' }}>🚀 How to Handle & Observe:</h4>
             <ul style={{ margin: 0, paddingLeft: '1.2rem', fontSize: '0.86rem', color: 'var(--text-secondary)', lineHeight: '1.6' }}>
               {info.howToUse.map((step, idx) => (
                 <li key={idx} style={{ marginBottom: '4px' }}>{step}</li>
@@ -146,9 +146,41 @@ const TopicInfoModal = ({ topicKey, customTitle, isOpen, onClose }) => {
           </div>
         )}
 
+        {/* Pros & Cons (+ / - Points) */}
+        {((info.pros && info.pros.length > 0) || (info.cons && info.cons.length > 0)) && (
+          <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '12px', marginBottom: '1.2rem' }}>
+            {/* Pros (+ Points) */}
+            {info.pros && info.pros.length > 0 && (
+              <div style={{ background: 'rgba(16, 185, 129, 0.08)', padding: '12px', borderRadius: '10px', border: '1px solid rgba(16, 185, 129, 0.2)' }}>
+                <h4 style={{ margin: '0 0 6px 0', fontSize: '0.88rem', color: '#10b981', display: 'flex', alignItems: 'center', gap: '6px' }}>
+                  ✅ Pros (+)
+                </h4>
+                <ul style={{ margin: 0, paddingLeft: '1.1rem', fontSize: '0.82rem', color: 'var(--text-primary)', lineHeight: '1.5' }}>
+                  {info.pros.map((pro, idx) => (
+                    <li key={idx} style={{ marginBottom: '3px' }}>{pro}</li>
+                  ))}
+                </ul>
+              </div>
+            )}
+            {/* Cons (- Points) */}
+            {info.cons && info.cons.length > 0 && (
+              <div style={{ background: 'rgba(239, 68, 68, 0.08)', padding: '12px', borderRadius: '10px', border: '1px solid rgba(239, 68, 68, 0.2)' }}>
+                <h4 style={{ margin: '0 0 6px 0', fontSize: '0.88rem', color: '#ef4444', display: 'flex', alignItems: 'center', gap: '6px' }}>
+                  ❌ Cons (-)
+                </h4>
+                <ul style={{ margin: 0, paddingLeft: '1.1rem', fontSize: '0.82rem', color: 'var(--text-primary)', lineHeight: '1.5' }}>
+                  {info.cons.map((con, idx) => (
+                    <li key={idx} style={{ marginBottom: '3px' }}>{con}</li>
+                  ))}
+                </ul>
+              </div>
+            )}
+          </div>
+        )}
+
         {/* Key Takeaways */}
         {info.keyPoints && (
-          <div style={{ background: 'rgba(0, 229, 255, 0.05)', padding: '10px 14px', borderRadius: '10px', border: '1px dashed rgba(0, 229, 255, 0.2)', marginBottom: '1rem' }}>
+          <div style={{ background: 'var(--bg-primary, rgba(0,0,0,0.03))', padding: '10px 14px', borderRadius: '10px', border: '1px dashed var(--glass-border)', marginBottom: '1rem' }}>
             <span style={{ fontSize: '0.84rem', color: 'var(--text-primary)', lineHeight: '1.4' }}>
               💡 <strong>Key Takeaway:</strong> {info.keyPoints}
             </span>
@@ -168,7 +200,7 @@ const TopicInfoModal = ({ topicKey, customTitle, isOpen, onClose }) => {
             fontWeight: 'bold',
             fontSize: '0.95rem',
             cursor: 'pointer',
-            boxShadow: '0 4px 15px rgba(0,229,255,0.3)'
+            boxShadow: 'none'
           }}
         >
           Got it! Start Learning 🚀

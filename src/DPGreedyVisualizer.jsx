@@ -3,6 +3,23 @@ import React, { useState, useEffect, useRef } from 'react';
 import gsap from 'gsap';
 import { getDPCodeTemplate } from './codeTemplatesDP';
 import CodeRunnerModal from './CodeRunnerModal.jsx';
+
+// Allman brace formatter
+const toAllman = code => {
+  if (!code) return '';
+  const lines = code.split('\n');
+  const out = [];
+  for (const line of lines) {
+    const t = line.trimEnd();
+    if (t.endsWith('{') && t.trim() !== '{' && !t.trim().startsWith('//') && !t.trim().startsWith('*')) {
+      const indent = line.match(/^(\s*)/)[1];
+      const body = t.slice(0, -1).trimEnd();
+      if (body.trim().length > 0) { out.push(body); out.push(indent + '{'); continue; }
+    }
+    out.push(line);
+  }
+  return out.join('\n');
+};
 import TopicInfoModal from './TopicInfoModal.jsx';
 
 // Fallback Clipboard copy
@@ -83,7 +100,158 @@ const getDPComplexityInfo = (algo) => {
   }
 };
 
+const highlightLogText = (text) => {
+  if (!text) return '';
+  const str = String(text);
+  const lower = str.toLowerCase();
+  
+  if (
+    lower.includes('root full') ||
+    lower.includes('split') ||
+    lower.includes('imbalance') ||
+    lower.includes('rotate') ||
+    lower.includes('rotation') ||
+    lower.includes('delete') ||
+    lower.includes('deleted') ||
+    lower.includes('remove') ||
+    lower.includes('removed') ||
+    lower.includes('pop') ||
+    lower.includes('popped') ||
+    lower.includes('mismatch') ||
+    lower.includes('⚡')
+  ) {
+    const regex = /(\b\d+(?:\.\d+)?\b)/g;
+    const parts = str.split(regex);
+    return (
+      <span style={{ color: '#f87171', fontWeight: 'bold' }}>
+        {parts.map((p, i) => 
+          regex.test(p) ? <span key={i} style={{ color: '#fbbf24', textShadow: '0 0 8px rgba(251,191,36,0.3)' }}>{p}</span> : p
+        )}
+      </span>
+    );
+  }
+  
+  if (
+    lower.includes('inserted') ||
+    lower.includes('insert(') ||
+    lower.includes('insert ') ||
+    lower.includes('create node') ||
+    lower.includes('success') ||
+    lower.includes('match') ||
+    lower.includes('completed') ||
+    lower.includes('done') ||
+    lower.includes('✦') ||
+    lower.includes('✓') ||
+    lower.includes('✅')
+  ) {
+    const regex = /(\b\d+(?:\.\d+)?\b)/g;
+    const parts = str.split(regex);
+    return (
+      <span style={{ color: '#34d399', fontWeight: 'bold' }}>
+        {parts.map((p, i) => 
+          regex.test(p) ? <span key={i} style={{ color: '#fbbf24' }}>{p}</span> : p
+        )}
+      </span>
+    );
+  }
+
+  if (
+    lower.includes('going to') ||
+    lower.includes('compare') ||
+    lower.includes('comparing') ||
+    lower.includes('probe') ||
+    lower.includes('probing') ||
+    lower.includes('relaxation') ||
+    lower.includes('check') ||
+    lower.includes('subproblem') ||
+    lower.includes('select') ||
+    lower.includes('selected') ||
+    lower.includes('fill') ||
+    lower.includes('dp[') ||
+    lower.includes('➜') ||
+    lower.includes('↳')
+  ) {
+    const regex = /(\b\d+(?:\.\d+)?\b)/g;
+    const parts = str.split(regex);
+    return (
+      <span style={{ color: '#fb923c', fontWeight: 600 }}>
+        {parts.map((p, i) => 
+          regex.test(p) ? <span key={i} style={{ color: '#fbbf24', fontWeight: 'bold' }}>{p}</span> : p
+        )}
+      </span>
+    );
+  }
+  
+  const regex = /(\b\d+(?:\.\d+)?\b)/g;
+  const parts = str.split(regex);
+  return parts.map((p, i) => 
+    /^\d+(?:\.\d+)?$/.test(p) ? <strong key={i} style={{ color: '#fbbf24' }}>{p}</strong> : p
+  );
+};
+
+const isDPLineMatch = (tab, msg, lineText) => {
+  const m = String(msg).toLowerCase();
+  const line = String(lineText).trim().toLowerCase();
+  
+  if (line.startsWith('//') || line.startsWith('import') || line.startsWith('#include') || line.startsWith('using')) {
+    return false;
+  }
+  
+  if (tab === 'LCS') {
+    if (m.includes('comparing') || m.includes('check')) {
+      return line.includes('if') && (line.includes('==') || line.includes('.charat') || line.includes('[i-1]') || line.includes('[j-1]'));
+    }
+    if (m.includes('match') && !m.includes('mismatch')) {
+      return line.includes('dp[i][j] =') && (line.includes('dp[i-1][j-1] + 1') || line.includes('dp[i - 1][j - 1] + 1'));
+    }
+    if (m.includes('mismatch')) {
+      return line.includes('dp[i][j] =') && (line.includes('max(') || line.includes('dp[i-1][j]') || line.includes('dp[i][j-1]'));
+    }
+  }
+  
+  if (tab === 'LIS') {
+    if (m.includes('comparing')) {
+      return line.includes('if') && line.includes('arr[j] < arr[i]');
+    }
+    if (m.includes('update') || m.includes('lis[i]')) {
+      return line.includes('lis[i] =') && (line.includes('max(') || line.includes('lis[j] + 1'));
+    }
+  }
+  
+  if (tab === 'Knapsack') {
+    if (m.includes('capacity')) {
+      return line.includes('if') && (line.includes('wt[i-1] <= w') || line.includes('wt[i - 1] <= w'));
+    }
+    if (m.includes('include') && !m.includes('exclude')) {
+      return line.includes('dp[i][w] =') && (line.includes('val[i-1]') || line.includes('val[i - 1]') || line.includes('max('));
+    }
+    if (m.includes('exclude')) {
+      return line.includes('dp[i][w] =') && line.includes('dp[i-1][w]');
+    }
+  }
+  
+  if (tab === 'CoinChange') {
+    if (m.includes('check') || m.includes('compare')) {
+      return line.includes('if') && (line.includes('coins[j]') || line.includes('coins[i]') || line.includes('<= i') || line.includes('<= w'));
+    }
+    if (m.includes('update') || m.includes('dp[i]') || m.includes('dp[w]')) {
+      return (line.includes('dp[i] =') || line.includes('dp[w] =')) && (line.includes('min(') || line.includes('dp[i - coin]') || line.includes('dp[w - coin]'));
+    }
+  }
+  
+  if (m.includes('loop') || m.includes('row') || m.includes('col') || m.includes('step')) {
+    return line.includes('for') && (line.includes('i') || line.includes('j') || line.includes('w'));
+  }
+  
+  return false;
+};
+
 const DPGreedyVisualizer = ({ onBack, openSettings, initialTab = 'LCS', onCopyCode, onCodeChange, fontSize = 14, wordWrap = 'off', onShowUpcomingFeatures }) => {
+  const [localFontSize, setLocalFontSize] = useState(fontSize);
+  useEffect(() => {
+    setLocalFontSize(fontSize);
+  }, [fontSize]);
+
   const [activeTab, setActiveTab] = useState(initialTab); // 'LCS' | 'LIS' | 'Knapsack' | 'CoinChange'
 
   useEffect(() => {
@@ -101,14 +269,14 @@ const DPGreedyVisualizer = ({ onBack, openSettings, initialTab = 'LCS', onCopyCo
 
   // Layout sizing
   const [showLogPanel, setShowLogPanel] = useState(true);
-  const [logPosition, setLogPosition] = useState({ x: 20, y: 120 });
+  const [logPosition, setLogPosition] = useState({ x: 50, y: 150 });
+  const [logSize, setLogSize] = useState({ width: 520, height: 280 });
   const [isDraggingLog, setIsDraggingLog] = useState(false);
-  const [logSize, setLogSize] = useState({ width: 580, height: 300 });
+  const dragStart = useRef({ x: 0, y: 0 });
+  const panelStart = useRef({ x: 0, y: 0 });
   const [activeStateWidth, setActiveStateWidth] = useState(240);
-  const [codeWidth, setCodeWidth] = useState(450);
+  const [codeWidth, setCodeWidth] = useState(360);
 
-  const logDragStart = useRef({ x: 0, y: 0 });
-  const logPanelStart = useRef({ x: 0, y: 0 });
   const logContainerRef = useRef(null);
 
   // LCS Inputs
@@ -180,17 +348,15 @@ const DPGreedyVisualizer = ({ onBack, openSettings, initialTab = 'LCS', onCopyCo
   };
 
   // Draggable Tracelog Events
-  const handleLogMouseDown = (e) => {
-    const handle = e.target.closest('.log-drag-handle');
-    if (handle) {
-      setIsDraggingLog(true);
-      const isTouch = e.type.startsWith('touch');
-      const clientX = isTouch ? e.touches[0].clientX : e.clientX;
-      const clientY = isTouch ? e.touches[0].clientY : e.clientY;
-      logDragStart.current = { x: clientX, y: clientY };
-      logPanelStart.current = { x: logPosition.x, y: logPosition.y };
-      if (e.cancelable) e.preventDefault();
-    }
+  const handleLogHeaderMouseDown = (e) => {
+    if (e.button !== 0 && e.type !== 'touchstart') return;
+    setIsDraggingLog(true);
+    const isTouch = e.type.startsWith('touch');
+    const clientX = isTouch ? e.touches[0].clientX : e.clientX;
+    const clientY = isTouch ? e.touches[0].clientY : e.clientY;
+    dragStart.current = { x: clientX, y: clientY };
+    panelStart.current = { x: logPosition.x, y: logPosition.y };
+    if (e.cancelable) e.preventDefault();
   };
 
   useEffect(() => {
@@ -199,18 +365,19 @@ const DPGreedyVisualizer = ({ onBack, openSettings, initialTab = 'LCS', onCopyCo
       const isTouch = e.type.startsWith('touch');
       const clientX = isTouch ? e.touches[0].clientX : e.clientX;
       const clientY = isTouch ? e.touches[0].clientY : e.clientY;
-      const dx = clientX - logDragStart.current.x;
-      const dy = clientY - logDragStart.current.y;
-      const maxX = Math.max(0, window.innerWidth - logSize.width);
-      const maxY = Math.max(0, window.innerHeight - logSize.height);
+      const dx = clientX - dragStart.current.x;
+      const dy = clientY - dragStart.current.y;
+      
       setLogPosition({
-        x: Math.max(0, Math.min(maxX, logPanelStart.current.x + dx)),
-        y: Math.max(0, Math.min(maxY, logPanelStart.current.y + dy))
+        x: Math.max(-logSize.width + 40, Math.min(window.innerWidth - 40, panelStart.current.x + dx)),
+        y: Math.max(0, Math.min(window.innerHeight - 40, panelStart.current.y + dy))
       });
     };
+
     const handleMouseUp = () => {
       setIsDraggingLog(false);
     };
+
     window.addEventListener('mousemove', handleMouseMove);
     window.addEventListener('mouseup', handleMouseUp);
     window.addEventListener('touchmove', handleMouseMove, { passive: false });
@@ -223,7 +390,7 @@ const DPGreedyVisualizer = ({ onBack, openSettings, initialTab = 'LCS', onCopyCo
     };
   }, [isDraggingLog, logSize]);
 
-  const handleResizeMouseDown = (e) => {
+  const handleLogResizeMouseDown = (e) => {
     if (e.cancelable) e.preventDefault();
     e.stopPropagation();
     const isTouch = e.type.startsWith('touch');
@@ -235,8 +402,8 @@ const DPGreedyVisualizer = ({ onBack, openSettings, initialTab = 'LCS', onCopyCo
     const handleMouseMove = (moveEvent) => {
       const currentX = moveEvent.type.startsWith('touch') ? moveEvent.touches[0].clientX : moveEvent.clientX;
       const currentY = moveEvent.type.startsWith('touch') ? moveEvent.touches[0].clientY : moveEvent.clientY;
-      const newWidth = Math.max(340, startWidth + (currentX - startX));
-      const newHeight = Math.max(180, startHeight + (currentY - startY));
+      const newWidth = Math.max(300, Math.min(800, startWidth + (currentX - startX)));
+      const newHeight = Math.max(150, Math.min(600, startHeight + (currentY - startY)));
       setLogSize({ width: newWidth, height: newHeight });
     };
 
@@ -260,7 +427,7 @@ const DPGreedyVisualizer = ({ onBack, openSettings, initialTab = 'LCS', onCopyCo
     const startWidth = activeStateWidth;
     const drag = (moveEvent) => {
       const currentX = moveEvent.type.startsWith('touch') ? moveEvent.touches[0].clientX : moveEvent.clientX;
-      const newWidth = Math.max(120, Math.min(logSize.width - 120, startWidth + (currentX - startX)));
+      const newWidth = Math.max(120, Math.min(450, startWidth + (currentX - startX)));
       setActiveStateWidth(newWidth);
     };
     const end = () => {
@@ -954,8 +1121,8 @@ const DPGreedyVisualizer = ({ onBack, openSettings, initialTab = 'LCS', onCopyCo
     }
 
     return (
-      <div style={{ display: 'flex', flexDirection: 'column', height: '100%', padding: '1rem', overflow: 'auto' }}>
-        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '1rem' }}>
+      <div style={{ display: 'flex', flexDirection: 'column', height: '100%', overflow: 'auto' }}>
+        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '1rem', padding: '1rem 1rem 0 1rem', flexShrink: 0 }}>
           <div style={{ fontSize: '0.9rem', color: 'var(--text-secondary)' }}>
             Rows (Y-axis): <strong style={{ color: '#ec4899' }}>{lcsStr2}</strong> | Columns (X-axis): <strong style={{ color: '#3b82f6' }}>{lcsStr1}</strong>
           </div>
@@ -966,7 +1133,7 @@ const DPGreedyVisualizer = ({ onBack, openSettings, initialTab = 'LCS', onCopyCo
           )}
         </div>
 
-        <div style={{ display: 'inline-block', margin: 'auto' }}>
+        <div style={{ display: 'flex', justifyContent: 'center', alignItems: 'center', minHeight: '100%', minWidth: 'min-content', padding: '1rem 1.5rem 2rem 1.5rem', flex: 1 }}>
           <table style={{ borderCollapse: 'collapse', color: 'white', fontFamily: 'sans-serif' }}>
             <thead>
               <tr>
@@ -1055,8 +1222,8 @@ const DPGreedyVisualizer = ({ onBack, openSettings, initialTab = 'LCS', onCopyCo
     }
 
     return (
-      <div style={{ display: 'flex', flexDirection: 'column', height: '100%', padding: '1.5rem', overflow: 'auto', gap: '2rem' }}>
-        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+      <div style={{ display: 'flex', flexDirection: 'column', height: '100%', overflow: 'auto' }}>
+        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', padding: '1.5rem 1.5rem 0 1.5rem', flexShrink: 0 }}>
           <div style={{ fontSize: '0.9rem', color: 'var(--text-secondary)' }}>
             Outer Loop Pointers: <span style={{ color: '#fb923c', fontWeight: 'bold' }}>i (current index)</span> | <span style={{ color: '#38bdf8', fontWeight: 'bold' }}>j (scanning index)</span>
           </div>
@@ -1067,7 +1234,7 @@ const DPGreedyVisualizer = ({ onBack, openSettings, initialTab = 'LCS', onCopyCo
           )}
         </div>
 
-        <div style={{ display: 'flex', flexDirection: 'column', gap: '1rem', alignItems: 'center', margin: 'auto' }}>
+        <div style={{ display: 'flex', flexDirection: 'column', justifyContent: 'center', alignItems: 'center', minHeight: '100%', minWidth: 'min-content', padding: '1.5rem 2rem 2.5rem 2rem', gap: '2rem', flex: 1 }}>
           {/* Elements list */}
           <div style={{ display: 'flex', gap: '10px' }}>
             {arr.map((val, idx) => {
@@ -1175,8 +1342,9 @@ const DPGreedyVisualizer = ({ onBack, openSettings, initialTab = 'LCS', onCopyCo
             )}
           </h3>
 
-          <div style={{ flex: 1, overflow: 'auto', display: 'flex' }}>
-            <table style={{ margin: 'auto', borderCollapse: 'collapse', fontSize: '0.78rem', fontFamily: 'monospace' }}>
+          <div style={{ flex: 1, overflow: 'auto', display: 'flex', flexDirection: 'column' }}>
+            <div style={{ display: 'flex', justifyContent: 'center', alignItems: 'center', minHeight: '100%', minWidth: 'min-content', padding: '0.5rem', flex: 1 }}>
+              <table style={{ borderCollapse: 'collapse', fontSize: '0.78rem', fontFamily: 'monospace' }}>
               <thead>
                 <tr>
                   <th style={{ border: '1px solid var(--glass-border)', padding: '6px', color: 'var(--text-secondary)' }}>Item</th>
@@ -1233,6 +1401,7 @@ const DPGreedyVisualizer = ({ onBack, openSettings, initialTab = 'LCS', onCopyCo
                 })}
               </tbody>
             </table>
+            </div>
           </div>
         </div>
 
@@ -1343,7 +1512,8 @@ const DPGreedyVisualizer = ({ onBack, openSettings, initialTab = 'LCS', onCopyCo
             </span>
           </h3>
 
-          <div style={{ display: 'flex', flexWrap: 'wrap', gap: '8px', justifyContent: 'center', margin: 'auto' }}>
+          <div style={{ flex: 1, overflow: 'auto', display: 'flex', flexDirection: 'column' }}>
+            <div style={{ display: 'flex', flexWrap: 'wrap', gap: '8px', justifyContent: 'center', alignItems: 'center', minHeight: '100%', minWidth: 'min-content', padding: '0.5rem', flex: 1 }}>
             {dp.map((val, idx) => {
               const isActive = currAmount === idx;
               let border = '1px solid var(--glass-border)';
@@ -1374,7 +1544,8 @@ const DPGreedyVisualizer = ({ onBack, openSettings, initialTab = 'LCS', onCopyCo
               );
             })}
           </div>
-        </div>
+            </div>
+          </div>
 
         {/* Right Side: Greedy Coin Selector */}
         <div style={{ display: 'flex', flexDirection: 'column', background: 'rgba(255,255,255,0.01)', border: '1px solid var(--glass-border)', borderRadius: '12px', padding: '1.2rem' }}>
@@ -1476,12 +1647,21 @@ const DPGreedyVisualizer = ({ onBack, openSettings, initialTab = 'LCS', onCopyCo
 
         {/* Action Controls */}
         <div className="controls-glass" style={{ display: 'flex', gap: '8px', alignItems: 'center' }}>
-          <button className="btn btn-clear" style={{ background: 'rgba(139, 92, 246, 0.18)', color: '#a78bfa' }} onClick={() => setShowComplexity(!showComplexity)}>
-            {showComplexity ? '👁️ Hide Big-O' : '👁️ Show Big-O'}
-          </button>
-          <button className="btn btn-clear" onClick={() => setShowCode(!showCode)}>
-            {showCode ? '📖 Hide Code' : '📖 Show Code'}
-          </button>
+          <div style={{ display: 'flex', gap: '15px', alignItems: 'center', background: 'rgba(255,255,255,0.03)', padding: '6px 14px', borderRadius: '10px', border: '1px solid var(--glass-border)', fontSize: '0.82rem' }}>
+            <span style={{ fontWeight: 'bold', color: 'var(--text-secondary)' }}>View:</span>
+            <label style={{ display: 'flex', alignItems: 'center', gap: '6px', cursor: 'pointer', color: 'var(--text-primary)', userSelect: 'none' }}>
+              <input type="checkbox" checked={showLogPanel} onChange={e => setShowLogPanel(e.target.checked)} style={{ accentColor: 'var(--accent-primary)', cursor: 'pointer' }} />
+              <span>Log</span>
+            </label>
+            <label style={{ display: 'flex', alignItems: 'center', gap: '6px', cursor: 'pointer', color: 'var(--text-primary)', userSelect: 'none' }}>
+              <input type="checkbox" checked={showCode} onChange={e => setShowCode(e.target.checked)} style={{ accentColor: 'var(--accent-primary)', cursor: 'pointer' }} />
+              <span>Code</span>
+            </label>
+            <label style={{ display: 'flex', alignItems: 'center', gap: '6px', cursor: 'pointer', color: 'var(--text-primary)', userSelect: 'none' }}>
+              <input type="checkbox" checked={showComplexity} onChange={e => setShowComplexity(e.target.checked)} style={{ accentColor: 'var(--accent-primary)', cursor: 'pointer' }} />
+              <span>Big-O</span>
+            </label>
+          </div>
           <button className="btn btn-clear" onClick={openSettings}>⚙ Settings</button>
         </div>
       </header>
@@ -1657,52 +1837,84 @@ const DPGreedyVisualizer = ({ onBack, openSettings, initialTab = 'LCS', onCopyCo
 
           </div>
 
-        </div>
-
-        {/* DRAGGABLE EXECUTION LOG PANEL OVERLAY */}
-        {showLogPanel && timeline.length > 0 && (
-          <div
-            onMouseDown={handleLogMouseDown}
-            onTouchStart={handleLogMouseDown}
-            style={{
-              position: 'absolute',
-              left: `${logPosition.x}px`,
-              top: `${logPosition.y}px`,
-              width: `${logSize.width}px`,
-              height: `${logSize.height}px`,
-              background: 'var(--bg-secondary)',
-              border: '1.5px solid var(--glass-border)',
-              borderRadius: '16px',
-              boxShadow: '0 20px 50px rgba(0,0,0,0.5)',
-              backdropFilter: 'blur(16px)',
-              display: 'flex',
-              flexDirection: 'column',
-              overflow: 'hidden',
-              zIndex: 100
-            }}
-          >
-            {/* Log Header handle */}
-            <div className="log-drag-handle" style={{
-              padding: '10px 15px', background: 'rgba(255,255,255,0.03)', borderBottom: '1px solid var(--glass-border)',
-              cursor: 'move', display: 'flex', justifyContent: 'space-between', alignItems: 'center', userSelect: 'none'
-            }}>
-              <div style={{ display: 'flex', alignItems: 'center', gap: '8px', fontSize: '0.85rem', fontWeight: 'bold' }}>
-                <span>📜 Execution Tracelog</span>
+          {showLogPanel && timeline.length > 0 && (
+            <div 
+              style={{
+                position: 'absolute',
+                left: `${logPosition.x}px`,
+                top: `${logPosition.y}px`,
+                width: `${logSize.width}px`,
+                height: `${logSize.height}px`,
+                background: 'rgba(15, 23, 42, 0.45)', // Translucent glassmorphism
+                backdropFilter: 'blur(16px) saturate(180%)',
+                WebkitBackdropFilter: 'blur(16px) saturate(180%)',
+                border: '1px solid rgba(255, 255, 255, 0.08)',
+                borderRadius: '16px',
+                boxShadow: '0 20px 50px rgba(0,0,0,0.5)',
+                display: 'flex',
+                flexDirection: 'column',
+                overflow: 'hidden',
+                zIndex: 100
+              }}
+            >
+              {/* Drag Handle Header */}
+              <div
+                onMouseDown={handleLogHeaderMouseDown}
+                onTouchStart={handleLogHeaderMouseDown}
+                style={{
+                  padding: '8px 12px',
+                  background: 'rgba(255, 255, 255, 0.04)',
+                  borderBottom: '1px solid rgba(255, 255, 255, 0.08)',
+                  display: 'flex',
+                  justifyContent: 'space-between',
+                  alignItems: 'center',
+                  userSelect: 'none',
+                  flexShrink: 0,
+                  cursor: 'move'
+                }}
+              >
+                <span style={{ fontWeight: 600, fontSize: '0.8rem', color: 'var(--text-primary)', display: 'flex', alignItems: 'center', gap: '6px' }}>
+                  📋 Execution Tracelog & Active State
+                </span>
+                <button
+                  onClick={() => setShowLogPanel(false)}
+                  style={{
+                    background: 'transparent',
+                    border: 'none',
+                    color: 'var(--text-secondary)',
+                    cursor: 'pointer',
+                    fontSize: '1rem',
+                    padding: '0 4px',
+                    lineHeight: 1
+                  }}
+                  title="Hide Log"
+                >
+                  ×
+                </button>
               </div>
-              <div style={{ display: 'flex', gap: '6px' }}>
-                <button style={{ background: 'transparent', border: 'none', color: 'var(--text-secondary)', cursor: 'pointer', fontSize: '1rem' }} onClick={() => setShowLogPanel(false)}>✕</button>
-              </div>
-            </div>
 
-            {/* Split panel: Left for Active State Values, Right for chronological text logs */}
-            <div style={{ display: 'flex', flex: 1, overflow: 'hidden' }}>
+              {/* Content Body */}
+              <div style={{ display: 'flex', flex: 1, overflow: 'hidden' }}>
 
-              {/* Active State Values */}
-              <div style={{ width: `${activeStateWidth}px`, borderRight: '1px solid var(--glass-border)', background: 'rgba(0,0,0,0.12)', display: 'flex', flexDirection: 'column', overflow: 'hidden' }}>
-                <div style={{ padding: '8px 12px', fontSize: '0.78rem', color: 'var(--text-secondary)', fontWeight: 600, borderBottom: '1px solid var(--glass-border)' }}>
-                  State Variables
-                </div>
-                <div style={{ flex: 1, overflowY: 'auto', padding: '10px', display: 'flex', flexDirection: 'column', gap: '8px', fontSize: '0.78rem', fontFamily: 'monospace' }}>
+                {/* Left Column: Active State Values */}
+                <div
+                  style={{
+                    width: `${activeStateWidth}px`,
+                    background: 'rgba(0, 0, 0, 0.25)',
+                    borderRight: '1px solid var(--glass-border)',
+                    padding: '6px 8px',
+                    display: 'flex',
+                    flexDirection: 'column',
+                    gap: '4px',
+                    fontSize: '0.72rem',
+                    color: 'var(--text-secondary)',
+                    overflowY: 'auto',
+                    flexShrink: 0
+                  }}
+                >
+                  <div style={{ fontSize: '0.72rem', color: 'var(--accent-primary)', textTransform: 'uppercase', fontWeight: 'bold', borderBottom: '1px solid rgba(255,255,255,0.06)', paddingBottom: '2px' }}>
+                    State Variables
+                  </div>
                   {activeTab === 'LCS' && (
                     <>
                       <div>String 1: <strong style={{ color: '#3b82f6' }}>&quot;{lcsStr1}&quot;</strong></div>
@@ -1739,102 +1951,135 @@ const DPGreedyVisualizer = ({ onBack, openSettings, initialTab = 'LCS', onCopyCo
                     </>
                   )}
                 </div>
+
+                {/* Col Resize bar */}
+                <div 
+                  onMouseDown={handleActiveStateColDragStart} 
+                  onTouchStart={handleActiveStateColDragStart}
+                  style={{ width: '4px', cursor: 'col-resize', background: 'transparent', zIndex: 5 }} 
+                />
+
+                {/* Operations/Timeline Log */}
+                <div ref={logContainerRef} style={{ flex: 1, background: 'rgba(0,0,0,0.15)', padding: '6px 8px', overflowY: 'auto', borderRight: '1px solid var(--glass-border)' }}>
+                  <div style={{ fontSize: '0.7rem', color: 'var(--text-secondary)', fontWeight: 'bold', textTransform: 'uppercase', marginBottom: '4px' }}>Chronological Step History</div>
+                  <div style={{ display: 'flex', flexDirection: 'column', gap: '4px' }}>
+                    {currentFrame.logs?.map((log, idx) => (
+                      <div key={idx} style={{ display: 'flex', alignItems: 'flex-start', gap: '8px', fontSize: '0.75rem', lineHeight: '1.4' }}>
+                        <span style={{ color: 'var(--text-secondary)', flexShrink: 0, width: '24px', textAlign: 'right', fontWeight: 'bold', userSelect: 'none' }}>
+                          {idx === currentFrame.logs.length - 1 ? '➔' : `${idx + 1}.`}
+                        </span>
+                        <span style={{ color: idx === currentFrame.logs.length - 1 ? 'var(--accent-primary)' : 'var(--text-primary)', wordBreak: 'break-word', flex: 1 }}>
+                          {highlightLogText(log)}
+                        </span>
+                      </div>
+                    ))}
+                    {(!currentFrame.logs || currentFrame.logs.length === 0) && (
+                      <div style={{ color: 'var(--text-secondary)', fontStyle: 'italic', fontSize: '0.7rem' }}>No steps recorded yet.</div>
+                    )}
+                  </div>
+                </div>
+
               </div>
 
-              {/* Col Resize bar */}
+              {/* Visual step highlight at bottom of log panel */}
+              <div style={{ background: 'rgba(0,0,0,0.2)', padding: '4px 12px', borderTop: '1px solid rgba(255, 255, 255, 0.08)', fontSize: '0.72rem', color: '#fbbf24', fontWeight: 600 }}>
+                💡 {currentFrame.msg || 'Ready to analyze.'}
+              </div>
+
+              {/* Resize Handle */}
               <div
-                onMouseDown={handleActiveStateColDragStart}
-                onTouchStart={handleActiveStateColDragStart}
-                style={{ width: '4px', cursor: 'col-resize', background: 'transparent', hover: { background: 'var(--accent-primary)' } }}
-              />
-
-              {/* Chronological steps */}
-              <div style={{ flex: 1, display: 'flex', flexDirection: 'column', overflow: 'hidden' }}>
-                <div style={{ padding: '8px 12px', fontSize: '0.78rem', color: 'var(--text-secondary)', fontWeight: 600, borderBottom: '1px solid var(--glass-border)' }}>
-                  Chronological Step History
-                </div>
-                <div ref={logContainerRef} style={{ flex: 1, overflowY: 'auto', padding: '12px', display: 'flex', flexDirection: 'column', gap: '6px' }}>
-                  {currentFrame.logs?.map((log, idx) => (
-                    <div key={idx} className="execution-log-item" style={{
-                      color: idx === currentFrame.logs.length - 1 ? 'var(--accent-primary)' : 'var(--text-primary)',
-                      fontWeight: idx === currentFrame.logs.length - 1 ? 'bold' : 'normal',
-                      fontSize: '0.8rem'
-                    }}>
-                      • {log}
-                    </div>
-                  ))}
-                  {(!currentFrame.logs || currentFrame.logs.length === 0) && (
-                    <div style={{ color: 'var(--text-secondary)', fontStyle: 'italic', fontSize: '0.8rem' }}>No steps recorded yet.</div>
-                  )}
-                </div>
+                onMouseDown={handleLogResizeMouseDown}
+                onTouchStart={handleLogResizeMouseDown}
+                style={{
+                  position: 'absolute', bottom: '0', right: '0', width: '15px', height: '15px',
+                  cursor: 'se-resize', background: 'transparent',
+                  display: 'flex', alignItems: 'flex-end', justifyContent: 'flex-end', padding: '2px',
+                  zIndex: 10
+                }}
+              >
+                <svg width="8" height="8" viewBox="0 0 8 8"><path d="M6 0 L8 0 L8 8 L0 8 L0 6 L4 6 L4 4 L6 4 Z" fill="rgba(255,255,255,0.3)" /></svg>
               </div>
 
             </div>
-
-            {/* Visual step highlight at bottom of log panel */}
-            <div style={{ background: 'rgba(0,0,0,0.2)', padding: '8px 15px', borderTop: '1px solid var(--glass-border)', fontSize: '0.8rem', color: '#fbbf24', fontWeight: 600, minHeight: '34px' }}>
-              💡 {currentFrame.msg || 'Ready to analyze.'}
-            </div>
-
-            {/* Resize Handle */}
-            <div
-              onMouseDown={handleResizeMouseDown}
-              onTouchStart={handleResizeMouseDown}
-              style={{
-                position: 'absolute', bottom: '0', right: '0', width: '15px', height: '15px',
-                cursor: 'se-resize', background: 'transparent',
-                display: 'flex', alignItems: 'flex-end', justifyContent: 'flex-end', padding: '2px'
-              }}
-            >
-              <svg width="8" height="8" viewBox="0 0 8 8"><path d="M6 0 L8 0 L8 8 L0 8 L0 6 L4 6 L4 4 L6 4 Z" fill="rgba(255,255,255,0.3)" /></svg>
-            </div>
-
-          </div>
-        )}
+          )}
+        </div>
 
         {/* CODE PANELS / MULTILANGUAGE CODE TEMPLATES ON RIGHT */}
         {showCode && (
           <div style={{ width: `${codeWidth}px`, borderLeft: '1px solid var(--glass-border)', display: 'flex', flexDirection: 'column', background: 'var(--bg-secondary)', flexShrink: 0 }}>
 
-            {/* Header controls for language selection */}
-            <div style={{ padding: '10px 15px', borderBottom: '1px solid var(--glass-border)', display: 'flex', justifyContent: 'space-between', alignItems: 'center', gap: '8px', flexWrap: 'wrap' }}>
-              <div style={{ display: 'flex', gap: '4px' }}>
+            {/* Header controls — sticky 2-row layout */}
+            <div style={{ flexShrink: 0, borderBottom: '1px solid var(--glass-border)', background: 'var(--bg-secondary)', position: 'sticky', top: 0, zIndex: 2 }}>
+              {/* Row 1: Language tabs */}
+              <div style={{ padding: '8px 12px', display: 'flex', alignItems: 'center', gap: '5px', borderBottom: '1px solid rgba(255,255,255,0.05)', flexWrap: 'wrap' }}>
+                <span style={{ fontSize: '0.78rem', fontWeight: 700, color: 'var(--text-secondary)', whiteSpace: 'nowrap' }}>🌐 Lang:</span>
                 {['C', 'C++', 'Java', 'Python', 'JS'].map(lang => (
                   <button
                     key={lang}
-                    className={`code-tab ${codeLanguage === lang ? 'active' : ''}`}
                     onClick={() => setCodeLanguage(lang)}
-                  >
-                    {lang === 'JS' ? 'JavaScript' : lang}
-                  </button>
+                    style={{
+                      padding: '2px 9px',
+                      fontSize: '0.74rem',
+                      borderRadius: '5px',
+                      border: codeLanguage === lang ? '1.5px solid var(--accent-primary)' : '1px solid var(--glass-border)',
+                      background: codeLanguage === lang ? 'var(--accent-primary)' : 'transparent',
+                      color: codeLanguage === lang ? '#fff' : 'var(--text-secondary)',
+                      cursor: 'pointer',
+                      fontWeight: codeLanguage === lang ? 700 : 400,
+                      transition: 'all 0.15s'
+                    }}
+                  >{lang === 'JS' ? 'JavaScript' : lang}</button>
                 ))}
               </div>
-
-              <div style={{ display: 'flex', gap: '6px' }}>
+              {/* Row 2: Utility actions */}
+              <div style={{ padding: '6px 12px', display: 'flex', alignItems: 'center', gap: '6px', flexWrap: 'wrap' }}>
+                <button onClick={() => setLocalFontSize(prev => Math.max(10, prev - 2))} style={{ background: 'transparent', border: '1px solid var(--glass-border)', borderRadius: '4px', color: 'var(--text-secondary)', fontSize: '0.73rem', padding: '1px 6px', cursor: 'pointer' }}>A−</button>
+                <button onClick={() => setLocalFontSize(prev => Math.min(40, prev + 2))} style={{ background: 'transparent', border: '1px solid var(--glass-border)', borderRadius: '4px', color: 'var(--text-secondary)', fontSize: '0.73rem', padding: '1px 6px', cursor: 'pointer' }}>A+</button>
                 <button
                   onClick={() => setIsRunnerOpen(true)}
-                  className="btn btn-clear"
-                  style={{ padding: '2px 8px', fontSize: '0.78rem', whiteSpace: 'nowrap', display: 'inline-flex', alignItems: 'center', background: 'rgba(16,185,129,0.2)', color: '#34d399', border: '1px solid rgba(16,185,129,0.3)', borderRadius: '6px' }}
-                >
-                  ▶ Run Code
-                </button>
-                <button className="btn btn-clear" style={{ padding: '2px 8px', fontSize: '0.78rem' }} onClick={handleCopyCode}>
+                  style={{ padding: '2px 8px', fontSize: '0.74rem', whiteSpace: 'nowrap', display: 'inline-flex', alignItems: 'center', background: 'rgba(16,185,129,0.15)', color: '#34d399', border: '1px solid rgba(16,185,129,0.3)', borderRadius: '5px', cursor: 'pointer' }}
+                >▶ Run</button>
+                <button onClick={handleCopyCode} style={{ padding: '2px 8px', fontSize: '0.74rem', background: 'transparent', border: '1px solid var(--glass-border)', borderRadius: '5px', color: 'var(--text-secondary)', cursor: 'pointer' }}>
                   {copied ? '✓ Copied' : '📋 Copy'}
                 </button>
               </div>
             </div>
 
             {/* Code Box displaying the template */}
-            <div className="code-box" style={{ flex: 1, borderRadius: 0, border: 'none', margin: 0, overflowY: 'auto' }}>
+            <div className="code-box" style={{ flex: 1, borderRadius: 0, border: 'none', margin: 0, overflow: 'auto', padding: '1rem' }}>
               <pre style={{
                 margin: 0,
                 color: 'var(--text-primary)',
                 fontFamily: "'Fira Code', monospace",
-                lineHeight: '1.5',
-                fontSize: `${fontSize}px`,
-                whiteSpace: wordWrap === 'on' ? 'pre-wrap' : 'pre'
+                lineHeight: '1.6',
+                fontSize: `${localFontSize}px`
               }}>
-                {currentCode}
+                {(() => {
+                  const codeLines = toAllman(currentCode).split('\n');
+                  const frame = timeline[currentStep] || {};
+                  return codeLines.map((lineText, idx) => {
+                    const isHighlighted = isDPLineMatch(activeTab, frame.msg || '', lineText);
+                    return (
+                      <div 
+                        key={idx} 
+                        style={{ 
+                          background: isHighlighted ? 'rgba(59,130,246,0.16)' : 'transparent',
+                          borderLeft: isHighlighted ? '3px solid var(--accent-primary)' : '3px solid transparent',
+                          padding: '1px 12px',
+                          transition: 'all 0.15s ease'
+                        }}
+                      >
+                        <span style={{ 
+                          whiteSpace: wordWrap === 'on' ? 'pre-wrap' : 'pre',
+                          color: isHighlighted ? '#ffffff' : 'var(--text-primary)',
+                          fontFamily: "'Fira Code', monospace"
+                        }}>
+                          {lineText || ' '}
+                        </span>
+                      </div>
+                    );
+                  });
+                })()}
               </pre>
             </div>
 

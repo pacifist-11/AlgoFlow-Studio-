@@ -8,6 +8,25 @@ import GeneralDSVisualizer from './GeneralDSVisualizer.jsx';
 import GraphVisualizer from './GraphVisualizer.jsx';
 import CodeRunnerModal from './CodeRunnerModal.jsx';
 import DPGreedyVisualizer from './DPGreedyVisualizer.jsx';
+import PatternsVisualizer from './PatternsVisualizer.jsx';
+import DSANotesVisualizer from './DSANotesVisualizer.jsx';
+
+// Allman brace formatter for code display
+const toAllman = code => {
+  if (!code) return '';
+  const lines = code.split('\n');
+  const out = [];
+  for (const line of lines) {
+    const t = line.trimEnd();
+    if (t.endsWith('{') && t.trim() !== '{' && !t.trim().startsWith('//') && !t.trim().startsWith('*')) {
+      const indent = line.match(/^(\s*)/)[1];
+      const body = t.slice(0, -1).trimEnd();
+      if (body.trim().length > 0) { out.push(body); out.push(indent + '{'); continue; }
+    }
+    out.push(line);
+  }
+  return out.join('\n');
+};
 import TopicInfoModal from './TopicInfoModal.jsx';
 
 // ─── Safe LocalStorage Helper ────────────────────────────────────────────────
@@ -38,7 +57,9 @@ const safeLocalStorage = {
 
 // ─── Tree Node ───────────────────────────────────────────────────────────────
 class TreeNode {
+  static idCounter = 0;
   constructor(value) {
+    this.id = ++TreeNode.idCounter;
     this.value = value;
     this.keys   = value !== undefined ? [value] : [];
     this.children = [];
@@ -58,6 +79,7 @@ class TreeNode {
 const cloneTree = (node) => {
   if (!node) return null;
   const n = new TreeNode(node.value);
+  n.id    = node.id;
   n.left  = cloneTree(node.left);
   n.right = cloneTree(node.right);
   n.x = node.x; n.y = node.y;
@@ -71,6 +93,91 @@ const cloneTree = (node) => {
   n.bitRep = node.bitRep;
   n.index  = node.index;
   return n;
+};
+
+const highlightLogText = (text) => {
+  if (!text) return '';
+  const str = String(text);
+  const lower = str.toLowerCase();
+  
+  if (
+    lower.includes('root full') ||
+    lower.includes('split') ||
+    lower.includes('imbalance') ||
+    lower.includes('rotate') ||
+    lower.includes('rotation') ||
+    lower.includes('delete') ||
+    lower.includes('deleted') ||
+    lower.includes('remove') ||
+    lower.includes('removed') ||
+    lower.includes('pop') ||
+    lower.includes('popped') ||
+    lower.includes('mismatch') ||
+    lower.includes('⚡')
+  ) {
+    const regex = /(\b\d+(?:\.\d+)?\b)/g;
+    const parts = str.split(regex);
+    return (
+      <span style={{ color: '#f87171', fontWeight: 'bold' }}>
+        {parts.map((p, i) => 
+          regex.test(p) ? <span key={i} style={{ color: '#fbbf24', textShadow: '0 0 8px rgba(251,191,36,0.3)' }}>{p}</span> : p
+        )}
+      </span>
+    );
+  }
+  
+  if (
+    lower.includes('inserted') ||
+    lower.includes('insert(') ||
+    lower.includes('insert ') ||
+    lower.includes('create node') ||
+    lower.includes('success') ||
+    lower.includes('match') ||
+    lower.includes('completed') ||
+    lower.includes('done') ||
+    lower.includes('✦') ||
+    lower.includes('✓') ||
+    lower.includes('✅')
+  ) {
+    const regex = /(\b\d+(?:\.\d+)?\b)/g;
+    const parts = str.split(regex);
+    return (
+      <span style={{ color: '#34d399', fontWeight: 'bold' }}>
+        {parts.map((p, i) => 
+          regex.test(p) ? <span key={i} style={{ color: '#fbbf24' }}>{p}</span> : p
+        )}
+      </span>
+    );
+  }
+
+  if (
+    lower.includes('going to child') ||
+    lower.includes('compare') ||
+    lower.includes('comparing') ||
+    lower.includes('probe') ||
+    lower.includes('probing') ||
+    lower.includes('relaxation') ||
+    lower.includes('check') ||
+    lower.includes('going to') ||
+    lower.includes('➜') ||
+    lower.includes('↳')
+  ) {
+    const regex = /(\b\d+(?:\.\d+)?\b)/g;
+    const parts = str.split(regex);
+    return (
+      <span style={{ color: '#fb923c', fontWeight: 600 }}>
+        {parts.map((p, i) => 
+          regex.test(p) ? <span key={i} style={{ color: '#fbbf24', fontWeight: 'bold' }}>{p}</span> : p
+        )}
+      </span>
+    );
+  }
+  
+  const regex = /(\b\d+(?:\.\d+)?\b)/g;
+  const parts = str.split(regex);
+  return parts.map((p, i) => 
+    /^\d+(?:\.\d+)?$/.test(p) ? <strong key={i} style={{ color: '#fbbf24' }}>{p}</strong> : p
+  );
 };
 
 class Frame {
@@ -438,10 +545,21 @@ const ChatBot = ({ customCode, codeLang, isChatOpen, setIsChatOpen, chatMessages
         </div>
       )}
       <button onClick={() => onShowUpcomingFeatures ? onShowUpcomingFeatures() : setIsChatOpen(!isChatOpen)}
-        style={{ width: '60px', height: '60px', borderRadius: '50%', background: 'linear-gradient(135deg, var(--accent-primary), var(--accent-secondary))', border: 'none', color: 'white', fontSize: '1.5rem', cursor: 'pointer', boxShadow: '0 6px 20px rgba(0,0,0,0.4)', display: 'flex', justifyContent: 'center', alignItems: 'center', transition: 'transform 0.3s' }}
+        style={{ position: 'relative', width: '60px', height: '60px', borderRadius: '50%', background: 'linear-gradient(135deg, var(--accent-primary), var(--accent-secondary))', border: 'none', color: 'white', fontSize: '1.5rem', cursor: 'pointer', boxShadow: '0 6px 20px rgba(0,0,0,0.4)', display: 'flex', justifyContent: 'center', alignItems: 'center', transition: 'transform 0.3s' }}
         onMouseOver={e => e.currentTarget.style.transform = 'scale(1.1)'}
         onMouseOut={e => e.currentTarget.style.transform = 'scale(1)'}
-        title="AI Coding Assistant">💬</button>
+        title="AI Coding Assistant">
+        <span style={{ fontSize: '1.6rem', lineHeight: 1 }}>🤖</span>
+        <span style={{
+          position: 'absolute',
+          inset: 0,
+          borderRadius: '50%',
+          border: '2px solid var(--accent-primary)',
+          animation: 'pulse 2.5s ease-in-out infinite',
+          opacity: 0.5,
+          pointerEvents: 'none'
+        }} />
+      </button>
     </div>
   );
 };
@@ -730,20 +848,28 @@ const makeCodePythonTutorRunnable = (code, lang) => {
       </header>
 
       {unsupportedInfo && (
-        <div style={{ background: 'rgba(239, 68, 68, 0.12)', borderBottom: '1px solid rgba(239, 68, 68, 0.3)', padding: '10px 16px', display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: '16px', flexShrink: 0 }}>
-          <div style={{ fontSize: '0.82rem', color: '#f87171', lineHeight: '1.4' }}>
-            <strong>🙏 We apologize for the inconvenience! ({unsupportedInfo.title})</strong>
-            <div style={{ color: 'var(--text-primary)', marginTop: '2px' }}>
-              {unsupportedInfo.reason} <span style={{ color: '#fbbf24', marginLeft: '6px' }}>💡 Suggestion: {unsupportedInfo.solution}</span>
+        <div style={{ background: 'linear-gradient(135deg, rgba(239, 68, 68, 0.18), rgba(220, 38, 38, 0.25))', borderBottom: '2px solid rgba(239, 68, 68, 0.5)', padding: '14px 20px', display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: '20px', flexShrink: 0, boxShadow: '0 4px 15px rgba(239, 68, 68, 0.2)' }}>
+          <div style={{ display: 'flex', alignItems: 'flex-start', gap: '12px' }}>
+            <div style={{ fontSize: '2rem', lineHeight: '1' }}>🙏</div>
+            <div>
+              <h4 style={{ margin: '0 0 4px 0', fontSize: '1rem', color: '#fca5a5', fontWeight: 'bold', letterSpacing: '0.3px' }}>
+                OUR SINCERE APOLOGY FOR THIS INCONVENIENCE — {unsupportedInfo.title.toUpperCase()}
+              </h4>
+              <div style={{ fontSize: '0.88rem', color: 'var(--text-primary)', lineHeight: '1.5' }}>
+                {unsupportedInfo.reason}
+              </div>
+              <div style={{ fontSize: '0.84rem', color: '#fbbf24', marginTop: '4px', fontWeight: '500' }}>
+                💡 Recommended Fix: {unsupportedInfo.solution}
+              </div>
             </div>
           </div>
-          <div style={{ display: 'flex', gap: '8px', flexShrink: 0 }}>
+          <div style={{ display: 'flex', gap: '10px', flexShrink: 0 }}>
             {detectedLang === 'C' && unsupportedInfo.title.includes('C++') && (
-              <button className="btn btn-insert" style={{ fontSize: '0.78rem', padding: '4px 12px', whiteSpace: 'nowrap' }} onClick={() => setDetectedLang('C++')}>
+              <button className="btn btn-insert" style={{ fontSize: '0.85rem', padding: '6px 14px', whiteSpace: 'nowrap', boxShadow: '0 0 10px rgba(59,130,246,0.5)' }} onClick={() => setDetectedLang('C++')}>
                 Switch to C++ Mode
               </button>
             )}
-            <button className="btn btn-clear" style={{ fontSize: '0.78rem', padding: '4px 12px', whiteSpace: 'nowrap', background: 'rgba(16,185,129,0.2)', color: '#34d399', border: '1px solid rgba(16,185,129,0.3)' }} onClick={() => setIsRunnerOpen(true)}>
+            <button className="btn btn-clear" style={{ fontSize: '0.85rem', padding: '6px 14px', whiteSpace: 'nowrap', background: 'rgba(16,185,129,0.25)', color: '#34d399', border: '1px solid rgba(16,185,129,0.4)', fontWeight: 'bold' }} onClick={() => setIsRunnerOpen(true)}>
               ▶ Run in Sandboxed Code Runner
             </button>
           </div>
@@ -1498,7 +1624,7 @@ function App() {
   };
 
   const checkRestrictedWords = (text) => {
-    if (!text) return false;
+    if (!text) return null;
     
     // Normalize string to lowercase
     let clean = text.toLowerCase();
@@ -1531,53 +1657,104 @@ function App() {
       'gudu', 'gudha', 'guda', 'gudda', 'guddha', 'goodu', 'gudhu', 'gudh',
       'vattakayalu', 'vattakaayalu', 'vattalu', 'vattakaya', 'vatta', 'vattakay', 'vattakayal',
       'puka', 'puku', 'pooku', 'pukaa', 'pooka',
+      'erripuka', 'erri puka', 'erripooka', 'erri pooka',
+      'moddagudu', 'modda gudu',
       'lanja', 'lanjaa', 'lanza', 'lanjodaka', 'lanjodka', 'lanjakodaka', 'lanje',
       'modda', 'madda', 'moddae', 'maddodda',
+      'mogga', 'moga', 'moggah', 'mogaa',
+      'bokka', 'boka', 'bokkah', 'bokaa',
       'sulli', 'suli',
       'dengai', 'dengey', 'denga', 'dengu', 'dengutha',
       'naaku',
-      'fuck', 'bitch', 'ass', 'bastard', 'dick', 'cunt', 'whore', 'shit'
+      'fuck', 'bitch', 'ass', 'bastard', 'dick', 'cunt', 'whore', 'shit',
+      'penis', 'peneis', 'penus', 'pnis', 'peniss', 'peniz',
+      'ovary', 'ovaries', 'ovaryy',
+      'vagina', 'vaginaa', 'vagna', 'vgina',
+      'boobs', 'boob', 'bobs', 'boobies',
+      
+      // Comprehensive Pornstars list
+      'mia khalifa', 'miakhalifa', 'sunny leone', 'sunnyleone', 'lana rhoades', 'lanarhoades',
+      'riley reid', 'rileyreid', 'angela white', 'angelawhite', 'abella danger', 'abelladanger',
+      'dani daniels', 'danidaniels', 'brandi love', 'brandilove', 'eva elfie', 'evaelfie',
+      'lisa ann', 'lisaann', 'mia melano', 'miamelano', 'johnny sins', 'johnnysins',
+      'jordi el nino', 'jordielnino', 'sasha grey', 'sashagrey', 'lexi lore', 'lexilore',
+      'sweetie fox', 'sweetiefox', 'kenzie reeves', 'kenziereeves', 'tori black', 'toriblack',
+      'piper perri', 'piperperri', 'esperanza gomez', 'esperanzagomez', 'hentai', 'pornstar', 'porn',
+      'august ames', 'asa akira', 'tasha reign', 'phoenix marie', 'charity crawford', 'alexis texas', 
+      'briana banks', 'jenna jameson', 'jesse jane', 'belladonna', 'stormy daniels', 'katrina jade', 
+      'gina valentina', 'lana lutz', 'emily willis', 'adriana chechik', 'kira noir', 'lena paul', 
+      'nicole aniston', 'sophie dee', 'christy mack', 'janice griffith', 'megan rain', 'anjelica ebbi',
+      
+      // Comprehensive Porn sites and channels list
+      'pornhub', 'xvideos', 'xnxx', 'xhamster', 'spankbang', 'redtube', 'youporn', 'onlyfans', 'chaturbate', 
+      'fansly', 'brazzers', 'naughtyamerica', 'realitykings', 'bangbros', 'evilangel', 'digitalplayground', 
+      'twistys', 'rkprime', 'faphouse', 'tube8', 'txxx', 'hentaihaven', 'porntrex', 'thumbzilla', 'eporner', 
+      'hqporner', 'tubegalore', 'drrtube', 'heavy-r', 'motherless', 'xhamsterlive', 'commatozzee', 'cummatozzee', 'commatozze', 'cummatozze',
+      
+      // Comprehensive Adult styles, genres, and category keywords
+      'milf', 'anal', 'blowjob', 'creampie', 'cumshot', 'deepthroat', 'gangbang', 'hardcore', 'softcore', 
+      'threesome', 'orgy', 'bondage', 'bdsm', 'cuckold', 'squirt', 'facials', 'voyeur', 'lesbian', 'gay', 
+      'ebony', 'interracial', 'babe', 'shemale', 'masturbation', 'masturbate', 'groupsex', 'transsexual',
+      'bukkake', 'anilingus', 'cunnilingus', 'fellatio', 'fisting', 'ladyboy'
     ];
     
-    // Collapsed forbidden root substrings (to match collapsed repeating letters, e.g. "aaathu" -> "athu")
-    // Note: We omit very short common English words like "as" or common innocent words like "naku" or "atu"
-    // to avoid false positives.
+    // Collapsed forbidden root substrings
     const collapsedBadWords = [
       'athu', 'gudu', 'guda', 'gudh', 'vatakayalu', 'vatalu', 'vatakaya', 'vata',
-      'puka', 'puku', 'poku',
+      'puka', 'puku', 'poku', 'erripuka', 'moddagudu', 'cumatoze', 'comatoze',
       'lanja', 'lanza', 'lanjodaka', 'lanjodka', 'lanjakodaka', 'lanje',
-      'moda', 'mada',
+      'moda', 'mada', 'moga', 'boka',
       'suli',
       'dengai', 'dengey', 'denga', 'dengu', 'dengutha',
-      'fuk', 'bich', 'cunt', 'whor', 'shit'
+      'fuk', 'bich', 'cunt', 'whor', 'shit',
+      'penis', 'pnis', 'ovary', 'ovari', 'vagina', 'vagna', 'bob', 'boob',
+      'pornhub', 'xvideo', 'xnxx', 'xhamster', 'spankbang', 'redtube', 'youporn', 'onlyfan', 'chaturbate', 'fansly', 'brazzer', 'naughtyamerica', 'realityking', 'bangbro', 'evilangel', 'digitalplayground', 'twisty', 'rkprime', 'faphouse', 'tube8', 'txxx', 'hentaihaven', 'porntrex', 'thumbzilla', 'eporner', 'hqporner', 'tubegalore', 'drrtube', 'heavy-r', 'motherless', 'xhamsterlive',
+      'milf', 'anal', 'blowjob', 'creampie', 'cumshot', 'deepthroat', 'gangbang', 'hardcore', 'softcore', 'threesome', 'orgy', 'bondage', 'bdsm', 'cuckold', 'squirt', 'facial', 'voyeur', 'lesbian', 'gay', 'eboni', 'interracial', 'babe', 'shemale', 'masturbation', 'masturbate', 'groupsex', 'transsexual', 'bukkake', 'anilingus', 'cunnilingus', 'fellatio', 'fisting', 'ladyboy'
     ];
 
     const checkString = (str) => {
-      // 1. Direct match check on standard text
+      // 0. Standalone check for "mg" (shortcut for moddagudu) to avoid false-positive matches on words like programmer or management
+      if (/\bmg\b/i.test(str) || /\bmg\b/i.test(str.replace(/[^a-z0-9\s]/g, ' ')) || str.replace(/[^a-z0-9]/g, '') === 'mg') {
+        return 'mg';
+      }
+
+      // 1. Direct match check on standard text (with word boundaries for short words like 'ass')
       for (const w of badWords) {
-        if (str.includes(w)) return true;
+        if (w.length <= 3) {
+          const boundaryRegex = new RegExp(`\\b${w}\\b`, 'i');
+          if (boundaryRegex.test(str)) return w;
+        } else {
+          if (str.includes(w)) return w;
+        }
       }
       
       // 2. Strip all non-alphabetic/numeric characters (spaces, tabs, punctuation, *, _, -, etc.) and match
       const alphaOnly = str.replace(/[^a-z0-9]/g, '');
       for (const w of badWords) {
-        if (alphaOnly.includes(w)) return true;
+        if (w.length <= 3) {
+          const boundaryRegex = new RegExp(`\\b${w}\\b`, 'i');
+          if (boundaryRegex.test(alphaOnly)) return w;
+        } else {
+          if (alphaOnly.includes(w)) return w;
+        }
       }
       
       // 3. Collapse consecutive duplicate letters and check
       const collapsed = alphaOnly.replace(/(.)\1+/g, '$1');
       for (const w of collapsedBadWords) {
-        if (collapsed.includes(w)) return true;
+        if (w.length <= 3) {
+          const boundaryRegex = new RegExp(`\\b${w}\\b`, 'i');
+          if (boundaryRegex.test(collapsed)) return w;
+        } else {
+          if (collapsed.includes(w)) return w;
+        }
       }
       
-      return false;
+      return null;
     };
 
-    if (checkString(clean) || checkString(variant1)) {
-      return true;
-    }
-    
-    return false;
+    const resVal = checkString(clean) || checkString(variant1);
+    return resVal;
   };
 
 
@@ -1586,16 +1763,13 @@ function App() {
     const nameTrimmed = feedbackName.trim();
     const emailTrimmed = feedbackEmail.trim();
     const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+    
     if (rating === 0) {
       triggerFeedbackError("Selecting a star rating is compulsory. Please select a rating (1-5 stars).");
       return;
     }
     if (!nameTrimmed) {
       triggerFeedbackError("Please enter your name.");
-      return;
-    }
-    if (checkRestrictedWords(nameTrimmed)) {
-      triggerFeedbackError("Your name contains restricted words. Please rectify it and submit again.");
       return;
     }
     if (!emailTrimmed) {
@@ -1610,17 +1784,65 @@ function App() {
       triggerFeedbackError("Please enter some feedback message.");
       return;
     }
-    if (checkRestrictedWords(feedbackText)) {
-      triggerFeedbackError("You are using restricted words in your message. Please rectify them and send again.");
-      return;
+
+    // Check for restricted words/pornstars
+    const restrictedInName = checkRestrictedWords(nameTrimmed);
+    const restrictedInEmail = checkRestrictedWords(emailTrimmed);
+    const restrictedInText = checkRestrictedWords(feedbackText);
+
+    let isRestricted = false;
+    let restrictedWord = null;
+    let restrictedField = null;
+
+    if (restrictedInName) {
+      isRestricted = true;
+      restrictedWord = restrictedInName;
+      restrictedField = 'name';
+    } else if (restrictedInEmail) {
+      isRestricted = true;
+      restrictedWord = restrictedInEmail;
+      restrictedField = 'email';
+    } else if (restrictedInText) {
+      isRestricted = true;
+      restrictedWord = restrictedInText;
+      restrictedField = 'message';
     }
 
+    if (isRestricted) {
+      // Show user warning statement telling them to rectify
+      triggerFeedbackError(`Restricted word/name detected: '${restrictedWord}' in ${restrictedField}. Please rectify it and submit again.`);
+
+      // Log restricted attempt in database
+      const payload = {
+        name: nameTrimmed,
+        email: emailTrimmed,
+        rating,
+        category: feedbackCategory,
+        text: feedbackText.trim(),
+        restricted_word: restrictedWord,
+        restricted_field: restrictedField
+      };
+
+      try {
+        await safeFetchJson('/api/feedback/submit-direct', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify(payload)
+        });
+        console.log("💾 Restricted attempt logged in database.");
+      } catch (err) {
+        console.warn("Restricted attempt database logging failed:", err);
+      }
+      return; // Do NOT advance to success screen
+    }
+
+    // Normal clean flow
     setFeedbackError('');
     setIsFeedbackSubmitted(true); // Optimistically show success screen instantly
     
     const payload = {
       name: nameTrimmed,
-      email: feedbackEmail.trim(),
+      email: emailTrimmed,
       rating,
       category: feedbackCategory,
       text: feedbackText.trim()
@@ -2012,7 +2234,7 @@ function App() {
     setTimeout(() => {
       window.location.hash = mode;
       setAppMode(mode);
-      const isStandalone = ['SORT_SEARCH_VIS', 'GENERAL_DSA_VIS', 'GRAPH_VIS', 'DP_GREEDY_VIS'].includes(mode);
+      const isStandalone = ['SORT_SEARCH_VIS', 'GENERAL_DSA_VIS', 'GRAPH_VIS', 'DP_GREEDY_VIS', 'JAVA_OOP_VIS', 'DSA_NOTES_VIS'].includes(mode);
       setSetupComplete(isStandalone);
       setIsPageLoading(false);
     }, 200);
@@ -2030,10 +2252,10 @@ function App() {
   useEffect(() => {
     const handleHashChange = () => {
       const hash = window.location.hash.replace('#', '').replace(/^\//, '').trim();
-      const validModes = ['MAIN_VIS', 'CODE_VAL_VIS', 'LINE_BY_LINE_VIS', 'SORT_SEARCH_VIS', 'GENERAL_DSA_VIS', 'GRAPH_VIS', 'DP_GREEDY_VIS'];
+      const validModes = ['MAIN_VIS', 'CODE_VAL_VIS', 'LINE_BY_LINE_VIS', 'SORT_SEARCH_VIS', 'GENERAL_DSA_VIS', 'GRAPH_VIS', 'DP_GREEDY_VIS', 'JAVA_OOP_VIS', 'DSA_NOTES_VIS'];
       if (validModes.includes(hash)) {
         setAppMode(hash);
-        const isStandalone = ['SORT_SEARCH_VIS', 'GENERAL_DSA_VIS', 'GRAPH_VIS', 'DP_GREEDY_VIS'].includes(hash);
+        const isStandalone = ['SORT_SEARCH_VIS', 'GENERAL_DSA_VIS', 'GRAPH_VIS', 'DP_GREEDY_VIS', 'JAVA_OOP_VIS', 'DSA_NOTES_VIS'].includes(hash);
         if (isStandalone) setSetupComplete(true);
       } else {
         setAppMode(null);
@@ -2725,19 +2947,124 @@ function App() {
   // ── Layout & SVG ──────────────────────────────────────────────────────
   const NODE_R = 28;
 
+  const getNodeDimensions = (node) => {
+    if (!node) return { w: 56, h: 56 };
+    const isBT = node.keys?.length > 0 && !node.range && node.value === undefined;
+    const isSeg = !!node.range;
+    if (isBT) {
+      const kw = Math.max(70, node.keys.length * 42 + 20);
+      return { w: kw, h: 38 };
+    }
+    if (isSeg) {
+      const showBits = treeType === 'FENWICK_TREE' && fenwickBitMode && node.bitRep;
+      return { w: 80, h: showBits ? 66 : 54 };
+    }
+    return { w: 56, h: 56 };
+  };
+
+  const getChildNodes = (node) => {
+    if (!node) return [];
+    if (treeType === 'BFS_TREE' || treeType === 'DFS_TREE' || treeType === 'B_TREE' || treeType === 'B_PLUS_TREE') {
+      return (node.children || []).filter(Boolean);
+    }
+    if (node.children && node.children.length > 0) {
+      return node.children.filter(Boolean);
+    }
+    return [node.left, node.right].filter(Boolean);
+  };
+
   const computeLayout = (rootNode) => {
     if (!rootNode) return;
-    const W = containerRef.current ? Math.max(containerRef.current.clientWidth - 40, 700) : 900;
-    if (treeType === 'BFS_TREE' || treeType === 'DFS_TREE' || (rootNode.children && rootNode.children.length > 0)) {
-      const layout = (n, d, l, r) => { if (!n) return; n.x=(l+r)/2; n.y=d*95+60; if(n.children?.length>0){const sp=r-l,st=sp/n.children.length;n.children.forEach((c,i)=>layout(c,d+1,l+i*st,l+(i+1)*st));} };
-      layout(rootNode, 0, 20, W - 20); return;
+    const containerW = containerRef.current ? Math.max(containerRef.current.clientWidth - 40, 700) : 900;
+    
+    // 1. HEAP TREE LAYOUT
+    if (treeType === 'MIN_HEAP' || treeType === 'MAX_HEAP') {
+      const queue = [rootNode];
+      const nodes = [];
+      while (queue.length > 0) {
+        const curr = queue.shift();
+        nodes.push(curr);
+        if (curr.left) queue.push(curr.left);
+        if (curr.right) queue.push(curr.right);
+      }
+      const n = nodes.length;
+      const levels = Math.floor(Math.log2(n)) + 1;
+      const maxNodesAtBottom = Math.pow(2, levels - 1);
+      const minStep = 68;
+      const reqW = Math.max(containerW, maxNodesAtBottom * minStep + 80);
+      
+      const paddingY = 60;
+      const paddingX = 40;
+      const usableWidth = reqW - 2 * paddingX;
+      
+      for (let i = 0; i < n; i++) {
+        const level = Math.floor(Math.log2(i + 1));
+        const levelNodes = Math.pow(2, level);
+        const levelIndex = i - (levelNodes - 1);
+        
+        nodes[i].y = paddingY + level * 88;
+        nodes[i].x = paddingX + (usableWidth / levelNodes) * (levelIndex + 0.5);
+      }
+      return;
     }
+
+    // 2. B-TREE, B+ TREE, BFS, DFS SPANNING TREES (Dynamic Partition Layout to preserve layout style)
+    if (treeType === 'B_TREE' || treeType === 'B_PLUS_TREE' || treeType === 'BFS_TREE' || treeType === 'DFS_TREE') {
+      const getTreeDepthAndWidth = (node) => {
+        let maxDepth = 0;
+        const levelCounts = {};
+        const traverse = (n, d) => {
+          if (!n) return;
+          maxDepth = Math.max(maxDepth, d);
+          levelCounts[d] = (levelCounts[d] || 0) + 1;
+          const kids = getChildNodes(n);
+          kids.forEach(c => traverse(c, d + 1));
+        };
+        traverse(node, 0);
+        const maxW = Math.max(...Object.values(levelCounts), 1);
+        return { depth: maxDepth, maxW };
+      };
+      
+      const { maxW } = getTreeDepthAndWidth(rootNode);
+      const isBT = treeType === 'B_TREE' || treeType === 'B_PLUS_TREE';
+      const nodeStep = isBT ? 140 : 80;
+      const reqW = Math.max(containerW, maxW * nodeStep + 80);
+      
+      const layout = (n, d, l, r) => {
+        if (!n) return;
+        n.x = (l + r) / 2;
+        n.y = d * 95 + 60;
+        const kids = getChildNodes(n);
+        if (kids.length > 0) {
+          const sp = r - l;
+          const st = sp / kids.length;
+          kids.forEach((c, i) => layout(c, d + 1, l + i * st, l + (i + 1) * st));
+        }
+      };
+      layout(rootNode, 0, 40, reqW - 40);
+      return;
+    }
+
+    // 3. BINARY SEARCH, AVL, RED-BLACK, SEGMENT, FENWICK TREES (Dynamic In-order based spacious layout)
     let ctr = 0;
-    const idx = n => { if (!n) return; idx(n.left); n._xi = ctr++; idx(n.right); };
+    const idx = n => {
+      if (!n) return;
+      idx(n.left);
+      n._xi = ctr++;
+      idx(n.right);
+    };
     idx(rootNode);
-    const sep = Math.max(58, Math.min(80, (W - 60) / Math.max(ctr, 1)));
-    const sx  = (W - (ctr - 1) * sep) / 2;
-    const pos = (n, d) => { if (!n) return; n.x=sx+(n._xi||0)*sep; n.y=d*88+60; pos(n.left,d+1); pos(n.right,d+1); };
+
+    const sep = Math.max(58, Math.min(80, (containerW - 60) / Math.max(ctr, 1)));
+    const sx = Math.max(45, (containerW - (ctr - 1) * sep) / 2);
+
+    const pos = (n, d) => {
+      if (!n) return;
+      n.x = sx + (n._xi || 0) * sep;
+      n.y = d * 88 + 60;
+      pos(n.left, d + 1);
+      pos(n.right, d + 1);
+    };
     pos(rootNode, 0);
   };
 
@@ -2789,10 +3116,7 @@ function App() {
         
         keysMap.set(n, key);
         
-        const kids = (treeType === 'BFS_TREE' || treeType === 'DFS_TREE') 
-          ? (n.children || []) 
-          : (n.children?.length > 0 ? n.children : [n.left, n.right].filter(Boolean));
-          
+        const kids = getChildNodes(n);
         kids.forEach(traverse);
       };
       
@@ -2836,11 +3160,11 @@ function App() {
     const collect = node => {
       if (!node) return;
       const currentKey = stableKeysMap.get(node);
-      const kids = (treeType === 'BFS_TREE' || treeType === 'DFS_TREE') ? (node.children || []) : (node.children?.length > 0 ? node.children : [node.left, node.right].filter(Boolean));
+      const kids = getChildNodes(node);
       kids.forEach(child => { 
         const childKey = stableKeysMap.get(child);
         const edgeKey = currentKey < childKey ? `e-${currentKey}-${childKey}` : `e-${childKey}-${currentKey}`;
-        allEdges.push({ id: edgeKey, x1: node.x, y1: node.y, x2: child.x, y2: child.y }); 
+        allEdges.push({ id: edgeKey, x1: node.x, y1: node.y, x2: child.x, y2: child.y, parentNode: node, childNode: child }); 
         collect(child); 
       });
       const isHL = highlightedNode === node.value || (node.keys?.includes(highlightedNode)) || (highlightedNode && highlightedNode === node.range) || (highlightedNode && highlightedNode === node.index);
@@ -2848,11 +3172,13 @@ function App() {
     };
     collect(rootNode);
 
-    const xs = allNodes.map(n => n.node.x).filter(x => !isNaN(x));
-    const ys = allNodes.map(n => n.node.y).filter(y => !isNaN(y));
-    if (!xs.length) return null;
-    const svgW = Math.max(700, Math.max(...xs) + 80);
-    const svgH = Math.max(280, Math.max(...ys) + 80);
+    if (!allNodes.length) return null;
+    const maxRight = Math.max(...allNodes.map(n => n.node.x + getNodeDimensions(n.node).w / 2));
+    const maxBottom = Math.max(...allNodes.map(n => n.node.y + getNodeDimensions(n.node).h / 2));
+    const containerW = containerRef.current ? Math.max(containerRef.current.clientWidth - 40, 700) : 900;
+    
+    const svgW = Math.max(containerW, maxRight + 50);
+    const svgH = Math.max(300, maxBottom + 50);
 
     return (
       <svg width={svgW} height={svgH} style={{ display: 'block', overflow: 'visible' }}>
@@ -2877,25 +3203,46 @@ function App() {
           `}</style>
         </defs>
         <g>{allEdges.map(e => {
-          const y1_val = e.y1 + (e.y2 > e.y1 ? NODE_R : -NODE_R);
-          const y2_val = e.y2 + (e.y2 > e.y1 ? -NODE_R : NODE_R);
+          const parentNode = e.parentNode;
+          const childNode = e.childNode;
+          
+          let x1_val = e.x1, y1_val = e.y1;
+          let x2_val = e.x2, y2_val = e.y2;
+          
+          if (parentNode && childNode) {
+            const pDim = getNodeDimensions(parentNode);
+            const cDim = getNodeDimensions(childNode);
+            const dx = e.x2 - e.x1;
+            const dy = e.y2 - e.y1;
+            const dist = Math.sqrt(dx * dx + dy * dy) || 1;
+            
+            if (parentNode.keys?.length > 0 || parentNode.range) {
+              y1_val = e.y1 + pDim.h / 2;
+              x1_val = e.x1;
+            } else {
+              x1_val = e.x1 + (dx / dist) * NODE_R;
+              y1_val = e.y1 + (dy / dist) * NODE_R;
+            }
+            
+            if (childNode.keys?.length > 0 || childNode.range) {
+              y2_val = e.y2 - cDim.h / 2;
+              x2_val = e.x2;
+            } else {
+              x2_val = e.x2 - (dx / dist) * NODE_R;
+              y2_val = e.y2 - (dy / dist) * NODE_R;
+            }
+          }
+
           return (
             <line 
               key={e.id} 
-              x1={e.x1} 
+              x1={x1_val} 
               y1={y1_val} 
-              x2={e.x2} 
+              x2={x2_val} 
               y2={y2_val} 
               stroke="var(--edge-color, rgba(99,140,250,0.45))" 
               strokeWidth="2" 
               strokeLinecap="round" 
-              style={{ 
-                x1: `${e.x1}px`,
-                y1: `${y1_val}px`,
-                x2: `${e.x2}px`,
-                y2: `${y2_val}px`,
-                transition: 'all 0.5s cubic-bezier(0.4, 0, 0.2, 1)' 
-              }}
             />
           );
         })}</g>
@@ -2934,22 +3281,22 @@ function App() {
             const glow  = isHL ? 'rgba(245,158,11,0.55)' : 'rgba(99,102,241,0.4)';
 
             if (isBT) {
-              const kw = Math.max(56, node.keys.length * 38);
-              return <g key={key} transform={`translate(${node.x}, ${node.y})`} style={{ transform: `translate(${node.x}px, ${node.y}px)`, transition: 'transform 0.5s cubic-bezier(0.4, 0, 0.2, 1)' }}>
-                <rect x={-kw/2} y={-18} width={kw} height={36} rx={18} fill={fill} stroke={isHL?'rgba(245,158,11,0.8)':'rgba(255,255,255,0.18)'} strokeWidth="1.5" style={{filter:`drop-shadow(0 3px 12px ${glow})`}}/>
-                {node.keys.slice(0,-1).map((_,ki)=><line key={ki} x1={-kw/2+(ki+1)*(kw/node.keys.length)} y1={-12} x2={-kw/2+(ki+1)*(kw/node.keys.length)} y2={12} stroke="rgba(255,255,255,0.25)" strokeWidth="1"/>)}
+              const kw = Math.max(70, node.keys.length * 42 + 20);
+              return <g key={key} transform={`translate(${node.x}, ${node.y})`}>
+                <rect x={-kw/2} y={-19} width={kw} height={38} rx={12} fill={fill} stroke={isHL?'rgba(245,158,11,0.9)':'rgba(255,255,255,0.2)'} strokeWidth="2" style={{filter:`drop-shadow(0 3px 12px ${glow})`}}/>
+                {node.keys.slice(0,-1).map((_,ki)=><line key={ki} x1={-kw/2+(ki+1)*(kw/node.keys.length)} y1={-14} x2={-kw/2+(ki+1)*(kw/node.keys.length)} y2={14} stroke="rgba(255,255,255,0.3)" strokeWidth="1.5"/>)}
                 <text x={0} y={1} textAnchor="middle" dominantBaseline="central" fontSize="15" fontWeight="900" fill="#ffffff" fontFamily="sans-serif" style={{ filter: 'drop-shadow(0 2px 4px rgba(0,0,0,0.9))' }}>{node.keys.join(' | ')}</text>
               </g>;
             }
             if (isSeg) {
               const isFenwick = treeType === 'FENWICK_TREE';
               const showBits = isFenwick && fenwickBitMode && node.bitRep;
-              const rh = showBits ? 64 : 52;
-              const ry = showBits ? -32 : -26;
-              return <g key={key} transform={`translate(${node.x}, ${node.y})`} style={{ transform: `translate(${node.x}px, ${node.y}px)`, transition: 'transform 0.5s cubic-bezier(0.4, 0, 0.2, 1)' }}>
-                <rect x={-36} y={ry} width={72} height={rh} rx={10} fill={fill} stroke={isHL?'rgba(245,158,11,0.8)':'rgba(255,255,255,0.18)'} strokeWidth="1.5" style={{filter:`drop-shadow(0 3px 12px ${glow})`}}/>
-                <text x={0} y={showBits ? -14 : -8} textAnchor="middle" dominantBaseline="central" fontSize="16" fontWeight="900" fill="#ffffff" fontFamily="sans-serif" style={{ filter: 'drop-shadow(0 2px 4px rgba(0,0,0,0.9))' }}>{node.sum}</text>
-                <text x={0} y={showBits ? 4 : 12} textAnchor="middle" dominantBaseline="central" fontSize="9" fill="rgba(255,255,255,0.85)" fontFamily="monospace" fontWeight="700">{node.range}</text>
+              const rh = showBits ? 66 : 54;
+              const ry = showBits ? -33 : -27;
+              return <g key={key} transform={`translate(${node.x}, ${node.y})`}>
+                <rect x={-40} y={ry} width={80} height={rh} rx={12} fill={fill} stroke={isHL?'rgba(245,158,11,0.9)':'rgba(255,255,255,0.2)'} strokeWidth="2" style={{filter:`drop-shadow(0 3px 12px ${glow})`}}/>
+                <text x={0} y={showBits ? -16 : -8} textAnchor="middle" dominantBaseline="central" fontSize="16" fontWeight="900" fill="#ffffff" fontFamily="sans-serif" style={{ filter: 'drop-shadow(0 2px 4px rgba(0,0,0,0.9))' }}>{node.sum}</text>
+                <text x={0} y={showBits ? 2 : 12} textAnchor="middle" dominantBaseline="central" fontSize="9" fill="rgba(255,255,255,0.85)" fontFamily="monospace" fontWeight="700">{node.range}</text>
                 {showBits && (
                   <text x={0} y={20} textAnchor="middle" dominantBaseline="central" fontSize="11" fontWeight="bold" fill="var(--accent-primary)" fontFamily="monospace">
                     ({node.bitRep})₂
@@ -2965,8 +3312,8 @@ function App() {
             const isRightRot = isTargetRotated && frame.rotation.includes("Right Rotate");
             const isLeftRot = isTargetRotated && frame.rotation.includes("Left Rotate");
 
-            return <g key={key} transform={`translate(${node.x}, ${node.y})`} style={{ transform: `translate(${node.x}px, ${node.y}px)`, transition: 'transform 0.5s cubic-bezier(0.4, 0, 0.2, 1)' }}>
-              <circle cx={0} cy={0} r={NODE_R} fill={fill} stroke={isHL?'rgba(245,158,11,0.85)':'rgba(255,255,255,0.18)'} strokeWidth="1.5" style={{filter:`drop-shadow(0 3px 14px ${glow})`,transform:isHL?'scale(1.12)':'scale(1)',transformOrigin:'center',transition:'all 0.3s ease'}}/>
+            return <g key={key} transform={`translate(${node.x}, ${node.y})`}>
+              <circle cx={0} cy={0} r={isHL ? NODE_R * 1.12 : NODE_R} fill={fill} stroke={isHL?'rgba(245,158,11,0.85)':'rgba(255,255,255,0.18)'} strokeWidth="1.5" style={{filter:`drop-shadow(0 3px 14px ${glow})`, transition: 'r 0.3s ease'}}/>
               <text x={0} y={1} textAnchor="middle" dominantBaseline="central" fontSize={String(node.value??'').length > 3 ? '12' : String(node.value??'').length > 2 ? '14' : '17'} fontWeight="900" fill="#ffffff" fontFamily="sans-serif" style={{ pointerEvents: 'none', filter: 'drop-shadow(0 2px 4px rgba(0,0,0,0.95))' }}>{String(node.value??'')}</text>
               {treeType==='AVL'&&<text x={0} y={-NODE_R-7} textAnchor="middle" fontSize="10" fill="#a78bfa" fontFamily="monospace">BF:{getBalance(node)}</text>}
               {treeType==='RB_TREE'&&node._color&&<circle cx={NODE_R-7} cy={-NODE_R+7} r={5} fill={node._color==='RED'?'#ef4444':'#1f2937'} stroke="white" strokeWidth="1"/>}
@@ -3057,6 +3404,13 @@ function App() {
               <option value={14}>Medium (14px)</option>
               <option value={16}>Large (16px)</option>
               <option value={18}>Extra Large (18px)</option>
+              <option value={20}>Double XL (20px)</option>
+              <option value={22}>Huge (22px)</option>
+              <option value={24}>Colossal (24px)</option>
+              <option value={28}>Giant (28px)</option>
+              <option value={32}>Extreme (32px)</option>
+              <option value={36}>Mega (36px)</option>
+              <option value={40}>Hyper (40px)</option>
             </select>
           </div>
 
@@ -3323,7 +3677,9 @@ function App() {
                 { id: 'MAIN_VIS', icon: '🚀', title: 'Tree Visualizer Studio', desc: 'Build BST / AVL / Heaps / B-Tree / Segment trees step-by-step with live code generation.' },
                 { id: 'GRAPH_VIS', icon: '🕸️', title: 'Graph Visualizer Studio', desc: 'Construct customized weighted graphs. Animate BFS, DFS, Dijkstra, and Greedy best-first traversals.' },
                 { id: 'DP_GREEDY_VIS', icon: '🧠', title: 'DP & Greedy Visualizer', desc: 'Visualize LCS, LIS, Knapsack, and Coin Change DP vs. Greedy side-by-side.' },
-                { id: 'CODE_VAL_VIS', icon: '💻', title: 'Code Validator & Runner', desc: 'Write or paste code in 4 languages. Enhanced syntax validation, error detection, and native cloud execution.' },
+                { id: 'JAVA_OOP_VIS', icon: '✨', title: 'Patterns Visualizer Studio', desc: 'Animate and compile 10 different loop patterns (Pyramids, Diamond, Pascal, Floyd, Butterfly) in 5 languages.' },
+                { id: 'DSA_NOTES_VIS', icon: '📚', title: 'DSA Study & Solved Sums', desc: 'Interactive step-by-step code trace, variables inspector and visualizations for 10 classic DSA problems.' },
+                { id: 'CODE_VAL_VIS', icon: '💻', title: 'Code Validator & Runner', desc: 'Write or paste code in 5 languages. Enhanced syntax validation, error detection, and native cloud execution.' },
                 { id: 'LINE_BY_LINE_VIS', icon: '🐞', title: 'Line-by-Line Debugger', desc: 'PythonTutor-style execution tracing. Step through code, track variables, frames, and output.' }
               ].map(card => (
                 <div key={card.id} className="option-card" onClick={() => {
@@ -3385,7 +3741,9 @@ function App() {
                 { id: 'DP_LCS', mode: 'DP_GREEDY_VIS', title: 'Longest Common Subsequence (LCS)', icon: '🧬', desc: 'DP & Greedy Visualizer', tab: 'LCS' },
                 { id: 'DP_LIS', mode: 'DP_GREEDY_VIS', title: 'Longest Increasing Subsequence (LIS)', icon: '📈', desc: 'DP & Greedy Visualizer', tab: 'LIS' },
                 { id: 'DP_KNAPSACK', mode: 'DP_GREEDY_VIS', title: 'Knapsack (0/1 & Fractional)', icon: '🎒', desc: 'DP & Greedy Visualizer', tab: 'Knapsack' },
-                { id: 'DP_COIN_CHANGE', mode: 'DP_GREEDY_VIS', title: 'Coin Change (Greedy vs DP)', icon: '🪙', desc: 'DP & Greedy Visualizer', tab: 'CoinChange' }
+                { id: 'DP_COIN_CHANGE', mode: 'DP_GREEDY_VIS', title: 'Coin Change (Greedy vs DP)', icon: '🪙', desc: 'DP & Greedy Visualizer', tab: 'CoinChange' },
+                { id: 'PATTERNS_LOOP', mode: 'JAVA_OOP_VIS', title: 'Patterns & Loop Studio (Pyramid, Pascal, Floyd)', icon: '✨', desc: 'Patterns Visualizer Studio', tab: 'Patterns' },
+                { id: 'DSA_NOTES_VIS', mode: 'DSA_NOTES_VIS', title: 'DSA Study & Solved Sums (Two Sum, List Reverse, Valid Parentheses, DP)', icon: '📚', desc: 'DSA Notes & Solved Problems Studio' }
               ].filter(c => c.title.toLowerCase().includes(homeSearchQuery.toLowerCase()) || c.desc.toLowerCase().includes(homeSearchQuery.toLowerCase())).map(card => (
                 <div key={card.id} className="option-card" onClick={() => setPendingModule(card)} onMouseEnter={e => gsap.to(e.currentTarget, { scale: 1.05, duration: 0.2 })} onMouseLeave={e => gsap.to(e.currentTarget, { scale: 1, duration: 0.2 })}>
                   <div className="option-icon">{card.icon}</div>
@@ -3468,6 +3826,35 @@ function App() {
           onShowUpcomingFeatures={() => setIsUpcomingOpen(true)}
         />
       </div>
+
+      {/* Patterns Visualizer Studio */}
+      <div style={{ display: appMode === 'JAVA_OOP_VIS' ? 'block' : 'none' }}>
+        <PatternsVisualizer 
+          onBack={goBack} 
+          openSettings={() => setIsSettingsOpen(true)} 
+          onCopyCode={handleCopyTrigger}
+          onCodeChange={(code, lang) => {
+            setActiveCodeForChat(code);
+            setActiveLangForChat(lang);
+          }}
+          fontSize={editorFontSize}
+          wordWrap={editorWordWrap}
+          onShowUpcomingFeatures={() => setIsUpcomingOpen(true)}
+        />
+      </div>
+
+      {/* DSA Notes & Solved Problems Studio */}
+      <div style={{ display: appMode === 'DSA_NOTES_VIS' ? 'block' : 'none' }}>
+        <DSANotesVisualizer 
+          onBack={goBack} 
+          openSettings={() => setIsSettingsOpen(true)} 
+          fontSize={editorFontSize}
+          wordWrap={editorWordWrap}
+          onShowUpcomingFeatures={() => setIsUpcomingOpen(true)}
+        />
+      </div>
+
+
 
       {/* Pending Module (Language Setup via Search) */}
       {pendingModule && (
@@ -4106,7 +4493,7 @@ function App() {
                         <div style={{ flex: 1, overflowY: 'auto' }}>
                           {frame.logs.map((log, i) => (
                             <div key={i} className={`execution-log-item ${log.type}`} style={{ padding: '3px 0', fontSize: '0.85rem' }}>
-                              {log.text}
+                              {highlightLogText(log.text)}
                             </div>
                           ))}
                           <div ref={logEndRef} />
@@ -4183,7 +4570,7 @@ function App() {
                       <div style={{ flex: 1, overflowY: 'auto' }}>
                         {frame.logs.map((log, i) => (
                           <div key={i} className={`execution-log-item ${log.type}`} style={{ padding: '3px 0', fontSize: '0.85rem' }}>
-                            {log.text}
+                            {highlightLogText(log.text)}
                           </div>
                         ))}
                       </div>
@@ -4227,19 +4614,32 @@ function App() {
                         </div>
                       </div>
                       
-                      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', gap: '8px' }}>
-                        <select className="styled-select" style={{ padding: '2px 8px', fontSize: '0.8rem', flex: 1, paddingRight: '22px', backgroundPosition: 'right 6px center', backgroundSize: '10px', border: '1px solid var(--glass-border)', borderRadius: '6px' }} value={codeLang} onChange={e => setCodeLang(e.target.value)}>
-                          <option value="C++">C++</option>
-                          <option value="Java">Java</option>
-                          <option value="Python">Python</option>
-                          <option value="JS">JavaScript</option>
-                        </select>
-                        
-                        <label style={{ display: 'flex', alignItems: 'center', gap: '4px', fontSize: '0.78rem', color: 'var(--text-secondary)', cursor: 'pointer', whiteSpace: 'nowrap' }}>
-                          <input type="checkbox" checked={showDeletionsInCode} onChange={e => setShowDeletionsInCode(e.target.checked)} style={{ accentColor: 'var(--accent-primary)' }} />
-                          <span>Include Deletes</span>
-                        </label>
-                      </div>
+                  {/* Row 1: Language pills */}
+                  <div style={{ display: 'flex', alignItems: 'center', gap: '5px', flexWrap: 'wrap', paddingBottom: '6px', borderBottom: '1px solid rgba(255,255,255,0.05)' }}>
+                    <span style={{ fontSize: '0.78rem', fontWeight: 700, color: 'var(--text-secondary)', whiteSpace: 'nowrap' }}>🌐 Lang:</span>
+                    {['C++','Java','Python','JS'].map(lang => (
+                      <button key={lang} onClick={() => setCodeLang(lang)}
+                        style={{
+                          padding: '2px 9px',
+                          fontSize: '0.74rem',
+                          borderRadius: '5px',
+                          border: codeLang === lang ? '1.5px solid var(--accent-primary)' : '1px solid var(--glass-border)',
+                          background: codeLang === lang ? 'var(--accent-primary)' : 'transparent',
+                          color: codeLang === lang ? '#fff' : 'var(--text-secondary)',
+                          cursor: 'pointer',
+                          fontWeight: codeLang === lang ? 700 : 400,
+                          transition: 'all 0.15s'
+                        }}
+                      >{lang === 'JS' ? 'JavaScript' : lang}</button>
+                    ))}
+                  </div>
+                  {/* Row 2: Include Deletes checkbox */}
+                  <div style={{ paddingTop: '4px' }}>
+                    <label style={{ display: 'flex', alignItems: 'center', gap: '4px', fontSize: '0.78rem', color: 'var(--text-secondary)', cursor: 'pointer', whiteSpace: 'nowrap' }}>
+                      <input type="checkbox" checked={showDeletionsInCode} onChange={e => setShowDeletionsInCode(e.target.checked)} style={{ accentColor: 'var(--accent-primary)' }} />
+                      <span>Include Deletes</span>
+                    </label>
+                  </div>
                     </div>
                     
                     <div className="code-box" style={{ flex: 1, overflowY: 'auto' }}>
@@ -4251,7 +4651,7 @@ function App() {
                         fontSize: '11px',
                         whiteSpace: 'pre'
                       }}>
-                        {getFullCodeTemplate(codeLang, treeType, showDeletionsInCode ? operationsLog : insertedValues.map(v => ({ op: 'insert', val: v })))}
+                        {toAllman(getFullCodeTemplate(codeLang, treeType, showDeletionsInCode ? operationsLog : insertedValues.map(v => ({ op: 'insert', val: v }))))}
                       </pre>
                     </div>
                   </div>

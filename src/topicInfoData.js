@@ -17,6 +17,14 @@ export const TOPIC_INFO = {
       'Click "Pop" to remove the top item.',
       'Click "Peek" to view the top element without removing it.'
     ],
+    pros: [
+      'Fast O(1) push and pop operations.',
+      'Low memory overhead (no pointers stored).'
+    ],
+    cons: [
+      'Fixed maximum size limit.',
+      'Wastes memory if capacity is underutilized.'
+    ],
     keyPoints: 'Strict LIFO discipline: the last element added is always processed first.'
   },
   'STACK_LL': {
@@ -32,6 +40,14 @@ export const TOPIC_INFO = {
     howToUse: [
       'Click "Push" to allocate a node at the head.',
       'Click "Pop" to unlink the head node.'
+    ],
+    pros: [
+      'Dynamic size (no overflow).',
+      'Memory allocated only when needed.'
+    ],
+    cons: [
+      'Extra memory used for pointer addresses.',
+      'Slightly slower due to heap allocations.'
     ],
     keyPoints: 'Dynamic memory allocation prevents stack overflow errors.'
   },
@@ -49,6 +65,14 @@ export const TOPIC_INFO = {
       'Enter a postfix string like "3 4 + 2 *".',
       'Click "Evaluate" to watch numbers get pushed and combined step-by-step.'
     ],
+    pros: [
+      'Systematic evaluation without parenthesis.',
+      'Excellent for machine code interpretation.'
+    ],
+    cons: [
+      'Requires conversion from infix to postfix.',
+      'Debugging complex expressions can be difficult.'
+    ],
     keyPoints: 'Operators pop top operands, perform arithmetic, and push back results.'
   },
   'STACK_BRACKETS': {
@@ -65,6 +89,14 @@ export const TOPIC_INFO = {
       'Enter a string containing brackets like "{ [ ( ) ] }".',
       'Click "Check Balance" to step through matching and popping.'
     ],
+    pros: [
+      'Linear time complexity O(N).',
+      'Simple and elegant implementation.'
+    ],
+    cons: [
+      'Requires extra stack storage space.',
+      'Only checks syntax structure, not semantic meaning.'
+    ],
     keyPoints: 'Every closing bracket must match the most recently opened bracket on top of the stack.'
   },
   'STACK_CONVERSION': {
@@ -80,6 +112,14 @@ export const TOPIC_INFO = {
     howToUse: [
       'Enter an infix equation like "A + B * C".',
       'Click "Convert" to watch operators rearrange based on precedence.'
+    ],
+    pros: [
+      'Facilitates mathematical parsing.',
+      'Handles operator precedence accurately.'
+    ],
+    cons: [
+      'Requires temporary stack storage.',
+      'Harder for humans to read the output directly.'
     ],
     keyPoints: 'Eliminates need for parentheses by placing operators directly after operands.'
   },
@@ -99,6 +139,14 @@ export const TOPIC_INFO = {
       'Click Enqueue to add an item to the rear.',
       'Click Dequeue to process and remove the front item.'
     ],
+    pros: [
+      'Maintains strict FIFO order.',
+      'Simple to implement.'
+    ],
+    cons: [
+      'Array shifts or pointer gaps cause memory waste.',
+      'Cannot easily access middle elements.'
+    ],
     keyPoints: 'First person to enter the line is always served first.'
   },
   'QUEUE_CIRCULAR': {
@@ -116,6 +164,14 @@ export const TOPIC_INFO = {
       'Dequeue items to free up front slots.',
       'Enqueue new items to observe rear wrapping back around to index 0!'
     ],
+    pros: [
+      'Efficient reuse of array space.',
+      'No need to shift elements.'
+    ],
+    cons: [
+      'Fixed capacity limit.',
+      'Harder to implement and debug.'
+    ],
     keyPoints: 'Eliminates wasted memory slots without shifting array items.'
   },
   'QUEUE_DEQUE': {
@@ -132,6 +188,14 @@ export const TOPIC_INFO = {
       'Use "Add Front" / "Add Rear" to push items to either side.',
       'Use "Remove Front" / "Remove Rear" to pop items from either side.'
     ],
+    pros: [
+      'Insert/delete from both ends in O(1).',
+      'Highly versatile.'
+    ],
+    cons: [
+      'Higher pointer storage overhead.',
+      'Complex pointer management in linked lists.'
+    ],
     keyPoints: 'Combines full flexibility of both Stack and Queue data structures.'
   },
   'QUEUE_PRIORITY': {
@@ -147,6 +211,14 @@ export const TOPIC_INFO = {
     howToUse: [
       'Enqueue items with values.',
       'Click Dequeue to watch the highest-priority item get extracted.'
+    ],
+    pros: [
+      'Always extracts min/max in O(log N).',
+      'Self-balancing heap structure.'
+    ],
+    cons: [
+      'Search for an arbitrary element is slow O(N).',
+      'High overhead for sorted sequences.'
     ],
     keyPoints: 'Underlying data structure powering heaps and greedy graph algorithms.'
   },
@@ -166,6 +238,14 @@ export const TOPIC_INFO = {
       'Click "Insert Head" or "Insert Tail" to add nodes.',
       'Traverse rightwards along pointers.'
     ],
+    pros: [
+      'Dynamic sizing (grows as needed).',
+      'Fast insertion/deletion at head O(1).'
+    ],
+    cons: [
+      'Cannot traverse backward.',
+      'No random access (requires O(N) traversal).'
+    ],
     keyPoints: 'Dynamic memory allocation with fast O(1) head insertion.'
   },
   'LL_DOUBLY': {
@@ -181,6 +261,14 @@ export const TOPIC_INFO = {
     howToUse: [
       'Add nodes and observe bidirectional arrows (prev ↔ next).',
       'Delete nodes and watch both neighboring pointers re-link.'
+    ],
+    pros: [
+      'Bidirectional traversal.',
+      'O(1) deletion of a node if given its pointer.'
+    ],
+    cons: [
+      'Extra memory for `prev` pointers.',
+      'Complex pointer manipulation code.'
     ],
     keyPoints: 'Allows efficient forward and backward list traversal.'
   },
@@ -198,6 +286,14 @@ export const TOPIC_INFO = {
       'Observe the curved connection arrow from tail back to head.',
       'Traverse continuously around the ring.'
     ],
+    pros: [
+      'Infinite loop navigation.',
+      'Any node can be a starting point.'
+    ],
+    cons: [
+      'Endless loops if not terminated correctly.',
+      'Self-referencing makes debugging trickier.'
+    ],
     keyPoints: 'No node contains a `null` ending pointer.'
   },
   'LL_POLYNOMIAL': {
@@ -213,6 +309,14 @@ export const TOPIC_INFO = {
     howToUse: [
       'Enter two polynomials in the inputs.',
       'Click Add (+) or Multiply (*) to observe term-by-term node merging.'
+    ],
+    pros: [
+      'Sparsity-friendly (stores non-zero terms).',
+      'Flexible polynomial sizes.'
+    ],
+    cons: [
+      'High memory overhead per term.',
+      'Slow term search times.'
     ],
     keyPoints: 'Stores only non-zero terms efficiently without wasting memory.'
   },
@@ -232,6 +336,14 @@ export const TOPIC_INFO = {
       'Enter values and click Insert.',
       'Observe keys mapping to index `key % size`. Colliding keys chain together!'
     ],
+    pros: [
+      'Table never fills up (unlimited load factor).',
+      'Very easy to implement.'
+    ],
+    cons: [
+      'Requires extra memory for linked list nodes.',
+      'Poor cache performance.'
+    ],
     keyPoints: 'Table never fills up (no overflow). Handles high load factors gracefully.'
   },
   'HASH_LINEAR': {
@@ -247,6 +359,14 @@ export const TOPIC_INFO = {
     howToUse: [
       'Insert values with identical remainder modulo table size.',
       'Watch probing step through index `+1`, `+2`, `+3` until an open slot is found.'
+    ],
+    pros: [
+      'Excellent CPU cache performance.',
+      'No pointer/list overhead.'
+    ],
+    cons: [
+      'Suffers from primary clustering.',
+      'Performance degrades as load factor > 0.7.'
     ],
     keyPoints: 'Contiguous memory layout provides superior CPU cache performance.'
   },
@@ -264,6 +384,14 @@ export const TOPIC_INFO = {
       'Insert keys that collide.',
       'Watch probing skip forward by square values (+1, +4, +9, +16...)!'
     ],
+    pros: [
+      'Eliminates primary clustering.',
+      'No extra node memory needed.'
+    ],
+    cons: [
+      'Can suffer from secondary clustering.',
+      'May fail to find open slots even if table is not full.'
+    ],
     keyPoints: 'Eliminates primary clustering by jumping away quadratically.'
   },
   'HASH_MULTIPLICATION': {
@@ -279,6 +407,14 @@ export const TOPIC_INFO = {
     howToUse: [
       'Insert numbers and watch the fractional part extracted and multiplied.',
       'Observe uniform key distribution regardless of table size power.'
+    ],
+    pros: [
+      'Uniform key distribution.',
+      'Works well with any table size.'
+    ],
+    cons: [
+      'Floating-point arithmetic is slower on some CPUs.',
+      'Slightly more math overhead.'
     ],
     keyPoints: 'Works well for any table size M (especially powers of 2).'
   },
@@ -296,6 +432,14 @@ export const TOPIC_INFO = {
       'Enter a large integer key (e.g. 567892).',
       'Watch how the digits are folded in pairs, summed, and mapped to a slot.'
     ],
+    pros: [
+      'Excellent for long numeric keys.',
+      'Simple integer arithmetic.'
+    ],
+    cons: [
+      'Higher collision rates for structured keys.',
+      'Chunk sizes must be pre-determined.'
+    ],
     keyPoints: 'Ideal for long numeric identifiers.'
   },
 
@@ -311,6 +455,14 @@ export const TOPIC_INFO = {
       'Game AI decision trees for path decision choices.'
     ],
     howToUse: ['Insert values and inspect binary decision tree branching.'],
+    pros: [
+      'Sorted order traversal.',
+      'Dynamic memory allocation.'
+    ],
+    cons: [
+      'Can degenerate to a linked list (worst case O(N)).',
+      'No balance guarantees.'
+    ],
     keyPoints: 'Enables fast binary search when tree remains balanced.'
   },
   'AVL': {
@@ -324,6 +476,14 @@ export const TOPIC_INFO = {
       'In-memory database index trees (Oracle / DB2 index balancing).'
     ],
     howToUse: ['Insert sequential numbers (1, 2, 3, 4, 5) to watch auto-rotations.'],
+    pros: [
+      'Strict height balancing.',
+      'Guaranteed O(log N) operations.'
+    ],
+    cons: [
+      'Frequent balancing rotations during inserts.',
+      'Slower write operations.'
+    ],
     keyPoints: 'Strictly guarantees O(log N) tree height via automatic rotations.'
   },
   'RB_TREE': {
@@ -337,6 +497,14 @@ export const TOPIC_INFO = {
       'Linux kernel completely fair scheduler (CFS) process tracking tree.'
     ],
     howToUse: ['Insert numbers and watch color recoloring and rotations.'],
+    pros: [
+      'Fewer rotations than AVL on insert/delete.',
+      'Excellent all-around lookup/write speed.'
+    ],
+    cons: [
+      'Slightly taller tree than AVL.',
+      'Extremely complex implementation.'
+    ],
     keyPoints: 'Provides faster insertion/deletion than AVL trees due to fewer rebalancing rotations.'
   },
   'B_TREE': {
@@ -350,6 +518,14 @@ export const TOPIC_INFO = {
       'Distributed storage engines like Apache Cassandra B-Tree SSTables.'
     ],
     howToUse: ['Set Order (M=4) and insert numbers to watch nodes split.'],
+    pros: [
+      'Highly optimized for disk block reads.',
+      'Very low tree height.'
+    ],
+    cons: [
+      'Waste of memory in nodes with few keys.',
+      'Complex key insertion splits and merges.'
+    ],
     keyPoints: 'Keeps tree height extremely shallow to minimize disk read operations.'
   },
   'B_PLUS_TREE': {
@@ -363,6 +539,14 @@ export const TOPIC_INFO = {
       'Mainframe disk volume block allocation indexing.'
     ],
     howToUse: ['Insert keys and observe how bottom leaves form a linked chain for range queries.'],
+    pros: [
+      'Extremely fast sequential range scans.',
+      'Consistent search times.'
+    ],
+    cons: [
+      'Redundant keys stored in internal nodes.',
+      'Complex traversal logic.'
+    ],
     keyPoints: 'Standard storage engine layout for high-throughput range scans.'
   },
   'SEGMENT_TREE': {
@@ -376,6 +560,14 @@ export const TOPIC_INFO = {
       'Competitive programming range query & point update problems.'
     ],
     howToUse: ['Query range `[L, R]` or update an index to watch O(log N) range updates.'],
+    pros: [
+      'O(log N) range queries.',
+      'O(log N) point updates.'
+    ],
+    cons: [
+      'Requires 4N memory space.',
+      'Implementation is complex for beginners.'
+    ],
     keyPoints: 'Answers interval sum/min/max queries in O(log N) time.'
   },
   'FENWICK_TREE': {
@@ -389,6 +581,14 @@ export const TOPIC_INFO = {
       'Signal processing running prefix sum calculations.'
     ],
     howToUse: ['Toggle BIT mode to inspect binary representations and `i += (i & -i)` index jumps.'],
+    pros: [
+      'Extremely memory efficient (O(N)).',
+      'Simple to write.'
+    ],
+    cons: [
+      'Only handles prefix sums easily.',
+      'Difficult to adapt for arbitrary range queries.'
+    ],
     keyPoints: 'Memory-efficient alternative to Segment Tree for prefix sum calculations.'
   },
 
@@ -404,6 +604,14 @@ export const TOPIC_INFO = {
       'Detecting if an array is already sorted in a single pass.'
     ],
     howToUse: ['Watch larger values bubble right pass by pass.'],
+    pros: [
+      'Detects already sorted arrays in O(N).',
+      'Stable sort.'
+    ],
+    cons: [
+      'Terrible O(N²) average/worst time.',
+      'Inefficient for large datasets.'
+    ],
     keyPoints: 'Simple baseline sorting algorithm.'
   },
   'Selection Sort': {
@@ -417,6 +625,14 @@ export const TOPIC_INFO = {
       'Finding top K smallest elements in small datasets.'
     ],
     howToUse: ['Observe how the sorted partition grows from left to right one minimum element at a time.'],
+    pros: [
+      'Performs at most O(N) swaps.',
+      'Excellent when writes are expensive.'
+    ],
+    cons: [
+      'Always takes O(N²) time.',
+      'Unstable sorting behavior.'
+    ],
     keyPoints: 'Performs at most N swaps total.'
   },
   'Insertion Sort': {
@@ -430,6 +646,14 @@ export const TOPIC_INFO = {
       'Hybrid sorting algorithms (used as base case in Timsort & QuickSort for small arrays N < 16).'
     ],
     howToUse: ['Watch items slide left until placed in their sorted position.'],
+    pros: [
+      'Best for nearly sorted data O(N).',
+      'In-place and stable.'
+    ],
+    cons: [
+      'O(N²) worst-case time.',
+      'Slow for reverse-sorted data.'
+    ],
     keyPoints: 'Extremely fast O(N) for nearly sorted data and small arrays.'
   },
   'Merge Sort': {
@@ -443,6 +667,14 @@ export const TOPIC_INFO = {
       'E-commerce stable product sorting (preserving seller order when sorting by price).'
     ],
     howToUse: ['Watch array divide into single elements and re-merge into sorted sub-lists.'],
+    pros: [
+      'Guaranteed O(N log N) worst-case.',
+      'Stable sort.'
+    ],
+    cons: [
+      'Requires O(N) extra memory.',
+      'Not in-place.'
+    ],
     keyPoints: 'Guarantees O(N log N) sorting time in all cases.'
   },
   'Quick Sort': {
@@ -456,6 +688,14 @@ export const TOPIC_INFO = {
       'Graphics engine mesh vertex sorting.'
     ],
     howToUse: ['Watch pivot element settle into place after partitioning.'],
+    pros: [
+      'Extremely fast in practice.',
+      'In-place sorting.'
+    ],
+    cons: [
+      'Worst-case O(N²) if pivot is poor.',
+      'Unstable sorting behavior.'
+    ],
     keyPoints: 'Fastest in-place general-purpose sorting algorithm.'
   },
   'Heap Sort': {
@@ -469,6 +709,14 @@ export const TOPIC_INFO = {
       'Priority queue extraction and order tracking.'
     ],
     howToUse: ['Watch max element get swapped to the end and heapify restore tree order.'],
+    pros: [
+      'Guaranteed O(N log N) worst-case.',
+      'O(1) extra space (in-place).'
+    ],
+    cons: [
+      'Unstable sort.',
+      'Poor cache locality (skipping indices).'
+    ],
     keyPoints: 'In-place sort with guaranteed O(N log N) time bound.'
   },
   'Counting Sort': {
@@ -482,6 +730,14 @@ export const TOPIC_INFO = {
       'Sub-routine for Radix Sort digit sorting.'
     ],
     howToUse: ['Watch frequency count array build up and reconstruct sorted elements.'],
+    pros: [
+      'Linear time complexity O(N+K).',
+      'Stable sort.'
+    ],
+    cons: [
+      'Requires extra memory for counts.',
+      'Only works on positive integers in a small range.'
+    ],
     keyPoints: 'Linear O(N + K) time when key range K is small.'
   },
   'Radix Sort': {
@@ -495,6 +751,14 @@ export const TOPIC_INFO = {
       'Suffix array construction in DNA string processing.'
     ],
     howToUse: ['Watch array get grouped into buckets by units digit, then tens digit, then hundreds.'],
+    pros: [
+      'Linear-time non-comparison sorting.',
+      'Stable sort.'
+    ],
+    cons: [
+      'Depends on Counting Sort constraints.',
+      'High memory overhead for digit arrays.'
+    ],
     keyPoints: 'Linear-time non-comparison sorting for integers.'
   },
   'Linear Search': {
@@ -508,6 +772,14 @@ export const TOPIC_INFO = {
       'Scanning small lists (N < 20) where hash overhead exceeds linear search speed.'
     ],
     howToUse: ['Watch search highlight index 0, 1, 2, ... until target is found.'],
+    pros: [
+      'Works on unsorted arrays.',
+      'No preprocessing required.'
+    ],
+    cons: [
+      'Slow time complexity O(N).',
+      'Inefficient for large search spaces.'
+    ],
     keyPoints: 'Works on unsorted arrays.'
   },
   'Binary Search': {
@@ -521,6 +793,14 @@ export const TOPIC_INFO = {
       'Standard library functions (`std::binary_search` in C++, `Arrays.binarySearch()` in Java).'
     ],
     howToUse: ['Watch search boundary [low, high] cut in half at every step.'],
+    pros: [
+      'Logarithmic search time O(log N).',
+      'Very fast on large sorted arrays.'
+    ],
+    cons: [
+      'Requires array to be sorted first.',
+      'Random access is necessary (cannot search linked lists easily).'
+    ],
     keyPoints: 'Extremely fast logarithmic search on sorted arrays.'
   },
 
@@ -536,6 +816,14 @@ export const TOPIC_INFO = {
       'Flight ticket search engines finding shortest/cheapest multi-stop flight path.'
     ],
     howToUse: ["Watch node distances relax dynamically using Priority Queue."],
+    pros: [
+      'Guarantees shortest path.',
+      'Efficient using priority queues.'
+    ],
+    cons: [
+      'Fails on negative edge weights.',
+      'High memory overhead for large graphs.'
+    ],
     keyPoints: "Greedy choice guarantees shortest distance for non-negative weights."
   },
   'BFS': {
@@ -549,6 +837,14 @@ export const TOPIC_INFO = {
       'Peer-to-Peer network (BitTorrent) neighbor discovery.'
     ],
     howToUse: ['Watch search expand outward in concentric circles/levels from start node.'],
+    pros: [
+      'Guarantees shortest path on unweighted graphs.',
+      'Excellent for level traversal.'
+    ],
+    cons: [
+      'High memory usage (stores all frontier nodes).',
+      'Not suitable for deep search paths.'
+    ],
     keyPoints: 'Guarantees shortest path in unweighted graphs.'
   },
   'DFS': {
@@ -562,6 +858,14 @@ export const TOPIC_INFO = {
       'Topological sorting of build steps in compiler makefiles.'
     ],
     howToUse: ['Watch search dive deep down a branch until hitting a dead-end, then backtrack.'],
+    pros: [
+      'Uses less memory than BFS.',
+      'Great for cycle detection and backtracking.'
+    ],
+    cons: [
+      'Can get stuck in infinite loops/paths.',
+      'Does not guarantee shortest path.'
+    ],
     keyPoints: 'Uses recursion/stack to explore pathways deeply.'
   },
   'Greedy': {
@@ -575,6 +879,14 @@ export const TOPIC_INFO = {
       'Initial fast path estimation in GIS mapping software.'
     ],
     howToUse: ['Watch algorithm move towards target node using straight-line distance heuristic.'],
+    pros: [
+      'Extremely fast.',
+      'Uses simple straight-line distance heuristics.'
+    ],
+    cons: [
+      'Can get stuck in local minima.',
+      'Does not guarantee shortest path.'
+    ],
     keyPoints: 'Fast but does not guarantee shortest path (unlike A* or Dijkstra).'
   },
   'Prim': {
@@ -588,6 +900,14 @@ export const TOPIC_INFO = {
       'Water pipeline distribution layout connecting residential houses.'
     ],
     howToUse: ['Watch cheapest edge candidate get added to connect unvisited nodes.'],
+    pros: [
+      'Finds optimal minimum spanning tree.',
+      'Fast using heaps.'
+    ],
+    cons: [
+      'Requires connected graphs.',
+      'Not efficient on sparse graphs without heaps.'
+    ],
     keyPoints: 'Connects all graph vertices with minimum total edge weight without cycles.'
   },
   'Bellman-Ford': {
@@ -601,6 +921,14 @@ export const TOPIC_INFO = {
       'Shortest path routing in graphs containing negative cost edges (e.g. tolls & discounts).'
     ],
     howToUse: ['Watch all edges get relaxed V-1 times step-by-step.'],
+    pros: [
+      'Works with negative weights.',
+      'Detects negative cycles.'
+    ],
+    cons: [
+      'Slow time complexity O(V*E).',
+      'Inefficient for positive-only weight graphs.'
+    ],
     keyPoints: 'Handles negative edge weights safely.'
   },
   'Floyd-Warshall': {
@@ -614,6 +942,14 @@ export const TOPIC_INFO = {
       'Traffic congestion analysis computing travel times between all city node pairs.'
     ],
     howToUse: ['Watch matrix update shortest path between every pair of vertices (u, v) using intermediate node k.'],
+    pros: [
+      'Finds paths between all node pairs.',
+      'Simple nested-loop structure.'
+    ],
+    cons: [
+      'High time complexity O(V³).',
+      'Requires large O(V²) memory matrix.'
+    ],
     keyPoints: 'Computes distance between all node pairs.'
   },
   'Kahn': {
@@ -627,6 +963,14 @@ export const TOPIC_INFO = {
       'Task scheduling in workflow engines like Apache Airflow and Celery.'
     ],
     howToUse: ['Watch vertices with in-degree 0 get processed and removed from graph sequentially.'],
+    pros: [
+      'Detects cycles in DAGs.',
+      'Simple queue-based implementation.'
+    ],
+    cons: [
+      'Only works on Directed Acyclic Graphs.',
+      'High overhead for simple chains.'
+    ],
     keyPoints: 'Essential for dependency resolution.'
   },
 
@@ -642,6 +986,14 @@ export const TOPIC_INFO = {
       'Anti-plagiarism software comparing essay text similarity.'
     ],
     howToUse: ['Watch 2D DP matrix populate step-by-step.'],
+    pros: [
+      'Finds exact non-contiguous matching segments.',
+      'Guaranteed optimal solution.'
+    ],
+    cons: [
+      'Quadratic time and space complexity O(N*M).',
+      'Slow for long strings.'
+    ],
     keyPoints: 'Subsequences do not need to occupy contiguous positions.'
   },
   'LIS': {
@@ -655,6 +1007,14 @@ export const TOPIC_INFO = {
       'Box nesting / envelope containment hierarchy ordering.'
     ],
     howToUse: ['Watch DP array build longest increasing sub-chain length for each element.'],
+    pros: [
+      'Guaranteed optimal increasing subsequence.',
+      'DP table tracks lengths accurately.'
+    ],
+    cons: [
+      'O(N²) time complexity for basic DP.',
+      'Requires O(N) extra space.'
+    ],
     keyPoints: 'Computes maximum strictly ascending sequence length.'
   },
   'Knapsack': {
@@ -668,6 +1028,14 @@ export const TOPIC_INFO = {
       'Cloud Virtual Machine resource allocation (packing apps into server RAM/CPU bounds).'
     ],
     howToUse: ['Watch DP table compute max value for every sub-capacity.'],
+    pros: [
+      'Guaranteed optimal value selection.',
+      'Prevents fractional items.'
+    ],
+    cons: [
+      'NP-hard problem.',
+      'Pseudo-polynomial time complexity O(N*W).'
+    ],
     keyPoints: 'Each item can either be taken (1) or left (0).'
   },
   'Fractional Knapsack': {
@@ -681,6 +1049,14 @@ export const TOPIC_INFO = {
       'Recipe ingredient selection under weight limits.'
     ],
     howToUse: ['Watch items get sorted by `value / weight` ratio and added greedily.'],
+    pros: [
+      'Linear-time greedy solution.',
+      'Highly efficient.'
+    ],
+    cons: [
+      'Only works if items are divisible.',
+      'Cannot be used for discrete items.'
+    ],
     keyPoints: 'Greedy choice yields global optimal solution because items are divisible.'
   },
   'Matrix Chain': {
@@ -694,6 +1070,14 @@ export const TOPIC_INFO = {
       'Scientific matrix computation in MATLAB & NumPy.'
     ],
     howToUse: ['Watch DP table compute optimal parenthesization split points `k`.'],
+    pros: [
+      'Saves millions of scalar operations.',
+      'Finds global optimal multiplication order.'
+    ],
+    cons: [
+      'O(N³) dynamic programming time.',
+      'Requires O(N²) table space.'
+    ],
     keyPoints: 'Order of multiplication drastically changes computational cost.'
   },
   'Coin Change': {
@@ -707,7 +1091,15 @@ export const TOPIC_INFO = {
       'Crypto token denomination swapping.'
     ],
     howToUse: ['Watch DP array build min coins from `0` to target amount `amount`.'],
-    keyPoints: 'Computes minimum coin count dynamically.'
+    pros: [
+      'Guarantees minimum coin count.',
+      'Works on arbitrary coin systems.'
+    ],
+    cons: [
+      'Inefficient for large target amounts.',
+      'O(N * Target) space complexity.'
+    ],
+    keyPoints: 'Keep code tracing dynamically to locate minimum coins.'
   },
   'Edit Distance': {
     title: 'Edit Distance (Levenshtein Distance)',
@@ -720,6 +1112,14 @@ export const TOPIC_INFO = {
       'Speech recognition transcript error matching.'
     ],
     howToUse: ['Watch 2D DP grid calculate character edit costs.'],
+    pros: [
+      'Computes exact minimum operations.',
+      'Highly versatile for spell checking.'
+    ],
+    cons: [
+      'O(N*M) time and space.',
+      'Heavy computation for long texts.'
+    ],
     keyPoints: 'Core algorithm behind spell checkers and auto-correct.'
   },
   'Activity Selection': {
@@ -733,6 +1133,14 @@ export const TOPIC_INFO = {
       'Satellite observation scheduling (maximizing satellite photography targets).'
     ],
     howToUse: ['Watch activities sorted by finish time and picked greedily.'],
+    pros: [
+      'Greedy strategy is optimal O(N log N).',
+      'Extremely fast.'
+    ],
+    cons: [
+      'Only works if activities have fixed start/end times.',
+      'Cannot handle dependent activities.'
+    ],
     keyPoints: 'Greedy strategy sorting by end time is optimal.'
   },
   'Job Sequencing': {
@@ -746,6 +1154,14 @@ export const TOPIC_INFO = {
       'Freelancer project scheduling maximizing revenue before deadlines.'
     ],
     howToUse: ['Watch jobs sorted by profit placed in latest available free time slot.'],
+    pros: [
+      'Maximizes profit within deadlines.',
+      'Simple greedy logic.'
+    ],
+    cons: [
+      'Time slots must be discrete.',
+      'Cannot handle overlapping non-divisible jobs easily.'
+    ],
     keyPoints: 'Greedy strategy scheduling highest profit jobs as late as possible.'
   },
   'Huffman Coding': {
@@ -759,6 +1175,14 @@ export const TOPIC_INFO = {
       'MP3 audio file encoding compressing sound frequencies.'
     ],
     howToUse: ['Watch min-heap repeatedly combine lowest frequency nodes into a binary prefix tree.'],
+    pros: [
+      'Guarantees lossless optimal compression.',
+      'Variable-length codes save space.'
+    ],
+    cons: [
+      'Must store Huffman tree with data.',
+      'Requires two passes over source data.'
+    ],
     keyPoints: 'Used in ZIP, JPEG, and MP3 data compression.'
   },
   'N-Queens': {
@@ -772,6 +1196,14 @@ export const TOPIC_INFO = {
       'Backtracking algorithmic puzzle solver design.'
     ],
     howToUse: ['Watch algorithm try queen positions and backtrack when attacks occur.'],
+    pros: [
+      'Finds all possible arrangements.',
+      'Prunes branches early.'
+    ],
+    cons: [
+      'Exponential worst-case time complexity.',
+      'Slow for large board sizes N.'
+    ],
     keyPoints: 'Classic backtracking depth-first search demonstration.'
   },
   'Subset Sum': {
@@ -785,6 +1217,14 @@ export const TOPIC_INFO = {
       'Vault combination verification.'
     ],
     howToUse: ['Watch DP boolean grid check sum reachability step-by-step.'],
+    pros: [
+      'Finds exact sum combinations.',
+      'Adapts to multiple targets.'
+    ],
+    cons: [
+      'NP-complete problem.',
+      'O(N * Sum) memory footprint.'
+    ],
     keyPoints: 'Subset sum is a special case of 0/1 Knapsack.'
   },
   'Sudoku': {
@@ -798,6 +1238,40 @@ export const TOPIC_INFO = {
       'Logic gate allocation in circuit synthesis.'
     ],
     howToUse: ['Watch backtracking algorithm place valid numbers and undo choices when invalid.'],
+    pros: [
+      'Solves any valid puzzle.',
+      'Prunes invalid paths early.'
+    ],
+    cons: [
+      'Can have high backtracking depth.',
+      'Worst-case time is exponential.'
+    ],
     keyPoints: 'Constraint satisfaction problem solved via depth-first recursive backtracking.'
+  },
+  'Patterns': {
+    title: 'Pattern Printing (Nested Loops)',
+    summary: 'A visual demonstration of nested loop execution to print 2D shapes, grids, and numbers. Perfect for mastering iteration, spacing, and inner-outer loop dynamics.',
+    formula: 'For Row i in 1..R: For Space s in 1..S: print(" ") | For Col j in 1..C: print(symbol)',
+    example: 'Right Pyramid (Rows=3):\nRow 1: Col 1 ➔ prints "* "\nRow 2: Col 1,2 ➔ prints "* * "\nRow 3: Col 1,2,3 ➔ prints "* * * "',
+    realLife: [
+      'Rendering text-based terminal graphics and charts.',
+      'Constructing mathematical grids or pixel grids in games.',
+      'Developing strong programmatic trace skills and logical loop structuring.'
+    ],
+    howToUse: [
+      'Select a pattern from the dropdown menu (e.g. Pascal, Floyd, Pyramid).',
+      'Adjust rows count and symbol type (such as stars, letters, or numbers).',
+      'Use the media controls to play the execution trace step-by-step.',
+      'Check variables inside the Active State panel during the animation.'
+    ],
+    pros: [
+      'Excellent for mastering nested iterations.',
+      'Immediate visual feedback.'
+    ],
+    cons: [
+      'Limited to simple text shapes.',
+      'No direct runtime optimization benefits.'
+    ],
+    keyPoints: 'Inner loops control the columns printed per line, while the outer loop controls vertical rows.'
   }
 };

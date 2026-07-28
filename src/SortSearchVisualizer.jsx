@@ -1,9 +1,26 @@
-/* eslint-disable react/prop-types, react-hooks/set-state-in-effect */
-import React, { useState, useEffect, useRef } from 'react';
+/* eslint-disable */
+import React, { useState, useEffect, useRef, useCallback } from 'react';
 import gsap from 'gsap';
 import { getSortSearchCode } from './codeTemplatesSort';
 import CodeRunnerModal from './CodeRunnerModal.jsx';
 import TopicInfoModal from './TopicInfoModal.jsx';
+
+// Allman brace formatter
+const toAllman = code => {
+  if (!code) return '';
+  const lines = code.split('\n');
+  const out = [];
+  for (const line of lines) {
+    const t = line.trimEnd();
+    if (t.endsWith('{') && t.trim() !== '{' && !t.trim().startsWith('//') && !t.trim().startsWith('*')) {
+      const indent = line.match(/^(\s*)/)[1];
+      const body = t.slice(0, -1).trimEnd();
+      if (body.trim().length > 0) { out.push(body); out.push(indent + '{'); continue; }
+    }
+    out.push(line);
+  }
+  return out.join('\n');
+};
 
 // Fallback-safe Clipboard Copy Helper
 const copyToClipboard = (text) => {
@@ -115,8 +132,240 @@ const getBSTPositions = (arr, width, height) => {
   return positions;
 };
 
+const highlightLogText = (text) => {
+  if (!text) return '';
+  const str = String(text);
+  const lower = str.toLowerCase();
+  
+  if (
+    lower.includes('root full') ||
+    lower.includes('split') ||
+    lower.includes('imbalance') ||
+    lower.includes('rotate') ||
+    lower.includes('rotation') ||
+    lower.includes('delete') ||
+    lower.includes('deleted') ||
+    lower.includes('remove') ||
+    lower.includes('removed') ||
+    lower.includes('pop') ||
+    lower.includes('popped') ||
+    lower.includes('mismatch') ||
+    lower.includes('⚡')
+  ) {
+    const regex = /(\b\d+(?:\.\d+)?\b)/g;
+    const parts = str.split(regex);
+    return (
+      <span style={{ color: '#f87171', fontWeight: 'bold' }}>
+        {parts.map((p, i) => 
+          regex.test(p) ? <span key={i} style={{ color: '#fbbf24', textShadow: '0 0 8px rgba(251,191,36,0.3)' }}>{p}</span> : p
+        )}
+      </span>
+    );
+  }
+  
+  if (
+    lower.includes('inserted') ||
+    lower.includes('insert(') ||
+    lower.includes('insert ') ||
+    lower.includes('create node') ||
+    lower.includes('success') ||
+    lower.includes('match') ||
+    lower.includes('completed') ||
+    lower.includes('done') ||
+    lower.includes('✦') ||
+    lower.includes('✓') ||
+    lower.includes('✅')
+  ) {
+    const regex = /(\b\d+(?:\.\d+)?\b)/g;
+    const parts = str.split(regex);
+    return (
+      <span style={{ color: '#34d399', fontWeight: 'bold' }}>
+        {parts.map((p, i) => 
+          regex.test(p) ? <span key={i} style={{ color: '#fbbf24' }}>{p}</span> : p
+        )}
+      </span>
+    );
+  }
+
+  if (
+    lower.includes('going to') ||
+    lower.includes('compare') ||
+    lower.includes('comparing') ||
+    lower.includes('probe') ||
+    lower.includes('probing') ||
+    lower.includes('relaxation') ||
+    lower.includes('check') ||
+    lower.includes('swap') ||
+    lower.includes('swapped') ||
+    lower.includes('➜') ||
+    lower.includes('↳')
+  ) {
+    const regex = /(\b\d+(?:\.\d+)?\b)/g;
+    const parts = str.split(regex);
+    return (
+      <span style={{ color: '#fb923c', fontWeight: 600 }}>
+        {parts.map((p, i) => 
+          regex.test(p) ? <span key={i} style={{ color: '#fbbf24', fontWeight: 'bold' }}>{p}</span> : p
+        )}
+      </span>
+    );
+  }
+  
+  const regex = /(\b\d+(?:\.\d+)?\b)/g;
+  const parts = str.split(regex);
+  return parts.map((p, i) => 
+    /^\d+(?:\.\d+)?$/.test(p) ? <strong key={i} style={{ color: '#fbbf24' }}>{p}</strong> : p
+  );
+};
+
+const isSortSearchLineMatch = (algo, msg, lineText) => {
+  const m = String(msg).toLowerCase();
+  const line = String(lineText).trim().toLowerCase();
+  
+  if (line.startsWith('//') || line.startsWith('import') || line.startsWith('#include') || line.startsWith('using')) {
+    return false;
+  }
+  
+  if (algo === 'Bubble Sort') {
+    if (m.includes('starting')) {
+      return line.includes('void bubblesort') || line.includes('def bubble_sort') || line.includes('function bubblesort');
+    }
+    if (m.includes('comparing')) {
+      return line.includes('if') && (line.includes('[j]') || line.includes('[j+1]') || line.includes('[j + 1]'));
+    }
+    if (m.includes('swapped')) {
+      return line.includes('swap') || line.includes('temp') || line.includes('arr[j] =') || line.includes('arr[j+1] =') || line.includes('arr[j + 1] =');
+    }
+    if (m.includes('placed')) {
+      return line.includes('for') && (line.includes('i <') || line.includes('range'));
+    }
+    if (m.includes('complete')) {
+      return line.includes('return') || line.includes('}');
+    }
+  }
+  
+  if (algo === 'Selection Sort') {
+    if (m.includes('starting')) {
+      return line.includes('selectionsort') || line.includes('selection_sort');
+    }
+    if (m.includes('comparing')) {
+      return line.includes('if') && line.includes('arr[j]') && line.includes('min_idx');
+    }
+    if (m.includes('new minimum')) {
+      return line.includes('min_idx = j') || line.includes('min_idx =');
+    }
+    if (m.includes('swapped')) {
+      return line.includes('swap') || line.includes('temp') || line.includes('arr[i] =');
+    }
+    if (m.includes('placed')) {
+      return line.includes('for') && (line.includes('i <') || line.includes('range'));
+    }
+  }
+  
+  if (algo === 'Insertion Sort') {
+    if (m.includes('starting')) {
+      return line.includes('insertionsort') || line.includes('insertion_sort');
+    }
+    if (m.includes('selected key')) {
+      return line.includes('key =');
+    }
+    if (m.includes('moving')) {
+      return line.includes('arr[j + 1] = arr[j]') || line.includes('arr[j+1] = arr[j]') || line.includes('while');
+    }
+    if (m.includes('placed key')) {
+      return line.includes('arr[j + 1] = key') || line.includes('arr[j+1] = key');
+    }
+  }
+  
+  if (algo === 'Merge Sort') {
+    if (m.includes('starting')) {
+      return line.includes('mergesort') || line.includes('merge_sort');
+    }
+    if (m.includes('comparing')) {
+      return line.includes('if') && line.includes('l[i] <= r[j]');
+    }
+    if (m.includes('writing') || m.includes('copying')) {
+      return line.includes('arr[k') || line.includes('arr[k++]');
+    }
+  }
+  
+  if (algo === 'Quick Sort') {
+    if (m.includes('starting')) {
+      return line.includes('quicksort') || line.includes('quick_sort');
+    }
+    if (m.includes('pivot selected')) {
+      return line.includes('pivot =') || line.includes('arr[high]');
+    }
+    if (m.includes('comparing')) {
+      return line.includes('if') && line.includes('pivot');
+    }
+    if (m.includes('swapped')) {
+      return line.includes('swap') || line.includes('temp');
+    }
+    if (m.includes('placed pivot') || m.includes('correct position')) {
+      return line.includes('swap') && (line.includes('i+1') || line.includes('high'));
+    }
+  }
+  
+  if (algo === 'Heap Sort') {
+    if (m.includes('starting')) {
+      return line.includes('heapsort') || line.includes('heap_sort');
+    }
+    if (m.includes('heapify')) {
+      return line.includes('heapify');
+    }
+    if (m.includes('swapped') || m.includes('extract')) {
+      return line.includes('swap') || line.includes('temp');
+    }
+  }
+  
+  if (algo === 'Binary Search') {
+    if (m.includes('starting')) {
+      return line.includes('binarysearch') || line.includes('binary_search');
+    }
+    if (m.includes('mid')) {
+      return line.includes('mid =');
+    }
+    if (m.includes('found')) {
+      return line.includes('return mid') || line.includes('return true') || line.includes('return');
+    }
+    if (m.includes('smaller')) {
+      return line.includes('high =') || line.includes('r =');
+    }
+    if (m.includes('larger')) {
+      return line.includes('low =') || line.includes('l =');
+    }
+    if (m.includes('not found') || m.includes('not present')) {
+      return line.includes('return -1') || line.includes('return false');
+    }
+  }
+  
+  if (algo === 'Linear Search') {
+    if (m.includes('starting')) {
+      return line.includes('linearsearch') || line.includes('linear_search');
+    }
+    if (m.includes('comparing') || m.includes('check')) {
+      return line.includes('if') && (line.includes('arr[i]') || line.includes('== target'));
+    }
+    if (m.includes('found')) {
+      return line.includes('return i') || line.includes('return true') || line.includes('return');
+    }
+    if (m.includes('not found') || m.includes('not present')) {
+      return line.includes('return -1') || line.includes('return false');
+    }
+  }
+  
+  return false;
+};
+
 const SortSearchVisualizer = ({ onBack, openSettings, initialTab = 'Sort', initialSort = 'Bubble Sort', initialSearch = 'Linear Search', onCopyCode, onCodeChange, fontSize = 14, wordWrap = 'off', onShowUpcomingFeatures }) => {
+  const [localFontSize, setLocalFontSize] = useState(fontSize);
+  useEffect(() => {
+    setLocalFontSize(fontSize);
+  }, [fontSize]);
+
   const [array, setArray] = useState([]);
+  const [visualizerStyle, setVisualizerStyle] = useState('classic'); // 'classic' or 'crane'
   const [initialArray, setInitialArray] = useState([]);
   const [timeline, setTimeline] = useState([]);
   const [currentStep, setCurrentStep] = useState(0);
@@ -145,14 +394,14 @@ const SortSearchVisualizer = ({ onBack, openSettings, initialTab = 'Sort', initi
 
   // Draggable execution log states
   const [showLogPanel, setShowLogPanel] = useState(true);
-  const [logPosition, setLogPosition] = useState({ x: 20, y: 120 });
+  const [logPosition, setLogPosition] = useState({ x: 50, y: 150 });
+  const [logSize, setLogSize] = useState({ width: 520, height: 280 });
   const [isDraggingLog, setIsDraggingLog] = useState(false);
-  const [logSize, setLogSize] = useState({ width: 580, height: 300 });
+  const dragStart = useRef({ x: 0, y: 0 });
+  const panelStart = useRef({ x: 0, y: 0 });
   const [activeStateWidth, setActiveStateWidth] = useState(240);
-  const [codeWidth, setCodeWidth] = useState(450);
+  const [codeWidth, setCodeWidth] = useState(360);
 
-  const logDragStart = useRef({ x: 0, y: 0 });
-  const logPanelStart = useRef({ x: 0, y: 0 });
   const logContainerRef = useRef(null);
 
   // Draggable tree visualizer states
@@ -207,20 +456,49 @@ const SortSearchVisualizer = ({ onBack, openSettings, initialTab = 'Sort', initi
     document.addEventListener('touchend', handleMouseUp);
   };
 
-  const handleLogMouseDown = (e) => {
-    const handle = e.target.closest('.log-drag-handle');
-    if (handle) {
-      setIsDraggingLog(true);
+  const handleLogHeaderMouseDown = (e) => {
+    if (e.button !== 0 && e.type !== 'touchstart') return;
+    setIsDraggingLog(true);
+    const isTouch = e.type.startsWith('touch');
+    const clientX = isTouch ? e.touches[0].clientX : e.clientX;
+    const clientY = isTouch ? e.touches[0].clientY : e.clientY;
+    dragStart.current = { x: clientX, y: clientY };
+    panelStart.current = { x: logPosition.x, y: logPosition.y };
+    if (e.cancelable) e.preventDefault();
+  };
+
+  useEffect(() => {
+    if (!isDraggingLog) return;
+    const handleMouseMove = (e) => {
       const isTouch = e.type.startsWith('touch');
       const clientX = isTouch ? e.touches[0].clientX : e.clientX;
       const clientY = isTouch ? e.touches[0].clientY : e.clientY;
-      logDragStart.current = { x: clientX, y: clientY };
-      logPanelStart.current = { x: logPosition.x, y: logPosition.y };
-      if (e.cancelable) e.preventDefault();
-    }
-  };
+      const dx = clientX - dragStart.current.x;
+      const dy = clientY - dragStart.current.y;
+      
+      setLogPosition({
+        x: Math.max(-logSize.width + 40, Math.min(window.innerWidth - 40, panelStart.current.x + dx)),
+        y: Math.max(0, Math.min(window.innerHeight - 40, panelStart.current.y + dy))
+      });
+    };
 
-  const handleResizeMouseDown = (e) => {
+    const handleMouseUp = () => {
+      setIsDraggingLog(false);
+    };
+
+    window.addEventListener('mousemove', handleMouseMove);
+    window.addEventListener('mouseup', handleMouseUp);
+    window.addEventListener('touchmove', handleMouseMove, { passive: false });
+    window.addEventListener('touchend', handleMouseUp);
+    return () => {
+      window.removeEventListener('mousemove', handleMouseMove);
+      window.removeEventListener('mouseup', handleMouseUp);
+      window.removeEventListener('touchmove', handleMouseMove);
+      window.removeEventListener('touchend', handleMouseUp);
+    };
+  }, [isDraggingLog, logSize]);
+
+  const handleLogResizeMouseDown = (e) => {
     if (e.cancelable) e.preventDefault();
     e.stopPropagation();
     const isTouch = e.type.startsWith('touch');
@@ -232,8 +510,8 @@ const SortSearchVisualizer = ({ onBack, openSettings, initialTab = 'Sort', initi
     const handleMouseMove = (moveEvent) => {
       const currentX = moveEvent.type.startsWith('touch') ? moveEvent.touches[0].clientX : moveEvent.clientX;
       const currentY = moveEvent.type.startsWith('touch') ? moveEvent.touches[0].clientY : moveEvent.clientY;
-      const newWidth = Math.max(340, startWidth + (currentX - startX));
-      const newHeight = Math.max(180, startHeight + (currentY - startY));
+      const newWidth = Math.max(300, Math.min(800, startWidth + (currentX - startX)));
+      const newHeight = Math.max(150, Math.min(600, startHeight + (currentY - startY)));
       setLogSize({ width: newWidth, height: newHeight });
     };
 
@@ -293,35 +571,7 @@ const SortSearchVisualizer = ({ onBack, openSettings, initialTab = 'Sort', initi
     document.addEventListener('touchend', end);
   };
 
-  useEffect(() => {
-    if (!isDraggingLog) return;
-    const handleMouseMove = (e) => {
-      const isTouch = e.type.startsWith('touch');
-      const clientX = isTouch ? e.touches[0].clientX : e.clientX;
-      const clientY = isTouch ? e.touches[0].clientY : e.clientY;
-      const dx = clientX - logDragStart.current.x;
-      const dy = clientY - logDragStart.current.y;
-      const maxX = Math.max(0, window.innerWidth - logSize.width);
-      const maxY = Math.max(0, window.innerHeight - logSize.height);
-      setLogPosition({
-        x: Math.max(0, Math.min(maxX, logPanelStart.current.x + dx)),
-        y: Math.max(0, Math.min(maxY, logPanelStart.current.y + dy))
-      });
-    };
-    const handleMouseUp = () => {
-      setIsDraggingLog(false);
-    };
-    window.addEventListener('mousemove', handleMouseMove);
-    window.addEventListener('mouseup', handleMouseUp);
-    window.addEventListener('touchmove', handleMouseMove, { passive: false });
-    window.addEventListener('touchend', handleMouseUp);
-    return () => {
-      window.removeEventListener('mousemove', handleMouseMove);
-      window.removeEventListener('mouseup', handleMouseUp);
-      window.removeEventListener('touchmove', handleMouseMove);
-      window.removeEventListener('touchend', handleMouseUp);
-    };
-  }, [isDraggingLog, logSize]);
+
 
   useEffect(() => {
     if (!isDraggingTreePanel) return;
@@ -1284,6 +1534,12 @@ const SortSearchVisualizer = ({ onBack, openSettings, initialTab = 'Sort', initi
             <option value="Search">Searching Algorithms</option>
           </select>
 
+          {/* Visualizer Style Toggle */}
+          <select className="styled-select" value={visualizerStyle} onChange={e => setVisualizerStyle(e.target.value)} disabled={isPlaying}>
+            <option value="classic">Classic Bars</option>
+            <option value="crane">3D Crane (Beta)</option>
+          </select>
+
           {activeTab === 'Sort' ? (
             <>
               <select className="styled-select" value={selectedSort} onChange={e => setSelectedSort(e.target.value)} disabled={isPlaying}>
@@ -1312,13 +1568,23 @@ const SortSearchVisualizer = ({ onBack, openSettings, initialTab = 'Sort', initi
           )}
 
           <div style={{ width: '1px', height: '22px', background: 'var(--glass-border)', margin: '0 4px' }} />
-          {(currentDisplayedAlgo === 'Heap Sort' || currentDisplayedAlgo === 'Binary Search') && (
-            <button className="btn btn-clear" onClick={() => setShowTreePanel(!showTreePanel)}>
-              {showTreePanel ? '🌳 Hide Tree' : '🌳 Show Tree'}
-            </button>
-          )}
-          <button className="btn btn-clear" onClick={() => setShowLogPanel(!showLogPanel)}>{showLogPanel ? '📋 Hide Log' : '📋 Show Log'}</button>
-          <button className="btn btn-clear" onClick={() => setShowCode(!showCode)}>{showCode ? '💻 Hide Code' : '💻 Show Code'}</button>
+          <div style={{ display: 'flex', gap: '15px', alignItems: 'center', background: 'rgba(255,255,255,0.03)', padding: '6px 14px', borderRadius: '10px', border: '1px solid var(--glass-border)', fontSize: '0.82rem' }}>
+            <span style={{ fontWeight: 'bold', color: 'var(--text-secondary)' }}>View:</span>
+            <label style={{ display: 'flex', alignItems: 'center', gap: '6px', cursor: 'pointer', color: 'var(--text-primary)', userSelect: 'none' }}>
+              <input type="checkbox" checked={showLogPanel} onChange={e => setShowLogPanel(e.target.checked)} style={{ accentColor: 'var(--accent-primary)', cursor: 'pointer' }} />
+              <span>Log</span>
+            </label>
+            <label style={{ display: 'flex', alignItems: 'center', gap: '6px', cursor: 'pointer', color: 'var(--text-primary)', userSelect: 'none' }}>
+              <input type="checkbox" checked={showCode} onChange={e => setShowCode(e.target.checked)} style={{ accentColor: 'var(--accent-primary)', cursor: 'pointer' }} />
+              <span>Code</span>
+            </label>
+            {(currentDisplayedAlgo === 'Heap Sort' || currentDisplayedAlgo === 'Binary Search') && (
+              <label style={{ display: 'flex', alignItems: 'center', gap: '6px', cursor: 'pointer', color: 'var(--text-primary)', userSelect: 'none' }}>
+                <input type="checkbox" checked={showTreePanel} onChange={e => setShowTreePanel(e.target.checked)} style={{ accentColor: 'var(--accent-primary)', cursor: 'pointer' }} />
+                <span>Tree</span>
+              </label>
+            )}
+          </div>
           <button className="btn btn-clear" style={{ background: 'rgba(0, 229, 255, 0.1)', border: '1px solid var(--accent-primary)', color: 'var(--accent-primary)' }} onClick={() => setShowTopicInfo(true)} title="Learn about this algorithm">ℹ️ Info</button>
           {openSettings && <button className="btn btn-clear" onClick={openSettings}>⚙ Settings</button>}
           <button className="btn btn-clear" onClick={onBack}>🏠 Home</button>
@@ -1346,34 +1612,284 @@ const SortSearchVisualizer = ({ onBack, openSettings, initialTab = 'Sort', initi
              </span>
           </div>
           
-          <div style={{ flex: 1, display: 'flex', alignItems: 'flex-end', justifyContent: 'center', gap: isMobile ? '4px' : '8px', background: 'var(--glass-bg)', borderRadius: '14px', border: '1px solid var(--glass-border)', padding: isMobile ? '1rem 0.5rem' : '2rem 1rem', overflow: 'hidden' }}>
-            {frame.arr.map((val, idx) => {
-              let bg = 'linear-gradient(to top, var(--accent-primary), var(--accent-secondary))';
-              if (idx === frame.i || idx === frame.j) bg = 'linear-gradient(to top, #fbbf24, #f59e0b)'; 
-              if (idx === frame.k) bg = 'linear-gradient(to top, #10b981, #059669)'; 
-              
-              return (
-                <div key={idx} ref={el => barRefs.current[idx] = el} style={{
-                  height: `${Math.max(val, 5)}%`, 
-                  width: isMobile ? '20px' : '45px',
-                  background: bg,
-                  borderRadius: '4px 4px 0 0',
+          {visualizerStyle === 'crane' ? (
+            <div style={{ 
+              flex: 1, 
+              display: 'flex', 
+              alignItems: 'flex-end', 
+              justifyContent: 'center', 
+              gap: isMobile ? '8px' : '16px', 
+              background: 'var(--glass-bg, rgba(15, 23, 42, 0.45))', 
+              borderRadius: '14px', 
+              border: '1px solid var(--glass-border, rgba(255,255,255,0.08))', 
+              padding: isMobile ? '80px 10px 20px 10px' : '120px 2rem 2rem 2rem', 
+              overflow: 'hidden',
+              position: 'relative'
+            }}>
+              {/* Top Crane Track & Trolley */}
+              <div style={{
+                position: 'absolute',
+                top: isMobile ? '12px' : '24px',
+                left: isMobile ? '10px' : '2rem',
+                right: isMobile ? '10px' : '2rem',
+                height: '8px',
+                background: '#1e293b',
+                border: '1px solid rgba(255,255,255,0.1)',
+                borderRadius: '4px',
+                zIndex: 10
+              }}>
+                {/* Carriage/Trolley */}
+                <div style={{
+                  position: 'absolute',
+                  left: frame.i !== -1 ? `calc(${(frame.i + 0.5) * (100 / frame.arr.length)}% - 20px)` : (frame.j !== -1 ? `calc(${(frame.j + 0.5) * (100 / frame.arr.length)}% - 20px)` : 'calc(100% - 40px)'),
+                  top: '-6px',
+                  width: '40px',
+                  height: '20px',
+                  background: 'linear-gradient(135deg, #64748b, #475569)',
+                  border: '1.5px solid #94a3b8',
+                  borderRadius: '4px',
                   display: 'flex',
-                  alignItems: 'flex-start',
+                  alignItems: 'center',
                   justifyContent: 'center',
-                  color: 'white',
-                  fontWeight: 'bold',
-                  fontSize: isMobile ? '0.7rem' : '1rem',
-                  paddingTop: '8px',
-                  boxShadow: '0 4px 12px rgba(0,0,0,0.1)',
-                  transition: 'height 0.2s ease, background 0.2s',
-                  transformOrigin: 'bottom center'
+                  transition: 'left 0.4s cubic-bezier(0.25, 0.8, 0.25, 1)',
+                  boxShadow: '0 4px 8px rgba(0,0,0,0.3)',
+                  zIndex: 12
                 }}>
-                  {val}
+                  {/* Wheel accents */}
+                  <div style={{ width: '6px', height: '6px', borderRadius: '50%', background: '#0f172a', position: 'absolute', left: '4px', top: '10px' }} />
+                  <div style={{ width: '6px', height: '6px', borderRadius: '50%', background: '#0f172a', position: 'absolute', right: '4px', top: '10px' }} />
                 </div>
-              );
-            })}
-          </div>
+
+                {/* Gripper Rope & Claw */}
+                <div style={{
+                  position: 'absolute',
+                  left: frame.i !== -1 ? `calc(${(frame.i + 0.5) * (100 / frame.arr.length)}% - 20px)` : (frame.j !== -1 ? `calc(${(frame.j + 0.5) * (100 / frame.arr.length)}% - 20px)` : 'calc(100% - 40px)'),
+                  top: '12px',
+                  width: '40px',
+                  display: 'flex',
+                  flexDirection: 'column',
+                  alignItems: 'center',
+                  transition: 'left 0.4s cubic-bezier(0.25, 0.8, 0.25, 1)',
+                  zIndex: 11
+                }}>
+                  {/* Cable Line */}
+                  <div style={{
+                    width: '2px',
+                    height: (frame.i !== -1 || frame.j !== -1) ? '35px' : '12px',
+                    background: '#94a3b8',
+                    transition: 'height 0.3s ease'
+                  }} />
+                  
+                  {/* Gripper Head */}
+                  <div style={{
+                    width: '20px',
+                    height: '10px',
+                    background: '#fbbf24',
+                    borderRadius: '2px 2px 0 0',
+                    border: '1px solid #d97706',
+                    position: 'relative'
+                  }}>
+                    {/* Left claw finger */}
+                    <div style={{
+                      position: 'absolute',
+                      left: '-3px',
+                      bottom: '-10px',
+                      width: '5px',
+                      height: '12px',
+                      borderLeft: '2.5px solid #fbbf24',
+                      borderBottom: '2.5px solid #fbbf24',
+                      borderRadius: '0 0 0 3px',
+                      transform: (frame.i !== -1 || frame.j !== -1) ? 'rotate(-12deg)' : 'rotate(-25deg)',
+                      transformOrigin: 'top right',
+                      transition: 'transform 0.2s'
+                    }} />
+                    {/* Right claw finger */}
+                    <div style={{
+                      position: 'absolute',
+                      right: '-3px',
+                      bottom: '-10px',
+                      width: '5px',
+                      height: '12px',
+                      borderRight: '2.5px solid #fbbf24',
+                      borderBottom: '2.5px solid #fbbf24',
+                      borderRadius: '0 0 3px 0',
+                      transform: (frame.i !== -1 || frame.j !== -1) ? 'rotate(12deg)' : 'rotate(25deg)',
+                      transformOrigin: 'top left',
+                      transition: 'transform 0.2s'
+                    }} />
+                  </div>
+
+                  {/* Gripper Box showing active target/comparison value */}
+                  {(frame.i !== -1 || (activeTab === 'Sort' && frame.j !== -1)) && (
+                    <div style={{
+                      marginTop: '6px',
+                      width: '28px',
+                      height: '28px',
+                      background: 'linear-gradient(to top, #d97706, #fbbf24)',
+                      border: '1px solid #b45309',
+                      borderRadius: '4px',
+                      display: 'flex',
+                      alignItems: 'center',
+                      justifyContent: 'center',
+                      color: 'white',
+                      fontWeight: 'bold',
+                      fontSize: '0.8rem',
+                      boxShadow: '0 4px 8px rgba(0,0,0,0.3)'
+                    }}>
+                      {activeTab === 'Search' ? (searchValue || '?') : (frame.i !== -1 ? frame.arr[frame.i] : frame.arr[frame.j])}
+                    </div>
+                  )}
+                </div>
+              </div>
+
+              {/* 3D Blocks */}
+              {frame.arr.map((val, idx) => {
+                const isSearch = activeTab === 'Search';
+                let colorType = 'primary'; // 'primary', 'active', 'inactive', 'highlight'
+
+                if (isSearch) {
+                  const low = frame.j !== -1 ? frame.j : 0;
+                  const high = frame.k !== -1 ? frame.k : frame.arr.length - 1;
+                  const mid = frame.i;
+                  
+                  if (idx >= low && idx <= high) {
+                    if (idx === mid) {
+                      colorType = 'highlight'; // Current checked element
+                    } else {
+                      colorType = 'active'; // In active search range (green)
+                    }
+                  } else {
+                    colorType = 'inactive'; // Excluded search space (dark)
+                  }
+                } else {
+                  // Sort colors
+                  if (idx === frame.i || idx === frame.j) {
+                    colorType = 'highlight';
+                  } else if (idx === frame.k) {
+                    colorType = 'active';
+                  } else {
+                    colorType = 'primary';
+                  }
+                }
+
+                const maxVal = Math.max(...frame.arr, 1);
+                const heightPercent = Math.max((val / maxVal) * 75, 12);
+
+                let frontBg, topBg, rightBg;
+                if (colorType === 'active') {
+                  frontBg = 'linear-gradient(to top, #047857, #10b981)';
+                  topBg = '#34d399';
+                  rightBg = '#065f46';
+                } else if (colorType === 'highlight') {
+                  frontBg = 'linear-gradient(to top, #d97706, #fbbf24)';
+                  topBg = '#fcd34d';
+                  rightBg = '#92400e';
+                } else if (colorType === 'inactive') {
+                  frontBg = 'linear-gradient(to top, #1e293b, #334155)';
+                  topBg = '#475569';
+                  rightBg = '#0f172a';
+                } else {
+                  frontBg = 'linear-gradient(to top, #4f46e5, #6366f1)';
+                  topBg = '#818cf8';
+                  rightBg = '#3730a3';
+                }
+                
+                return (
+                  <div key={idx} style={{
+                    position: 'relative',
+                    height: `${heightPercent}%`,
+                    width: isMobile ? '20px' : '45px',
+                    display: 'flex',
+                    flexDirection: 'column',
+                    justifyContent: 'flex-end',
+                    transition: 'all 0.3s ease'
+                  }}>
+                    <div style={{ position: 'relative', width: '100%', height: '100%' }}>
+                      {/* Top Face */}
+                      <div style={{
+                        position: 'absolute',
+                        top: '-8px',
+                        left: '4px',
+                        width: '100%',
+                        height: '8px',
+                        background: topBg,
+                        transform: 'skewX(-45deg)',
+                        transformOrigin: 'bottom left',
+                        transition: 'all 0.3s ease'
+                      }} />
+                      {/* Right Face */}
+                      <div style={{
+                        position: 'absolute',
+                        top: '-4px',
+                        right: '-8px',
+                        width: '8px',
+                        height: '100%',
+                        background: rightBg,
+                        transform: 'skewY(-45deg)',
+                        transformOrigin: 'top left',
+                        transition: 'all 0.3s ease'
+                      }} />
+                      {/* Front Face */}
+                      <div style={{
+                        position: 'absolute',
+                        top: 0,
+                        left: 0,
+                        width: '100%',
+                        height: '100%',
+                        background: frontBg,
+                        border: '1px solid rgba(255,255,255,0.08)',
+                        borderRadius: '3px',
+                        display: 'flex',
+                        flexDirection: 'column',
+                        alignItems: 'center',
+                        justifyContent: 'flex-start',
+                        paddingTop: '8px',
+                        color: 'white',
+                        fontWeight: 'bold',
+                        fontSize: isMobile ? '0.7rem' : '1rem',
+                        boxShadow: '0 8px 16px rgba(0,0,0,0.3)',
+                        transition: 'all 0.3s ease'
+                      }}>
+                        {val}
+                        <span style={{ fontSize: '0.65rem', opacity: 0.5, marginTop: '2px', fontFamily: 'monospace' }}>
+                          {idx}
+                        </span>
+                      </div>
+                    </div>
+                  </div>
+                );
+              })}
+            </div>
+          ) : (
+            <div style={{ flex: 1, display: 'flex', alignItems: 'flex-end', justifyContent: 'center', gap: isMobile ? '4px' : '8px', background: 'var(--glass-bg)', borderRadius: '14px', border: '1px solid var(--glass-border)', padding: isMobile ? '1rem 0.5rem' : '2rem 1rem', overflow: 'hidden' }}>
+              {frame.arr.map((val, idx) => {
+                let bg = 'linear-gradient(to top, var(--accent-primary), var(--accent-secondary))';
+                if (idx === frame.i || idx === frame.j) bg = 'linear-gradient(to top, #fbbf24, #f59e0b)'; 
+                if (idx === frame.k) bg = 'linear-gradient(to top, #10b981, #059669)'; 
+                
+                return (
+                  <div key={idx} ref={el => barRefs.current[idx] = el} style={{
+                    height: `${Math.max(val, 5)}%`, 
+                    width: isMobile ? '20px' : '45px',
+                    background: bg,
+                    borderRadius: '4px 4px 0 0',
+                    display: 'flex',
+                    alignItems: 'flex-start',
+                    justifyContent: 'center',
+                    color: 'white',
+                    fontWeight: 'bold',
+                    fontSize: isMobile ? '0.7rem' : '1rem',
+                    paddingTop: '8px',
+                    boxShadow: '0 4px 12px rgba(0,0,0,0.1)',
+                    transition: 'height 0.2s ease, background 0.2s',
+                    transformOrigin: 'bottom center'
+                  }}>
+                    {val}
+                  </div>
+                );
+              })}
+            </div>
+          )}
           
           {selectedSort === 'Counting Sort' && frame.counts && (
             <div style={{ 
@@ -1497,43 +2013,42 @@ const SortSearchVisualizer = ({ onBack, openSettings, initialTab = 'Sort', initi
           </div>
 
           {showLogPanel && !isMobile && (
-            <div
+            <div 
               style={{
-                position: 'fixed',
-                left: `${Math.max(0, Math.min(logPosition.x, window.innerWidth - logSize.width))}px`,
-                top: `${Math.max(0, Math.min(logPosition.y, window.innerHeight - logSize.height))}px`,
+                position: 'absolute',
+                left: `${logPosition.x}px`,
+                top: `${logPosition.y}px`,
                 width: `${logSize.width}px`,
                 height: `${logSize.height}px`,
-                background: 'rgba(15, 23, 42, 0.95)',
-                backdropFilter: 'blur(12px)',
-                border: '1px solid var(--glass-border)',
-                borderRadius: '12px',
-                boxShadow: '0 15px 30px rgba(0,0,0,0.5)',
+                background: 'rgba(15, 23, 42, 0.45)', // Translucent glassmorphism
+                backdropFilter: 'blur(16px) saturate(180%)',
+                WebkitBackdropFilter: 'blur(16px) saturate(180%)',
+                border: '1px solid rgba(255, 255, 255, 0.08)',
+                borderRadius: '16px',
+                boxShadow: '0 20px 50px rgba(0,0,0,0.5)',
                 display: 'flex',
                 flexDirection: 'column',
-                zIndex: 99,
-                overflow: 'hidden'
+                overflow: 'hidden',
+                zIndex: 100
               }}
             >
               {/* Drag Handle Header */}
               <div
-                className="log-drag-handle"
-                onMouseDown={handleLogMouseDown}
-                onTouchStart={handleLogMouseDown}
+                onMouseDown={handleLogHeaderMouseDown}
+                onTouchStart={handleLogHeaderMouseDown}
                 style={{
                   padding: '8px 12px',
                   background: 'rgba(255, 255, 255, 0.04)',
-                  borderBottom: '1px solid var(--glass-border)',
-                  cursor: 'move',
+                  borderBottom: '1px solid rgba(255, 255, 255, 0.08)',
                   display: 'flex',
                   justifyContent: 'space-between',
                   alignItems: 'center',
                   userSelect: 'none',
                   flexShrink: 0,
-                  touchAction: 'none'
+                  cursor: 'move'
                 }}
               >
-                <span style={{ fontWeight: 600, fontSize: '0.85rem', color: 'var(--text-primary)', display: 'flex', alignItems: 'center', gap: '6px' }}>
+                <span style={{ fontWeight: 600, fontSize: '0.8rem', color: 'var(--text-primary)', display: 'flex', alignItems: 'center', gap: '6px' }}>
                   📋 Execution Log & Active State
                 </span>
                 <button
@@ -1543,7 +2058,7 @@ const SortSearchVisualizer = ({ onBack, openSettings, initialTab = 'Sort', initi
                     border: 'none',
                     color: 'var(--text-secondary)',
                     cursor: 'pointer',
-                    fontSize: '1.1rem',
+                    fontSize: '1rem',
                     padding: '0 4px',
                     lineHeight: 1
                   }}
@@ -1553,7 +2068,7 @@ const SortSearchVisualizer = ({ onBack, openSettings, initialTab = 'Sort', initi
                 </button>
               </div>
 
-              {/* Dual Column Content Body */}
+              {/* Content Body */}
               <div style={{ display: 'flex', flex: 1, overflow: 'hidden' }}>
 
                 {/* Left Column: Data Structure Pointers & Elements */}
@@ -1562,17 +2077,17 @@ const SortSearchVisualizer = ({ onBack, openSettings, initialTab = 'Sort', initi
                     width: `${activeStateWidth}px`,
                     background: 'rgba(0, 0, 0, 0.25)',
                     borderRight: '1px solid var(--glass-border)',
-                    padding: '10px 12px',
+                    padding: '6px 8px',
                     display: 'flex',
                     flexDirection: 'column',
-                    gap: '10px',
-                    fontSize: '0.8rem',
+                    gap: '4px',
+                    fontSize: '0.72rem',
                     color: 'var(--text-secondary)',
                     overflowY: 'auto',
                     flexShrink: 0
                   }}
                 >
-                  <div style={{ fontSize: '0.75rem', color: 'var(--accent-primary)', textTransform: 'uppercase', fontWeight: 'bold', borderBottom: '1px solid rgba(255,255,255,0.06)', paddingBottom: '4px' }}>
+                  <div style={{ fontSize: '0.72rem', color: 'var(--accent-primary)', textTransform: 'uppercase', fontWeight: 'bold', borderBottom: '1px solid rgba(255,255,255,0.06)', paddingBottom: '2px' }}>
                     Active State
                   </div>
                   <div>
@@ -1587,9 +2102,9 @@ const SortSearchVisualizer = ({ onBack, openSettings, initialTab = 'Sort', initi
                     return (
                       <>
                         <div>
-                          <div style={{ marginBottom: '2px', fontSize: '0.75rem' }}>Elements:</div>
+                          <div style={{ marginBottom: '2px', fontSize: '0.7rem' }}>Elements:</div>
                           {frame.arr && frame.arr.length > 0 ? (
-                            <div style={{ background: 'rgba(0,0,0,0.18)', padding: '4px 6px', borderRadius: '4px', fontFamily: 'monospace', color: '#34d399', wordBreak: 'break-all', fontWeight: 'bold' }}>
+                            <div style={{ background: 'rgba(0,0,0,0.18)', padding: '2px 4px', borderRadius: '4px', fontFamily: 'monospace', color: '#34d399', wordBreak: 'break-all', fontWeight: 'bold' }}>
                               [{frame.arr.join(', ')}]
                             </div>
                           ) : (
@@ -1597,9 +2112,9 @@ const SortSearchVisualizer = ({ onBack, openSettings, initialTab = 'Sort', initi
                           )}
                         </div>
 
-                        <div style={{ borderTop: '1px solid rgba(255,255,255,0.06)', paddingTop: '6px', marginTop: '4px' }}>
-                          <div style={{ fontSize: '0.72rem', textTransform: 'uppercase', fontWeight: 'bold', marginBottom: '4px', color: 'var(--accent-secondary)' }}>Pointers & Highlights</div>
-                          <div style={{ display: 'flex', flexDirection: 'column', gap: '4px' }}>
+                        <div style={{ borderTop: '1px solid rgba(255,255,255,0.06)', paddingTop: '4px', marginTop: '2px' }}>
+                          <div style={{ fontSize: '0.7rem', textTransform: 'uppercase', fontWeight: 'bold', marginBottom: '2px', color: 'var(--accent-secondary)' }}>Pointers & Highlights</div>
+                          <div style={{ display: 'flex', flexDirection: 'column', gap: '2px' }}>
                             {(() => {
                               const getValStr = (idx) => {
                                 if (idx === undefined || idx === -1 || !frame.arr) return null;
@@ -1617,56 +2132,48 @@ const SortSearchVisualizer = ({ onBack, openSettings, initialTab = 'Sort', initi
                                 if (j !== -1) details.push({ label: 'Min Index', val: getValStr(j), color: '#60a5fa' });
                                 if (k !== -1) details.push({ label: 'Index i (sorted)', val: getValStr(k), color: '#10b981' });
                               } else if (currentDisplayedAlgo === 'Insertion Sort') {
-                                if (i !== -1) {
-                                  const label = (frame.msg && (frame.msg.includes('Selected key') || frame.msg.includes('Placed key'))) ? 'Key Index' : 'Index j';
-                                  details.push({ label, val: getValStr(i), color: '#fbbf24' });
-                                }
-                                if (j !== -1) details.push({ label: 'Index j+1', val: getValStr(j), color: '#60a5fa' });
+                                if (i !== -1) details.push({ label: 'Active Key Index', val: getValStr(i), color: '#fbbf24' });
+                                if (j !== -1) details.push({ label: 'Index j', val: getValStr(j), color: '#60a5fa' });
+                                if (k !== -1) details.push({ label: 'Sorted Boundary', val: getValStr(k), color: '#10b981' });
                               } else if (currentDisplayedAlgo === 'Merge Sort') {
-                                if (i !== -1) details.push({ label: 'Left index', val: getValStr(i), color: '#fbbf24' });
-                                if (j !== -1) details.push({ label: 'Right index', val: getValStr(j), color: '#60a5fa' });
-                                if (k !== -1) details.push({ label: 'Merge index', val: getValStr(k), color: '#10b981' });
-                              } else if (currentDisplayedAlgo === 'Heap Sort') {
-                                if (i !== -1) details.push({ label: 'Index i', val: getValStr(i), color: '#fbbf24' });
-                                if (j !== -1) details.push({ label: 'Child/Swap index', val: getValStr(j), color: '#60a5fa' });
-                                if (k !== -1) details.push({ label: 'Sorted boundary', val: getValStr(k), color: '#10b981' });
+                                if (i !== -1) details.push({ label: 'Merge Left', val: getValStr(i), color: '#fbbf24' });
+                                if (j !== -1) details.push({ label: 'Merge Right', val: getValStr(j), color: '#60a5fa' });
+                                if (k !== -1) details.push({ label: 'Merge Active', val: getValStr(k), color: '#10b981' });
                               } else if (currentDisplayedAlgo === 'Quick Sort') {
-                                if (i !== -1) details.push({ label: 'Index j', val: getValStr(i), color: '#fbbf24' });
-                                if (j !== -1) details.push({ label: 'Pivot index', val: getValStr(j), color: '#60a5fa' });
-                                if (k !== -1) details.push({ label: 'Boundary index i', val: getValStr(k), color: '#10b981' });
-                              } else if (currentDisplayedAlgo === 'Shell Sort') {
-                                if (i !== -1) details.push({ label: 'Index j', val: getValStr(i), color: '#fbbf24' });
-                                if (j !== -1) details.push({ label: 'Index j - gap', val: getValStr(j), color: '#60a5fa' });
-                              } else if (currentDisplayedAlgo === 'Cocktail Shaker Sort') {
-                                if (i !== -1) details.push({ label: 'Index i', val: getValStr(i), color: '#fbbf24' });
-                                if (j !== -1) details.push({ label: 'Index i+1', val: getValStr(j), color: '#60a5fa' });
-                                if (k !== -1) details.push({ label: 'Sorted boundary', val: getValStr(k), color: '#10b981' });
-                              } else if (currentDisplayedAlgo === 'Radix Sort') {
-                                if (i !== -1) details.push({ label: 'Current index', val: getValStr(i), color: '#fbbf24' });
-                                if (j !== -1) details.push({ label: 'Reassemble index', val: getValStr(j), color: '#60a5fa' });
-                                if (k !== -1) details.push({ label: 'Digit place', val: `${k}s place`, color: '#10b981' });
+                                if (i !== -1) details.push({ label: 'Pivot Index', val: getValStr(i), color: '#fbbf24' });
+                                if (j !== -1) details.push({ label: 'Pointer i', val: getValStr(j), color: '#60a5fa' });
+                                if (k !== -1) details.push({ label: 'Pointer j', val: getValStr(k), color: '#10b981' });
+                              } else if (currentDisplayedAlgo === 'Heap Sort') {
+                                if (i !== -1) details.push({ label: 'Node i', val: getValStr(i), color: '#fbbf24' });
+                                if (j !== -1) details.push({ label: 'Largest Node', val: getValStr(j), color: '#60a5fa' });
+                                if (k !== -1) details.push({ label: 'End index', val: getValStr(k), color: '#10b981' });
                               } else if (currentDisplayedAlgo === 'Counting Sort') {
                                 if (i !== -1) details.push({ label: 'Input Index', val: getValStr(i), color: '#fbbf24' });
                                 if (j !== -1) details.push({ label: 'Placed Index', val: getValStr(j), color: '#60a5fa' });
+                              } else if (currentDisplayedAlgo === 'Radix Sort') {
+                                if (i !== -1) details.push({ label: 'Item Index', val: getValStr(i), color: '#fbbf24' });
+                                if (j !== -1) details.push({ label: 'Output Index', val: getValStr(j), color: '#60a5fa' });
+                                if (k !== -1) details.push({ label: 'Place Value', val: `${k}s place`, color: '#10b981' });
+                              } else if (currentDisplayedAlgo === 'Shell Sort') {
+                                if (i !== -1) details.push({ label: 'Index i', val: getValStr(i), color: '#fbbf24' });
+                                if (j !== -1) details.push({ label: 'Index j', val: getValStr(j), color: '#60a5fa' });
+                                if (k !== -1) details.push({ label: 'Current Gap', val: String(k), color: '#10b981' });
+                              } else if (currentDisplayedAlgo === 'Cocktail Shaker Sort') {
+                                if (i !== -1) details.push({ label: 'Index i', val: getValStr(i), color: '#fbbf24' });
+                                if (j !== -1) details.push({ label: 'Swapped occurred', val: j === 1 ? 'Yes' : 'No', color: '#60a5fa' });
+                                if (k !== -1) details.push({ label: 'Direction', val: k === 1 ? 'Forward' : 'Backward', color: '#10b981' });
                               } else if (currentDisplayedAlgo === 'Linear Search') {
-                                if (i !== -1) details.push({ label: 'Current index', val: getValStr(i), color: '#fbbf24' });
-                                if (k !== -1) details.push({ label: 'Found index', val: getValStr(k), color: '#10b981' });
+                                if (i !== -1) details.push({ label: 'Mid/Active Index', val: getValStr(i), color: '#fbbf24' });
                               } else if (currentDisplayedAlgo === 'Binary Search') {
-                                if (i !== -1) details.push({ label: 'Mid index (m)', val: getValStr(i), color: '#fbbf24' });
-                                if (j !== -1) details.push({ label: 'Left index (l)', val: getValStr(j), color: '#60a5fa' });
-                                if (k !== -1) details.push({ label: 'Right index (r)', val: getValStr(k), color: '#10b981' });
+                                if (i !== -1) details.push({ label: 'Mid Index', val: getValStr(i), color: '#fbbf24' });
+                                if (j !== -1) details.push({ label: 'Left Index', val: getValStr(j), color: '#60a5fa' });
+                                if (k !== -1) details.push({ label: 'Right Index', val: getValStr(k), color: '#10b981' });
                               }
 
-                              if (details.length === 0) {
-                                return <div style={{ color: 'var(--text-secondary)', fontStyle: 'italic', fontSize: '0.8rem' }}>No active pointers</div>;
-                              }
-
-                              return details.map((d, index) => (
-                                <div key={index} style={{ display: 'flex', justifyContent: 'space-between' }}>
+                              return details.map((d, idx) => (
+                                <div key={idx} style={{ display: 'flex', justifyContent: 'space-between', gap: '4px' }}>
                                   <span>{d.label}:</span>
-                                  <span style={{ color: d.color, fontWeight: 'bold', fontFamily: 'monospace' }}>
-                                    {d.val}
-                                  </span>
+                                  <span style={{ color: d.color, fontWeight: 'bold' }}>{d.val}</span>
                                 </div>
                               ));
                             })()}
@@ -1675,27 +2182,14 @@ const SortSearchVisualizer = ({ onBack, openSettings, initialTab = 'Sort', initi
                       </>
                     );
                   })()}
+
                 </div>
 
-                {/* Vertical Column split resize handle */}
+                {/* Col Resize bar */}
                 <div 
-                  onMouseDown={handleActiveStateColDragStart}
+                  onMouseDown={handleActiveStateColDragStart} 
                   onTouchStart={handleActiveStateColDragStart}
-                  style={{
-                    width: '8px',
-                    cursor: 'col-resize',
-                    background: 'rgba(255, 255, 255, 0.05)',
-                    borderLeft: '1px solid var(--glass-border)',
-                    borderRight: '1px solid var(--glass-border)',
-                    alignSelf: 'stretch',
-                    transition: 'background 0.2s',
-                    borderRadius: '3px',
-                    flexShrink: 0,
-                    touchAction: 'none'
-                  }}
-                  onMouseOver={e => e.currentTarget.style.background = 'rgba(96,165,250,0.5)'}
-                  onMouseOut={e => e.currentTarget.style.background = 'rgba(255, 255, 255, 0.05)'}
-                  title="Drag to resize columns"
+                  style={{ width: '4px', cursor: 'col-resize', background: 'transparent', zIndex: 5 }} 
                 />
 
                 {/* Right Column: Log list container */}
@@ -1716,37 +2210,33 @@ const SortSearchVisualizer = ({ onBack, openSettings, initialTab = 'Sort', initi
                       </div>
                     )}
                     {timeline.slice(0, currentStep + 1).map((frame, idx) => (
-                      <div key={idx} style={{ display: 'flex', gap: '6px', lineHeight: '1.4' }}>
-                        <span style={{ color: 'var(--text-secondary)', userSelect: 'none', minWidth: '15px' }}>
+                      <div key={idx} style={{ display: 'flex', alignItems: 'flex-start', gap: '8px', fontSize: '0.75rem', lineHeight: '1.4' }}>
+                        <span style={{ color: 'var(--text-secondary)', flexShrink: 0, width: '24px', textAlign: 'right', fontWeight: 'bold', userSelect: 'none' }}>
                           {idx === currentStep ? '➔' : `${idx + 1}.`}
                         </span>
-                        <span style={{ color: idx === currentStep ? '#fbbf24' : 'var(--text-primary)' }}>
-                          {frame.msg}
+                        <span style={{ color: idx === currentStep ? 'var(--accent-primary)' : 'var(--text-primary)', wordBreak: 'break-word', flex: 1 }}>
+                          {highlightLogText(frame.msg)}
                         </span>
                       </div>
                     ))}
                   </div>
                 </div>
-
-                {/* Resize Handle */}
-                <div
-                  style={{
-                    position: 'absolute',
-                    right: '4px',
-                    bottom: '4px',
-                    width: '12px',
-                    height: '12px',
-                    cursor: 'se-resize',
-                    background: 'linear-gradient(135deg, transparent 60%, rgba(255,255,255,0.3) 60%)',
-                    zIndex: 100,
-                    touchAction: 'none'
-                  }}
-                  onMouseDown={handleResizeMouseDown}
-                  onTouchStart={handleResizeMouseDown}
-                  title="Drag to resize panel"
-                />
-
               </div>
+
+              {/* Resize Handle */}
+              <div
+                onMouseDown={handleLogResizeMouseDown}
+                onTouchStart={handleLogResizeMouseDown}
+                style={{
+                  position: 'absolute', bottom: '0', right: '0', width: '15px', height: '15px',
+                  cursor: 'se-resize', background: 'transparent',
+                  display: 'flex', alignItems: 'flex-end', justifyContent: 'flex-end', padding: '2px',
+                  zIndex: 10
+                }}
+              >
+                <svg width="8" height="8" viewBox="0 0 8 8"><path d="M6 0 L8 0 L8 8 L0 8 L0 6 L4 6 L4 4 L6 4 Z" fill="rgba(255,255,255,0.3)" /></svg>
+              </div>
+
             </div>
           )}
 
@@ -1887,9 +2377,13 @@ const SortSearchVisualizer = ({ onBack, openSettings, initialTab = 'Sort', initi
 
               <div style={{ flex: 1, background: 'rgba(0,0,0,0.15)', borderRadius: '10px', padding: '0.75rem 1rem', overflowY: 'auto', border: '1px solid rgba(255,255,255,0.03)' }}>
                 {timeline.slice(0, currentStep + 1).map((f, idx) => (
-                  <div key={idx} style={{ display: 'flex', gap: '6px', fontSize: '0.8rem', marginBottom: '4px' }}>
-                    <span style={{ color: 'var(--text-secondary)' }}>{idx === currentStep ? '➔' : `${idx + 1}.`}</span>
-                    <span style={{ color: idx === currentStep ? '#fbbf24' : 'var(--text-primary)' }}>{f.msg}</span>
+                  <div key={idx} style={{ display: 'flex', alignItems: 'flex-start', gap: '8px', fontSize: '0.75rem', marginBottom: '6px', lineHeight: '1.4' }}>
+                    <span style={{ color: 'var(--text-secondary)', flexShrink: 0, width: '24px', textAlign: 'right', fontWeight: 'bold', userSelect: 'none' }}>
+                      {idx === currentStep ? '➔' : `${idx + 1}.`}
+                    </span>
+                    <span style={{ color: idx === currentStep ? 'var(--accent-primary)' : 'var(--text-primary)', wordBreak: 'break-word', flex: 1 }}>
+                      {highlightLogText(f.msg)}
+                    </span>
                   </div>
                 ))}
               </div>
@@ -1922,43 +2416,78 @@ const SortSearchVisualizer = ({ onBack, openSettings, initialTab = 'Sort', initi
               title="Drag to resize columns" />
           )}
 
-          <div style={{ width: isMobile ? '100%' : `${codeWidth}px`, background: 'var(--glass-bg)', borderRadius: '14px', border: '1px solid var(--glass-border)', display: 'flex', flexDirection: 'column', padding: '0.85rem', overflow: 'hidden', minWidth: isMobile ? '100%' : '200px' }}>
-            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '0.6rem', flexShrink: 0 }}>
-              <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
-                <h3 style={{ color: 'var(--text-secondary)', fontSize: '0.9rem', fontWeight: 600, margin: 0 }}>Code</h3>
+          <div style={{ width: isMobile ? '100%' : `${codeWidth}px`, background: 'var(--glass-bg)', borderRadius: '14px', border: '1px solid var(--glass-border)', display: 'flex', flexDirection: 'column', overflow: 'hidden', minWidth: isMobile ? '100%' : '200px' }}>
+            {/* Header — sticky 2-row layout */}
+            <div style={{ flexShrink: 0, borderBottom: '1px solid var(--glass-border)', background: 'var(--bg-secondary)', borderRadius: '14px 14px 0 0' }}>
+              {/* Row 1: Language selector */}
+              <div style={{ padding: '8px 12px', display: 'flex', alignItems: 'center', gap: '5px', borderBottom: '1px solid rgba(255,255,255,0.05)', flexWrap: 'wrap' }}>
+                <span style={{ fontSize: '0.78rem', fontWeight: 700, color: 'var(--text-secondary)', whiteSpace: 'nowrap' }}>🌐 Lang:</span>
+                {['C','C++','Java','Python','JS'].map(lang => (
+                  <button key={lang} onClick={() => setCodeLang(lang)}
+                    style={{
+                      padding: '2px 9px',
+                      fontSize: '0.74rem',
+                      borderRadius: '5px',
+                      border: codeLang === lang ? '1.5px solid var(--accent-primary)' : '1px solid var(--glass-border)',
+                      background: codeLang === lang ? 'var(--accent-primary)' : 'transparent',
+                      color: codeLang === lang ? '#fff' : 'var(--text-secondary)',
+                      cursor: 'pointer',
+                      fontWeight: codeLang === lang ? 700 : 400,
+                      transition: 'all 0.15s'
+                    }}
+                  >{lang === 'JS' ? 'JavaScript' : lang}</button>
+                ))}
+              </div>
+              {/* Row 2: Utility actions */}
+              <div style={{ padding: '6px 12px', display: 'flex', alignItems: 'center', gap: '6px', flexWrap: 'wrap' }}>
+                <h3 style={{ color: 'var(--text-secondary)', fontSize: '0.85rem', fontWeight: 600, margin: 0 }}>Code</h3>
+                <button onClick={() => setLocalFontSize(prev => Math.max(10, prev - 2))} style={{ background: 'transparent', border: '1px solid var(--glass-border)', borderRadius: '4px', color: 'var(--text-secondary)', fontSize: '0.73rem', padding: '1px 6px', cursor: 'pointer' }}>A−</button>
+                <button onClick={() => setLocalFontSize(prev => Math.min(40, prev + 2))} style={{ background: 'transparent', border: '1px solid var(--glass-border)', borderRadius: '4px', color: 'var(--text-secondary)', fontSize: '0.73rem', padding: '1px 6px', cursor: 'pointer' }}>A+</button>
                 <button 
                   onClick={() => onShowUpcomingFeatures ? onShowUpcomingFeatures() : setIsRunnerOpen(true)}
-                  className="btn btn-clear"  
-                  style={{ padding: '0.2rem 0.5rem', fontSize: '0.75rem', whiteSpace: 'nowrap', display: 'inline-flex', alignItems: 'center', background: 'rgba(16,185,129,0.2)', color: '#34d399', border: '1px solid rgba(16,185,129,0.3)' }}
-                >
-                  ▶ Run Code
-                </button>
+                  style={{ padding: '2px 8px', fontSize: '0.74rem', whiteSpace: 'nowrap', display: 'inline-flex', alignItems: 'center', background: 'rgba(16,185,129,0.15)', color: '#34d399', border: '1px solid rgba(16,185,129,0.3)', borderRadius: '5px', cursor: 'pointer' }}
+                >▶ Run</button>
                 <button 
                   onClick={handleCopyCode} 
-                  className="btn btn-clear" 
-                  style={{ padding: '0.2rem 0.5rem', fontSize: '0.75rem', whiteSpace: 'nowrap' }}
-                >
-                  {copied ? '✓ Copied' : '📋 Copy'}
-                </button>
+                  style={{ padding: '2px 8px', fontSize: '0.74rem', background: 'transparent', border: '1px solid var(--glass-border)', borderRadius: '5px', color: 'var(--text-secondary)', cursor: 'pointer', whiteSpace: 'nowrap' }}
+                >{copied ? '✓ Copied' : '📋 Copy'}</button>
               </div>
-              <select className="styled-select" style={{ padding: '4px 8px', fontSize: '0.8rem', width: '100px' }} value={codeLang} onChange={e => setCodeLang(e.target.value)}>
-                <option value="C">C</option>
-                <option value="C++">C++</option>
-                <option value="Java">Java</option>
-                <option value="Python">Python</option>
-                <option value="JS">JavaScript</option>
-              </select>
             </div>
-            <div className="code-box" style={{ flex: 1, overflowY: 'auto', padding: '1rem', borderRadius: '8px' }}>
+            <div className="code-box" style={{ flex: 1, overflow: 'auto', padding: '1rem', borderRadius: '8px' }}>
               <pre style={{ 
                 margin: 0, 
                 color: 'var(--text-primary)', 
                 fontFamily: "'Fira Code', monospace", 
                 lineHeight: '1.6',
-                fontSize: `${fontSize}px`,
-                whiteSpace: wordWrap === 'on' ? 'pre-wrap' : 'pre'
+                fontSize: `${localFontSize}px`
               }}>
-                 {getSortSearchCode(currentDisplayedAlgo, codeLang, array, searchValue ? parseInt(searchValue) : undefined)}
+                {(() => {
+                  const rawCode = getSortSearchCode(currentDisplayedAlgo, codeLang, array, searchValue ? parseInt(searchValue) : undefined);
+                  const codeLines = toAllman(rawCode).split('\n');
+                  const frame = timeline[currentStep] || {};
+                  return codeLines.map((lineText, idx) => {
+                    const isHighlighted = isSortSearchLineMatch(currentDisplayedAlgo, frame.msg || '', lineText);
+                    return (
+                      <div 
+                        key={idx} 
+                        style={{ 
+                          background: isHighlighted ? 'rgba(59,130,246,0.16)' : 'transparent',
+                          borderLeft: isHighlighted ? '3px solid var(--accent-primary)' : '3px solid transparent',
+                          padding: '1px 12px',
+                          transition: 'all 0.15s ease'
+                        }}
+                      >
+                        <span style={{ 
+                          whiteSpace: wordWrap === 'on' ? 'pre-wrap' : 'pre',
+                          color: isHighlighted ? '#ffffff' : 'var(--text-primary)',
+                          fontFamily: "'Fira Code', monospace"
+                        }}>
+                          {lineText || ' '}
+                        </span>
+                      </div>
+                    );
+                  });
+                })()}
               </pre>
             </div>
           </div>

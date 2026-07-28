@@ -3,6 +3,23 @@ import React, { useState, useEffect, useRef } from 'react';
 import gsap from 'gsap';
 import { getGeneralCodeTemplate } from './codeTemplatesGeneral';
 import CodeRunnerModal from './CodeRunnerModal.jsx';
+
+// Allman brace formatter
+const toAllman = code => {
+  if (!code) return '';
+  const lines = code.split('\n');
+  const out = [];
+  for (const line of lines) {
+    const t = line.trimEnd();
+    if (t.endsWith('{') && t.trim() !== '{' && !t.trim().startsWith('//') && !t.trim().startsWith('*')) {
+      const indent = line.match(/^(\s*)/)[1];
+      const body = t.slice(0, -1).trimEnd();
+      if (body.trim().length > 0) { out.push(body); out.push(indent + '{'); continue; }
+    }
+    out.push(line);
+  }
+  return out.join('\n');
+};
 import TopicInfoModal from './TopicInfoModal.jsx';
 
 // Fallback-safe Clipboard Copy Helper
@@ -188,7 +205,101 @@ const parsePolynomial = (str) => {
   return merged.filter(t => t.coeff !== 0);
 };
 
+const highlightLogText = (text) => {
+  if (!text) return '';
+  const str = String(text);
+  const lower = str.toLowerCase();
+  
+  if (
+    lower.includes('root full') ||
+    lower.includes('split') ||
+    lower.includes('imbalance') ||
+    lower.includes('rotate') ||
+    lower.includes('rotation') ||
+    lower.includes('delete') ||
+    lower.includes('deleted') ||
+    lower.includes('remove') ||
+    lower.includes('removed') ||
+    lower.includes('pop') ||
+    lower.includes('popped') ||
+    lower.includes('mismatch') ||
+    lower.includes('⚡')
+  ) {
+    const regex = /(\b\d+(?:\.\d+)?\b)/g;
+    const parts = str.split(regex);
+    return (
+      <span style={{ color: '#f87171', fontWeight: 'bold' }}>
+        {parts.map((p, i) => 
+          regex.test(p) ? <span key={i} style={{ color: '#fbbf24', textShadow: '0 0 8px rgba(251,191,36,0.3)' }}>{p}</span> : p
+        )}
+      </span>
+    );
+  }
+  
+  if (
+    lower.includes('inserted') ||
+    lower.includes('insert(') ||
+    lower.includes('insert ') ||
+    lower.includes('create node') ||
+    lower.includes('success') ||
+    lower.includes('match') ||
+    lower.includes('completed') ||
+    lower.includes('done') ||
+    lower.includes('✦') ||
+    lower.includes('✓') ||
+    lower.includes('✅')
+  ) {
+    const regex = /(\b\d+(?:\.\d+)?\b)/g;
+    const parts = str.split(regex);
+    return (
+      <span style={{ color: '#34d399', fontWeight: 'bold' }}>
+        {parts.map((p, i) => 
+          regex.test(p) ? <span key={i} style={{ color: '#fbbf24' }}>{p}</span> : p
+        )}
+      </span>
+    );
+  }
+
+  if (
+    lower.includes('going to') ||
+    lower.includes('compare') ||
+    lower.includes('comparing') ||
+    lower.includes('probe') ||
+    lower.includes('probing') ||
+    lower.includes('relaxation') ||
+    lower.includes('check') ||
+    lower.includes('add') ||
+    lower.includes('added') ||
+    lower.includes('push') ||
+    lower.includes('pushed') ||
+    lower.includes('collision') ||
+    lower.includes('➜') ||
+    lower.includes('↳')
+  ) {
+    const regex = /(\b\d+(?:\.\d+)?\b)/g;
+    const parts = str.split(regex);
+    return (
+      <span style={{ color: '#fb923c', fontWeight: 600 }}>
+        {parts.map((p, i) => 
+          regex.test(p) ? <span key={i} style={{ color: '#fbbf24', fontWeight: 'bold' }}>{p}</span> : p
+        )}
+      </span>
+    );
+  }
+  
+  const regex = /(\b\d+(?:\.\d+)?\b)/g;
+  const parts = str.split(regex);
+  return parts.map((p, i) => 
+    /^\d+(?:\.\d+)?$/.test(p) ? <strong key={i} style={{ color: '#fbbf24' }}>{p}</strong> : p
+  );
+};
+
 const GeneralDSVisualizer = ({ onBack, openSettings, initialType = 'HASH_TABLE', initialVariety = 'HASH_LINEAR', onCopyCode, onCodeChange, fontSize = 14, wordWrap = 'off', onShowUpcomingFeatures }) => {
+  const [localFontSize, setLocalFontSize] = useState(fontSize);
+  useEffect(() => {
+    setLocalFontSize(fontSize);
+  }, [fontSize]);
+
   const [dsType, setDsType] = useState(initialType);
   const [dsVariety, setDsVariety] = useState(initialVariety);
   const [showTopicInfo, setShowTopicInfo] = useState(false);
@@ -216,17 +327,59 @@ const GeneralDSVisualizer = ({ onBack, openSettings, initialType = 'HASH_TABLE',
 
   // Draggable execution log states
   const [showLogPanel, setShowLogPanel] = useState(true);
-  const [logPosition, setLogPosition] = useState({ x: 20, y: 120 });
+  const [logPosition, setLogPosition] = useState({ x: 50, y: 150 });
+  const [logSize, setLogSize] = useState({ width: 520, height: 280 });
   const [isDraggingLog, setIsDraggingLog] = useState(false);
-  const [logSize, setLogSize] = useState({ width: 580, height: 300 });
+  const dragStart = useRef({ x: 0, y: 0 });
+  const panelStart = useRef({ x: 0, y: 0 });
   const [activeStateWidth, setActiveStateWidth] = useState(240);
-  const [codeWidth, setCodeWidth] = useState(450);
+  const [codeWidth, setCodeWidth] = useState(360);
 
-  const logDragStart = useRef({ x: 0, y: 0 });
-  const logPanelStart = useRef({ x: 0, y: 0 });
   const logContainerRef = useRef(null);
 
-  const handleResizeMouseDown = (e) => {
+  const handleLogHeaderMouseDown = (e) => {
+    if (e.button !== 0 && e.type !== 'touchstart') return;
+    setIsDraggingLog(true);
+    const isTouch = e.type.startsWith('touch');
+    const clientX = isTouch ? e.touches[0].clientX : e.clientX;
+    const clientY = isTouch ? e.touches[0].clientY : e.clientY;
+    dragStart.current = { x: clientX, y: clientY };
+    panelStart.current = { x: logPosition.x, y: logPosition.y };
+    if (e.cancelable) e.preventDefault();
+  };
+
+  useEffect(() => {
+    if (!isDraggingLog) return;
+    const handleMouseMove = (e) => {
+      const isTouch = e.type.startsWith('touch');
+      const clientX = isTouch ? e.touches[0].clientX : e.clientX;
+      const clientY = isTouch ? e.touches[0].clientY : e.clientY;
+      const dx = clientX - dragStart.current.x;
+      const dy = clientY - dragStart.current.y;
+      
+      setLogPosition({
+        x: Math.max(-logSize.width + 40, Math.min(window.innerWidth - 40, panelStart.current.x + dx)),
+        y: Math.max(0, Math.min(window.innerHeight - 40, panelStart.current.y + dy))
+      });
+    };
+
+    const handleMouseUp = () => {
+      setIsDraggingLog(false);
+    };
+
+    window.addEventListener('mousemove', handleMouseMove);
+    window.addEventListener('mouseup', handleMouseUp);
+    window.addEventListener('touchmove', handleMouseMove, { passive: false });
+    window.addEventListener('touchend', handleMouseUp);
+    return () => {
+      window.removeEventListener('mousemove', handleMouseMove);
+      window.removeEventListener('mouseup', handleMouseUp);
+      window.removeEventListener('touchmove', handleMouseMove);
+      window.removeEventListener('touchend', handleMouseUp);
+    };
+  }, [isDraggingLog, logSize]);
+
+  const handleLogResizeMouseDown = (e) => {
     if (e.cancelable) e.preventDefault();
     e.stopPropagation();
     const isTouch = e.type.startsWith('touch');
@@ -238,8 +391,8 @@ const GeneralDSVisualizer = ({ onBack, openSettings, initialType = 'HASH_TABLE',
     const handleMouseMove = (moveEvent) => {
       const currentX = moveEvent.type.startsWith('touch') ? moveEvent.touches[0].clientX : moveEvent.clientX;
       const currentY = moveEvent.type.startsWith('touch') ? moveEvent.touches[0].clientY : moveEvent.clientY;
-      const newWidth = Math.max(340, startWidth + (currentX - startX));
-      const newHeight = Math.max(180, startHeight + (currentY - startY));
+      const newWidth = Math.max(300, Math.min(800, startWidth + (currentX - startX)));
+      const newHeight = Math.max(150, Math.min(600, startHeight + (currentY - startY)));
       setLogSize({ width: newWidth, height: newHeight });
     };
 
@@ -263,7 +416,7 @@ const GeneralDSVisualizer = ({ onBack, openSettings, initialType = 'HASH_TABLE',
     const startWidth = activeStateWidth;
     const drag = (moveEvent) => {
       const currentX = moveEvent.type.startsWith('touch') ? moveEvent.touches[0].clientX : moveEvent.clientX;
-      const newWidth = Math.max(120, Math.min(logSize.width - 120, startWidth + (currentX - startX)));
+      const newWidth = Math.max(120, Math.min(450, startWidth + (currentX - startX)));
       setActiveStateWidth(newWidth);
     };
     const end = () => {
@@ -298,49 +451,6 @@ const GeneralDSVisualizer = ({ onBack, openSettings, initialType = 'HASH_TABLE',
     document.addEventListener('touchmove', drag, { passive: false });
     document.addEventListener('touchend', end);
   };
-
-  const handleLogMouseDown = (e) => {
-    const handle = e.target.closest('.log-drag-handle');
-    if (handle) {
-      setIsDraggingLog(true);
-      const isTouch = e.type.startsWith('touch');
-      const clientX = isTouch ? e.touches[0].clientX : e.clientX;
-      const clientY = isTouch ? e.touches[0].clientY : e.clientY;
-      logDragStart.current = { x: clientX, y: clientY };
-      logPanelStart.current = { x: logPosition.x, y: logPosition.y };
-      if (e.cancelable) e.preventDefault();
-    }
-  };
-
-  useEffect(() => {
-    if (!isDraggingLog) return;
-    const handleMouseMove = (e) => {
-      const isTouch = e.type.startsWith('touch');
-      const clientX = isTouch ? e.touches[0].clientX : e.clientX;
-      const clientY = isTouch ? e.touches[0].clientY : e.clientY;
-      const dx = clientX - logDragStart.current.x;
-      const dy = clientY - logDragStart.current.y;
-      const maxX = Math.max(0, window.innerWidth - logSize.width);
-      const maxY = Math.max(0, window.innerHeight - logSize.height);
-      setLogPosition({
-        x: Math.max(0, Math.min(maxX, logPanelStart.current.x + dx)),
-        y: Math.max(0, Math.min(maxY, logPanelStart.current.y + dy))
-      });
-    };
-    const handleMouseUp = () => {
-      setIsDraggingLog(false);
-    };
-    window.addEventListener('mousemove', handleMouseMove);
-    window.addEventListener('mouseup', handleMouseUp);
-    window.addEventListener('touchmove', handleMouseMove, { passive: false });
-    window.addEventListener('touchend', handleMouseUp);
-    return () => {
-      window.removeEventListener('mousemove', handleMouseMove);
-      window.removeEventListener('mouseup', handleMouseUp);
-      window.removeEventListener('touchmove', handleMouseMove);
-      window.removeEventListener('touchend', handleMouseUp);
-    };
-  }, [isDraggingLog, logSize]);
 
 
 
@@ -1637,23 +1747,25 @@ const GeneralDSVisualizer = ({ onBack, openSettings, initialType = 'HASH_TABLE',
     
     const arr = frame.arr || [];
     return (
-      <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '12px', padding: '2rem', flexWrap: 'nowrap', overflowX: 'auto', width: '100%', position: 'relative' }}>
-        <div style={{ position: 'absolute', top: '50%', left: '10%', right: '10%', height: '80px', transform: 'translateY(-50%)', borderTop: '3px solid var(--glass-border)', borderBottom: '3px solid var(--glass-border)', borderRadius: '0', pointerEvents: 'none' }} />
-        <div style={{ padding: '0.8rem', color: 'var(--text-secondary)', textAlign: 'center', fontWeight: 'bold', zIndex: 2 }}>
-          {dsVariety === 'QUEUE_DEQUE' ? '⟷ Front' : 'Front Out ➔'}
-        </div>
-        {arr.map((val, idx) => (
-          <div key={idx} style={{
-            width: '65px', height: '65px', background: idx === frame.activeIdx ? 'linear-gradient(135deg, #fbbf24, #f59e0b)' : 'linear-gradient(135deg, var(--accent-primary), var(--accent-secondary))',
-            borderRadius: '10px', display: 'flex', alignItems: 'center', justifyContent: 'center', color: 'white', fontWeight: 'bold', fontSize: '1.3rem',
-            boxShadow: idx === frame.activeIdx ? '0 0 20px rgba(245,158,11,0.6)' : '0 5px 15px rgba(0,0,0,0.3)', transition: 'all 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275)', flexShrink: 0, zIndex: 2
-          }}>
-            {val}
+      <div style={{ display: 'flex', alignItems: 'center', padding: '2rem', overflowX: 'auto', width: '100%', position: 'relative', height: '100%' }}>
+        <div style={{ display: 'flex', alignItems: 'center', gap: '12px', margin: 'auto', minWidth: 'max-content', position: 'relative' }}>
+          <div style={{ position: 'absolute', top: '50%', left: '10%', right: '10%', height: '80px', transform: 'translateY(-50%)', borderTop: '3px solid var(--glass-border)', borderBottom: '3px solid var(--glass-border)', borderRadius: '0', pointerEvents: 'none' }} />
+          <div style={{ padding: '0.8rem', color: 'var(--text-secondary)', textAlign: 'center', fontWeight: 'bold', zIndex: 2 }}>
+            {dsVariety === 'QUEUE_DEQUE' ? '⟷ Front' : 'Front Out ➔'}
           </div>
-        ))}
-        {arr.length === 0 && <div style={{ color: 'var(--text-secondary)', fontStyle: 'italic', margin: '0 2rem', zIndex: 2 }}>Queue is empty</div>}
-        <div style={{ padding: '0.8rem', color: 'var(--text-secondary)', textAlign: 'center', fontWeight: 'bold', zIndex: 2 }}>
-          {dsVariety === 'QUEUE_DEQUE' ? 'Rear ⟷' : '➔ Rear In'}
+          {arr.map((val, idx) => (
+            <div key={idx} style={{
+              width: '65px', height: '65px', background: idx === frame.activeIdx ? 'linear-gradient(135deg, #fbbf24, #f59e0b)' : 'linear-gradient(135deg, var(--accent-primary), var(--accent-secondary))',
+              borderRadius: '10px', display: 'flex', alignItems: 'center', justifyContent: 'center', color: 'white', fontWeight: 'bold', fontSize: '1.3rem',
+              boxShadow: idx === frame.activeIdx ? '0 0 20px rgba(245,158,11,0.6)' : '0 5px 15px rgba(0,0,0,0.3)', transition: 'all 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275)', flexShrink: 0, zIndex: 2
+            }}>
+              {val}
+            </div>
+          ))}
+          {arr.length === 0 && <div style={{ color: 'var(--text-secondary)', fontStyle: 'italic', margin: '0 2rem', zIndex: 2 }}>Queue is empty</div>}
+          <div style={{ padding: '0.8rem', color: 'var(--text-secondary)', textAlign: 'center', fontWeight: 'bold', zIndex: 2 }}>
+            {dsVariety === 'QUEUE_DEQUE' ? 'Rear ⟷' : '➔ Rear In'}
+          </div>
         </div>
       </div>
     );
@@ -1958,12 +2070,21 @@ const GeneralDSVisualizer = ({ onBack, openSettings, initialType = 'HASH_TABLE',
           )}
 
           {!isMobile && (
-            <>
-              <div style={{ width: '1px', height: '26px', background: 'var(--glass-border)', margin: '0 8px' }} />
-              <button className="btn btn-clear" onClick={() => setShowLogPanel(!showLogPanel)}>{showLogPanel ? '📋 Hide Log' : '📋 Show Log'}</button>
-              <button className="btn btn-clear" onClick={() => setShowHistory(!showHistory)}>{showHistory ? '🗑️ Hide History' : '🗑️ Show History'}</button>
-              <button className="btn btn-clear" onClick={() => setShowCode(!showCode)}>{showCode ? '💻 Hide Code' : '💻 Show Code'}</button>
-            </>
+            <div style={{ display: 'flex', gap: '15px', alignItems: 'center', background: 'rgba(255,255,255,0.03)', padding: '6px 14px', borderRadius: '10px', border: '1px solid var(--glass-border)', fontSize: '0.82rem', marginLeft: '8px' }}>
+              <span style={{ fontWeight: 'bold', color: 'var(--text-secondary)' }}>View:</span>
+              <label style={{ display: 'flex', alignItems: 'center', gap: '6px', cursor: 'pointer', color: 'var(--text-primary)', userSelect: 'none' }}>
+                <input type="checkbox" checked={showLogPanel} onChange={e => setShowLogPanel(e.target.checked)} style={{ accentColor: 'var(--accent-primary)', cursor: 'pointer' }} />
+                <span>Log</span>
+              </label>
+              <label style={{ display: 'flex', alignItems: 'center', gap: '6px', cursor: 'pointer', color: 'var(--text-primary)', userSelect: 'none' }}>
+                <input type="checkbox" checked={showCode} onChange={e => setShowCode(e.target.checked)} style={{ accentColor: 'var(--accent-primary)', cursor: 'pointer' }} />
+                <span>Code</span>
+              </label>
+              <label style={{ display: 'flex', alignItems: 'center', gap: '6px', cursor: 'pointer', color: 'var(--text-primary)', userSelect: 'none' }}>
+                <input type="checkbox" checked={showHistory} onChange={e => setShowHistory(e.target.checked)} style={{ accentColor: 'var(--accent-primary)', cursor: 'pointer' }} />
+                <span>History</span>
+              </label>
+            </div>
           )}
           <button className="btn btn-clear" onClick={onBack}>🏠 Home</button>
         </div>
@@ -1984,8 +2105,35 @@ const GeneralDSVisualizer = ({ onBack, openSettings, initialType = 'HASH_TABLE',
               {frame.msg || 'Select an operation to begin...'}
             </span>
           </div>
-          <div style={{ flex: 1, display: 'flex', gap: '1.5rem', overflow: 'hidden', width: '100%' }}>
+          <div style={{ flex: 1, display: 'flex', flexDirection: 'column', gap: '1.5rem', overflow: 'hidden', width: '100%' }}>
             <div style={{ flex: 1, display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', background: 'var(--glass-bg)', borderRadius: '16px', border: '1px solid var(--glass-border)', overflow: 'auto', position: 'relative', boxShadow: 'inset 0 0 40px rgba(0,0,0,0.2)', width: '100%', height: '100%' }}>
+            
+            {/* Hash Table Size Suggestion Alert */}
+            {dsType === 'HASH_TABLE' && tableSize > 10 && (
+              <div style={{
+                position: 'absolute',
+                top: '15px',
+                left: '15px',
+                zIndex: 35,
+                padding: '8px 14px',
+                background: 'rgba(245, 158, 11, 0.12)',
+                border: '1.2px solid rgba(245, 158, 11, 0.35)',
+                borderRadius: '10px',
+                backdropFilter: 'blur(8px)',
+                boxShadow: '0 4px 15px rgba(0,0,0,0.2)',
+                fontSize: '0.75rem',
+                color: '#fbbf24',
+                display: 'flex',
+                alignItems: 'center',
+                gap: '8px',
+                maxWidth: '320px',
+                pointerEvents: 'none'
+              }}>
+                <span>💡</span>
+                <span>Tip: For larger table sizes, try hiding the right code panel or scaling down your screen/browser zoom to fit everything.</span>
+              </div>
+            )}
+
             {dsType === 'STACK' && renderStack(frame)}
             {dsType === 'QUEUE' && renderQueue(frame)}
             {dsType === 'LINKED_LIST' && (dsVariety === 'LL_POLYNOMIAL' ? renderPolynomials(frame) : renderLinkedList(frame))}
@@ -2040,378 +2188,269 @@ const GeneralDSVisualizer = ({ onBack, openSettings, initialType = 'HASH_TABLE',
                 </div>
               );
             })()}
-
-             {showLogPanel && !isMobile && (
-               <div
-                 style={{
-                   position: 'fixed',
-                   left: `${Math.max(0, Math.min(logPosition.x, window.innerWidth - logSize.width))}px`,
-                   top: `${Math.max(0, Math.min(logPosition.y, window.innerHeight - logSize.height))}px`,
-                   width: `${logSize.width}px`,
-                   height: `${logSize.height}px`,
-                   background: 'rgba(15, 23, 42, 0.95)',
-                   backdropFilter: 'blur(12px)',
-                   border: '1px solid var(--glass-border)',
-                   borderRadius: '12px',
-                   boxShadow: '0 15px 30px rgba(0,0,0,0.5)',
-                   display: 'flex',
-                   flexDirection: 'column',
-                   zIndex: 99,
-                   overflow: 'hidden'
-                 }}
-               >
-                 {/* Drag Handle Header */}
-                 <div
-                   className="log-drag-handle"
-                   onMouseDown={handleLogMouseDown}
-                   onTouchStart={handleLogMouseDown}
-                   style={{
-                     padding: '8px 12px',
-                     background: 'rgba(255, 255, 255, 0.04)',
-                     borderBottom: '1px solid var(--glass-border)',
-                     cursor: 'move',
-                     display: 'flex',
-                     justifyContent: 'space-between',
-                     alignItems: 'center',
-                     userSelect: 'none',
-                     flexShrink: 0,
-                     touchAction: 'none'
-                   }}
-                 >
-                   <span style={{ fontWeight: 600, fontSize: '0.85rem', color: 'var(--text-primary)', display: 'flex', alignItems: 'center', gap: '6px' }}>
-                     📋 Execution Log & Active State
-                   </span>
-                   <button
-                     onClick={() => setShowLogPanel(false)}
-                     style={{
-                       background: 'transparent',
-                       border: 'none',
-                       color: 'var(--text-secondary)',
-                       cursor: 'pointer',
-                       fontSize: '1.1rem',
-                       padding: '0 4px',
-                       lineHeight: 1
-                     }}
-                     title="Hide Log"
-                   >
-                     ×
-                   </button>
-                 </div>
-
-                 {/* Dual Column Content Body */}
-                 <div style={{ display: 'flex', flex: 1, overflow: 'hidden' }}>
-
-                   {/* Left Column: Data Structure Pointers & Elements */}
-                   <div
-                     style={{
-                       width: `${activeStateWidth}px`,
-                       background: 'rgba(0, 0, 0, 0.25)',
-                       borderRight: '1px solid var(--glass-border)',
-                       padding: '10px 12px',
-                       display: 'flex',
-                       flexDirection: 'column',
-                       gap: '10px',
-                       fontSize: '0.8rem',
-                       color: 'var(--text-secondary)',
-                       overflowY: 'auto',
-                       flexShrink: 0
-                     }}
-                   >
-                     <div style={{ fontSize: '0.75rem', color: 'var(--accent-primary)', textTransform: 'uppercase', fontWeight: 'bold', borderBottom: '1px solid rgba(255,255,255,0.06)', paddingBottom: '4px' }}>
-                       Active State
-                     </div>
-                     <div>
-                       <span style={{ color: 'var(--text-secondary)' }}>Type: </span>
-                       <span style={{ color: 'var(--text-primary)', fontWeight: 'bold' }}>
-                         {dsType.replace('_', ' ')} {dsVariety && `(${dsVariety.replace('HASH_', '').replace('CIRCULAR_', '')})`}
-                       </span>
-                     </div>
-
-                     {(() => {
-                       const frame = timeline[currentStep] || {};
-                       return (
-                         <>
-                           <div>
-                             <div style={{ marginBottom: '2px', fontSize: '0.75rem' }}>Elements:</div>
-                             {frame.arr ? (
-                               <div style={{ background: 'rgba(0,0,0,0.18)', padding: '4px 6px', borderRadius: '4px', fontFamily: 'monospace', color: '#34d399', wordBreak: 'break-all', fontWeight: 'bold' }}>
-                                 [{frame.arr.join(', ')}]
-                               </div>
-                             ) : frame.cq && frame.cq.arr ? (
-                               <div style={{ background: 'rgba(0,0,0,0.18)', padding: '4px 6px', borderRadius: '4px', fontFamily: 'monospace', color: '#34d399', wordBreak: 'break-all', fontWeight: 'bold' }}>
-                                 [{frame.cq.arr.map((x) => x === null ? 'null' : x).join(', ')}]
-                               </div>
-                             ) : frame.ht ? (
-                               <div style={{ background: 'rgba(0,0,0,0.18)', padding: '4px 6px', borderRadius: '4px', fontFamily: 'monospace', color: '#34d399', fontSize: '0.72rem', overflowY: 'auto', maxHeight: '90px' }}>
-                                 {frame.ht.map((bucket, bIdx) => (
-                                   <div key={bIdx} style={{ whiteSpace: 'nowrap' }}>
-                                     {bIdx}: {Array.isArray(bucket) ? (bucket.length > 0 ? bucket.join(' ➔ ') : 'empty') : (bucket === null ? 'empty' : bucket === 'TOMBSTONE' ? 'DEL' : bucket)}
-                                   </div>
-                                 ))}
-                               </div>
-                             ) : (
-                               <span style={{ fontStyle: 'italic' }}>Empty</span>
-                             )}
-                           </div>
-                            <div style={{ borderTop: '1px solid rgba(255,255,255,0.06)', paddingTop: '6px', marginTop: '4px' }}>
-                              <div style={{ fontSize: '0.72rem', textTransform: 'uppercase', fontWeight: 'bold', marginBottom: '4px', color: 'var(--accent-secondary)' }}>Trace Variables</div>
-                              
-                              {dsType === 'HASH_TABLE' ? (
-                                <div style={{ display: 'flex', flexDirection: 'column', gap: '4px' }}>
-                                  {frame.activeBucket !== undefined && frame.activeBucket !== -1 && (
-                                    <div style={{ display: 'flex', justifyContent: 'space-between' }}>
-                                      <span>Target Slot:</span>
-                                      <span style={{ color: '#fbbf24', fontWeight: 'bold', fontFamily: 'monospace' }}>
-                                        {frame.activeBucket}
-                                      </span>
-                                    </div>
-                                  )}
-                                  {frame.activeNode !== undefined && frame.activeNode !== -1 && (
-                                    <div style={{ display: 'flex', justifyContent: 'space-between' }}>
-                                      <span>Chain Node Index:</span>
-                                      <span style={{ color: 'var(--text-primary)', fontFamily: 'monospace' }}>{frame.activeNode}</span>
-                                    </div>
-                                  )}
-                                  {(frame.activeBucket === undefined || frame.activeBucket === -1) && (
-                                    <div style={{ color: 'var(--text-secondary)', fontStyle: 'italic', fontSize: '0.8rem' }}>No active slot</div>
-                                  )}
-                                </div>
-                              ) : dsVariety === 'QUEUE_CIRCULAR' ? (
-                                <div style={{ display: 'flex', flexDirection: 'column', gap: '4px' }}>
-                                  <div style={{ display: 'flex', justifyContent: 'space-between' }}>
-                                    <span>Front Index:</span>
-                                    <span style={{ color: '#fbbf24', fontWeight: 'bold', fontFamily: 'monospace' }}>
-                                      {frame.cq && frame.cq.f !== -1 ? frame.cq.f : 'N/A'}
-                                    </span>
-                                  </div>
-                                  <div style={{ display: 'flex', justifyContent: 'space-between' }}>
-                                    <span>Rear Index:</span>
-                                    <span style={{ color: '#60a5fa', fontWeight: 'bold', fontFamily: 'monospace' }}>
-                                      {frame.cq && frame.cq.r !== -1 ? frame.cq.r : 'N/A'}
-                                    </span>
-                                  </div>
-                                </div>
-                              ) : (
-                                <div style={{ display: 'flex', flexDirection: 'column', gap: '4px' }}>
-                                  {frame.activeIdx !== undefined && frame.activeIdx !== -1 ? (
-                                    <>
-                                      <div style={{ display: 'flex', justifyContent: 'space-between' }}>
-                                        <span>Active Val:</span>
-                                        <span style={{ color: '#fbbf24', fontWeight: 'bold' }}>
-                                          {frame.arr ? (frame.arr[frame.activeIdx] ?? 'N/A') : 'N/A'}
-                                        </span>
-                                      </div>
-                                      <div style={{ display: 'flex', justifyContent: 'space-between' }}>
-                                        <span>Active Index:</span>
-                                        <span style={{ color: 'var(--text-primary)', fontFamily: 'monospace' }}>
-                                          {frame.activeIdx}
-                                        </span>
-                                      </div>
-                                    </>
-                                  ) : (
-                                    <div style={{ color: 'var(--text-secondary)', fontStyle: 'italic', fontSize: '0.8rem' }}>No active pointer</div>
-                                  )}
-                                </div>
-                              )}
-
-                              {frame.activeLineText && (
-                                <div style={{ marginTop: '8px' }}>
-                                  <div style={{ fontSize: '0.65rem', color: 'var(--text-secondary)' }}>Snippet:</div>
-                                  <div style={{ fontSize: '0.72rem', color: '#60a5fa', fontFamily: 'monospace', background: 'rgba(0,0,0,0.2)', padding: '2px 4px', borderRadius: '4px', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }} title={frame.activeLineText}>
-                                    {frame.activeLineText}
-                                  </div>
-                                </div>
-                              )}
-                            </div>
-                         </>
-                       );
-                     })()}
-                   </div>
-
-                   {/* Vertical Column split resize handle */}
-                    <div 
-                      onMouseDown={handleActiveStateColDragStart}
-                      onTouchStart={handleActiveStateColDragStart}
-                      style={{
-                        width: '6px',
-                        cursor: 'col-resize',
-                        background: 'rgba(255, 255, 255, 0.05)',
-                        borderLeft: '1px solid var(--glass-border)',
-                        borderRight: '1px solid var(--glass-border)',
-                        alignSelf: 'stretch',
-                        transition: 'background 0.2s',
-                        borderRadius: '3px',
-                        flexShrink: 0,
-                        touchAction: 'none'
-                      }}
-                      onMouseOver={e => e.currentTarget.style.background = 'rgba(96,165,250,0.5)'}
-                      onMouseOut={e => e.currentTarget.style.background = 'rgba(255, 255, 255, 0.05)'}
-                      title="Drag to resize columns"
-                    />
-
-                   {/* Right Column: Log list container */}
-                   <div
-                     ref={logContainerRef}
-                     style={{
-                       padding: '10px 12px',
-                       overflowY: 'auto',
-                       flex: 1,
-                       fontFamily: 'monospace',
-                       fontSize: '0.82rem'
-                     }}
-                   >
-                     <div style={{ display: 'flex', flexDirection: 'column', gap: '5px' }}>
-                       {timeline.length === 0 && (
-                         <div style={{ color: 'var(--text-secondary)', fontStyle: 'italic', textAlign: 'center', marginTop: '20px' }}>
-                           No simulation logs yet. Run operation to start.
-                         </div>
-                       )}
-                       {timeline.slice(0, currentStep + 1).map((frame, idx) => (
-                         <div key={idx} style={{ display: 'flex', gap: '6px', lineHeight: '1.4' }}>
-                           <span style={{ color: 'var(--text-secondary)', userSelect: 'none', minWidth: '15px' }}>
-                             {idx === currentStep ? '➔' : `${idx + 1}.`}
-                           </span>
-                           <span style={{ color: idx === currentStep ? '#fbbf24' : 'var(--text-primary)' }}>
-                             {frame.msg}
-                           </span>
-                         </div>
-                       ))}
-                     </div>
-                   </div>
-
-                   {/* Resize Handle */}
-                   <div
-                     style={{
-                       position: 'absolute',
-                       right: '4px',
-                       bottom: '4px',
-                       width: '12px',
-                       height: '12px',
-                       cursor: 'se-resize',
-                       background: 'linear-gradient(135deg, transparent 60%, rgba(255,255,255,0.3) 60%)',
-                       zIndex: 100,
-                       touchAction: 'none'
-                     }}
-                     onMouseDown={handleResizeMouseDown}
-                     onTouchStart={handleResizeMouseDown}
-                     title="Drag to resize panel"
-                   />
-
-                 </div>
-               </div>
-             )}
             </div>
-
-            {/* Popped/Removed Elements Sidebar Panel */}
-            {showHistory && !isMobile && (
-              <div style={{
-                width: '220px',
-                background: 'var(--glass-bg)',
-                backdropFilter: 'blur(16px)',
-                border: '1px solid var(--glass-border)',
+            {showLogPanel && !isMobile && (
+            <div 
+              style={{
+                position: 'absolute',
+                left: `${logPosition.x}px`,
+                top: `${logPosition.y}px`,
+                width: `${logSize.width}px`,
+                height: `${logSize.height}px`,
+                background: 'rgba(15, 23, 42, 0.45)', // Translucent glassmorphism
+                backdropFilter: 'blur(16px) saturate(180%)',
+                WebkitBackdropFilter: 'blur(16px) saturate(180%)',
+                border: '1px solid rgba(255, 255, 255, 0.08)',
                 borderRadius: '16px',
+                boxShadow: '0 20px 50px rgba(0,0,0,0.5)',
                 display: 'flex',
                 flexDirection: 'column',
                 overflow: 'hidden',
-                boxShadow: '0 10px 25px rgba(0,0,0,0.3)',
-                transition: 'all 0.3s',
-                flexShrink: 0
-              }}>
-                <div style={{
-                  padding: '12px 16px',
-                  background: 'rgba(255, 255, 255, 0.03)',
-                  borderBottom: '1px solid var(--glass-border)',
-                  fontWeight: 'bold',
-                  fontSize: '0.9rem',
-                  color: 'var(--text-primary)',
+                zIndex: 100
+              }}
+            >
+              {/* Drag Handle Header */}
+              <div
+                onMouseDown={handleLogHeaderMouseDown}
+                onTouchStart={handleLogHeaderMouseDown}
+                style={{
+                  padding: '8px 12px',
+                  background: 'rgba(255, 255, 255, 0.04)',
+                  borderBottom: '1px solid rgba(255, 255, 255, 0.08)',
                   display: 'flex',
                   justifyContent: 'space-between',
-                  alignItems: 'center'
-                }}>
-                  <span style={{ display: 'flex', alignItems: 'center', gap: '6px' }}>
-                    {dsType === 'STACK' && '🗑️ Popped Elements'}
-                    {dsType === 'QUEUE' && '🗑️ Dequeued Elements'}
-                    {dsType === 'LINKED_LIST' && '🗑️ Deleted Elements'}
-                    {dsType === 'HASH_TABLE' && '🗑️ Deleted Elements'}
-                  </span>
-                  {poppedElements.length > 0 && (
-                    <button
-                      onClick={() => setPoppedElements([])}
-                      style={{
-                        background: 'transparent',
-                        border: 'none',
-                        color: '#ef4444',
-                        cursor: 'pointer',
-                        fontSize: '0.75rem',
-                        fontWeight: 'bold',
-                        padding: '2px 6px',
-                        borderRadius: '4px',
-                        transition: 'background 0.2s'
-                      }}
-                      onMouseOver={e => e.currentTarget.style.background = 'rgba(239, 68, 68, 0.1)'}
-                      onMouseOut={e => e.currentTarget.style.background = 'transparent'}
-                    >
-                      Clear
-                    </button>
-                  )}
-                </div>
-                <div style={{
-                  flex: 1,
-                  padding: '12px',
-                  overflowY: 'auto',
-                  display: 'flex',
-                  flexDirection: 'column',
-                  gap: '8px'
-                }}>
-                  {poppedElements.length === 0 ? (
-                    <div style={{
-                      color: 'var(--text-secondary)',
-                      fontStyle: 'italic',
-                      fontSize: '0.8rem',
-                      textAlign: 'center',
-                      marginTop: '20px'
-                    }}>
-                      No elements {dsType === 'STACK' ? 'popped' : dsType === 'QUEUE' ? 'dequeued' : 'deleted'} yet.
-                    </div>
-                  ) : (
-                    [...poppedElements].reverse().map((item, index) => {
-                      const displayVal = typeof item === 'object' ? item.val : item;
-                      const opName = typeof item === 'object' ? item.op : 'Pop';
-                      const dsName = typeof item === 'object' ? item.ds : 'Stack';
-                      return (
-                        <div 
-                          key={index} 
-                          style={{
-                            display: 'flex',
-                            flexDirection: 'column',
-                            gap: '6px',
-                            padding: '10px 12px',
-                            background: 'rgba(255, 255, 255, 0.02)',
-                            border: '1px solid var(--glass-border)',
-                            borderRadius: '8px',
-                            fontSize: '0.85rem',
-                            color: 'var(--text-primary)',
-                            animation: 'fadeIn 0.3s ease-out'
-                          }}
-                        >
-                          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-                            <span style={{ color: 'var(--text-secondary)', fontSize: '0.72rem', fontFamily: 'monospace' }}>
-                              #{poppedElements.length - index} ({dsName})
-                            </span>
-                            <span style={{ color: 'var(--accent-primary)', fontSize: '0.72rem', fontWeight: 'bold', textTransform: 'uppercase' }}>
-                              {opName}
-                            </span>
-                          </div>
-                          <div style={{ display: 'flex', justifyContent: 'flex-end', fontWeight: 'bold', fontSize: '1.1rem', color: '#f43f5e', textShadow: '0 0 10px rgba(244,63,94,0.3)' }}>
-                            {displayVal}
-                          </div>
-                        </div>
-                      );
-                    })
-                  )}
-                </div>
+                  alignItems: 'center',
+                  userSelect: 'none',
+                  flexShrink: 0,
+                  cursor: 'move'
+                }}
+              >
+                <span style={{ fontWeight: 600, fontSize: '0.8rem', color: 'var(--text-primary)', display: 'flex', alignItems: 'center', gap: '6px' }}>
+                  📋 Execution Log & Active State
+                </span>
+                <button
+                  onClick={() => setShowLogPanel(false)}
+                  style={{
+                    background: 'transparent',
+                    border: 'none',
+                    color: 'var(--text-secondary)',
+                    cursor: 'pointer',
+                    fontSize: '1rem',
+                    padding: '0 4px',
+                    lineHeight: 1
+                  }}
+                  title="Hide Log"
+                >
+                  ×
+                </button>
               </div>
-            )}
+
+              {/* Content Body */}
+              <div style={{ display: 'flex', flex: 1, overflow: 'hidden' }}>
+
+                {/* Left Column: Data Structure Pointers & Elements */}
+                <div
+                  style={{
+                    width: `${activeStateWidth}px`,
+                    background: 'rgba(0, 0, 0, 0.25)',
+                    borderRight: '1px solid var(--glass-border)',
+                    padding: '6px 8px',
+                    display: 'flex',
+                    flexDirection: 'column',
+                    gap: '4px',
+                    fontSize: '0.72rem',
+                    color: 'var(--text-secondary)',
+                    overflowY: 'auto',
+                    flexShrink: 0
+                  }}
+                >
+                  <div style={{ fontSize: '0.72rem', color: 'var(--accent-primary)', textTransform: 'uppercase', fontWeight: 'bold', borderBottom: '1px solid rgba(255,255,255,0.06)', paddingBottom: '2px' }}>
+                    Active State
+                  </div>
+                  <div>
+                    <span style={{ color: 'var(--text-secondary)' }}>Type: </span>
+                    <span style={{ color: 'var(--text-primary)', fontWeight: 'bold' }}>
+                      {dsType.replace('_', ' ')} {dsVariety && `(${dsVariety.replace('HASH_', '').replace('CIRCULAR_', '')})`}
+                    </span>
+                  </div>
+
+                  {(() => {
+                    const frame = timeline[currentStep] || {};
+                    return (
+                      <>
+                        <div>
+                          <div style={{ marginBottom: '2px', fontSize: '0.7rem' }}>Elements:</div>
+                          {frame.arr ? (
+                            <div style={{ background: 'rgba(0,0,0,0.18)', padding: '2px 4px', borderRadius: '4px', fontFamily: 'monospace', color: '#34d399', wordBreak: 'break-all', fontWeight: 'bold' }}>
+                              [{frame.arr.join(', ')}]
+                            </div>
+                          ) : frame.cq && frame.cq.arr ? (
+                            <div style={{ background: 'rgba(0,0,0,0.18)', padding: '2px 4px', borderRadius: '4px', fontFamily: 'monospace', color: '#34d399', wordBreak: 'break-all', fontWeight: 'bold' }}>
+                              [{frame.cq.arr.map((x) => x === null ? 'null' : x).join(', ')}]
+                            </div>
+                          ) : frame.ht ? (
+                            <div style={{ background: 'rgba(0,0,0,0.18)', padding: '2px 4px', borderRadius: '4px', fontFamily: 'monospace', color: '#34d399', fontSize: '0.72rem', overflowY: 'auto', maxHeight: '90px' }}>
+                              {frame.ht.map((bucket, bIdx) => (
+                                <div key={bIdx} style={{ whiteSpace: 'nowrap' }}>
+                                  {bIdx}: {Array.isArray(bucket) ? (bucket.length > 0 ? bucket.join(' ➔ ') : 'empty') : (bucket === null ? 'empty' : bucket === 'TOMBSTONE' ? 'DEL' : bucket)}
+                                </div>
+                              ))}
+                            </div>
+                          ) : (
+                            <span style={{ fontStyle: 'italic' }}>Empty</span>
+                          )}
+                        </div>
+
+                        <div style={{ borderTop: '1px solid rgba(255,255,255,0.06)', paddingTop: '4px', marginTop: '2px' }}>
+                          <div style={{ fontSize: '0.7rem', textTransform: 'uppercase', fontWeight: 'bold', marginBottom: '2px', color: 'var(--accent-secondary)' }}>Trace Variables</div>
+                          {dsType === 'HASH_TABLE' ? (
+                            <div style={{ display: 'flex', flexDirection: 'column', gap: '2px' }}>
+                              {frame.activeBucket !== undefined && frame.activeBucket !== -1 && (
+                                <div style={{ display: 'flex', justifyContent: 'space-between' }}>
+                                  <span>Target Slot:</span>
+                                  <span style={{ color: '#fbbf24', fontWeight: 'bold', fontFamily: 'monospace' }}>
+                                    {frame.activeBucket}
+                                  </span>
+                                </div>
+                              )}
+                              {frame.activeNode !== undefined && frame.activeNode !== -1 && (
+                                <div style={{ display: 'flex', justifyContent: 'space-between' }}>
+                                  <span>Chain Node Index:</span>
+                                  <span style={{ color: 'var(--text-primary)', fontFamily: 'monospace' }}>{frame.activeNode}</span>
+                                </div>
+                              )}
+                              {(frame.activeBucket === undefined || frame.activeBucket === -1) && (
+                                <div style={{ color: 'var(--text-secondary)', fontStyle: 'italic', fontSize: '0.7rem' }}>No active slot</div>
+                              )}
+                            </div>
+                          ) : dsVariety === 'QUEUE_CIRCULAR' ? (
+                            <div style={{ display: 'flex', flexDirection: 'column', gap: '2px' }}>
+                              <div style={{ display: 'flex', justifyContent: 'space-between' }}>
+                                <span>Front Index:</span>
+                                <span style={{ color: '#fbbf24', fontWeight: 'bold', fontFamily: 'monospace' }}>
+                                  {frame.cq && frame.cq.f !== -1 ? frame.cq.f : 'N/A'}
+                                </span>
+                              </div>
+                              <div style={{ display: 'flex', justifyContent: 'space-between' }}>
+                                <span>Rear Index:</span>
+                                <span style={{ color: '#60a5fa', fontWeight: 'bold', fontFamily: 'monospace' }}>
+                                  {frame.cq && frame.cq.r !== -1 ? frame.cq.r : 'N/A'}
+                                </span>
+                              </div>
+                            </div>
+                          ) : (
+                            <div style={{ display: 'flex', flexDirection: 'column', gap: '2px' }}>
+                              {frame.activeIdx !== undefined && frame.activeIdx !== -1 ? (
+                                <>
+                                  <div style={{ display: 'flex', justifyContent: 'space-between' }}>
+                                    <span>Active Val:</span>
+                                    <span style={{ color: '#fbbf24', fontWeight: 'bold' }}>
+                                      {frame.arr ? (frame.arr[frame.activeIdx] ?? 'N/A') : 'N/A'}
+                                    </span>
+                                  </div>
+                                  <div style={{ display: 'flex', justifyContent: 'space-between' }}>
+                                    <span>Active Index:</span>
+                                    <span style={{ color: 'var(--text-primary)', fontFamily: 'monospace' }}>
+                                      {frame.activeIdx}
+                                    </span>
+                                  </div>
+                                </>
+                              ) : (
+                                <div style={{ color: 'var(--text-secondary)', fontStyle: 'italic', fontSize: '0.7rem' }}>No active pointer</div>
+                              )}
+                            </div>
+                          )}
+                        </div>
+                      </>
+                    );
+                  })()}
+                </div>
+
+                {/* Col Resize bar */}
+                <div 
+                  onMouseDown={handleActiveStateColDragStart} 
+                  onTouchStart={handleActiveStateColDragStart}
+                  style={{ width: '4px', cursor: 'col-resize', background: 'transparent', zIndex: 5 }} 
+                />
+
+                {/* Operations/Timeline Log */}
+                <div ref={logContainerRef} style={{ flex: 1, background: 'rgba(0,0,0,0.15)', padding: '6px 8px', overflowY: 'auto', borderRight: '1px solid var(--glass-border)' }}>
+                  <div style={{ fontSize: '0.7rem', color: 'var(--text-secondary)', fontWeight: 'bold', textTransform: 'uppercase', marginBottom: '4px' }}>Log Steps</div>
+                  {timeline.length === 0 && (
+                    <div style={{ color: 'var(--text-secondary)', fontStyle: 'italic', fontSize: '0.7rem' }}>
+                      No simulation logs yet. Run operation to start.
+                    </div>
+                  )}
+                  {timeline.slice(0, currentStep + 1).map((f, idx) => (
+                    <div key={idx} style={{ display: 'flex', alignItems: 'flex-start', gap: '8px', fontSize: '0.75rem', marginBottom: '6px', lineHeight: '1.4' }}>
+                      <span style={{ color: 'var(--text-secondary)', flexShrink: 0, width: '24px', textAlign: 'right', fontWeight: 'bold', userSelect: 'none' }}>
+                        {idx === currentStep ? '➔' : `${idx + 1}.`}
+                      </span>
+                      <span style={{ color: idx === currentStep ? 'var(--accent-primary)' : 'var(--text-primary)', wordBreak: 'break-word', flex: 1 }}>
+                        {highlightLogText(f.msg)}
+                      </span>
+                    </div>
+                  ))}
+                </div>
+
+                {/* Popped/Removed Elements History */}
+                {showHistory && (
+                  <div style={{ flex: 1, background: 'rgba(0,0,0,0.15)', padding: '6px 8px', overflowY: 'auto' }}>
+                    <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', borderBottom: '1px solid rgba(255,255,255,0.06)', paddingBottom: '4px', marginBottom: '4px' }}>
+                      <span style={{ fontSize: '0.7rem', color: 'var(--text-secondary)', fontWeight: 'bold', textTransform: 'uppercase' }}>
+                        {dsType === 'STACK' && '🗑️ Popped'}
+                        {dsType === 'QUEUE' && '🗑️ Dequeued'}
+                        {dsType === 'LINKED_LIST' && '🗑️ Deleted'}
+                        {dsType === 'HASH_TABLE' && '🗑️ Deleted'} History
+                      </span>
+                      {poppedElements.length > 0 && (
+                        <button onClick={() => setPoppedElements([])} style={{ background: 'transparent', border: 'none', color: '#ef4444', cursor: 'pointer', fontSize: '0.7rem', fontWeight: 'bold' }}>
+                          Clear
+                        </button>
+                      )}
+                    </div>
+                    {poppedElements.length === 0 ? (
+                      <div style={{ color: 'var(--text-secondary)', fontStyle: 'italic', fontSize: '0.7rem', textAlign: 'center', marginTop: '6px' }}>
+                        No elements processed yet.
+                      </div>
+                    ) : (
+                      <div style={{ display: 'flex', flexDirection: 'column', gap: '4px' }}>
+                        {[...poppedElements].reverse().map((item, index) => {
+                          const displayVal = typeof item === 'object' ? item.val : item;
+                          const opName = typeof item === 'object' ? item.op : 'Pop';
+                          const dsName = typeof item === 'object' ? item.ds : 'Stack';
+                          return (
+                            <div key={index} style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', background: 'rgba(255, 255, 255, 0.02)', padding: '4px 6px', borderRadius: '4px', border: '1px solid var(--glass-border)', fontSize: '0.7rem' }}>
+                              <span style={{ color: 'var(--text-secondary)', fontSize: '0.65rem' }}>
+                                #{poppedElements.length - index} ({dsName} {opName})
+                              </span>
+                              <span style={{ fontWeight: 'bold', color: '#f43f5e' }}>{displayVal}</span>
+                            </div>
+                          );
+                        })}
+                      </div>
+                    )}
+                  </div>
+                )}
+
+              </div>
+
+              {/* Resize Handle */}
+              <div
+                onMouseDown={handleLogResizeMouseDown}
+                onTouchStart={handleLogResizeMouseDown}
+                style={{
+                  position: 'absolute', bottom: '0', right: '0', width: '15px', height: '15px',
+                  cursor: 'se-resize', background: 'transparent',
+                  display: 'flex', alignItems: 'flex-end', justifyContent: 'flex-end', padding: '2px',
+                  zIndex: 10
+                }}
+              >
+                <svg width="8" height="8" viewBox="0 0 8 8"><path d="M6 0 L8 0 L8 8 L0 8 L0 6 L4 6 L4 4 L6 4 Z" fill="rgba(255,255,255,0.3)" /></svg>
+              </div>
+
+            </div>
+          )}
           </div>
           
           <div style={{ display: 'flex', flexDirection: isMobile ? 'column' : 'row', justifyContent: 'space-between', alignItems: 'center', marginTop: '1.5rem', background: 'var(--glass-bg)', padding: isMobile ? '10px 14px' : '12px 24px', borderRadius: '16px', border: '1px solid var(--glass-border)', gap: '10px' }}>
@@ -2547,9 +2586,13 @@ const GeneralDSVisualizer = ({ onBack, openSettings, initialType = 'HASH_TABLE',
                   </div>
                 )}
                 {timeline.slice(0, currentStep + 1).map((f, idx) => (
-                  <div key={idx} style={{ display: 'flex', gap: '6px', fontSize: '0.8rem', marginBottom: '4px' }}>
-                    <span style={{ color: 'var(--text-secondary)' }}>{idx === currentStep ? '➔' : `${idx + 1}.`}</span>
-                    <span style={{ color: idx === currentStep ? '#fbbf24' : 'var(--text-primary)' }}>{f.msg}</span>
+                  <div key={idx} style={{ display: 'flex', alignItems: 'flex-start', gap: '8px', fontSize: '0.75rem', marginBottom: '6px', lineHeight: '1.4' }}>
+                    <span style={{ color: 'var(--text-secondary)', flexShrink: 0, width: '24px', textAlign: 'right', fontWeight: 'bold', userSelect: 'none' }}>
+                      {idx === currentStep ? '➔' : `${idx + 1}.`}
+                    </span>
+                    <span style={{ color: idx === currentStep ? 'var(--accent-primary)' : 'var(--text-primary)', wordBreak: 'break-word', flex: 1 }}>
+                      {highlightLogText(f.msg)}
+                    </span>
                   </div>
                 ))}
               </div>
@@ -2609,63 +2652,67 @@ const GeneralDSVisualizer = ({ onBack, openSettings, initialType = 'HASH_TABLE',
           )}
 
           <div style={{ width: isMobile ? '100%' : `${codeWidth}px`, background: 'var(--bg-secondary)', borderLeft: isMobile ? 'none' : '1px solid var(--glass-border)', display: 'flex', flexDirection: 'column', overflow: 'hidden', minWidth: isMobile ? '100%' : '200px' }}>
-            <div style={{ padding: '1rem', borderBottom: '1px solid var(--glass-border)', display: 'flex', justifyContent: 'space-between', alignItems: 'center', background: 'var(--glass-bg)', gap: '10px' }}>
-              <h3 style={{ margin: 0, fontSize: '1.1rem', color: 'var(--text-primary)', fontWeight: 'bold', flex: 1 }}>Implementation</h3>
-              <div style={{ display: 'flex', gap: '6px' }}>
+            {/* Sticky 2-row header */}
+            <div style={{ flexShrink: 0, borderBottom: '1px solid var(--glass-border)', background: 'var(--bg-secondary)' }}>
+              {/* Row 1: Language pills */}
+              <div style={{ padding: '8px 12px', display: 'flex', alignItems: 'center', gap: '5px', borderBottom: '1px solid rgba(255,255,255,0.05)', flexWrap: 'wrap' }}>
+                <span style={{ fontSize: '0.78rem', fontWeight: 700, color: 'var(--text-secondary)', whiteSpace: 'nowrap' }}>🌐 Lang:</span>
+                {['C','C++','Java','Python','JS'].map(lang => (
+                  <button key={lang} onClick={() => setCodeLanguage(lang)}
+                    style={{
+                      padding: '2px 9px',
+                      fontSize: '0.74rem',
+                      borderRadius: '5px',
+                      border: codeLanguage === lang ? '1.5px solid var(--accent-primary)' : '1px solid var(--glass-border)',
+                      background: codeLanguage === lang ? 'var(--accent-primary)' : 'transparent',
+                      color: codeLanguage === lang ? '#fff' : 'var(--text-secondary)',
+                      cursor: 'pointer',
+                      fontWeight: codeLanguage === lang ? 700 : 400,
+                      transition: 'all 0.15s'
+                    }}
+                  >{lang === 'JS' ? 'JavaScript' : lang}</button>
+                ))}
+              </div>
+              {/* Row 2: Utility actions */}
+              <div style={{ padding: '6px 12px', display: 'flex', alignItems: 'center', gap: '6px', flexWrap: 'wrap' }}>
+                <h3 style={{ margin: 0, fontSize: '0.9rem', color: 'var(--text-primary)', fontWeight: 'bold' }}>Code</h3>
+                <button onClick={() => setLocalFontSize(prev => Math.max(10, prev - 2))} style={{ background: 'transparent', border: '1px solid var(--glass-border)', borderRadius: '4px', color: 'var(--text-secondary)', fontSize: '0.73rem', padding: '1px 6px', cursor: 'pointer' }}>A−</button>
+                <button onClick={() => setLocalFontSize(prev => Math.min(40, prev + 2))} style={{ background: 'transparent', border: '1px solid var(--glass-border)', borderRadius: '4px', color: 'var(--text-secondary)', fontSize: '0.73rem', padding: '1px 6px', cursor: 'pointer' }}>A+</button>
                 <button 
                   onClick={() => onShowUpcomingFeatures ? onShowUpcomingFeatures() : setIsRunnerOpen(true)}
-                  className="btn btn-clear"  
-                  style={{ padding: '0.3rem 0.6rem', fontSize: '0.85rem', whiteSpace: 'nowrap', display: 'inline-flex', alignItems: 'center', background: 'rgba(16,185,129,0.2)', color: '#34d399', border: '1px solid rgba(16,185,129,0.3)' }}
-                >
-                  ▶ Run Code
+                  style={{ padding: '2px 8px', fontSize: '0.74rem', whiteSpace: 'nowrap', display: 'inline-flex', alignItems: 'center', background: 'rgba(16,185,129,0.15)', color: '#34d399', border: '1px solid rgba(16,185,129,0.3)', borderRadius: '5px', cursor: 'pointer' }}
+                >▶ Run</button>
+                <button onClick={handleCopyCode} style={{ padding: '2px 8px', fontSize: '0.74rem', background: 'transparent', border: '1px solid var(--glass-border)', borderRadius: '5px', color: 'var(--text-secondary)', cursor: 'pointer' }}>
+                  {copied ? '✓ Copied' : '📋 Copy'}
                 </button>
-              <button 
-                onClick={handleCopyCode} 
-                className="btn btn-clear" 
-                style={{ padding: '0.3rem 0.6rem', fontSize: '0.85rem', whiteSpace: 'nowrap' }}
-              >
-                {copied ? '✓ Copied' : '📋 Copy'}
-              </button>
+              </div>
             </div>
-            <select className="styled-select" style={{ width: '120px', padding: '0.3rem' }} value={codeLanguage} onChange={(e) => setCodeLanguage(e.target.value)}>
-              <option value="C">C</option>
-              <option value="C++">C++</option>
-              <option value="Java">Java</option>
-              <option value="Python">Python</option>
-              <option value="JS">JavaScript</option>
-            </select>
+            <div style={{ flex: 1, padding: '1rem 0', overflow: 'auto', background: 'var(--bg-secondary)' }}>
+              <pre style={{ 
+                margin: 0, 
+                color: 'var(--text-primary)', 
+                fontFamily: "'Fira Code', monospace", 
+                fontSize: `${localFontSize}px`, 
+                lineHeight: '1.6' 
+              }}>
+                <code>
+                  {toAllman(currentCode).split('\n').map((line, i) => {
+                    const isMatch = frame.activeLineText && line.includes(frame.activeLineText) && !line.trim().startsWith('//');
+                    return (
+                      <div key={i} style={{ 
+                          background: isMatch ? 'rgba(16, 185, 129, 0.15)' : 'transparent',
+                          borderLeft: isMatch ? '3px solid #10b981' : '3px solid transparent',
+                          padding: '1px 12px',
+                          transition: 'all 0.2s'
+                      }}>
+                          <span style={{ whiteSpace: wordWrap === 'on' ? 'pre-wrap' : 'pre', fontFamily: "'Fira Code', monospace", color: isMatch ? '#ffffff' : 'var(--text-primary)' }}>{line || ' '}</span>
+                      </div>
+                    );
+                  })}
+                </code>
+              </pre>
+            </div>
           </div>
-          <div style={{ flex: 1, padding: '1rem 0', overflowY: 'auto', background: 'var(--bg-secondary)' }}>
-            <pre style={{ 
-              margin: 0, 
-              color: 'var(--text-primary)', 
-              fontFamily: "'Fira Code', monospace", 
-              fontSize: `${fontSize}px`, 
-              whiteSpace: wordWrap === 'on' ? 'pre-wrap' : 'pre', 
-              lineHeight: '1.6' 
-            }}>
-              <code>
-                {currentCode.split('\n').map((line, i) => {
-                  const isMatch = frame.activeLineText && line.includes(frame.activeLineText) && !line.trim().startsWith('//');
-                  return (
-                    <div key={i} style={{ 
-                        background: isMatch ? 'rgba(16, 185, 129, 0.15)' : 'transparent',
-                        borderLeft: isMatch ? '4px solid #10b981' : '4px solid transparent',
-                        padding: '2px 1rem',
-                        display: 'flex',
-                        transition: 'all 0.2s'
-                    }}>
-                        <span style={{ width: '25px', color: isMatch ? '#10b981' : 'var(--text-secondary)', userSelect: 'none', textAlign: 'right', marginRight: '15px' }}>
-                          {isMatch ? '➔' : i + 1}
-                        </span>
-                        <span>{line}</span>
-                    </div>
-                  );
-                })}
-              </code>
-            </pre>
-          </div>
-        </div>
         </>
         )}
       </div>
