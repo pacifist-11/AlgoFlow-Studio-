@@ -1612,66 +1612,69 @@ const SortSearchVisualizer = ({ onBack, openSettings, initialTab = 'Sort', initi
              </span>
           </div>
           
-          {visualizerStyle === 'crane' ? (
-            <div style={{ 
-              flex: 1, 
-              display: 'flex', 
-              alignItems: 'flex-end', 
-              justifyContent: 'center', 
-              gap: isMobile ? '8px' : '16px', 
-              background: 'var(--glass-bg, rgba(15, 23, 42, 0.45))', 
-              borderRadius: '14px', 
-              border: '1px solid var(--glass-border, rgba(255,255,255,0.08))', 
-              padding: isMobile ? '80px 10px 20px 10px' : '120px 2rem 2rem 2rem', 
-              overflow: 'hidden',
-              position: 'relative'
-            }}>
-              {/* Top Crane Track & Trolley */}
-              <div style={{
-                position: 'absolute',
-                top: isMobile ? '12px' : '24px',
-                left: isMobile ? '10px' : '2rem',
-                right: isMobile ? '10px' : '2rem',
-                height: '8px',
-                background: '#1e293b',
-                border: '1px solid rgba(255,255,255,0.1)',
-                borderRadius: '4px',
-                zIndex: 10
+          {visualizerStyle === 'crane' ? (() => {
+            const craneIdx = frame.i !== -1 ? frame.i : (frame.j !== -1 ? frame.j : 0);
+            const craneLeft = `calc(${(craneIdx + 0.5) * (100 / Math.max(1, frame.arr?.length || 1))}% - 20px)`;
+            return (
+              <div style={{ 
+                flex: 1, 
+                display: 'flex', 
+                alignItems: 'flex-end', 
+                justifyContent: 'center', 
+                gap: isMobile ? '8px' : '16px', 
+                background: 'var(--glass-bg, rgba(15, 23, 42, 0.45))', 
+                borderRadius: '14px', 
+                border: '1px solid var(--glass-border, rgba(255,255,255,0.08))', 
+                padding: isMobile ? '80px 10px 20px 10px' : '120px 2rem 2rem 2rem', 
+                overflow: 'hidden',
+                position: 'relative'
               }}>
-                {/* Carriage/Trolley */}
+                {/* Top Crane Track & Trolley */}
                 <div style={{
                   position: 'absolute',
-                  left: frame.i !== -1 ? `calc(${(frame.i + 0.5) * (100 / frame.arr.length)}% - 20px)` : (frame.j !== -1 ? `calc(${(frame.j + 0.5) * (100 / frame.arr.length)}% - 20px)` : 'calc(100% - 40px)'),
-                  top: '-6px',
-                  width: '40px',
-                  height: '20px',
-                  background: 'linear-gradient(135deg, #64748b, #475569)',
-                  border: '1.5px solid #94a3b8',
+                  top: isMobile ? '12px' : '24px',
+                  left: isMobile ? '10px' : '2rem',
+                  right: isMobile ? '10px' : '2rem',
+                  height: '8px',
+                  background: '#1e293b',
+                  border: '1px solid rgba(255,255,255,0.1)',
                   borderRadius: '4px',
-                  display: 'flex',
-                  alignItems: 'center',
-                  justifyContent: 'center',
-                  transition: 'left 0.4s cubic-bezier(0.25, 0.8, 0.25, 1)',
-                  boxShadow: '0 4px 8px rgba(0,0,0,0.3)',
-                  zIndex: 12
+                  zIndex: 10
                 }}>
-                  {/* Wheel accents */}
-                  <div style={{ width: '6px', height: '6px', borderRadius: '50%', background: '#0f172a', position: 'absolute', left: '4px', top: '10px' }} />
-                  <div style={{ width: '6px', height: '6px', borderRadius: '50%', background: '#0f172a', position: 'absolute', right: '4px', top: '10px' }} />
-                </div>
+                  {/* Carriage/Trolley */}
+                  <div style={{
+                    position: 'absolute',
+                    left: craneLeft,
+                    top: '-6px',
+                    width: '40px',
+                    height: '20px',
+                    background: 'linear-gradient(135deg, #64748b, #475569)',
+                    border: '1.5px solid #94a3b8',
+                    borderRadius: '4px',
+                    display: 'flex',
+                    alignItems: 'center',
+                    justifyContent: 'center',
+                    transition: 'left 0.4s cubic-bezier(0.25, 0.8, 0.25, 1)',
+                    boxShadow: '0 4px 8px rgba(0,0,0,0.3)',
+                    zIndex: 12
+                  }}>
+                    {/* Wheel accents */}
+                    <div style={{ width: '6px', height: '6px', borderRadius: '50%', background: '#0f172a', position: 'absolute', left: '4px', top: '10px' }} />
+                    <div style={{ width: '6px', height: '6px', borderRadius: '50%', background: '#0f172a', position: 'absolute', right: '4px', top: '10px' }} />
+                  </div>
 
-                {/* Gripper Rope & Claw */}
-                <div style={{
-                  position: 'absolute',
-                  left: frame.i !== -1 ? `calc(${(frame.i + 0.5) * (100 / frame.arr.length)}% - 20px)` : (frame.j !== -1 ? `calc(${(frame.j + 0.5) * (100 / frame.arr.length)}% - 20px)` : 'calc(100% - 40px)'),
-                  top: '12px',
-                  width: '40px',
-                  display: 'flex',
-                  flexDirection: 'column',
-                  alignItems: 'center',
-                  transition: 'left 0.4s cubic-bezier(0.25, 0.8, 0.25, 1)',
-                  zIndex: 11
-                }}>
+                  {/* Gripper Rope & Claw */}
+                  <div style={{
+                    position: 'absolute',
+                    left: craneLeft,
+                    top: '12px',
+                    width: '40px',
+                    display: 'flex',
+                    flexDirection: 'column',
+                    alignItems: 'center',
+                    transition: 'left 0.4s cubic-bezier(0.25, 0.8, 0.25, 1)',
+                    zIndex: 11
+                  }}>
                   {/* Cable Line */}
                   <div style={{
                     width: '2px',
@@ -1860,7 +1863,8 @@ const SortSearchVisualizer = ({ onBack, openSettings, initialTab = 'Sort', initi
                 );
               })}
             </div>
-          ) : (
+            );
+          })() : (
             <div style={{ flex: 1, display: 'flex', alignItems: 'flex-end', justifyContent: 'center', gap: isMobile ? '4px' : '8px', background: 'var(--glass-bg)', borderRadius: '14px', border: '1px solid var(--glass-border)', padding: isMobile ? '1rem 0.5rem' : '2rem 1rem', overflow: 'hidden' }}>
               {frame.arr.map((val, idx) => {
                 let bg = 'linear-gradient(to top, var(--accent-primary), var(--accent-secondary))';
