@@ -1942,8 +1942,8 @@ function App() {
     }
 
     if (isRestricted) {
-      // Show user warning statement telling them to rectify
-      triggerFeedbackError(`Restricted word/name detected: '${restrictedWord}' in ${restrictedField}. Please rectify it and submit again.`);
+      // Show polite user warning statement telling them to rectify without echoing profane words on screen
+      triggerFeedbackError(`Inappropriate language detected in your ${restrictedField}. Please modify your input and submit again.`);
 
       // Log restricted attempt in database
       const payload = {

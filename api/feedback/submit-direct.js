@@ -233,7 +233,7 @@ export default async function handler(req, res) {
       `;
       console.log('💾 Restricted feedback attempt logged:', rows[0].id);
       return res.status(400).json({ 
-        error: `Restricted word/name detected: '${finalRestrictedWord}' in ${finalRestrictedField}. Please rectify it.`
+        error: `Inappropriate language detected in your ${finalRestrictedField}. Please modify your input and submit again.`
       });
     } catch (err) {
       console.error('❌ Neon insert for restricted feedback failed:', err.message);
