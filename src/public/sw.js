@@ -1,5 +1,5 @@
 /* eslint-disable no-undef */
-const CACHE_NAME = 'algoflow-v2';
+const CACHE_NAME = 'algoflow-v3';
 const ASSETS = [
   '/',
   '/index.html',
@@ -34,24 +34,27 @@ self.addEventListener('activate', (e) => {
   self.clients.claim();
 });
 
-// Fetch Event
+// Fetch Event - Network First for HTML / navigation requests to ensure fresh Vercel deployments load instantly
 self.addEventListener('fetch', (e) => {
-  // Check if target is a http/https request (ignore chrome-extension, etc.)
   if (!e.request.url.startsWith('http')) return;
+
+  if (e.request.mode === 'navigate' || (e.request.headers.get('accept') && e.request.headers.get('accept').includes('text/html'))) {
+    e.respondWith(
+      fetch(e.request).then((networkResponse) => {
+        const responseClone = networkResponse.clone();
+        caches.open(CACHE_NAME).then((cache) => cache.put(e.request, responseClone));
+        return networkResponse;
+      }).catch(() => caches.match(e.request).then(cached => cached || caches.match('/')))
+    );
+    return;
+  }
 
   e.respondWith(
     caches.match(e.request).then((cachedResponse) => {
       if (cachedResponse) {
         return cachedResponse;
       }
-      return fetch(e.request).then((networkResponse) => {
-        return networkResponse;
-      }).catch(() => {
-        // Fallback for offline if page is requested
-        if (e.request.mode === 'navigate') {
-          return caches.match('/');
-        }
-      });
+      return fetch(e.request);
     })
   );
 });
