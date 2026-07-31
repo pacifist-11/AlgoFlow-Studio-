@@ -509,6 +509,111 @@ const THEMES = {
     '--edge-color': 'rgba(5, 150, 105, 0.7)',
     bodyBg: 'radial-gradient(circle at 15% 15%, rgba(16,185,129,0.15), transparent 45%), radial-gradient(circle at 85% 85%, rgba(5,150,105,0.15), transparent 45%)',
     type: 'light'
+  },
+  'Pure White Canvas': {
+    '--bg-primary': '#ffffff',
+    '--bg-secondary': '#f8fafc',
+    '--accent-primary': '#4f46e5',
+    '--accent-secondary': '#6366f1',
+    '--text-primary': '#0f172a',
+    '--text-secondary': '#475569',
+    '--glass-bg': 'rgba(255, 255, 255, 0.92)',
+    '--glass-border': 'rgba(79, 70, 229, 0.2)',
+    '--node-fill-1': '#4f46e5',
+    '--node-fill-2': '#6366f1',
+    '--edge-color': 'rgba(79, 70, 229, 0.7)',
+    bodyBg: 'radial-gradient(circle at 10% 20%, rgba(99,102,241,0.08), transparent 40%), radial-gradient(circle at 90% 80%, rgba(79,70,229,0.06), transparent 40%)',
+    type: 'light'
+  },
+  'Nordic Chalk': {
+    '--bg-primary': '#f9fafb',
+    '--bg-secondary': '#f3f4f6',
+    '--accent-primary': '#0284c7',
+    '--accent-secondary': '#f97316',
+    '--text-primary': '#111827',
+    '--text-secondary': '#4b5563',
+    '--glass-bg': 'rgba(249, 250, 251, 0.9)',
+    '--glass-border': 'rgba(156, 163, 175, 0.3)',
+    '--node-fill-1': '#0284c7',
+    '--node-fill-2': '#ea580c',
+    '--edge-color': 'rgba(2, 132, 199, 0.7)',
+    bodyBg: 'radial-gradient(circle at 20% 20%, rgba(2,132,199,0.06), transparent 40%), radial-gradient(circle at 80% 80%, rgba(249,115,22,0.06), transparent 40%)',
+    type: 'light'
+  },
+  'Warm Paper': {
+    '--bg-primary': '#faf8f5',
+    '--bg-secondary': '#f2ede4',
+    '--accent-primary': '#d97706',
+    '--accent-secondary': '#c2410c',
+    '--text-primary': '#292524',
+    '--text-secondary': '#78350f',
+    '--glass-bg': 'rgba(250, 248, 245, 0.92)',
+    '--glass-border': 'rgba(217, 119, 6, 0.25)',
+    '--node-fill-1': '#d97706',
+    '--node-fill-2': '#c2410c',
+    '--edge-color': 'rgba(217, 119, 6, 0.7)',
+    bodyBg: 'radial-gradient(circle at 15% 15%, rgba(217,119,6,0.08), transparent 40%), radial-gradient(circle at 85% 85%, rgba(194,65,12,0.08), transparent 40%)',
+    type: 'light'
+  },
+  'Lavender Mist': {
+    '--bg-primary': '#f7f5ff',
+    '--bg-secondary': '#ede9fe',
+    '--accent-primary': '#7c3aed',
+    '--accent-secondary': '#9333ea',
+    '--text-primary': '#1e1b4b',
+    '--text-secondary': '#5b21b6',
+    '--glass-bg': 'rgba(247, 245, 255, 0.9)',
+    '--glass-border': 'rgba(124, 58, 237, 0.25)',
+    '--node-fill-1': '#7c3aed',
+    '--node-fill-2': '#9333ea',
+    '--edge-color': 'rgba(124, 58, 237, 0.7)',
+    bodyBg: 'radial-gradient(circle at 10% 20%, rgba(124,58,237,0.1), transparent 40%), radial-gradient(circle at 90% 80%, rgba(147,51,234,0.08), transparent 40%)',
+    type: 'light'
+  },
+  'Breeze Cyan': {
+    '--bg-primary': '#f0fdfa',
+    '--bg-secondary': '#ccfbf1',
+    '--accent-primary': '#0d9488',
+    '--accent-secondary': '#0284c7',
+    '--text-primary': '#042f2e',
+    '--text-secondary': '#115e59',
+    '--glass-bg': 'rgba(240, 253, 250, 0.92)',
+    '--glass-border': 'rgba(13, 148, 136, 0.25)',
+    '--node-fill-1': '#0d9488',
+    '--node-fill-2': '#0284c7',
+    '--edge-color': 'rgba(13, 148, 136, 0.7)',
+    bodyBg: 'radial-gradient(circle at 15% 15%, rgba(13,148,136,0.1), transparent 45%), radial-gradient(circle at 85% 85%, rgba(2,132,199,0.1), transparent 45%)',
+    type: 'light'
+  },
+  'Blush Pearl': {
+    '--bg-primary': '#fff8f6',
+    '--bg-secondary': '#ffede8',
+    '--accent-primary': '#e11d48',
+    '--accent-secondary': '#f97316',
+    '--text-primary': '#2a0c0e',
+    '--text-secondary': '#9f1239',
+    '--glass-bg': 'rgba(255, 248, 246, 0.92)',
+    '--glass-border': 'rgba(225, 29, 72, 0.25)',
+    '--node-fill-1': '#e11d48',
+    '--node-fill-2': '#ea580c',
+    '--edge-color': 'rgba(225, 29, 72, 0.7)',
+    bodyBg: 'radial-gradient(circle at 10% 20%, rgba(225,29,72,0.08), transparent 40%), radial-gradient(circle at 90% 80%, rgba(249,115,22,0.08), transparent 40%)',
+    type: 'light'
+  },
+  'High Contrast Light': {
+    '--bg-primary': '#ffffff',
+    '--bg-secondary': '#f1f5f9',
+    '--accent-primary': '#2563eb',
+    '--accent-secondary': '#d97706',
+    '--text-primary': '#000000',
+    '--text-secondary': '#1e293b',
+    '--glass-bg': 'rgba(255, 255, 255, 0.95)',
+    '--glass-border': 'rgba(37, 99, 235, 0.3)',
+    '--node-fill-1': '#2563eb',
+    '--node-fill-2': '#0284c7',
+    '--edge-color': 'rgba(37, 99, 235, 0.8)',
+    bodyBg: 'radial-gradient(circle at 20% 20%, rgba(37,99,235,0.05), transparent 50%), radial-gradient(circle at 80% 80%, rgba(217,119,6,0.05), transparent 50%)',
+    type: 'light'
   }
 };
 
@@ -3422,30 +3527,51 @@ function App() {
             </select>
           </div>
 
-          {isInstallable && (
-            <div className="select-group" style={{ marginBottom: '0.6rem', borderTop: '1px solid var(--glass-border)', paddingTop: '0.8rem' }}>
-              <label style={{ fontWeight: 700, fontSize: '0.95rem', color: 'var(--text-primary)', display: 'block', marginBottom: '4px' }}>📥 Install Application</label>
-              <button 
-                onClick={async () => {
-                  if (deferredPrompt) {
-                    deferredPrompt.prompt();
-                    const { outcome } = await deferredPrompt.userChoice;
-                    if (outcome === 'accepted') {
-                      setDeferredPrompt(null);
-                      setIsInstallable(false);
+          <div className="select-group" style={{ marginBottom: '0.6rem', borderTop: '1px solid var(--glass-border)', paddingTop: '0.8rem' }}>
+            <label style={{ fontWeight: 700, fontSize: '0.95rem', color: 'var(--text-primary)', display: 'block', marginBottom: '6px' }}>
+              📥 Install Application (PWA)
+            </label>
+            {(typeof window !== 'undefined' && (window.matchMedia('(display-mode: standalone)').matches || window.navigator.standalone)) ? (
+              <div style={{
+                padding: '0.65rem 0.85rem', borderRadius: '10px',
+                background: 'rgba(16, 185, 129, 0.15)', border: '1px solid rgba(16, 185, 129, 0.3)',
+                color: 'var(--text-primary)', fontSize: '0.85rem', fontWeight: 600, display: 'flex', alignItems: 'center', gap: '8px'
+              }}>
+                <span style={{ color: '#10b981', fontSize: '1.1rem' }}>✓</span>
+                <span>App is running in Standalone Desktop/Mobile Mode</span>
+              </div>
+            ) : (
+              <div>
+                <button 
+                  onClick={async () => {
+                    if (deferredPrompt) {
+                      deferredPrompt.prompt();
+                      const { outcome } = await deferredPrompt.userChoice;
+                      if (outcome === 'accepted') {
+                        setDeferredPrompt(null);
+                        setIsInstallable(false);
+                      }
+                    } else {
+                      alert("To install AlgoFlow Studio as a desktop/mobile app:\n\n1. Look for the Install icon (📥 or ⊕) in your browser's address bar or menu.\n2. Click 'Install' or 'Add to Home Screen'.");
                     }
-                  }
-                }}
-                style={{
-                  width: '100%', padding: '0.6rem', borderRadius: '10px', 
-                  border: 'none', background: 'linear-gradient(135deg, #10b981, #059669)',
-                  color: 'white', cursor: 'pointer', fontWeight: 700, transition: 'all 0.2s', fontSize: '0.9rem'
-                }}
-              >
-                Install AlgoFlow Studio
-              </button>
-            </div>
-          )}
+                  }}
+                  style={{
+                    width: '100%', padding: '0.7rem', borderRadius: '10px', 
+                    border: 'none', background: 'linear-gradient(135deg, #10b981, #059669)',
+                    color: 'white', cursor: 'pointer', fontWeight: 700, transition: 'all 0.2s', fontSize: '0.9rem',
+                    display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '8px',
+                    boxShadow: '0 4px 14px rgba(16,185,129,0.3)'
+                  }}
+                >
+                  <span>📲</span>
+                  <span>Install AlgoFlow Studio App</span>
+                </button>
+                <div style={{ fontSize: '0.75rem', color: 'var(--text-secondary)', marginTop: '6px', textAlign: 'center' }}>
+                  Install for quick desktop access, offline support &amp; native performance
+                </div>
+              </div>
+            )}
+          </div>
 
           <button className="btn btn-start" style={{ marginTop: '0.75rem', padding: '0.75rem' }} onClick={() => setIsSettingsOpen(false)}>Save &amp; Close</button>
         </div>
@@ -3553,6 +3679,26 @@ function App() {
       {/* Home Screen */}
       <div style={{ display: !appMode ? 'block' : 'none', position: 'relative' }}>
         <div style={{ position: 'absolute', top: '20px', right: '20px', zIndex: 50, display: 'flex', gap: '10px' }}>
+          {isInstallable && (
+            <button 
+              className="btn btn-clear" 
+              onClick={async () => {
+                if (deferredPrompt) {
+                  deferredPrompt.prompt();
+                  const { outcome } = await deferredPrompt.userChoice;
+                  if (outcome === 'accepted') {
+                    setDeferredPrompt(null);
+                    setIsInstallable(false);
+                  }
+                }
+              }}
+              style={{ display: 'flex', alignItems: 'center', gap: '8px', padding: '0.6rem 1.2rem', borderRadius: '12px', background: 'linear-gradient(135deg, #10b981, #059669)', border: 'none', color: '#fff', cursor: 'pointer', transition: 'all 0.25s', fontWeight: 'bold', boxShadow: '0 4px 14px rgba(16, 185, 129, 0.3)' }}
+              onMouseEnter={e => e.currentTarget.style.transform = 'scale(1.05)'}
+              onMouseLeave={e => e.currentTarget.style.transform = 'scale(1)'}
+            >
+              📥 Install App
+            </button>
+          )}
           <button 
             className="btn btn-clear" 
             onClick={() => setIsUpcomingOpen(true)}

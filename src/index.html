@@ -196,12 +196,14 @@
     // Safety fallback: force hide preloader after 1.5s max under all circumstances
     setTimeout(hidePreloader, 1500);
 
-    // Automatically unregister stale service workers on all hosts to prevent asset caching bugs
+    // Register Service Worker for PWA installation & offline caching
     if ('serviceWorker' in navigator) {
-      navigator.serviceWorker.getRegistrations().then((registrations) => {
-        for (let registration of registrations) {
-          registration.unregister();
-        }
+      window.addEventListener('load', () => {
+        navigator.serviceWorker.register('/sw.js').then((reg) => {
+          console.log('Service Worker registered successfully:', reg.scope);
+        }).catch((err) => {
+          console.error('Service Worker registration failed:', err);
+        });
       });
     }
   </script>
