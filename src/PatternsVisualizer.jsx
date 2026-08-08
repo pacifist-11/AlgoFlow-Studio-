@@ -271,7 +271,7 @@ const PatternsVisualizer = ({ onBack, openSettings, onCopyCode, onCodeChange, fo
   const logContainerRef = useRef(null);
 
   // Interactive configurations
-  const [selectedLanguage, setSelectedLanguage] = useState('Java'); // 'Java' | 'Python' | 'C++' | 'C' | 'JavaScript'
+  const [selectedLanguage, setSelectedLanguage] = useState('C'); // 'Java' | 'Python' | 'C++' | 'C' | 'JavaScript'
   const [selectedPattern, setSelectedPattern] = useState('PYRAMID_HALF');
   const [patternInputRows, setPatternInputRows] = useState(5);
   const [patternSymbol, setPatternSymbol] = useState('*');
@@ -1348,7 +1348,7 @@ const PatternsVisualizer = ({ onBack, openSettings, onCopyCode, onCodeChange, fo
               {/* Row 1: Language selector */}
               <div style={{ padding: '8px 12px', display: 'flex', alignItems: 'center', gap: '6px', borderBottom: '1px solid rgba(255,255,255,0.05)', flexWrap: 'wrap' }}>
                 <span style={{ fontSize: '0.78rem', fontWeight: 700, color: 'var(--text-secondary)', whiteSpace: 'nowrap' }}>🌐 Lang:</span>
-                {['Java','Python','C++','C','JavaScript'].map(lang => (
+                {['Java','Python','C','JavaScript'].map(lang => (
                   <button
                     key={lang}
                     onClick={() => setSelectedLanguage(lang)}

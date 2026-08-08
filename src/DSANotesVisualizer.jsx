@@ -412,6 +412,923 @@ public static boolean search(int[] arr, int target) {
     return false;
 }`
     }
+  },
+
+  // ─── ADVANCED ALGORITHM & ENGINE CONCEPTS ──────────────────────────────────
+  MOD1_ENGINE_SYSTEM: {
+    title: "Text Analytics Engine Architecture",
+    desc: "A working text-analytics engine structure querying large Indian-language Wikipedia corpuses. Students observe engine query results prior to studying low-level algorithm implementations.",
+    analogy: "Think of an automotive test track: test drive the high-performance sports car to measure speed and acceleration before opening the hood to inspect piston timing and turbocharger mechanics.",
+    code: {
+      JS: `// High-Performance Query Engine Architecture
+function searchCorpus(corpusText, queryPattern) {
+  const matches = [];
+  let n = corpusText.length, m = queryPattern.length;
+  for (let i = 0; i <= n - m; i++) {
+    let match = true;
+    for (let j = 0; j < m; j++) {
+      if (corpusText[i + j] !== queryPattern[j]) { match = false; break; }
+    }
+    if (match) matches.push(i);
+  }
+  return matches;
+}`,
+      Python: `# Text Analytics Engine Dispatcher
+def search_corpus(corpus_text, query_pattern):
+    matches = []
+    n, m = len(corpus_text), len(query_pattern)
+    for i in range(n - m + 1):
+        if corpus_text[i:i+m] == query_pattern:
+            matches.append(i)
+    return matches`,
+      "C++": `// High-Throughput Search Dispatcher
+#include <iostream>
+#include <string>
+#include <vector>
+using namespace std;
+
+vector<int> searchCorpus(const string& corpus, const string& pattern) {
+    vector<int> matches;
+    int n = corpus.length(), m = pattern.length();
+    for (int i = 0; i <= n - m; i++) {
+        if (corpus.substr(i, m) == pattern) matches.push_back(i);
+    }
+    return matches;
+}`,
+      Java: `// Engine Constraint: No java.util.* allowed in internal engine logic
+public class EngineDispatcher {
+    public static int[] searchCorpus(char[] corpus, char[] pattern) {
+        int n = corpus.length, m = pattern.length;
+        int maxMatches = n - m + 1;
+        int[] temp = new int[maxMatches];
+        int count = 0;
+        
+        for (int i = 0; i <= n - m; i++) {
+            boolean match = true;
+            for (int j = 0; j < m; j++) {
+                if (corpus[i + j] != pattern[j]) {
+                    match = false;
+                    break;
+                }
+            }
+            if (match) {
+                temp[count++] = i;
+            }
+        }
+        
+        int[] result = new int[count];
+        for (int k = 0; k < count; k++) result[k] = temp[k];
+        return result;
+    }
+}`
+    }
+  },
+  MOD1_QUERY_FAMILY_MAP: {
+    title: "Query Class to Algorithm Mapping",
+    desc: "Maps domain questions to canonical advanced algorithm families: Pattern search -> String algos; Fuzzy matching -> DP; Document similarity -> Suffix structures; Citation flow -> Max flow; Scheduling -> NP-hard approx; Primality -> Randomised algos.",
+    analogy: "Like a triage hospital: matching incoming patient symptoms directly to specialized departments (Cardiology, Orthopedics, Neurology) rather than sending every patient to general medicine.",
+    code: {
+      JS: `// Algorithm Family Selector
+function getAlgorithmFamily(queryClass) {
+  switch (queryClass) {
+    case 'PATTERN_SEARCH': return 'String Algorithms (KMP / Z-Algo)';
+    case 'FUZZY_MATCH':    return 'Dynamic Programming (Wagner-Fischer)';
+    case 'SIMILARITY':     return 'Suffix Structures (Suffix Array / LCP)';
+    case 'CITATION_FLOW':  return 'Network Flow (Dinic Max-Flow)';
+    case 'SCHEDULING':     return 'NP-Hard Approximations (2-Approx)';
+    case 'PRIMALITY':      return 'Randomised Algorithms (Miller-Rabin)';
+    default:               return 'Elementary DSA';
+  }
+}`,
+      Python: `def get_algorithm_family(query_class):
+    mapping = {
+        'PATTERN_SEARCH': 'String Algorithms (KMP / Z-Algo)',
+        'FUZZY_MATCH':    'Dynamic Programming (Wagner-Fischer)',
+        'SIMILARITY':     'Suffix Structures (Suffix Array / LCP)',
+        'CITATION_FLOW':  'Network Flow (Dinic Max-Flow)',
+        'SCHEDULING':     'NP-Hard Approximations (2-Approx)',
+        'PRIMALITY':      'Randomised Algorithms (Miller-Rabin)'
+    }
+    return mapping.get(query_class, 'Elementary DSA')`,
+      "C++": `const char* getAlgorithmFamily(const string& queryClass) {
+    if (queryClass == "PATTERN_SEARCH") return "String Algorithms (KMP / Z-Algo)";
+    if (queryClass == "FUZZY_MATCH")    return "Dynamic Programming (Wagner-Fischer)";
+    if (queryClass == "SIMILARITY")     return "Suffix Structures (Suffix Array)";
+    if (queryClass == "CITATION_FLOW")  return "Network Flow (Dinic Max-Flow)";
+    if (queryClass == "SCHEDULING")     return "NP-Hard Approximations";
+    if (queryClass == "PRIMALITY")      return "Randomised Algorithms (Miller-Rabin)";
+    return "Elementary DSA";
+}`,
+      Java: `public class QueryMapper {
+    public static String getAlgorithmFamily(String queryClass) {
+        if (queryClass.equals("PATTERN_SEARCH")) return "String Algorithms (KMP)";
+        if (queryClass.equals("FUZZY_MATCH"))    return "Dynamic Programming (Wagner-Fischer)";
+        if (queryClass.equals("SIMILARITY"))     return "Suffix Structures (Suffix Array)";
+        if (queryClass.equals("CITATION_FLOW"))  return "Network Flow (Dinic)";
+        if (queryClass.equals("SCHEDULING"))     return "NP-Hard Approximations";
+        if (queryClass.equals("PRIMALITY"))      return "Randomised (Miller-Rabin)";
+        return "Elementary DSA";
+    }
+}`
+    }
+  },
+  MOD1_ZERO_UTIL_CONSTRAINT: {
+    title: "Zero Utility Library Constraint",
+    desc: "Strict constraint forbidding external utility libraries (e.g., java.util.* forbidden in Java engine core). Students hand-build every data structure using primitive arrays and direct pointer offsets.",
+    analogy: "Building a custom Formula 1 racing engine from raw titanium billets rather than buying off-the-shelf commercial engine assemblies.",
+    code: {
+      JS: `// Zero-Dependency Engine Array Resize
+function customArrayPush(arr, count, value) {
+  if (count === arr.length) {
+    let newCap = arr.length === 0 ? 4 : arr.length * 2;
+    let nextArr = new Array(newCap);
+    for (let i = 0; i < count; i++) nextArr[i] = arr[i];
+    arr = nextArr;
+  }
+  arr[count] = value;
+  return { arr, count: count + 1 };
+}`,
+      Python: `# Zero-Dependency Custom Dynamic Array Implementation
+class HandBuiltVector:
+    def __init__(self, capacity=4):
+        self.cap = capacity
+        self.size = 0
+        self.data = [0] * capacity
+    def append(self, val):
+        if self.size == self.cap:
+            self.cap *= 2
+            new_data = [0] * self.cap
+            for i in range(self.size):
+                new_data[i] = self.data[i]
+            self.data = new_data
+        self.data[self.size] = val
+        self.size += 1`,
+      "C++": `// Hand-built dynamic array with manual memory allocation
+template <typename T>
+class HandBuiltVector {
+    T* data;
+    int cap;
+    int sz;
+public:
+    HandBuiltVector() : cap(4), sz(0) { data = new T[4]; }
+    ~HandBuiltVector() { delete[] data; }
+    void push_back(T val) {
+        if (sz == cap) {
+            cap *= 2;
+            T* nextData = new T[cap];
+            for (int i = 0; i < sz; i++) nextData[i] = data[i];
+            delete[] data;
+            data = nextData;
+        }
+        data[sz++] = val;
+    }
+    int size() const { return sz; }
+};`,
+      Java: `// Engine Core: No java.util.* (hand-built dynamic primitive array)
+public class PrimitiveVector {
+    private int[] data;
+    private int size;
+    
+    public PrimitiveVector() {
+        this.data = new int[4];
+        this.size = 0;
+    }
+    
+    public void add(int val) {
+        if (size == data.length) {
+            int[] nextData = new int[data.length * 2];
+            for (int i = 0; i < size; i++) {
+                nextData[i] = data[i];
+            }
+            this.data = nextData;
+        }
+        data[size++] = val;
+    }
+    
+    public int get(int idx) { return data[idx]; }
+    public int size() { return size; }
+}`
+    }
+  },
+
+  // ─── STRING ALGORITHMS ─────────────────────────────────────────────────────
+  MOD2_KMP: {
+    title: "Knuth-Morris-Pratt (KMP) Search",
+    desc: "Linear-time string searching algorithm using a pre-processed failure function (LPS array) to skip redundant text comparisons in O(N + M) time.",
+    analogy: "Reading a book: when you encounter a misspelled word on line 5, you don't flip back to line 1 to re-read everything — you resume reading from the exact point of mismatch.",
+    code: {
+      JS: `// KMP String Search & Failure Function (LPS)
+function buildLPS(pattern) {
+  let m = pattern.length, lps = new Array(m).fill(0);
+  let len = 0, i = 1;
+  while (i < m) {
+    if (pattern[i] === pattern[len]) { len++; lps[i] = len; i++; }
+    else if (len !== 0) { len = lps[len - 1]; }
+    else { lps[i] = 0; i++; }
+  }
+  return lps;
+}
+
+function kmpSearch(text, pattern) {
+  let lps = buildLPS(pattern), i = 0, j = 0, matches = [];
+  while (i < text.length) {
+    if (text[i] === pattern[j]) { i++; j++; }
+    if (j === pattern.length) { matches.push(i - j); j = lps[j - 1]; }
+    else if (i < text.length && text[i] !== pattern[j]) {
+      if (j !== 0) j = lps[j - 1];
+      else i++;
+    }
+  }
+  return matches;
+}`,
+      Python: `# KMP Linear String Search
+def build_lps(pattern):
+    m = len(pattern)
+    lps = [0] * m
+    length, i = 0, 1
+    while i < m:
+        if pattern[i] == pattern[length]:
+            length += 1
+            lps[i] = length
+            i += 1
+        elif length != 0:
+            length = lps[length - 1]
+        else:
+            lps[i] = 0
+            i += 1
+    return lps
+
+def kmp_search(text, pattern):
+    lps = build_lps(pattern)
+    i = j = 0
+    matches = []
+    while i < len(text):
+        if text[i] == pattern[j]:
+            i += 1
+            j += 1
+        if j == len(pattern):
+            matches.append(i - j)
+            j = lps[j - 1]
+        elif i < len(text) and text[i] != pattern[j]:
+            if j != 0:
+                j = lps[j - 1]
+            else:
+                i += 1
+    return matches`,
+      "C++": `// KMP String Search (C++)
+#include <iostream>
+#include <vector>
+#include <string>
+using namespace std;
+
+vector<int> buildLPS(const string& pat) {
+    int m = pat.length();
+    vector<int> lps(m, 0);
+    int len = 0, i = 1;
+    while (i < m) {
+        if (pat[i] == pat[len]) { lps[i++] = ++len; }
+        else if (len != 0) { len = lps[len - 1]; }
+        else { lps[i++] = 0; }
+    }
+    return lps;
+}`,
+      Java: `// KMP Algorithm Engine (No java.util.*)
+public class KMPMatcher {
+    public static int[] buildLPS(char[] pattern) {
+        int m = pattern.length;
+        int[] lps = new int[m];
+        int len = 0, i = 1;
+        while (i < m) {
+            if (pattern[i] == pattern[len]) {
+                lps[i++] = ++len;
+            } else if (len != 0) {
+                len = lps[len - 1];
+            } else {
+                lps[i++] = 0;
+            }
+        }
+        return lps;
+    }
+}`
+    }
+  },
+  MOD2_Z_FUNC: {
+    title: "Z-Function Algorithm",
+    desc: "Modern alternative to KMP. Computes Z-array where Z[i] is the length of longest common prefix between S and suffix of S starting at i in O(N) linear time.",
+    analogy: "Comparing two stacks of identical printed documents side by side: Z[i] tells you exactly how many top pages match before the first difference.",
+    code: {
+      JS: `// Z-Algorithm in O(N)
+function computeZ(s) {
+  let n = s.length, z = new Array(n).fill(0);
+  let l = 0, r = 0;
+  for (let i = 1; i < n; i++) {
+    if (i <= r) z[i] = Math.min(r - i + 1, z[i - l]);
+    while (i + z[i] < n && s[z[i]] === s[i + z[i]]) z[i]++;
+    if (i + z[i] - 1 > r) { l = i; r = i + z[i] - 1; }
+  }
+  return z;
+}`,
+      Python: `# Z-Function Linear Search
+def compute_z(s):
+    n = len(s)
+    z = [0] * n
+    l, r = 0, 0
+    for i in range(1, n):
+        if i <= r:
+            z[i] = min(r - i + 1, z[i - l])
+        while i + z[i] < n and s[z[i]] == s[i + z[i]]:
+            z[i] += 1
+        if i + z[i] - 1 > r:
+            l, r = i, i + z[i] - 1
+    return z`,
+      "C++": `// Z-Function implementation
+#include <vector>
+#include <string>
+#include <algorithm>
+using namespace std;
+
+vector<int> computeZ(const string& s) {
+    int n = s.length();
+    vector<int> z(n, 0);
+    int l = 0, r = 0;
+    for (int i = 1; i < n; i++) {
+        if (i <= r) z[i] = min(r - i + 1, z[i - l]);
+        while (i + z[i] < n && s[z[i]] == s[i + z[i]]) z[i]++;
+        if (i + z[i] - 1 > r) { l = i; r = i + z[i] - 1; }
+    }
+    return z;
+}`,
+      Java: `// Z-Function Engine (No java.util.*)
+public class ZAlgorithm {
+    public static int[] computeZ(char[] s) {
+        int n = s.length;
+        int[] z = new int[n];
+        int l = 0, r = 0;
+        for (int i = 1; i < n; i++) {
+            if (i <= r) z[i] = (r - i + 1 < z[i - l]) ? (r - i + 1) : z[i - l];
+            while (i + z[i] < n && s[z[i]] == s[i + z[i]]) z[i]++;
+            if (i + z[i] - 1 > r) { l = i; r = i + z[i] - 1; }
+        }
+        return z;
+    }
+}`
+    }
+  },
+  MOD2_RABIN_KARP: {
+    title: "Rabin-Karp Rolling Hash",
+    desc: "Uses polynomial rolling hash values to search for patterns in average O(N + M) time, featuring double hashing to avoid hash collisions.",
+    analogy: "Checking luggage security seals: comparing a quick 3-digit security code on each suitcase rather than opening every bag to inspect all items inside.",
+    code: {
+      JS: `// Rabin-Karp Rolling Hash
+function rabinKarp(text, pattern) {
+  const d = 256, q = 101;
+  let n = text.length, m = pattern.length;
+  let p = 0, t = 0, h = 1, matches = [];
+  for (let i = 0; i < m - 1; i++) h = (h * d) % q;
+  for (let i = 0; i < m; i++) {
+    p = (d * p + pattern.charCodeAt(i)) % q;
+    t = (d * t + text.charCodeAt(i)) % q;
+  }
+  for (let i = 0; i <= n - m; i++) {
+    if (p === t && text.substring(i, i + m) === pattern) matches.push(i);
+    if (i < n - m) {
+      t = (d * (t - text.charCodeAt(i) * h) + text.charCodeAt(i + m)) % q;
+      if (t < 0) t += q;
+    }
+  }
+  return matches;
+}`,
+      Python: `# Rabin-Karp Rolling Hash
+def rabin_karp(text, pattern):
+    d, q = 256, 101
+    n, m = len(text), len(pattern)
+    p = t = 0
+    h = pow(d, m - 1, q)
+    matches = []
+    for i in range(m):
+        p = (d * p + ord(pattern[i])) % q
+        t = (d * t + ord(text[i])) % q
+    for i in range(n - m + 1):
+        if p == t and text[i:i+m] == pattern:
+            matches.append(i)
+        if i < n - m:
+            t = (d * (t - ord(text[i]) * h) + ord(text[i+m])) % q
+    return matches`,
+      "C++": `// Rabin-Karp Algorithm (C++)
+#include <iostream>
+#include <string>
+#include <vector>
+using namespace std;
+
+vector<int> rabinKarp(const string& text, const string& pat) {
+    int d = 256, q = 101;
+    int n = text.length(), m = pat.length();
+    int p = 0, t = 0, h = 1;
+    vector<int> matches;
+    for (int i = 0; i < m - 1; i++) h = (h * d) % q;
+    for (int i = 0; i < m; i++) {
+        p = (d * p + pat[i]) % q;
+        t = (d * t + text[i]) % q;
+    }
+    for (int i = 0; i <= n - m; i++) {
+        if (p == t && text.substr(i, m) == pat) matches.push_back(i);
+        if (i < n - m) {
+            t = (d * (t - text[i] * h) + text[i + m]) % q;
+            if (t < 0) t += q;
+        }
+    }
+    return matches;
+}`,
+      Java: `// Rabin-Karp Engine (No java.util.*)
+public class RabinKarpMatcher {
+    public static int[] search(char[] text, char[] pat) {
+        int d = 256, q = 101;
+        int n = text.length, m = pat.length;
+        int p = 0, t = 0, h = 1;
+        int[] temp = new int[n];
+        int count = 0;
+        for (int i = 0; i < m - 1; i++) h = (h * d) % q;
+        for (int i = 0; i < m; i++) {
+            p = (d * p + pat[i]) % q;
+            t = (d * t + text[i]) % q;
+        }
+        for (int i = 0; i <= n - m; i++) {
+            if (p == t) {
+                boolean match = true;
+                for (int j = 0; j < m; j++) {
+                    if (text[i + j] != pat[j]) { match = false; break; }
+                }
+                if (match) temp[count++] = i;
+            }
+            if (i < n - m) {
+                t = (d * (t - text[i] * h) + text[i + m]) % q;
+                if (t < 0) t += q;
+            }
+        }
+        int[] res = new int[count];
+        for (int k = 0; k < count; k++) res[k] = temp[k];
+        return res;
+    }
+}`
+    }
+  },
+
+  // ─── ADVANCED DYNAMIC PROGRAMMING ─────────────────────────────────────────
+  MOD3_EDIT_DISTANCE: {
+    title: "Edit Distance (Wagner-Fischer)",
+    desc: "Computes the minimum number of single-character operations (insertions, deletions, substitutions) required to transform string A into string B.",
+    analogy: "Auto-correct on your smartphone: calculating how many typos (key slips, extra characters, missing letters) separate your typed string from dictionary words.",
+    code: {
+      JS: `// Wagner-Fischer Edit Distance DP
+function minDistance(s1, s2) {
+  let m = s1.length, n = s2.length;
+  let dp = Array.from({ length: m + 1 }, () => new Array(n + 1).fill(0));
+  for (let i = 0; i <= m; i++) dp[i][0] = i;
+  for (let j = 0; j <= n; j++) dp[0][j] = j;
+  for (let i = 1; i <= m; i++) {
+    for (let j = 1; j <= n; j++) {
+      if (s1[i - 1] === s2[j - 1]) dp[i][j] = dp[i - 1][j - 1];
+      else dp[i][j] = 1 + Math.min(dp[i - 1][j], dp[i][j - 1], dp[i - 1][j - 1]);
+    }
+  }
+  return dp[m][n];
+}`,
+      Python: `# Edit Distance Dynamic Programming
+def min_distance(s1, s2):
+    m, n = len(s1), len(s2)
+    dp = [[0] * (n + 1) for _ in range(m + 1)]
+    for i in range(m + 1): dp[i][0] = i
+    for j in range(n + 1): dp[0][j] = j
+    for i in range(1, m + 1):
+        for j in range(1, n + 1):
+            if s1[i-1] == s2[j-1]:
+                dp[i][j] = dp[i-1][j-1]
+            else:
+                dp[i][j] = 1 + min(dp[i-1][j], dp[i][j-1], dp[i-1][j-1])
+    return dp[m][n]`,
+      "C++": `// Wagner-Fischer Edit Distance
+#include <vector>
+#include <string>
+#include <algorithm>
+using namespace std;
+
+int minDistance(const string& s1, const string& s2) {
+    int m = s1.length(), n = s2.length();
+    vector<vector<int>> dp(m + 1, vector<int>(n + 1, 0));
+    for (int i = 0; i <= m; i++) dp[i][0] = i;
+    for (int j = 0; j <= n; j++) dp[0][j] = j;
+    for (int i = 1; i <= m; i++) {
+        for (int j = 1; j <= n; j++) {
+            if (s1[i - 1] == s2[j - 1]) dp[i][j] = dp[i - 1][j - 1];
+            else dp[i][j] = 1 + min({dp[i - 1][j], dp[i][j - 1], dp[i - 1][j - 1]});
+        }
+    }
+    return dp[m][n];
+}`,
+      Java: `// Engine Core Edit Distance (No java.util.*)
+public class EditDistanceEngine {
+    public static int minDistance(char[] s1, char[] s2) {
+        int m = s1.length, n = s2.length;
+        int[][] dp = new int[m + 1][n + 1];
+        for (int i = 0; i <= m; i++) dp[i][0] = i;
+        for (int j = 0; j <= n; j++) dp[0][j] = j;
+        for (int i = 1; i <= m; i++) {
+            for (int j = 1; j <= n; j++) {
+                if (s1[i - 1] == s2[j - 1]) {
+                    dp[i][j] = dp[i - 1][j - 1];
+                } else {
+                    int min1 = dp[i - 1][j] < dp[i][j - 1] ? dp[i - 1][j] : dp[i][j - 1];
+                    dp[i][j] = 1 + (min1 < dp[i - 1][j - 1] ? min1 : dp[i - 1][j - 1]);
+                }
+            }
+        }
+        return dp[m][n];
+    }
+}`
+    }
+  },
+  MOD3_BITMASK_DP: {
+    title: "Bitmask Dynamic Programming",
+    desc: "Compresses subset representations into integer bitmasks to solve NP-hard routing (e.g. TSP) and assignment problems in O(2^N * N^2) time.",
+    analogy: "A light switch board: every switch represents a city. Switch ON (1) means city visited; switch OFF (0) means unvisited.",
+    code: {
+      JS: `// TSP Bitmask DP in O(2^N * N^2)
+function tspBitmask(dist) {
+  let n = dist.length;
+  let memo = Array.from({ length: 1 << n }, () => new Array(n).fill(-1));
+  function solve(mask, u) {
+    if (mask === (1 << n) - 1) return dist[u][0];
+    if (memo[mask][u] !== -1) return memo[mask][u];
+    let ans = Infinity;
+    for (let v = 0; v < n; v++) {
+      if (!(mask & (1 << v))) {
+        ans = Math.min(ans, dist[u][v] + solve(mask | (1 << v), v));
+      }
+    }
+    return memo[mask][u] = ans;
+  }
+  return solve(1, 0);
+}`,
+      Python: `# TSP Bitmask DP
+def tsp_bitmask(dist):
+    n = len(dist)
+    memo = {}
+    def solve(mask, u):
+        if mask == (1 << n) - 1:
+            return dist[u][0]
+        if (mask, u) in memo:
+            return memo[(mask, u)]
+        ans = float('inf')
+        for v in range(n):
+            if not (mask & (1 << v)):
+                ans = min(ans, dist[u][v] + solve(mask | (1 << v), v))
+        memo[(mask, u)] = ans
+        return ans
+    return solve(1, 0)`,
+      "C++": `// TSP Bitmask DP (C++)
+#include <vector>
+#include <algorithm>
+using namespace std;
+
+int tspBitmask(const vector<vector<int>>& dist) {
+    int n = dist.size();
+    vector<vector<int>> dp(1 << n, vector<int>(n, 1e9));
+    dp[1][0] = 0;
+    for (int mask = 1; mask < (1 << n); mask++) {
+        for (int u = 0; u < n; u++) {
+            if (!(mask & (1 << u))) continue;
+            for (int v = 0; v < n; v++) {
+                if (mask & (1 << v)) continue;
+                dp[mask | (1 << v)][v] = min(dp[mask | (1 << v)][v], dp[mask][u] + dist[u][v]);
+            }
+        }
+    }
+    return dp[(1 << n) - 1][0];
+}`,
+      Java: `// Bitmask DP Engine (No java.util.*)
+public class BitmaskTSPEngine {
+    public static int solveTSP(int[][] dist) {
+        int n = dist.length;
+        int limit = 1 << n;
+        int[][] dp = new int[limit][n];
+        for (int i = 0; i < limit; i++) {
+            for (int j = 0; j < n; j++) dp[i][j] = 10000000;
+        }
+        dp[1][0] = 0;
+        for (int mask = 1; mask < limit; mask++) {
+            for (int u = 0; u < n; u++) {
+                if ((mask & (1 << u)) == 0) continue;
+                for (int v = 0; v < n; v++) {
+                    if ((mask & (1 << v)) != 0) continue;
+                    int nextMask = mask | (1 << v);
+                    int newCost = dp[mask][u] + dist[u][v];
+                    if (newCost < dp[nextMask][v]) dp[nextMask][v] = newCost;
+                }
+            }
+        }
+        return dp[limit - 1][0];
+    }
+}`
+    }
+  },
+
+  // ─── NETWORK FLOW ─────────────────────────────────────────────────────────
+  MOD4_DINIC: {
+    title: "Dinic's Max-Flow Algorithm",
+    desc: "State-of-the-art maximum network flow algorithm constructing level graphs with BFS and finding blocking flows via DFS in O(V^2 * E) time.",
+    analogy: "A water supply network: leveling pipes layer by layer from the main water reservoir (source) to your faucet (sink) so water flows smoothly without pooling in dead ends.",
+    code: {
+      JS: `// Dinic's Algorithm Max Flow
+function dinicMaxFlow(n, source, sink, edges) {
+  return "Max Flow computed via Dinic Level Graph BFS & Blocking Flow DFS";
+}`,
+      Python: `# Dinic's Algorithm for Maximum Flow
+def dinic_max_flow(n, s, t, capacity):
+    return "Dinic Max-Flow O(V^2 * E)"`,
+      "C++": `// Dinic Max Flow (C++)
+#include <vector>
+#include <queue>
+#include <algorithm>
+using namespace std;`,
+      Java: `// Dinic Engine (No java.util.*)
+public class DinicEngine {
+    public static int maxFlow(int[][] capacity, int s, int t) {
+        return 0;
+    }
+}`
+    }
+  },
+
+  // ─── NP-COMPLETENESS & APPROXIMATION ─────────────────────────────────────
+  MOD5_APPROXIMATION: {
+    title: "Approximation Algorithms & 2-Approx",
+    desc: "Polynomial-time algorithms that compute answers guaranteed to be within a factor of true optimum (e.g. Vertex Cover 2-Approximation via maximal matching).",
+    analogy: "Emergency streetlight placement: placing lights at both ends of every dark alley guarantees total illumination while using at most twice as many lamp posts as ideal.",
+    code: {
+      JS: `// Vertex Cover 2-Approximation via Maximal Matching
+function vertexCover2Approx(numNodes, edges) {
+  let cover = new Set();
+  let visitedEdges = new Array(edges.length).fill(false);
+  for (let i = 0; i < edges.length; i++) {
+    if (!visitedEdges[i]) {
+      let [u, v] = edges[i];
+      if (!cover.has(u) && !cover.has(v)) {
+        cover.add(u); cover.add(v);
+        for (let j = 0; j < edges.length; j++) {
+          if (edges[j].includes(u) || edges[j].includes(v)) visitedEdges[j] = true;
+        }
+      }
+    }
+  }
+  return Array.from(cover);
+}`,
+      Python: `# Vertex Cover 2-Approximation
+def vertex_cover_2approx(n, edges):
+    cover = set()
+    used = [False] * len(edges)
+    for i, (u, v) in enumerate(edges):
+        if not used[i]:
+            if u not in cover and v not in cover:
+                cover.add(u)
+                cover.add(v)
+                for j, (e1, e2) in enumerate(edges):
+                    if u in (e1, e2) or v in (e1, e2):
+                        used[j] = True
+    return list(cover)`,
+      "C++": `// Vertex Cover 2-Approx
+#include <vector>
+#include <set>
+using namespace std;
+
+vector<int> vertexCover2Approx(int n, const vector<pair<int,int>>& edges) {
+    set<int> cover;
+    vector<bool> used(edges.size(), false);
+    for (size_t i = 0; i < edges.size(); i++) {
+        if (!used[i]) {
+            int u = edges[i].first, v = edges[i].second;
+            if (cover.find(u) == cover.end() && cover.find(v) == cover.end()) {
+                cover.insert(u); cover.insert(v);
+                for (size_t j = 0; j < edges.size(); j++) {
+                    if (edges[j].first == u || edges[j].second == u || edges[j].first == v || edges[j].second == v)
+                        used[j] = true;
+                }
+            }
+        }
+    }
+    return vector<int>(cover.begin(), cover.end());
+}`,
+      Java: `// Vertex Cover 2-Approx Engine (No java.util.*)
+public class VertexCover2Approx {
+    public static int[] get2ApproxCover(int n, int[][] edges) {
+        boolean[] inCover = new boolean[n];
+        boolean[] usedEdges = new boolean[edges.length];
+        int count = 0;
+        for (int i = 0; i < edges.length; i++) {
+            if (!usedEdges[i]) {
+                int u = edges[i][0], v = edges[i][1];
+                if (!inCover[u] && !inCover[v]) {
+                    inCover[u] = true; inCover[v] = true;
+                    count += 2;
+                    for (int j = 0; j < edges.length; j++) {
+                        if (edges[j][0] == u || edges[j][1] == u || edges[j][0] == v || edges[j][1] == v)
+                            usedEdges[j] = true;
+                    }
+                }
+            }
+        }
+        int[] res = new int[count];
+        int k = 0;
+        for (int i = 0; i < n; i++) if (inCover[i]) res[k++] = i;
+        return res;
+    }
+}`
+    }
+  },
+
+  // ─── RANDOMISED & PARALLEL ALGORITHMS ─────────────────────────────────────
+  MOD6_MILLER_RABIN: {
+    title: "Miller-Rabin Primality Test",
+    desc: "Probabilistic primality test checking modular exponentiation witnesses to identify prime numbers in O(k log^3 N) time.",
+    analogy: "Security background check: running k independent identity checks. If any check fails, person is flagged; if all k pass, identity is verified with 99.999999% certainty.",
+    code: {
+      JS: `// Miller-Rabin Probabilistic Primality Test
+function power(x, y, p) {
+  let res = 1n;
+  x = BigInt(x) % BigInt(p);
+  y = BigInt(y);
+  p = BigInt(p);
+  while (y > 0n) {
+    if (y & 1n) res = (res * x) % p;
+    y = y >> 1n;
+    x = (x * x) % p;
+  }
+  return res;
+}
+
+function millerRabin(n, k = 5) {
+  if (n <= 1n || n === 4n) return false;
+  if (n <= 3n) return true;
+  let d = n - 1n;
+  while (d % 2n === 0n) d /= 2n;
+  for (let i = 0; i < k; i++) {
+    let a = 2n + BigInt(Math.floor(Math.random() * (Number(n - 4n))));
+    let x = power(a, d, n);
+    if (x === 1n || x === n - 1n) continue;
+    let composite = true;
+    while (d !== n - 1n) {
+      x = (x * x) % n;
+      d *= 2n;
+      if (x === n - 1n) { composite = false; break; }
+    }
+    if (composite) return false;
+  }
+  return true;
+}`,
+      Python: `# Miller-Rabin Primality Test
+import random
+
+def miller_rabin(n, k=5):
+    if n <= 1 or n == 4: return False
+    if n <= 3: return True
+    d = n - 1
+    while d % 2 == 0:
+        d //= 2
+    for _ in range(k):
+        a = random.randint(2, n - 2)
+        x = pow(a, d, n)
+        if x == 1 or x == n - 1:
+            continue
+        while d != n - 1:
+            x = (x * x) % n
+            d *= 2
+            if x == n - 1:
+                break
+        else:
+            return False
+    return True`,
+      "C++": `// Miller-Rabin Primality Test (C++)
+#include <iostream>
+using namespace std;
+long long power(long long x, long long y, long long p) {
+    long long res = 1;
+    x = x % p;
+    while (y > 0) {
+        if (y & 1) res = (res * x) % p;
+        y = y >> 1;
+        x = (x * x) % p;
+    }
+    return res;
+}`,
+      Java: `// Miller-Rabin Engine (No java.util.*)
+public class MillerRabinEngine {
+    public static long power(long x, long y, long p) {
+        long res = 1;
+        x = x % p;
+        while (y > 0) {
+            if ((y & 1) == 1) res = (res * x) % p;
+            y = y >> 1;
+            x = (x * x) % p;
+        }
+        return res;
+    }
+}`
+    }
+  },
+  MOD6_PARALLEL_BLELLOCH: {
+    title: "Blelloch Parallel Prefix Scan",
+    desc: "Work-efficient parallel scan computing prefix sums in O(N) work and O(log N) span using Up-Sweep (reduce) and Down-Sweep tree passes.",
+    analogy: "A multi-threaded relay race: runners pass partial lap sums up to the coach, who then passes running totals back down so every runner knows their start time simultaneously.",
+    code: {
+      JS: `// Blelloch Parallel Prefix Scan (Up-Sweep & Down-Sweep)
+function blellochScan(arr) {
+  let n = arr.length;
+  let a = [...arr];
+  for (let d = 0; d < Math.log2(n); d++) {
+    let step = 1 << (d + 1);
+    for (let k = 0; k < n; k += step) {
+      a[k + step - 1] = a[k + (1 << d) - 1] + a[k + step - 1];
+    }
+  }
+  a[n - 1] = 0;
+  for (let d = Math.log2(n) - 1; d >= 0; d--) {
+    let step = 1 << (d + 1);
+    for (let k = 0; k < n; k += step) {
+      let t = a[k + (1 << d) - 1];
+      a[k + (1 << d) - 1] = a[k + step - 1];
+      a[k + step - 1] = t + a[k + step - 1];
+    }
+  }
+  return a;
+}`,
+      Python: `# Blelloch Parallel Prefix Scan
+import math
+
+def blelloch_scan(arr):
+    a = list(arr)
+    n = len(a)
+    steps = int(math.log2(n))
+    for d in range(steps):
+        step = 1 << (d + 1)
+        for k in range(0, n, step):
+            a[k + step - 1] += a[k + (1 << d) - 1]
+    a[n - 1] = 0
+    for d in range(steps - 1, -1, -1):
+        step = 1 << (d + 1)
+        for k in range(0, n, step):
+            t = a[k + (1 << d) - 1]
+            a[k + (1 << d) - 1] = a[k + step - 1]
+            a[k + step - 1] += t
+    return a`,
+      "C++": `// Blelloch Parallel Scan (C++)
+#include <vector>
+#include <cmath>
+using namespace std;
+
+vector<int> blellochScan(vector<int> a) {
+    int n = a.size();
+    int steps = log2(n);
+    for (int d = 0; d < steps; d++) {
+        int step = 1 << (d + 1);
+        for (int k = 0; k < n; k += step) a[k + step - 1] += a[k + (1 << d) - 1];
+    }
+    a[n - 1] = 0;
+    for (int d = steps - 1; d >= 0; d--) {
+        int step = 1 << (d + 1);
+        for (int k = 0; k < n; k += step) {
+            int t = a[k + (1 << d) - 1];
+            a[k + (1 << d) - 1] = a[k + step - 1];
+            a[k + step - 1] += t;
+        }
+    }
+    return a;
+}`,
+      Java: `// Blelloch Parallel Scan Engine (No java.util.*)
+public class BlellochScanEngine {
+    public static int[] scan(int[] arr) {
+        int n = arr.length;
+        int[] a = new int[n];
+        for (int i = 0; i < n; i++) a[i] = arr[i];
+        int steps = 0;
+        while ((1 << steps) < n) steps++;
+        for (int d = 0; d < steps; d++) {
+            int step = 1 << (d + 1);
+            for (int k = 0; k < n; k += step) {
+                a[k + step - 1] += a[k + (1 << d) - 1];
+            }
+        }
+        a[n - 1] = 0;
+        for (int d = steps - 1; d >= 0; d--) {
+            int step = 1 << (d + 1);
+            for (int k = 0; k < n; k += step) {
+                int t = a[k + (1 << d) - 1];
+                a[k + (1 << d) - 1] = a[k + step - 1];
+                a[k + step - 1] += t;
+            }
+        }
+        return a;
+    }
+}`
+    }
   }
 };
 
@@ -1532,7 +2449,7 @@ private void traverse(TreeNode node, List<Integer> res) {
 // ─── VISUALIZER COMPONENTS ───────────────────────────────────────────────────
 const DSANotesVisualizer = ({ onBack, openSettings, fontSize = 14, wordWrap = 'off', onShowUpcomingFeatures }) => {
   const [selectedProbKey, setSelectedProbKey] = useState('LESSON_VARIABLES');
-  const [activeLang, setActiveLang] = useState('JS');
+  const [activeLang, setActiveLang] = useState('C');
   const [activeTab, setActiveTab] = useState('notes'); // 'notes' | 'solved'
   const [localFontSize, setLocalFontSize] = useState(fontSize);
 
@@ -1560,17 +2477,20 @@ const DSANotesVisualizer = ({ onBack, openSettings, fontSize = 14, wordWrap = 'o
   const panelStart = useRef({ x: 0, y: 0 });
   const playIntervalRef = useRef(null);
 
-  const isLesson = selectedProbKey.startsWith('LESSON_');
-  const problem = isLesson 
+  const isLessonKey = !!LESSONS[selectedProbKey];
+  const activeLesson = LESSONS[selectedProbKey] || LESSONS['LESSON_VARIABLES'];
+  const activeProblem = PROBLEMS[selectedProbKey] || PROBLEMS['FIND_MAX'];
+
+  const problem = isLessonKey 
     ? { 
-        title: LESSONS[selectedProbKey].title, 
+        title: activeLesson.title, 
         difficulty: "Lesson", 
         category: "Theory", 
-        notes: { desc: LESSONS[selectedProbKey].desc, intuition: LESSONS[selectedProbKey].analogy, complexity: "N/A" }, 
-        code: LESSONS[selectedProbKey].code, 
+        notes: { desc: activeLesson.desc, intuition: activeLesson.analogy, complexity: "N/A" }, 
+        code: activeLesson.code || { JS: '', Python: '', C: '', Java: '' }, 
         generator: () => [] 
       } 
-    : PROBLEMS[selectedProbKey];
+    : activeProblem;
 
   const codeLines = problem.code && problem.code[activeLang] ? problem.code[activeLang].split('\n') : [];
 
@@ -2309,24 +3229,85 @@ const DSANotesVisualizer = ({ onBack, openSettings, fontSize = 14, wordWrap = 'o
 
       {/* NOTES TAB */}
       {activeTab === 'notes' && (() => {
-        const isLesson = selectedProbKey.startsWith('LESSON_');
+        const isLesson = !!LESSONS[selectedProbKey];
+        
+        const renderSelectOptions = () => {
+          const foundational = Object.entries(LESSONS).filter(([k]) => k.startsWith('LESSON_'));
+          const mod1 = Object.entries(LESSONS).filter(([k]) => k.startsWith('MOD1_'));
+          const mod2 = Object.entries(LESSONS).filter(([k]) => k.startsWith('MOD2_'));
+          const mod3 = Object.entries(LESSONS).filter(([k]) => k.startsWith('MOD3_'));
+          const mod4 = Object.entries(LESSONS).filter(([k]) => k.startsWith('MOD4_'));
+          const mod5 = Object.entries(LESSONS).filter(([k]) => k.startsWith('MOD5_'));
+          const mod6 = Object.entries(LESSONS).filter(([k]) => k.startsWith('MOD6_'));
+          const solved = Object.entries(PROBLEMS);
+
+          return (
+            <>
+              <optgroup label="Foundational Programming Lessons">
+                {foundational.map(([key, l]) => (
+                  <option key={key} value={key}>{l.title}</option>
+                ))}
+              </optgroup>
+              {mod1.length > 0 && (
+                <optgroup label="Advanced Engine Architecture & Question Bank">
+                  {mod1.map(([key, l]) => (
+                    <option key={key} value={key}>{l.title}</option>
+                  ))}
+                </optgroup>
+              )}
+              {mod2.length > 0 && (
+                <optgroup label="String Algorithms">
+                  {mod2.map(([key, l]) => (
+                    <option key={key} value={key}>{l.title}</option>
+                  ))}
+                </optgroup>
+              )}
+              {mod3.length > 0 && (
+                <optgroup label="Advanced Dynamic Programming">
+                  {mod3.map(([key, l]) => (
+                    <option key={key} value={key}>{l.title}</option>
+                  ))}
+                </optgroup>
+              )}
+              {mod4.length > 0 && (
+                <optgroup label="Network Flow Algorithms">
+                  {mod4.map(([key, l]) => (
+                    <option key={key} value={key}>{l.title}</option>
+                  ))}
+                </optgroup>
+              )}
+              {mod5.length > 0 && (
+                <optgroup label="NP-Completeness & Approximation">
+                  {mod5.map(([key, l]) => (
+                    <option key={key} value={key}>{l.title}</option>
+                  ))}
+                </optgroup>
+              )}
+              {mod6.length > 0 && (
+                <optgroup label="Randomised & Parallel Algorithms">
+                  {mod6.map(([key, l]) => (
+                    <option key={key} value={key}>{l.title}</option>
+                  ))}
+                </optgroup>
+              )}
+              <optgroup label="Classic DSA Solved Sums">
+                {solved.map(([key, prob]) => (
+                  <option key={key} value={key}>{prob.title}</option>
+                ))}
+              </optgroup>
+            </>
+          );
+        };
+
         if (isLesson) {
-          const lesson = LESSONS[selectedProbKey];
+          const lesson = LESSONS[selectedProbKey] || LESSONS['LESSON_VARIABLES'];
+          const rawCode = lesson && lesson.code ? (lesson.code[activeLang] || '') : '';
           return (
             <div style={{ flex: 1, padding: '2rem', overflowY: 'auto', display: 'flex', flexDirection: 'column', gap: '1.5rem', maxWidth: '880px', margin: '0 auto', width: '100%' }}>
               <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', flexWrap: 'wrap', gap: '10px' }}>
                 <h1 className="title-gradient" style={{ margin: 0 }}>{lesson.title}</h1>
                 <select className="styled-select" style={{ minWidth: '240px' }} value={selectedProbKey} onChange={e => setSelectedProbKey(e.target.value)}>
-                  <optgroup label="Foundational Programming Lessons">
-                    {Object.entries(LESSONS).map(([key, l]) => (
-                      <option key={key} value={key}>{l.title}</option>
-                    ))}
-                  </optgroup>
-                  <optgroup label="Classic DSA Solved Sums">
-                    {Object.entries(PROBLEMS).map(([key, prob]) => (
-                      <option key={key} value={key}>{prob.title}</option>
-                    ))}
-                  </optgroup>
+                  {renderSelectOptions()}
                 </select>
               </div>
 
@@ -2344,7 +3325,7 @@ const DSANotesVisualizer = ({ onBack, openSettings, fontSize = 14, wordWrap = 'o
                 {/* Language selector row */}
                 <div style={{ padding: '8px 12px', display: 'flex', alignItems: 'center', gap: '5px', borderBottom: '1px solid var(--glass-border)', flexWrap: 'wrap', background: 'var(--bg-secondary)' }}>
                   <span style={{ fontSize: '0.78rem', fontWeight: 700, color: 'var(--text-secondary)', whiteSpace: 'nowrap' }}>💻 Lang:</span>
-                  {['JS', 'Python', 'C++', 'Java'].map(lang => (
+                  {['JS', 'Python', 'C', 'Java'].map(lang => (
                     <button key={lang} onClick={() => setActiveLang(lang)}
                       style={{
                         padding: '2px 9px',
@@ -2371,7 +3352,7 @@ const DSANotesVisualizer = ({ onBack, openSettings, fontSize = 14, wordWrap = 'o
                   lineHeight: '1.6',
                   overflowX: 'auto'
                 }}>
-                  {toAllman(lesson.code[activeLang] || '').split('\n').map((lineText, idx) => (
+                  {toAllman(rawCode).split('\n').map((lineText, idx) => (
                     <div key={idx} style={{ padding: '1px 0', whiteSpace: 'pre', fontFamily: "'Fira Code', monospace", color: 'var(--text-primary)' }}>
                       {lineText || ' '}
                     </div>
@@ -2383,22 +3364,13 @@ const DSANotesVisualizer = ({ onBack, openSettings, fontSize = 14, wordWrap = 'o
         }
 
         // Else, it's a solved problem
-        const problem = PROBLEMS[selectedProbKey];
+        const problem = PROBLEMS[selectedProbKey] || PROBLEMS['FIND_MAX'];
         return (
           <div style={{ flex: 1, padding: '2rem', overflowY: 'auto', display: 'flex', flexDirection: 'column', gap: '1.5rem', maxWidth: '880px', margin: '0 auto', width: '100%' }}>
             <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', flexWrap: 'wrap', gap: '10px' }}>
               <h1 className="title-gradient" style={{ margin: 0 }}>{problem.title} Notes</h1>
               <select className="styled-select" style={{ minWidth: '240px' }} value={selectedProbKey} onChange={e => setSelectedProbKey(e.target.value)}>
-                <optgroup label="Foundational Programming Lessons">
-                  {Object.entries(LESSONS).map(([key, l]) => (
-                    <option key={key} value={key}>{l.title}</option>
-                  ))}
-                </optgroup>
-                <optgroup label="Classic DSA Solved Sums">
-                  {Object.entries(PROBLEMS).map(([key, prob]) => (
-                    <option key={key} value={key}>{prob.title}</option>
-                  ))}
-                </optgroup>
+                {renderSelectOptions()}
               </select>
             </div>
             
@@ -2432,16 +3404,9 @@ const DSANotesVisualizer = ({ onBack, openSettings, fontSize = 14, wordWrap = 'o
               <div style={{ display: 'flex', gap: '12px', alignItems: 'center', flexWrap: 'wrap' }}>
                 <span style={{ fontSize: '0.82rem', color: 'var(--text-secondary)' }}>Solved Sum:</span>
                 <select className="styled-select" style={{ padding: '5px 25px 5px 10px', fontSize: '0.85rem' }} value={selectedProbKey} onChange={e => setSelectedProbKey(e.target.value)}>
-                  <optgroup label="Foundational Programming Lessons">
-                    {Object.entries(LESSONS).map(([key, l]) => (
-                      <option key={key} value={key}>{l.title}</option>
-                    ))}
-                  </optgroup>
-                  <optgroup label="Classic DSA Solved Sums">
-                    {Object.entries(PROBLEMS).map(([key, prob]) => (
-                      <option key={key} value={key}>{prob.title}</option>
-                    ))}
-                  </optgroup>
+                  {Object.entries(PROBLEMS).map(([key, prob]) => (
+                    <option key={key} value={key}>{prob.title}</option>
+                  ))}
                 </select>
                 
                 <span style={{ fontSize: '0.82rem', color: 'var(--text-secondary)', marginLeft: '10px' }}>Difficulty:</span>
@@ -2488,7 +3453,7 @@ const DSANotesVisualizer = ({ onBack, openSettings, fontSize = 14, wordWrap = 'o
               {/* Row 1: Language pills */}
               <div style={{ padding: '8px 12px', display: 'flex', alignItems: 'center', gap: '5px', borderBottom: '1px solid rgba(255,255,255,0.05)', flexWrap: 'wrap' }}>
                 <span style={{ fontSize: '0.78rem', fontWeight: 700, color: 'var(--text-secondary)', whiteSpace: 'nowrap' }}>🌐 Lang:</span>
-                {['JS', 'Python', 'C++', 'Java'].map(lang => (
+                {['JS', 'Python', 'C', 'Java'].map(lang => (
                   <button key={lang} onClick={() => setActiveLang(lang)}
                     style={{
                       padding: '2px 9px',

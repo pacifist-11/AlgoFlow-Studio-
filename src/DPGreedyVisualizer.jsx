@@ -259,7 +259,7 @@ const DPGreedyVisualizer = ({ onBack, openSettings, initialTab = 'LCS', onCopyCo
       setActiveTab(initialTab);
     }
   }, [initialTab]);
-  const [codeLanguage, setCodeLanguage] = useState('Java');
+  const [codeLanguage, setCodeLanguage] = useState('C');
   const [showCode, setShowCode] = useState(false);
   const [showComplexity, setShowComplexity] = useState(true);
   const [showTopicInfo, setShowTopicInfo] = useState(false);
@@ -2013,7 +2013,7 @@ const DPGreedyVisualizer = ({ onBack, openSettings, initialTab = 'LCS', onCopyCo
               {/* Row 1: Language tabs */}
               <div style={{ padding: '8px 12px', display: 'flex', alignItems: 'center', gap: '5px', borderBottom: '1px solid rgba(255,255,255,0.05)', flexWrap: 'wrap' }}>
                 <span style={{ fontSize: '0.78rem', fontWeight: 700, color: 'var(--text-secondary)', whiteSpace: 'nowrap' }}>🌐 Lang:</span>
-                {['C', 'C++', 'Java', 'Python', 'JS'].map(lang => (
+                {['C', 'Java', 'Python', 'JS'].map(lang => (
                   <button
                     key={lang}
                     onClick={() => setCodeLanguage(lang)}

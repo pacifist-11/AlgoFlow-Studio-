@@ -3194,7 +3194,7 @@ const GraphVisualizer = ({ onBack, openSettings, initialAlgo = 'Dijkstra', onCop
                 {/* Row 1: Language pills */}
                 <div style={{ padding: '8px 12px', display: 'flex', alignItems: 'center', gap: '5px', borderBottom: '1px solid rgba(255,255,255,0.05)', flexWrap: 'wrap' }}>
                   <span style={{ fontSize: '0.78rem', fontWeight: 700, color: 'var(--text-secondary)', whiteSpace: 'nowrap' }}>🌐 Lang:</span>
-                  {['C','C++','Java','Python','JS'].map(lang => (
+                  {['C','Java','Python','JS'].map(lang => (
                     <button key={lang} onClick={() => setCodeLang(lang)}
                       style={{
                         padding: '2px 9px',

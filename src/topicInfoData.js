@@ -1273,5 +1273,369 @@ export const TOPIC_INFO = {
       'No direct runtime optimization benefits.'
     ],
     keyPoints: 'Inner loops control the columns printed per line, while the outer loop controls vertical rows.'
+  },
+
+  // ─── MODULE 1: SYSTEM ARCHITECTURE & ADVANCED ALGORITHM CANON ────────────
+  'MOD1_ENGINE_SYSTEM': {
+    title: 'Text Analytics Engine System Architecture',
+    summary: 'A complete text-analytics engine setup querying high-volume corpus data (e.g. Indian-language Wikipedia) to evaluate algorithms on live operational workloads.',
+    formula: 'Query Engine API ➔ Dispatcher ➔ Hand-built Algo Module ➔ Performance Inspector',
+    example: 'Querying "भारत" in a 50MB Hindi text corpus ➔ Measuring exact character comparison counts across Naïve vs KMP search.',
+    realLife: ['Enterprise search engines', 'High-throughput log analytics engines', 'Multilingual NLP document indexers'],
+    howToUse: ['Issue raw queries against the analytics engine before inspecting underlying data structures.'],
+    pros: ['Immediate real-world feedback', 'Clean abstraction layer between API and internals'],
+    cons: ['Requires large corpus handling', 'Higher memory footprint during indexing'],
+    keyPoints: 'Observability first: test algorithms on actual corpus data before implementation.'
+  },
+  'MOD1_QUERY_FAMILY_MAP': {
+    title: 'Query Class to Advanced-Algorithm Family Mapping',
+    summary: 'Systematic mapping of domain queries to canonical advanced algorithmic paradigms.',
+    formula: 'Pattern Search ➔ String Algos | Fuzzy Match ➔ DP | Similarity ➔ Suffix Structures | Flow ➔ Max Flow | Scheduling ➔ NP-Hard Approx | Primality ➔ Randomised',
+    example: 'Fuzzy query with up to 2 typos ➔ Wagner-Fischer DP. Capacity allocation ➔ Dinic Max-Flow.',
+    realLife: ['System architecture design', 'Algorithm selection in product backends', 'Tech stack optimization'],
+    howToUse: ['Identify query requirements and look up the matching advanced algorithm family.'],
+    pros: ['Prevents wrong algorithm selection', 'Optimal asymptotic guarantees'],
+    cons: ['Requires deep domain understanding'],
+    keyPoints: 'Matching query intent to the optimal theoretical framework saves orders of magnitude in compute.'
+  },
+  'MOD1_ADV_CANON_RATIONALE': {
+    title: 'Advanced Algorithm Canon Rationale (CLRS, KT, Erickson)',
+    summary: 'Why DSA-1/DSA-2 linear and tree/graph algorithms cannot solve sub-quadratic substring search, optimal sequence alignment, or capacity-constrained assignment.',
+    formula: 'Linear/Tree DSA ➔ O(N*M) worst case | Advanced Canon ➔ O(N+M) or O(V^2 E)',
+    example: 'Searching a length-100 pattern in a length-1,000,000 document: Naïve takes 100,000,000 ops vs KMP taking 1,000,100 ops.',
+    realLife: ['Genome alignment engines', 'Large-scale network routing', 'Cryptographic key generation'],
+    howToUse: ['Study the limits of elementary DSA to understand why advanced paradigms are mandatory.'],
+    pros: ['Sub-quadratic runtime guarantees', 'Solves scale bottlenecks'],
+    cons: ['Higher conceptual complexity', 'Harder implementation details'],
+    keyPoints: 'Elementary DSA breaks at scale; advanced canon provides mathematically proven speedups.'
+  },
+  'MOD1_ZERO_UTIL_CONSTRAINT': {
+    title: 'Zero Utility Library Engine Constraint',
+    summary: 'Building high-performance algorithm engines without external utility packages (e.g. forbidden java.util.*) using custom primitive arrays and bitwise operations.',
+    formula: 'No ArrayList/HashMap ➔ Raw int[] / char[] arrays + Manual Memory & Index Management',
+    example: 'Implementing custom dynamic arrays and open-addressing hash tables directly on primitive arrays.',
+    realLife: ['Embedded firmware development', 'High-frequency trading engines', 'Kernel driver memory allocators'],
+    howToUse: ['Write algorithms using only language primitives and custom pointer offsets.'],
+    pros: ['Zero garbage collection overhead', 'Deterministic cache line optimization'],
+    cons: ['Manual memory handling', 'More code boilerplate'],
+    keyPoints: 'Hand-building structures yields complete control over memory alignment and execution efficiency.'
+  },
+
+  // ─── MODULE 2: STRING ALGORITHMS ──────────────────────────────────────────
+  'MOD2_NAIVE_MATCHING': {
+    title: 'Naïve String Matching Algorithm',
+    summary: 'Checks pattern P of length m against text T of length n by shifting one position at a time and comparing characters.',
+    formula: 'For shift s in 0..(n-m): check if T[s..s+m-1] == P[0..m-1] | Time: O((n-m+1)*m)',
+    example: 'Text "AAAAAB", Pattern "AAAB" ➔ Backtracks multiple times, total comparisons = 12.',
+    realLife: ['Basic text editor find function', 'Simple shell script pattern matching'],
+    howToUse: ['Slide pattern across text one character at a time.'],
+    pros: ['No preprocessing required', 'O(1) extra space'],
+    cons: ['O(n*m) worst-case time complexity', 'Inefficient on repetitive texts'],
+    keyPoints: 'Fails to reuse information gained from previous character comparisons.'
+  },
+  'MOD2_KMP': {
+    title: 'Knuth-Morris-Pratt (KMP) Algorithm',
+    summary: 'Linear-time pattern matching using a precomputed failure function (LPS array) to skip redundant comparisons.',
+    formula: 'LPS[i] = length of longest proper prefix of P[0..i] that is also a suffix. Time: O(n + m)',
+    example: 'Pattern "AAAB" ➔ LPS = [0, 1, 2, 0]. Mismatch after "AAA" skips shift to current index without backtracking text.',
+    realLife: ['DNA sequence pattern lookup', 'Antivirus signature scanners'],
+    howToUse: ['Compute LPS table for pattern, then match text without ever moving the text pointer backwards.'],
+    pros: ['O(n + m) linear time', 'Never backtracks input text stream'],
+    cons: ['O(m) auxiliary memory for LPS array', 'Slightly non-trivial precomputed logic'],
+    keyPoints: 'Reuses previous comparison results via prefix-suffix failure table.'
+  },
+  'MOD2_Z_FUNC': {
+    title: 'Z-Function Algorithm',
+    summary: 'Computes array Z where Z[i] is the length of longest common prefix between string S and suffix starting at i.',
+    formula: 'Z[i] = max k such that S[0..k-1] == S[i..i+k-1] | Time: O(N) with Z-box [L, R]',
+    example: 'String "aabxaab" ➔ Z = [0, 1, 0, 0, 3, 1, 0]. Z[4]=3 ("aab").',
+    realLife: ['String search (by concatenating P + "$" + T)', 'Finding period of strings'],
+    howToUse: ['Construct Z-array maintaining [L, R] segment of farthest matched prefix.'],
+    pros: ['Cleaner implementation than KMP', 'Linear time O(N)'],
+    cons: ['Requires concatenation string memory'],
+    keyPoints: 'Maintains a rightmost match window [L, R] to achieve O(1) amortized Z-value lookups.'
+  },
+  'MOD2_RABIN_KARP': {
+    title: 'Rabin-Karp Rolling Hash Algorithm',
+    summary: 'Uses polynomial rolling hash to find pattern matches in average linear time, enhanced with double hashing for zero collisions.',
+    formula: 'H = (c1*B^(m-1) + c2*B^(m-2) + ... + cm) mod M | Roll: H_next = (H - top)*B + new_char',
+    example: 'Text "31415926", Pattern "26" ➔ Compute hash in O(1) shift ➔ Match hash values.',
+    realLife: ['Plagiarism detection across large document collections', 'Multi-pattern string matching'],
+    howToUse: ['Compute hash of pattern and text windows, sliding hash window in O(1) time.'],
+    pros: ['Average O(n + m) runtime', 'Extends easily to multi-pattern and 2D grid search'],
+    cons: ['Worst-case O(n*m) without double hashing', 'Requires modular arithmetic discipline'],
+    keyPoints: 'Rolling property allows updating hash of sliding window in O(1) constant time.'
+  },
+  'MOD2_AHO_CORASICK': {
+    title: 'Aho-Corasick Automaton',
+    summary: 'Multi-pattern string searching algorithm constructing a trie with failure links to match set of patterns simultaneously.',
+    formula: 'Trie + Failure Links + Output Links | Time: O(N + sum(M_i) + K_matches)',
+    example: 'Search {"he", "she", "his", "hers"} in "ushers" ➔ Single pass matches "she", "he", "hers".',
+    realLife: ['Network intrusion detection systems (Snort)', 'Gene keyword search in biological databases'],
+    howToUse: ['Build trie of patterns, add BFS failure links, then stream text through state automaton.'],
+    pros: ['Finds all pattern occurrences in single text pass', 'Linear in text length plus match count'],
+    cons: ['Complex trie memory structure', 'Higher setup cost for small pattern sets'],
+    keyPoints: 'Combines Trie structure with KMP failure links for dictionary matching.'
+  },
+  'MOD2_SUFFIX_ARRAYS': {
+    title: 'Suffix Array (SA-IS & Log-Squared)',
+    summary: 'Sorted array of all suffixes of a string, enabling fast substring searches and structural queries.',
+    formula: 'Suffixes of "banana": "a", "ana", "anana", "banana", "na", "nana" ➔ SA = [5, 3, 1, 0, 4, 2]',
+    example: 'Binary search pattern "nan" in Suffix Array in O(M log N) time.',
+    realLife: ['Full-text indexing in search engines', 'Data compression algorithms (BWT)'],
+    howToUse: ['Construct suffix array via SA-IS O(N) or O(N log^2 N) prefix doubling.'],
+    pros: ['More memory efficient than Suffix Trees', 'Enables binary search for any pattern'],
+    cons: ['O(N log^2 N) or O(N log N) build complexity in basic implementations'],
+    keyPoints: 'Lexicographically orders suffixes to turn string queries into range binary searches.'
+  },
+  'MOD2_LCP_KASAI': {
+    title: 'Longest Common Prefix (LCP) Array (Kasai)',
+    summary: 'Linear-time computation of LCP array storing lengths of longest common prefixes of adjacent suffixes in Suffix Array.',
+    formula: 'LCP[i] = max length of prefix shared by Suffix[SA[i]] and Suffix[SA[i-1]] | Kasai: O(N)',
+    example: 'Suffixes "ana" and "anana" ➔ LCP value = 3.',
+    realLife: ['Finding longest repeated substring', 'Counting distinct substrings'],
+    howToUse: ['Use Kasai theorem: LCP value decreases by at most 1 when moving from suffix i to suffix i+1.'],
+    pros: ['Linear O(N) time computation', 'Unlocks range minimum query (RMQ) power on strings'],
+    cons: ['Requires precomputed Suffix Array and Inverse Suffix Array'],
+    keyPoints: 'Consecutive suffix overlap property guarantees linear scan without redundant character checks.'
+  },
+
+  // ─── MODULE 3: ADVANCED DYNAMIC PROGRAMMING ─────────────────────────────
+  'MOD3_EDIT_DISTANCE': {
+    title: 'Edit Distance (Wagner-Fischer & Damerau)',
+    summary: 'Computes minimum operations (insertion, deletion, substitution, transposition) to convert string A to B.',
+    formula: 'dp[i][j] = min(dp[i-1][j]+1, dp[i][j-1]+1, dp[i-1][j-1] + (A[i]!=B[j]?1:0))',
+    example: 'Convert "kitten" ➔ "sitting": 3 edits (replace k->s, e->i, add g).',
+    realLife: ['Autocorrect and spell checkers', 'Fuzzy database record deduplication'],
+    howToUse: ['Fill 2D matrix bottom-up, backtrack from dp[m][n] for edit path.'],
+    pros: ['Handles arbitrary string modifications', 'Guarantees global optimum'],
+    cons: ['O(N*M) time and space', 'Can be slow for very long documents'],
+    keyPoints: 'Classic 2D DP capturing minimal cost atomic string mutations.'
+  },
+  'MOD3_GENOME_ALIGNMENT': {
+    title: 'Genome Alignment (Needleman-Wunsch & Smith-Waterman)',
+    summary: 'Global and local sequence alignment for biological DNA/RNA chains with match rewards and gap penalties.',
+    formula: 'dp[i][j] = max(dp[i-1][j-1] + score, dp[i-1][j] - gap, dp[i][j-1] - gap, [0 for local])',
+    example: 'Align DNA "AGACTAG" and "CGATCG" with gap penalty -2.',
+    realLife: ['Bioinformatics gene similarity detection', 'BLAST database searching'],
+    howToUse: ['Use Needleman-Wunsch for global end-to-end alignment; Smith-Waterman for local motif discovery.'],
+    pros: ['Biologically accurate alignment scoring', 'Flexible gap penalty models'],
+    cons: ['Quadratic space O(N*M) unless space-optimized with Hirschberg'],
+    keyPoints: 'Smith-Waterman caps cell values at zero to discover optimal local sub-alignments.'
+  },
+  'MOD3_INTERVAL_DP': {
+    title: 'Interval DP (Matrix-Chain & Optimal BST)',
+    summary: 'Solves optimal parenthesization or tree construction over subsegments [i..j].',
+    formula: 'dp[i][j] = min_{i<=k<j} (dp[i][k] + dp[k+1][j] + cost(i, k, j))',
+    example: 'Matrix Chain Multiplication of sizes 10x30, 30x5, 5x60 ➔ Min scalar multiplications = 4500.',
+    realLife: ['SQL query optimizer expression evaluation', 'Compiler AST code generation'],
+    howToUse: ['Iterate subsegment lengths from 2 to N, finding optimal split point k.'],
+    pros: ['Solves non-associative combination problems', 'O(N^3) standard, reducible to O(N^2) via Knuth optimization'],
+    cons: ['O(N^3) cubic time limit without optimizations'],
+    keyPoints: 'Calculates answers for smaller interval lengths before combining into larger intervals.'
+  },
+  'MOD3_BITMASK_DP': {
+    title: 'Bitmask DP (TSP & Hamiltonian Path)',
+    summary: 'Compresses subset state representation into integer bitmasks to solve NP-hard routing and set cover problems in exponential space.',
+    formula: 'dp[mask][u] = min_{v in mask} (dp[mask \ (1<<u)][v] + dist[v][u]) | Time: O(2^N * N^2)',
+    example: 'Travelling Salesman Problem (TSP) with N=16 cities ➔ Reduced from 16! (20 trillion) to 2^16 * 16^2 (16 million ops).',
+    realLife: ['Logistics delivery route optimization', 'Chip wire layout routing'],
+    howToUse: ['Represent subset of visited vertices as bitmask integer (e.g. 0b1011 = cities 0,1,3 visited).'],
+    pros: ['Drastically faster than naive factorial search', 'Exact optimal solution guarantee'],
+    cons: ['Strictly limited to N <= 20 to 22 due to 2^N memory'],
+    keyPoints: 'Uses binary bitsets to store optimal cost for every possible subset of nodes.'
+  },
+  'MOD3_TREE_DP': {
+    title: 'DP on Trees & Rerooting Technique',
+    summary: 'Computes dynamic programming values on hierarchical tree nodes, using post-order DFS and tree rerooting for distance sums.',
+    formula: 'dp[u] = f(dp[v1], dp[v2], ...) for children v_i | Rerooting: dp_root[v] = dp_down[v] + combine(dp_up[u])',
+    example: 'Tree Diameter / Maximum Independent Set on Tree in O(N) time.',
+    realLife: ['Organizational hierarchy optimization', 'Network topology latency aggregation'],
+    howToUse: ['Run bottom-up post-order traversal, then top-down pass for rerooting queries.'],
+    pros: ['Linear O(N) time on tree structures', 'Solves all-pairs root answers in O(N) instead of O(N^2)'],
+    cons: ['Only applies to acyclic connected graphs (trees)'],
+    keyPoints: 'Leverages unique path property in trees to eliminate cycles in DP dependencies.'
+  },
+  'MOD3_SOS_DP': {
+    title: 'Sum-Over-Subsets (SOS DP)',
+    summary: 'Efficiently computes sum of function values over all submasks for every mask in O(N * 2^N) time.',
+    formula: 'F[mask] = sum_{submask <= mask} A[submask] | SOS transition: dp[i][mask] = dp[i-1][mask] + dp[i-1][mask ^ (1<<i)]',
+    example: 'N=20 bitset query ➔ 20 * 2^20 (20 million) ops vs Naive 3^20 (3.4 billion) ops.',
+    realLife: ['Inclusion-exclusion formula computations', 'Sub-feature coverage analytics'],
+    howToUse: ['Iterate bit position i from 0 to N-1, adding submask sums in-place.'],
+    pros: ['Drastic speedup from O(3^N) down to O(N * 2^N)', 'Simple iterative memory array update'],
+    cons: ['Requires bitmask state storage capacity'],
+    keyPoints: 'Fixes one bit dimension at a time to build cumulative subset sums efficiently.'
+  },
+
+  // ─── MODULE 4: NETWORK FLOW ───────────────────────────────────────────────
+  'MOD4_MAX_FLOW_SETUP': {
+    title: 'Max-Flow Problem & Residual Graph Fundamentals',
+    summary: 'Finds maximum total flow routed from source S to sink T through a directed graph with edge capacities.',
+    formula: 'Conservation: sum(flow_in) == sum(flow_out) | Capacity: 0 <= flow(e) <= cap(e)',
+    example: 'Water pipe network with bottlenecks ➔ Maximum throughput calculated at sink.',
+    realLife: ['Internet packet routing bandwidth', 'Oil pipeline transport optimization'],
+    howToUse: ['Construct capacity matrix and residual capacity graph with reverse edge capacity.'],
+    pros: ['Mathematical guarantee of max throughput', 'Underpins min-cut and assignment duality'],
+    cons: ['Requires capacity initialization and anti-parallel edge setup'],
+    keyPoints: 'Augmenting flow along paths increases total flow while maintaining capacity conservation.'
+  },
+  'MOD4_FORD_FULKERSON': {
+    title: 'Ford-Fulkerson Method & Max-Flow Min-Cut Theorem',
+    summary: 'Iteratively finds augmenting paths in residual graph using DFS until no path exists.',
+    formula: 'Max Flow Value == Capacity of Minimum S-T Cut | Time: O(E * max_flow)',
+    example: 'Find path S->A->T with residual capacity 5 ➔ Push 5 flow ➔ Update residual graph.',
+    realLife: ['Network bottleneck identification', 'Partitioning data clusters'],
+    howToUse: ['Repeatedly search for S-T path in residual graph, push bottleneck capacity.'],
+    pros: ['Simple conceptual design', 'Proves Max-Flow Min-Cut dual equivalence'],
+    cons: ['Can loop indefinitely or run slowly with irrational capacities without BFS'],
+    keyPoints: 'The bottleneck capacity along an augmenting path determines flow increase.'
+  },
+  'MOD4_EDMONDS_KARP': {
+    title: 'Edmonds-Karp Algorithm',
+    summary: 'Implementation of Ford-Fulkerson method using Breadth-First Search (BFS) to pick shortest augmenting paths in O(V * E^2) time.',
+    formula: 'Shortest path BFS ➔ Augment flow ➔ Guarantees at most O(V * E) augmentations | Time: O(V * E^2)',
+    example: 'Graph with V=100, E=1000 ➔ Bound to 10^8 operations regardless of capacity values.',
+    realLife: ['Practical flow solver reference', 'Matching supply and demand networks'],
+    howToUse: ['Use BFS to find augmenting path with fewest edges, augment flow, repeat until BFS fails.'],
+    pros: ['Polynomial runtime independent of capacity values', 'Prevents infinite looping on flow networks'],
+    cons: ['Slower than Dinic algorithm on large dense graphs'],
+    keyPoints: 'BFS guarantees monotonically non-decreasing distance to sink in residual graph.'
+  },
+  'MOD4_DINIC': {
+    title: 'Dinic Algorithm',
+    summary: 'State-of-the-art max flow algorithm constructing level graphs with BFS and finding blocking flows via DFS in O(V^2 * E) time.',
+    formula: 'Level Graph (BFS) + Blocking Flow (DFS with current-edge pointer) | Time: O(V^2 * E)',
+    example: 'Unit network graphs (like Bipartite Matching) run in O(E * sqrt(V)) time.',
+    realLife: ['Industrial maximum flow solvers', 'Bipartite graph matching engines'],
+    howToUse: ['Build level graph with BFS. Push blocking flow using DFS with edge pointers until no level path exists.'],
+    pros: ['Extremely fast in practice', 'Near-linear O(E * sqrt(V)) on unit capacity networks'],
+    cons: ['Slightly more code complexity (level array + ptr array + DFS)'],
+    keyPoints: 'Layered level graphs eliminate non-shortest paths and redundant DFS traversals.'
+  },
+  'MOD4_MIN_CUT': {
+    title: 'Min-Cut Duality & Graph Partitioning',
+    summary: 'Finds minimum total capacity of edges that, if removed, completely disconnect source S from sink T.',
+    formula: 'Cut Capacity = sum_{u in S, v in T} cap(u, v) | Reachable nodes from S in final residual graph form S-side',
+    example: 'Image segmentation: Foreground (S) vs Background (T) pixel separation minimizing boundary penalty.',
+    realLife: ['Computer vision image segmentation', 'Social network community partitioning'],
+    howToUse: ['Run Max-Flow. Traverse reachable nodes from S in residual graph to find S-set and cut edges.'],
+    pros: ['Solves global optimal 2-way partitioning', 'Polynomial time optimal solution'],
+    cons: ['Only directly applies to 2-terminal partitioning'],
+    keyPoints: 'Min-cut edges are precisely those fully saturated in the max-flow residual graph.'
+  },
+  'MOD4_BIPARTITE_MATCHING': {
+    title: 'Bipartite Matching & König Theorem',
+    summary: 'Finds maximum set of independent edges in bipartite graph using max flow reduction or Hopcroft-Karp.',
+    formula: 'Source ➔ Left set (cap 1) ➔ Right set (cap 1) ➔ Sink (cap 1) | Max Matching == Min Vertex Cover (König)',
+    example: 'Assign 50 jobs to 50 workers based on candidate qualifications ➔ Maximize fulfilled assignments.',
+    realLife: ['Job candidate resume matching', 'Ride-sharing driver-rider assignment'],
+    howToUse: ['Connect Source to left nodes, right nodes to Sink, run Dinic Max Flow.'],
+    pros: ['O(E * sqrt(V)) fast execution', 'König theorem yields minimum vertex cover for free'],
+    cons: ['Graph must be strictly bipartite'],
+    keyPoints: 'Reduces maximum matching directly to unit-capacity maximum network flow.'
+  },
+
+  // ─── MODULE 5: NP-COMPLETENESS & APPROXIMATION ───────────────────────────
+  'MOD5_P_VS_NP_REDUCTIONS': {
+    title: 'Polynomial-Time Reductions (P vs NP)',
+    summary: 'Formal tool to compare problem hardness. A <=_p B means if problem B is easy, problem A is also easy.',
+    formula: 'Transform instance I_A ➔ I_B in poly-time such that Answer(I_A) == Answer(I_B)',
+    example: 'Reduce 3-SAT to Independent Set: Satisfiable boolean formula ➔ Independent set of size K.',
+    realLife: ['Identifying intractable software problems', 'Proving security of cryptographic protocols'],
+    howToUse: ['Construct polynomial time function converting input instance of known hard problem into target problem.'],
+    pros: ['Rigorously proves hardness bounds', 'Prevents wasting time searching for non-existent poly-time exact algorithms'],
+    cons: ['Requires tricky gadget constructions'],
+    keyPoints: 'Reduction maps instances without changing the underlying decision answer.'
+  },
+  'MOD5_COOK_LEVIN': {
+    title: 'Cook-Levin Theorem & SAT',
+    summary: 'Proves Boolean Satisfiability (SAT) is NP-complete by simulating non-deterministic Turing Machine computation in logic clauses.',
+    formula: 'Formula F in CNF format: (x1 OR NOT x2) AND (x2 OR x3) | Check if truth assignment evaluates to True',
+    example: '3-SAT clause evaluation ➔ Foundation for all NP-completeness reduction proofs.',
+    realLife: ['Hardware verification circuit checkers (SAT solvers)', 'Automated software theorem provers'],
+    howToUse: ['Express problem constraints as 3-CNF clauses and pass to SAT solver engine.'],
+    pros: ['Universal reduction anchor point', 'SAT solvers perform surprisingly fast on real-world instances'],
+    cons: ['Worst-case exponential time complexity remains'],
+    keyPoints: 'Every problem in NP can be reduced in polynomial time to SAT.'
+  },
+  'MOD5_REDUCTION_ZOO': {
+    title: 'The NP Reduction Zoo (Karp 21)',
+    summary: 'The canonical chain of reductions: 3-SAT ➔ CLIQUE ➔ INDEPENDENT-SET ➔ VERTEX-COVER ➔ HAMILTONIAN-CYCLE ➔ TSP.',
+    formula: '3-SAT <=_p CLIQUE <=_p INDEPENDENT_SET <=_p VERTEX_COVER <=_p HAM_CYCLE <=_p TSP',
+    example: 'Convert Vertex Cover graph to Travelling Salesman Problem graph.',
+    realLife: ['Recognizing NP-hard structures in systems architecture', 'Algorithm complexity categorization'],
+    howToUse: ['Trace target problem back to standard Karp 21 problem to establish NP-hardness.'],
+    pros: ['Comprehensive map of computational hardness', 'Provides gadget template patterns'],
+    cons: ['Multi-step reductions require careful equivalence verification'],
+    keyPoints: 'Proving NP-hardness requires reducing FROM a known NP-hard problem TO your problem.'
+  },
+  'MOD5_APPROXIMATION': {
+    title: 'Approximation Algorithms & Vertex-Cover 2-Approx',
+    summary: 'Polynomial-time algorithms that compute solutions guaranteed to be within a factor alpha of the true optimal value.',
+    formula: 'Approximation Ratio alpha = Cost(Approx) / Cost(OPT) <= 2 for 2-Approximation',
+    example: 'Vertex-Cover 2-Approx: Repeatedly pick arbitrary edge (u, v), add both u and v to cover, delete incident edges.',
+    realLife: ['Network router placement', 'Facility site selection optimization'],
+    howToUse: ['Run maximal matching edge selection, return all matched endpoints as vertex cover.'],
+    pros: ['Polynomial runtime guarantee', 'Mathematically bounded worst-case quality'],
+    cons: ['Does not guarantee absolute optimum solution'],
+    keyPoints: 'Maximal matching endpoints yield at most twice the optimal vertex cover size.'
+  },
+
+  // ─── MODULE 6: RANDOMISED & PARALLEL ALGORITHMS ────────────
+  'MOD6_LAS_VEGAS_MONTE_CARLO': {
+    title: 'Las Vegas vs Monte Carlo Algorithms',
+    summary: 'Classification of randomised algorithms: Las Vegas always returns correct answer with random runtime; Monte Carlo runs in fixed time with bounded error probability.',
+    formula: 'Las Vegas: P(Correct) = 1, Expected Time = O(N) | Monte Carlo: Time = O(N), P(Error) <= epsilon',
+    example: 'Randomised Quicksort (Las Vegas) vs Miller-Rabin Primality (Monte Carlo).',
+    realLife: ['Distributed consensus protocols', 'Financial Monte Carlo risk simulations'],
+    howToUse: ['Choose Las Vegas when correctness is non-negotiable; choose Monte Carlo when speed is critical.'],
+    pros: ['Simplifies algorithm design', 'Bypasses worst-case deterministic counter-examples'],
+    cons: ['Randomness source dependency', 'Requires probabilistic tail-bound proofs'],
+    keyPoints: 'Las Vegas randomises runtime; Monte Carlo randomises output correctness.'
+  },
+  'MOD6_MILLER_RABIN': {
+    title: 'Miller-Rabin Primality Test',
+    summary: 'Probabilistic primality test evaluating modular exponentiation witnesses to identify large prime numbers in O(k log^3 N) time.',
+    formula: 'Write n-1 = 2^s * d | Check a^d mod n == 1 or a^(2^r * d) mod n == -1 | Error <= (1/4)^k',
+    example: 'Test 1024-bit prime candidate with k=40 random bases ➔ Chance of error < 2^-80 (negligible).',
+    realLife: ['RSA & ECC cryptographic key generation', 'Public key infrastructure (SSL/TLS)'],
+    howToUse: ['Decompose n-1, test k random witness bases. If any fails, n is composite; else highly likely prime.'],
+    pros: ['Fast polynomial time for 2048-bit numbers', 'Extremely low error probability'],
+    cons: ['Probabilistic (Monte Carlo) nature'],
+    keyPoints: 'Fails Carmichael numbers that trick naive Fermat tests by checking square root witnesses of 1.'
+  },
+  'MOD6_RESERVOIR_SAMPLING': {
+    title: 'Reservoir Sampling for Streaming Data',
+    summary: 'Randomised algorithm sampling k items uniformly at random from an uncounted stream of items in a single pass.',
+    formula: 'Item i (1-indexed) selected with probability k/i ➔ Replaces random item in reservoir [0..k-1]',
+    example: 'Sample 100 random tweets from live stream of 10 million tweets without storing entire stream.',
+    realLife: ['Big data stream telemetry sampling', 'Database query planner statistics collection'],
+    howToUse: ['Fill reservoir with first k items. For item i > k, generate random r in [0..i-1]; if r < k, replace res[r].'],
+    pros: ['O(k) minimal memory space', 'Single pass O(N) streaming time'],
+    cons: ['Requires uniform random number generator'],
+    keyPoints: 'Inductive proof guarantees every item has exact equal probability k/N of being selected.'
+  },
+  'MOD6_PARALLEL_WORK_SPAN': {
+    title: 'Parallel Work & Span Model (Brent Theorem)',
+    summary: 'Theoretical framework analyzing parallel runtime using Work T_1 (total operations) and Span T_infinity (critical path length).',
+    formula: 'Speedup S_p = T_1 / T_p | Brent Bound: T_p <= T_1 / P + T_infinity',
+    example: 'Parallel array sum: Work = O(N), Span = O(log N) on tree reduction.',
+    realLife: ['GPU kernel optimization', 'Multi-core parallel runtime schedulers'],
+    howToUse: ['Measure longest sequential dependency path (Span) to determine max possible parallel speedup.'],
+    pros: ['Hardware-agnostic parallel performance model', 'Predicts exact scalability limits'],
+    cons: ['Ignores communication and memory bus contention overheads'],
+    keyPoints: 'Span T_infinity imposes hard upper bound on speedup regardless of thread count.'
+  },
+  'MOD6_PARALLEL_BLELLOCH': {
+    title: 'Blelloch Parallel Prefix Scan Algorithm',
+    summary: 'Work-efficient parallel scan computing prefix sums in O(N) work and O(log N) span using Up-Sweep and Down-Sweep tree passes.',
+    formula: 'Up-Sweep (Reduce tree) ➔ Set root 0 ➔ Down-Sweep (Propagate & Swap) | Work O(N), Span O(log N)',
+    example: 'Compute prefix sums of [3, 1, 7, 0, 4, 1, 6, 3] on 8 GPU threads in 2 * log2(8) = 6 steps.',
+    realLife: ['GPU parallel radix sort', 'Stream compaction & ray tracing acceleration'],
+    howToUse: ['Build binary sum tree upwards (Up-Sweep), then push cumulative prefix sums downwards (Down-Sweep).'],
+    pros: ['Work-efficient O(N) total additions', 'Massively parallel execution on GPUs'],
+    cons: ['Requires power-of-two array padding'],
+    keyPoints: 'Down-sweep pass replaces left child with current value and right child with sum of current and old left.'
   }
 };

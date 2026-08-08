@@ -10,6 +10,7 @@ import CodeRunnerModal from './CodeRunnerModal.jsx';
 import DPGreedyVisualizer from './DPGreedyVisualizer.jsx';
 import PatternsVisualizer from './PatternsVisualizer.jsx';
 import DSANotesVisualizer from './DSANotesVisualizer.jsx';
+import Beginner101Visualizer from './Beginner101Visualizer.jsx';
 
 // Allman brace formatter for code display
 const toAllman = code => {
@@ -1152,7 +1153,7 @@ function App() {
   const [deleteStrategy, setDeleteStrategy] = useState('RIGHT');
   const [splitStrategy,  setSplitStrategy]  = useState('MEDIAN');
   const [showBoundsInfo,  setShowBoundsInfo]  = useState(false);
-  const [codeLang,      setCodeLang]      = useState('C++');
+  const [codeLang,      setCodeLang]      = useState('C');
   const [currentTheme,  setCurrentTheme]  = useState(() => {
     return safeLocalStorage.getItem('algoflow_theme') || 'Neon Cyberpunk';
   });
@@ -1233,7 +1234,7 @@ function App() {
   // Copy success/options modal state
   const [copyModalData, setCopyModalData] = useState({ isOpen: false, code: '', language: '' });
   const [activeCodeForChat, setActiveCodeForChat] = useState('');
-  const [activeLangForChat, setActiveLangForChat] = useState('C++');
+  const [activeLangForChat, setActiveLangForChat] = useState('C');
   const [themeMode, setThemeMode] = useState('dark');
 
   const [lastActiveMode, setLastActiveMode] = useState(null);
@@ -2363,32 +2364,24 @@ function App() {
 
 
   const enterMode = mode => {
-    setIsPageLoading(true);
-    setTimeout(() => {
-      window.location.hash = mode;
-      setAppMode(mode);
-      const isStandalone = ['SORT_SEARCH_VIS', 'GENERAL_DSA_VIS', 'GRAPH_VIS', 'DP_GREEDY_VIS', 'JAVA_OOP_VIS', 'DSA_NOTES_VIS'].includes(mode);
-      setSetupComplete(isStandalone);
-      setIsPageLoading(false);
-    }, 200);
+    window.location.hash = mode;
+    setAppMode(mode);
+    const isStandalone = ['SORT_SEARCH_VIS', 'GENERAL_DSA_VIS', 'GRAPH_VIS', 'DP_GREEDY_VIS', 'JAVA_OOP_VIS', 'DSA_NOTES_VIS', 'BEGINNER_101_VIS'].includes(mode);
+    setSetupComplete(isStandalone);
   };
   const goBack    = () => {
-    setIsPageLoading(true);
-    setTimeout(() => {
-      window.location.hash = '';
-      setAppMode(null);
-      setSetupComplete(false);
-      setIsPageLoading(false);
-    }, 200);
+    window.location.hash = '';
+    setAppMode(null);
+    setSetupComplete(false);
   };
 
   useEffect(() => {
     const handleHashChange = () => {
       const hash = window.location.hash.replace('#', '').replace(/^\//, '').trim();
-      const validModes = ['MAIN_VIS', 'CODE_VAL_VIS', 'LINE_BY_LINE_VIS', 'SORT_SEARCH_VIS', 'GENERAL_DSA_VIS', 'GRAPH_VIS', 'DP_GREEDY_VIS', 'JAVA_OOP_VIS', 'DSA_NOTES_VIS'];
+      const validModes = ['MAIN_VIS', 'CODE_VAL_VIS', 'LINE_BY_LINE_VIS', 'SORT_SEARCH_VIS', 'GENERAL_DSA_VIS', 'GRAPH_VIS', 'DP_GREEDY_VIS', 'JAVA_OOP_VIS', 'DSA_NOTES_VIS', 'BEGINNER_101_VIS'];
       if (validModes.includes(hash)) {
         setAppMode(hash);
-        const isStandalone = ['SORT_SEARCH_VIS', 'GENERAL_DSA_VIS', 'GRAPH_VIS', 'DP_GREEDY_VIS', 'JAVA_OOP_VIS', 'DSA_NOTES_VIS'].includes(hash);
+        const isStandalone = ['SORT_SEARCH_VIS', 'GENERAL_DSA_VIS', 'GRAPH_VIS', 'DP_GREEDY_VIS', 'JAVA_OOP_VIS', 'DSA_NOTES_VIS', 'BEGINNER_101_VIS'].includes(hash);
         if (isStandalone) setSetupComplete(true);
       } else {
         setAppMode(null);
@@ -3706,7 +3699,7 @@ function App() {
     <>
       {/* Home Screen */}
       <div style={{ display: !appMode ? 'block' : 'none', position: 'relative' }}>
-        <div style={{ position: 'absolute', top: '20px', right: '20px', zIndex: 50, display: 'flex', gap: '10px' }}>
+        <div style={{ position: 'absolute', top: '20px', right: '20px', zIndex: 50, display: 'flex', gap: '10px', alignItems: 'center', flexWrap: 'wrap' }}>
           {isInstallable && (
             <button 
               className="btn btn-clear" 
@@ -3854,7 +3847,8 @@ function App() {
                 { id: 'JAVA_OOP_VIS', icon: '✨', title: 'Patterns Visualizer Studio', desc: 'Animate and compile 10 different loop patterns (Pyramids, Diamond, Pascal, Floyd, Butterfly) in 5 languages.' },
                 { id: 'DSA_NOTES_VIS', icon: '📚', title: 'DSA Study & Solved Sums', desc: 'Interactive step-by-step code trace, variables inspector and visualizations for 10 classic DSA problems.' },
                 { id: 'CODE_VAL_VIS', icon: '💻', title: 'Code Validator & Runner', desc: 'Write or paste code in 5 languages. Enhanced syntax validation, error detection, and native cloud execution.' },
-                { id: 'LINE_BY_LINE_VIS', icon: '🐞', title: 'Line-by-Line Debugger', desc: 'PythonTutor-style execution tracing. Step through code, track variables, frames, and output.' }
+                { id: 'LINE_BY_LINE_VIS', icon: '🐞', title: 'Line-by-Line Debugger', desc: 'PythonTutor-style execution tracing. Step through code, track variables, frames, and output.' },
+                { id: 'BEGINNER_101_VIS', icon: '🌱', title: 'Beginner 101', desc: 'Hands-on interactive learning for Variables, Data Types, Arrays & Why Sorting Matters.' }
               ].map(card => (
                 <div key={card.id} className="option-card" onClick={() => {
                   if (card.id === 'CODE_VAL_VIS') {
@@ -3917,6 +3911,18 @@ function App() {
                 { id: 'DP_KNAPSACK', mode: 'DP_GREEDY_VIS', title: 'Knapsack (0/1 & Fractional)', icon: '🎒', desc: 'DP & Greedy Visualizer', tab: 'Knapsack' },
                 { id: 'DP_COIN_CHANGE', mode: 'DP_GREEDY_VIS', title: 'Coin Change (Greedy vs DP)', icon: '🪙', desc: 'DP & Greedy Visualizer', tab: 'CoinChange' },
                 { id: 'PATTERNS_LOOP', mode: 'JAVA_OOP_VIS', title: 'Patterns & Loop Studio (Pyramid, Pascal, Floyd)', icon: '✨', desc: 'Patterns Visualizer Studio', tab: 'Patterns' },
+                { id: 'MOD1_ENGINE_SYSTEM', mode: 'DSA_NOTES_VIS', title: 'Text Analytics Engine Architecture', icon: '🏛️', desc: 'Advanced Algorithm Concept' },
+                { id: 'MOD1_QUERY_FAMILY_MAP', mode: 'DSA_NOTES_VIS', title: 'Query Class to Algorithm Mapping', icon: '🗺️', desc: 'Advanced Algorithm Concept' },
+                { id: 'MOD1_ZERO_UTIL_CONSTRAINT', mode: 'DSA_NOTES_VIS', title: 'Zero Utility Library Constraint', icon: '⛔', desc: 'Advanced Algorithm Concept' },
+                { id: 'MOD2_KMP', mode: 'DSA_NOTES_VIS', title: 'Knuth-Morris-Pratt (KMP) Pattern Search', icon: '🔍', desc: 'Advanced String Algorithms' },
+                { id: 'MOD2_Z_FUNC', mode: 'DSA_NOTES_VIS', title: 'Z-Function String Matching', icon: '⚡', desc: 'Advanced String Algorithms' },
+                { id: 'MOD2_RABIN_KARP', mode: 'DSA_NOTES_VIS', title: 'Rabin-Karp Rolling Hash & Double Hashing', icon: '🔑', desc: 'Advanced String Algorithms' },
+                { id: 'MOD3_EDIT_DISTANCE', mode: 'DSA_NOTES_VIS', title: 'Edit Distance (Wagner-Fischer & Damerau)', icon: '📝', desc: 'Advanced Dynamic Programming' },
+                { id: 'MOD3_BITMASK_DP', mode: 'DSA_NOTES_VIS', title: 'Bitmask DP (Travelling Salesman Problem)', icon: '🎛️', desc: 'Advanced Dynamic Programming' },
+                { id: 'MOD4_DINIC', mode: 'DSA_NOTES_VIS', title: 'Dinic Max-Flow Algorithm (Level Graphs)', icon: '🌊', desc: 'Network Flow Algorithms' },
+                { id: 'MOD5_APPROXIMATION', mode: 'DSA_NOTES_VIS', title: 'Approximation Algorithms & Vertex-Cover 2-Approx', icon: '🎯', desc: 'NP-Completeness & Approximation' },
+                { id: 'MOD6_MILLER_RABIN', mode: 'DSA_NOTES_VIS', title: 'Miller-Rabin Primality Test', icon: '🎲', desc: 'Randomised & Parallel Algorithms' },
+                { id: 'MOD6_PARALLEL_BLELLOCH', mode: 'DSA_NOTES_VIS', title: 'Blelloch Parallel Prefix Scan', icon: '🚀', desc: 'Randomised & Parallel Algorithms' },
                 { id: 'DSA_NOTES_VIS', mode: 'DSA_NOTES_VIS', title: 'DSA Study & Solved Sums (Two Sum, List Reverse, Valid Parentheses, DP)', icon: '📚', desc: 'DSA Notes & Solved Problems Studio' }
               ].filter(c => c.title.toLowerCase().includes(homeSearchQuery.toLowerCase()) || c.desc.toLowerCase().includes(homeSearchQuery.toLowerCase())).map(card => (
                 <div key={card.id} className="option-card" onClick={() => setPendingModule(card)} onMouseEnter={e => gsap.to(e.currentTarget, { scale: 1.05, duration: 0.2 })} onMouseLeave={e => gsap.to(e.currentTarget, { scale: 1, duration: 0.2 })}>
@@ -3928,6 +3934,17 @@ function App() {
             )}
           </div>
         </div>
+      </div>
+
+      {/* Beginner 101 Visualizer */}
+      <div style={{ display: appMode === 'BEGINNER_101_VIS' ? 'block' : 'none' }}>
+        <div style={{ padding: '16px', background: 'var(--bg-secondary)', borderBottom: '1px solid var(--glass-border)', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+          <button className="btn btn-clear" onClick={goBack} style={{ display: 'flex', alignItems: 'center', gap: '6px' }}>
+            ← 🏠 Home
+          </button>
+          <span style={{ fontWeight: 'bold', color: '#38bdf8' }}>🌱 Beginner 101</span>
+        </div>
+        <Beginner101Visualizer codeLang={codeLang} setCodeLang={setCodeLang} />
       </div>
 
       {/* Sort Search Visualizer */}
@@ -4791,7 +4808,7 @@ function App() {
                   {/* Row 1: Language pills */}
                   <div style={{ display: 'flex', alignItems: 'center', gap: '5px', flexWrap: 'wrap', paddingBottom: '6px', borderBottom: '1px solid rgba(255,255,255,0.05)' }}>
                     <span style={{ fontSize: '0.78rem', fontWeight: 700, color: 'var(--text-secondary)', whiteSpace: 'nowrap' }}>🌐 Lang:</span>
-                    {['C++','Java','Python','JS'].map(lang => (
+                    {['C','Java','Python','JS'].map(lang => (
                       <button key={lang} onClick={() => setCodeLang(lang)}
                         style={{
                           padding: '2px 9px',
