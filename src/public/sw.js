@@ -1,5 +1,5 @@
 /* eslint-disable no-undef */
-const CACHE_NAME = 'algoflow-v4';
+const CACHE_NAME = 'algoflow-v5';
 const ASSETS = [
   '/',
   '/index.html',
@@ -8,17 +8,17 @@ const ASSETS = [
   '/manifest.json'
 ];
 
-// Install Event
+// Install Event - Precache initial assets
 self.addEventListener('install', (e) => {
   e.waitUntil(
     caches.open(CACHE_NAME).then((cache) => {
-      return cache.addAll(ASSETS).catch(err => console.log('Error caching assets:', err));
+      return cache.addAll(ASSETS).catch(err => console.log('Error caching initial assets:', err));
     })
   );
   self.skipWaiting();
 });
 
-// Activate Event
+// Activate Event - Clear old caches
 self.addEventListener('activate', (e) => {
   e.waitUntil(
     caches.keys().then((keys) => {
@@ -38,7 +38,7 @@ self.addEventListener('activate', (e) => {
 self.addEventListener('fetch', (e) => {
   if (!e.request.url.startsWith('http')) return;
 
-  // HTML / Navigation requests: Network First, fallback to cache
+  // HTML / Navigation requests: Network First, fallback to cached index.html
   if (e.request.mode === 'navigate' || (e.request.headers.get('accept') && e.request.headers.get('accept').includes('text/html'))) {
     e.respondWith(
       fetch(e.request).then((networkResponse) => {
@@ -47,7 +47,11 @@ self.addEventListener('fetch', (e) => {
           caches.open(CACHE_NAME).then((cache) => cache.put(e.request, responseClone));
         }
         return networkResponse;
-      }).catch(() => caches.match(e.request).then(cached => cached || caches.match('/')))
+      }).catch(() => {
+        return caches.match(e.request).then((cached) => {
+          return cached || caches.match('/') || caches.match('/index.html');
+        });
+      })
     );
     return;
   }
@@ -71,9 +75,10 @@ self.addEventListener('fetch', (e) => {
         }
         return networkResponse;
       }).catch(() => {
-        // Silent catch for offline network failures on non-cached assets
+        // Silent catch for offline network failures on non-cached external assets
       });
     })
   );
 });
+
 
