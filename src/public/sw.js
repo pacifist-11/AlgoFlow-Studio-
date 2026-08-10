@@ -1,5 +1,5 @@
 /* eslint-disable no-undef */
-const CACHE_NAME = 'algoflow-v3';
+const CACHE_NAME = 'algoflow-v4';
 const ASSETS = [
   '/',
   '/index.html',
@@ -34,27 +34,46 @@ self.addEventListener('activate', (e) => {
   self.clients.claim();
 });
 
-// Fetch Event - Network First for HTML / navigation requests to ensure fresh Vercel deployments load instantly
+// Fetch Event
 self.addEventListener('fetch', (e) => {
   if (!e.request.url.startsWith('http')) return;
 
+  // HTML / Navigation requests: Network First, fallback to cache
   if (e.request.mode === 'navigate' || (e.request.headers.get('accept') && e.request.headers.get('accept').includes('text/html'))) {
     e.respondWith(
       fetch(e.request).then((networkResponse) => {
-        const responseClone = networkResponse.clone();
-        caches.open(CACHE_NAME).then((cache) => cache.put(e.request, responseClone));
+        if (networkResponse && networkResponse.status === 200) {
+          const responseClone = networkResponse.clone();
+          caches.open(CACHE_NAME).then((cache) => cache.put(e.request, responseClone));
+        }
         return networkResponse;
       }).catch(() => caches.match(e.request).then(cached => cached || caches.match('/')))
     );
     return;
   }
 
+  // Assets (JS, CSS, images, fonts): Cache First, fallback to Network + Dynamic Caching
   e.respondWith(
     caches.match(e.request).then((cachedResponse) => {
       if (cachedResponse) {
         return cachedResponse;
       }
-      return fetch(e.request);
+      return fetch(e.request).then((networkResponse) => {
+        if (
+          networkResponse &&
+          networkResponse.status === 200 &&
+          e.request.method === 'GET' &&
+          !e.request.url.includes('googlesyndication') &&
+          !e.request.url.includes('pagead')
+        ) {
+          const responseClone = networkResponse.clone();
+          caches.open(CACHE_NAME).then((cache) => cache.put(e.request, responseClone));
+        }
+        return networkResponse;
+      }).catch(() => {
+        // Silent catch for offline network failures on non-cached assets
+      });
     })
   );
 });
+
