@@ -2,11 +2,13 @@ import React, { useState } from 'react';
 import HandsOnVariables from './HandsOnVariables.jsx';
 import HandsOnArrays from './HandsOnArrays.jsx';
 import WhySortingMattersChallenge from './WhySortingMattersChallenge.jsx';
+import WhyDSAMattersGuide from './WhyDSAMattersGuide.jsx';
+import LanguageQuirksExceptions from './LanguageQuirksExceptions.jsx';
 import HandsOnSyntaxPractice from './HandsOnSyntaxPractice.jsx';
 import LanguageCareerGuide from './LanguageCareerGuide.jsx';
 
 export default function Beginner101Visualizer({ codeLang = 'C', setCodeLang }) {
-  const [activeModule, setActiveModule] = useState('variables'); // variables, arrays, why_sort, syntax, career
+  const [activeModule, setActiveModule] = useState('career'); // career, variables, arrays, quirks, syntax, why_sort, why_dsa
   const [localLang, setLocalLang] = useState(codeLang || 'C');
 
   const currentLang = setCodeLang ? codeLang : localLang;
@@ -19,11 +21,13 @@ export default function Beginner101Visualizer({ codeLang = 'C', setCodeLang }) {
   };
 
   const modules = [
-    { id: 'variables', icon: '📦', title: '1. Variables & Data Types', desc: 'Memory storage boxes' },
-    { id: 'arrays', icon: '📊', title: '2. Arrays & Indexing', desc: 'Rows of memory boxes' },
-    { id: 'why_sort', icon: '⚡', title: '3. Why Sorting Matters', desc: 'Interactive search game' },
-    { id: 'syntax', icon: '✍️', title: '4. Syntax & Practice', desc: 'Fix syntax errors & sandbox' },
-    { id: 'career', icon: '🎯', title: '5. Which Language to Pick?', desc: 'Jobs & fields guide' }
+    { id: 'career', icon: '🎯', title: '1. Which Language to Pick?', desc: 'Jobs & fields guide' },
+    { id: 'variables', icon: '📦', title: '2. Variables & Data Types', desc: 'Memory storage boxes' },
+    { id: 'arrays', icon: '📊', title: '3. Arrays & Indexing', desc: 'Rows of memory boxes' },
+    { id: 'quirks', icon: '⚠️', title: '4. Quirks & Exceptions', desc: 'Java pointers, Python syntax, etc.' },
+    { id: 'syntax', icon: '✍️', title: '5. Syntax & Practice', desc: 'Fix syntax errors & sandbox' },
+    { id: 'why_sort', icon: '⚡', title: '6. Why Sorting Matters', desc: 'Interactive search game' },
+    { id: 'why_dsa', icon: '🧠', title: '7. Why DSA Matters', desc: 'Scalability, Big-O & quiz' }
   ];
 
   return (
@@ -120,7 +124,7 @@ export default function Beginner101Visualizer({ codeLang = 'C', setCodeLang }) {
             🌱 Beginner 101: Hands-On Fundamentals & Career Guide
           </h1>
           <p style={{ margin: '6px 0 0 0', color: '#cbd5e1', fontSize: '14px' }}>
-            Learn variables, arrays, syntax rules, and discover which programming language to choose for your target career!
+            Learn variables, arrays, why sorting & DSA matter, language quirks, syntax rules, and discover which programming language to choose for your target career!
           </p>
         </div>
 
@@ -160,6 +164,8 @@ export default function Beginner101Visualizer({ codeLang = 'C', setCodeLang }) {
       {activeModule === 'variables' && <HandsOnVariables selectedLang={currentLang} onSelectLang={handleSelectLang} />}
       {activeModule === 'arrays' && <HandsOnArrays selectedLang={currentLang} onSelectLang={handleSelectLang} />}
       {activeModule === 'why_sort' && <WhySortingMattersChallenge />}
+      {activeModule === 'why_dsa' && <WhyDSAMattersGuide />}
+      {activeModule === 'quirks' && <LanguageQuirksExceptions selectedLang={currentLang} onSelectLang={handleSelectLang} />}
       {activeModule === 'syntax' && <HandsOnSyntaxPractice selectedLang={currentLang} onSelectLang={handleSelectLang} />}
       {activeModule === 'career' && <LanguageCareerGuide />}
     </div>

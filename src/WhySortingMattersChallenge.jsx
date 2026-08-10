@@ -1,26 +1,34 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState } from 'react';
+
+const GRID_SIZE = 36; // 6x6 grid (36 blocks)
+
+function generateChallengeData() {
+  const set = new Set();
+  while (set.size < GRID_SIZE) {
+    const rand = Math.floor(Math.random() * 90) + 10; // Random 2-digit numbers from 10 to 99
+    set.add(rand);
+  }
+  const unsorted = Array.from(set);
+  const target = unsorted[Math.floor(Math.random() * GRID_SIZE)];
+  const sorted = [...unsorted].sort((a, b) => a - b);
+  return {
+    unsortedNumbers: unsorted,
+    sortedNumbers: sorted,
+    targetNumber: target
+  };
+}
 
 export default function WhySortingMattersChallenge() {
-  const targetNumber = 78;
-  
-  // Unsorted array of 24 numbers
-  const [unsortedNumbers] = useState([
-    14, 82, 3, 91, 27, 45, 63, 78, 12, 56, 38, 99,
-    7, 68, 88, 32, 51, 19, 74, 95, 4, 61, 85, 23
-  ]);
-
-  // Sorted version of the exact same numbers
-  const [sortedNumbers] = useState(
-    [...unsortedNumbers].sort((a, b) => a - b)
-  );
+  const [challengeData, setChallengeData] = useState(() => generateChallengeData());
+  const { unsortedNumbers, sortedNumbers, targetNumber } = challengeData;
 
   // Unsorted game state
-  const [revealedUnsorted, setRevealedUnsorted] = useState(new Array(24).fill(false));
+  const [revealedUnsorted, setRevealedUnsorted] = useState(new Array(GRID_SIZE).fill(false));
   const [unsortedClicks, setUnsortedClicks] = useState(0);
   const [foundUnsorted, setFoundUnsorted] = useState(false);
 
   // Sorted game state
-  const [revealedSorted, setRevealedSorted] = useState(new Array(24).fill(false));
+  const [revealedSorted, setRevealedSorted] = useState(new Array(GRID_SIZE).fill(false));
   const [sortedClicks, setSortedClicks] = useState(0);
   const [foundSorted, setFoundSorted] = useState(false);
 
@@ -47,10 +55,11 @@ export default function WhySortingMattersChallenge() {
   };
 
   const resetChallenge = () => {
-    setRevealedUnsorted(new Array(24).fill(false));
+    setChallengeData(generateChallengeData());
+    setRevealedUnsorted(new Array(GRID_SIZE).fill(false));
     setUnsortedClicks(0);
     setFoundUnsorted(false);
-    setRevealedSorted(new Array(24).fill(false));
+    setRevealedSorted(new Array(GRID_SIZE).fill(false));
     setSortedClicks(0);
     setFoundSorted(false);
   };
@@ -70,7 +79,7 @@ export default function WhySortingMattersChallenge() {
           <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
             <span style={{ fontSize: '24px' }}>⚡</span>
             <h2 style={{ margin: 0, fontSize: '20px', fontWeight: '700', color: '#38bdf8' }}>
-              Module 3: "Why Do We Need Sorting?" (Interactive Speed Challenge)
+              Module 6: "Why Do We Need Sorting?" (Interactive Speed Challenge)
             </h2>
           </div>
           <button
