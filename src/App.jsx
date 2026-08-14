@@ -1126,6 +1126,7 @@ const copyToClipboard = (text) => {
 
 // ─── Main App ─────────────────────────────────────────────────────────────────
 function App() {
+  const [welcomeRole] = useState(() => (Math.random() < 0.5 ? 'engineer' : 'coder'));
   const [appMode,       setAppMode]       = useState(null);
   const [setupComplete, setSetupComplete] = useState(false);
   const [isPageLoading, setIsPageLoading] = useState(false);
@@ -2366,7 +2367,7 @@ function App() {
   const enterMode = mode => {
     window.location.hash = mode;
     setAppMode(mode);
-    const isStandalone = ['SORT_SEARCH_VIS', 'GENERAL_DSA_VIS', 'GRAPH_VIS', 'DP_GREEDY_VIS', 'JAVA_OOP_VIS', 'DSA_NOTES_VIS', 'BEGINNER_101_VIS'].includes(mode);
+    const isStandalone = ['BEGINNER_101_VIS', 'GENERAL_DSA_VIS', 'SORT_SEARCH_VIS', 'GRAPH_VIS', 'DP_GREEDY_VIS', 'JAVA_OOP_VIS', 'DSA_NOTES_VIS'].includes(mode);
     setSetupComplete(isStandalone);
   };
   const goBack    = () => {
@@ -2378,10 +2379,10 @@ function App() {
   useEffect(() => {
     const handleHashChange = () => {
       const hash = window.location.hash.replace('#', '').replace(/^\//, '').trim();
-      const validModes = ['MAIN_VIS', 'CODE_VAL_VIS', 'LINE_BY_LINE_VIS', 'SORT_SEARCH_VIS', 'GENERAL_DSA_VIS', 'GRAPH_VIS', 'DP_GREEDY_VIS', 'JAVA_OOP_VIS', 'DSA_NOTES_VIS', 'BEGINNER_101_VIS'];
+      const validModes = ['BEGINNER_101_VIS', 'GENERAL_DSA_VIS', 'SORT_SEARCH_VIS', 'MAIN_VIS', 'GRAPH_VIS', 'DP_GREEDY_VIS', 'JAVA_OOP_VIS', 'DSA_NOTES_VIS', 'LINE_BY_LINE_VIS', 'CODE_VAL_VIS'];
       if (validModes.includes(hash)) {
         setAppMode(hash);
-        const isStandalone = ['SORT_SEARCH_VIS', 'GENERAL_DSA_VIS', 'GRAPH_VIS', 'DP_GREEDY_VIS', 'JAVA_OOP_VIS', 'DSA_NOTES_VIS', 'BEGINNER_101_VIS'].includes(hash);
+        const isStandalone = ['BEGINNER_101_VIS', 'GENERAL_DSA_VIS', 'SORT_SEARCH_VIS', 'GRAPH_VIS', 'DP_GREEDY_VIS', 'JAVA_OOP_VIS', 'DSA_NOTES_VIS'].includes(hash);
         if (isStandalone) setSetupComplete(true);
       } else {
         setAppMode(null);
@@ -3759,7 +3760,18 @@ function App() {
                 <div>
                   <h4 style={{ margin: 0, color: 'var(--text-primary)', fontSize: '0.95rem', fontWeight: 700 }}>Unsaved Session Detected</h4>
                   <p style={{ margin: 0, color: 'var(--text-secondary)', fontSize: '0.8rem' }}>
-                    You were recently working on <strong>{lastActiveMode === 'MAIN_VIS' ? 'Tree Visualizer' : lastActiveMode === 'GRAPH_VIS' ? 'Graph Visualizer' : lastActiveMode === 'SORT_SEARCH_VIS' ? 'Sort & Search' : lastActiveMode === 'GENERAL_DSA_VIS' ? 'General DSA' : lastActiveMode === 'CODE_VAL_VIS' ? 'Code Validator' : 'Line Debugger'}</strong>.
+                    You were recently working on <strong>{
+                      lastActiveMode === 'BEGINNER_101_VIS' ? 'Beginner 101' :
+                      lastActiveMode === 'GENERAL_DSA_VIS' ? 'General DSA' :
+                      lastActiveMode === 'SORT_SEARCH_VIS' ? 'Sort & Search' :
+                      lastActiveMode === 'MAIN_VIS' ? 'Tree Visualizer' :
+                      lastActiveMode === 'GRAPH_VIS' ? 'Graph Visualizer' :
+                      lastActiveMode === 'DP_GREEDY_VIS' ? 'DP & Greedy' :
+                      lastActiveMode === 'JAVA_OOP_VIS' ? 'Patterns' :
+                      lastActiveMode === 'DSA_NOTES_VIS' ? 'DSA Study & Solved Sums' :
+                      lastActiveMode === 'LINE_BY_LINE_VIS' ? 'Line Debugger' :
+                      'Code Validator'
+                    }</strong>.
                   </p>
                 </div>
               </div>
@@ -3778,7 +3790,10 @@ function App() {
           )}
 
           <div style={{ textAlign: 'center' }}>
-            <h1 className="title-gradient" style={{ fontSize: '3rem', marginBottom: '1.5rem' }}>AlgoFlow-Studio</h1>
+            <h1 className="title-gradient" style={{ fontSize: '3rem', marginBottom: '0.4rem' }}>AlgoFlow-Studio</h1>
+            <p style={{ margin: '0 0 1.8rem 0', color: 'var(--accent-primary)', fontSize: '1.1rem', fontWeight: 600, letterSpacing: '0.04em' }}>
+              AlgoFlow always welcomes uu {welcomeRole} ✨
+            </p>
             <div style={{ 
               maxWidth: '500px', 
               margin: '0 auto 2.5rem auto', 
@@ -3839,16 +3854,16 @@ function App() {
           <div className="home-grid">
             {homeSearchQuery.trim() === '' ? (
               [
-                { id: 'SORT_SEARCH_VIS', icon: '📊', title: 'Sort & Search Visualizer', desc: 'Visualize array sorting and searching algorithms with dynamic GSAP animations.' },
+                { id: 'BEGINNER_101_VIS', icon: '🌱', title: 'Beginner 101', desc: 'B.Tech Branch Roadmaps, Language Picker, Variables, Arrays & Why Sorting Matters.' },
                 { id: 'GENERAL_DSA_VIS', icon: '📦', title: 'General DSA Visualizer', desc: 'Explore foundational data structures: Stacks, Queues, Linked Lists, and Hash Tables.' },
+                { id: 'SORT_SEARCH_VIS', icon: '📊', title: 'Sort & Search Visualizer', desc: 'Visualize array sorting and searching algorithms with dynamic GSAP animations.' },
                 { id: 'MAIN_VIS', icon: '🚀', title: 'Tree Visualizer Studio', desc: 'Build BST / AVL / Heaps / B-Tree / Segment trees step-by-step with live code generation.' },
                 { id: 'GRAPH_VIS', icon: '🕸️', title: 'Graph Visualizer Studio', desc: 'Construct customized weighted graphs. Animate BFS, DFS, Dijkstra, and Greedy best-first traversals.' },
                 { id: 'DP_GREEDY_VIS', icon: '🧠', title: 'DP & Greedy Visualizer', desc: 'Visualize LCS, LIS, Knapsack, and Coin Change DP vs. Greedy side-by-side.' },
                 { id: 'JAVA_OOP_VIS', icon: '✨', title: 'Patterns Visualizer Studio', desc: 'Animate and compile 10 different loop patterns (Pyramids, Diamond, Pascal, Floyd, Butterfly) in 5 languages.' },
                 { id: 'DSA_NOTES_VIS', icon: '📚', title: 'DSA Study & Solved Sums', desc: 'Interactive step-by-step code trace, variables inspector and visualizations for 10 classic DSA problems.' },
-                { id: 'CODE_VAL_VIS', icon: '💻', title: 'Code Validator & Runner', desc: 'Write or paste code in 5 languages. Enhanced syntax validation, error detection, and native cloud execution.' },
                 { id: 'LINE_BY_LINE_VIS', icon: '🐞', title: 'Line-by-Line Debugger', desc: 'PythonTutor-style execution tracing. Step through code, track variables, frames, and output.' },
-                { id: 'BEGINNER_101_VIS', icon: '🌱', title: 'Beginner 101', desc: 'Hands-on interactive learning for Variables, Data Types, Arrays & Why Sorting Matters.' }
+                { id: 'CODE_VAL_VIS', icon: '💻', title: 'Code Validator & Runner', desc: 'Write or paste code in 5 languages. Enhanced syntax validation, error detection, and native cloud execution.' }
               ].map(card => (
                 <div key={card.id} className="option-card" onClick={() => {
                   if (card.id === 'CODE_VAL_VIS') {
@@ -3923,7 +3938,9 @@ function App() {
                 { id: 'MOD5_APPROXIMATION', mode: 'DSA_NOTES_VIS', title: 'Approximation Algorithms & Vertex-Cover 2-Approx', icon: '🎯', desc: 'NP-Completeness & Approximation' },
                 { id: 'MOD6_MILLER_RABIN', mode: 'DSA_NOTES_VIS', title: 'Miller-Rabin Primality Test', icon: '🎲', desc: 'Randomised & Parallel Algorithms' },
                 { id: 'MOD6_PARALLEL_BLELLOCH', mode: 'DSA_NOTES_VIS', title: 'Blelloch Parallel Prefix Scan', icon: '🚀', desc: 'Randomised & Parallel Algorithms' },
-                { id: 'DSA_NOTES_VIS', mode: 'DSA_NOTES_VIS', title: 'DSA Study & Solved Sums (Two Sum, List Reverse, Valid Parentheses, DP)', icon: '📚', desc: 'DSA Notes & Solved Problems Studio' }
+                { id: 'DSA_NOTES_VIS', mode: 'DSA_NOTES_VIS', title: 'DSA Study & Solved Sums (Two Sum, List Reverse, Valid Parentheses, DP)', icon: '📚', desc: 'DSA Notes & Solved Problems Studio' },
+                { id: 'BTECH_ROADMAP', mode: 'BEGINNER_101_VIS', title: 'B.Tech Branch Roadmaps & Language Picker', icon: '🎓', desc: 'Which language to pick for CSE, ECE, EEE, Mech, Civil, AI/ML, Cyber Security & more' },
+                { id: 'LANG_CAREER', mode: 'BEGINNER_101_VIS', title: 'Language Career Guide', icon: '🎯', desc: 'Jobs, fields, and applications per programming language' }
               ].filter(c => c.title.toLowerCase().includes(homeSearchQuery.toLowerCase()) || c.desc.toLowerCase().includes(homeSearchQuery.toLowerCase())).map(card => (
                 <div key={card.id} className="option-card" onClick={() => setPendingModule(card)} onMouseEnter={e => gsap.to(e.currentTarget, { scale: 1.05, duration: 0.2 })} onMouseLeave={e => gsap.to(e.currentTarget, { scale: 1, duration: 0.2 })}>
                   <div className="option-icon">{card.icon}</div>
@@ -3944,7 +3961,7 @@ function App() {
           </button>
           <span style={{ fontWeight: 'bold', color: '#38bdf8' }}>🌱 Beginner 101</span>
         </div>
-        <Beginner101Visualizer codeLang={codeLang} setCodeLang={setCodeLang} />
+        <Beginner101Visualizer codeLang={codeLang} setCodeLang={setCodeLang} fontSize={editorFontSize} />
       </div>
 
       {/* Sort Search Visualizer */}

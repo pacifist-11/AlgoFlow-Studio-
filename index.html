@@ -138,29 +138,40 @@
       </g>
     </svg>
     <p class="label">Loading AlgoFlow Studio...</p>
-    <p class="sub-label">Usually takes 1-2 seconds. 🙏</p>
+    <p class="sub-label" id="preloader-sub-label">AlgoFlow always welcomes uu engineer 🚀</p>
     <div class="quote-box" id="quote-box">
-      <span class="quote-text" id="quote-text">"First, solve the problem. Then, write the code." — John Johnson</span>
+      <span class="quote-text" id="quote-text">"AlgoFlow always welcomes uu engineer" — AlgoFlow Studio</span>
     </div>
   </div>
 
   <div id="root"></div>
   <script type="module" src="/src/entry.jsx"></script>
   <script>
+    const randomRole = Math.random() < 0.5 ? 'engineer' : 'coder';
+    const welcomeMsg = `AlgoFlow always welcomes uu ${randomRole} 🚀`;
+    
+    const subLabelEl = document.getElementById('preloader-sub-label');
+    if (subLabelEl) {
+      subLabelEl.textContent = welcomeMsg;
+    }
+
     // Quotes Array
     const quotes = [
+      { text: welcomeMsg, author: "AlgoFlow Studio" },
       { text: "First, solve the problem. Then, write the code.", author: "John Johnson" },
       { text: "Patience is not simply the ability to wait - it's how we behave while we're waiting.", author: "Joyce Meyer" },
       { text: "Experience is the name everyone gives to their mistakes.", author: "Oscar Wilde" },
       { text: "The only way to learn a new programming language is by writing programs in it.", author: "Dennis Ritchie" },
       { text: "Computers are good at following instructions, but not at reading your mind.", author: "Donald Knuth" },
-      { text: "Simplicity is the soul of efficiency.", author: "Austin Freeman" },
-      { text: "Peace is the result of retraining your mind to process life as it is, rather than as you think it should be.", author: "Wayne Dyer" }
+      { text: "Simplicity is the soul of efficiency.", author: "Austin Freeman" }
     ];
 
     let currentQuoteIndex = 0;
     const quoteBox = document.getElementById('quote-box');
     const quoteText = document.getElementById('quote-text');
+    if (quoteText) {
+      quoteText.innerHTML = `"${welcomeMsg}" — AlgoFlow Studio`;
+    }
 
     // Rotate quotes every 7 seconds
     const quoteInterval = setInterval(() => {

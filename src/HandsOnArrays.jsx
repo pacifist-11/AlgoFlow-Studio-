@@ -4,11 +4,13 @@ export default function HandsOnArrays({ selectedLang: propLang }) {
   const normLang = (l) => {
     if (!l) return 'c';
     const lower = l.toLowerCase();
-    if (lower === 'js') return 'javascript';
+    if (lower === 'js' || lower === 'frontend' || lower === 'javascript') return 'javascript';
+    if (lower === 'cpp' || lower === 'c++') return 'c';
     return lower;
   };
 
-  const activeLang = normLang(propLang);
+  const rawLang = normLang(propLang);
+  const activeLang = ['python', 'javascript', 'c', 'java'].includes(rawLang) ? rawLang : 'c';
   const [arrayName, setArrayName] = useState('favoriteSongs');
   const [items, setItems] = useState(['Believer', 'Shape of You', 'Counting Stars', 'Levitating']);
   const [newItem, setNewItem] = useState('');
@@ -34,7 +36,7 @@ export default function HandsOnArrays({ selectedLang: propLang }) {
       return `# Python\n${arrayName} = [${arrStr}]\n\n# Access item at index ${selectedIndex}:\nselected_song = ${arrayName}[${selectedIndex}]  # Output: "${items[selectedIndex] || ''}"`;
     }
     if (activeLang === 'javascript') {
-      return `// JavaScript\nconst ${arrayName} = [${arrStr}];\n\n// Access item at index ${selectedIndex}:\nconst selectedSong = ${arrayName}[${selectedIndex}]; // Output: "${items[selectedIndex] || ''}"`;
+      return `// Frontend (HTML/CSS/JS)\nconst ${arrayName} = [${arrStr}];\n\n// Access item at index ${selectedIndex}:\nconst selectedSong = ${arrayName}[${selectedIndex}]; // Output: "${items[selectedIndex] || ''}"`;
     }
     if (activeLang === 'c') {
       return `// C Language\n#include <stdio.h>\n\nchar* ${arrayName}[] = {${arrStr}};\n\n// Access item at index ${selectedIndex}:\nchar* selectedSong = ${arrayName}[${selectedIndex}]; // "${items[selectedIndex] || ''}"`;

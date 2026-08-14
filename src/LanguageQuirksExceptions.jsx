@@ -1,13 +1,23 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 
-export default function LanguageQuirksExceptions({ selectedLang = 'C', onSelectLang }) {
-  const [activeLangTab, setActiveLangTab] = useState(
-    ['C', 'Java', 'Python', 'JS'].includes(selectedLang?.toUpperCase()) 
-      ? (selectedLang === 'JS' ? 'JS' : selectedLang.toUpperCase()) 
-      : 'Java'
-  );
+export default function LanguageQuirksExceptions({ selectedLang = 'C' }) {
+  const getMappedLang = (l) => {
+    const up = (l || 'C').toUpperCase();
+    if (up === 'JS' || up === 'JAVASCRIPT' || up === 'FRONTEND') return 'JS';
+    if (up === 'PYTHON') return 'Python';
+    if (up === 'JAVA') return 'Java';
+    return 'C';
+  };
+
+  const [activeLangTab, setActiveLangTab] = useState(() => getMappedLang(selectedLang));
   const [activeQuirkIndex, setActiveQuirkIndex] = useState(0);
   const [simulatorState, setSimulatorState] = useState('normal'); // 'normal', 'trap', 'fixed'
+
+  useEffect(() => {
+    setActiveLangTab(getMappedLang(selectedLang));
+    setActiveQuirkIndex(0);
+    setSimulatorState('normal');
+  }, [selectedLang]);
 
   const quirksData = {
     Java: {
@@ -96,7 +106,7 @@ export default function LanguageQuirksExceptions({ selectedLang = 'C', onSelectL
       ]
     },
     JS: {
-      title: '🌐 JavaScript Type Coercion & Scope Quirks',
+      title: '🌐 Frontend (HTML/CSS/JS) Scope & Type Quirks',
       icon: '🌐',
       color: '#eab308',
       items: [
@@ -123,14 +133,7 @@ export default function LanguageQuirksExceptions({ selectedLang = 'C', onSelectL
   const currentQuirksGroup = quirksData[activeLangTab] || quirksData.Java;
   const currentQuirk = currentQuirksGroup.items[activeQuirkIndex] || currentQuirksGroup.items[0];
 
-  const handleSelectLangTab = (lang) => {
-    setActiveLangTab(lang);
-    setActiveQuirkIndex(0);
-    setSimulatorState('normal');
-    if (onSelectLang) {
-      onSelectLang(lang);
-    }
-  };
+
 
   return (
     <div style={{
@@ -150,38 +153,25 @@ export default function LanguageQuirksExceptions({ selectedLang = 'C', onSelectL
               Module 4: Language Quirks, Exceptions & Syntax Rules
             </h2>
             <p style={{ margin: '4px 0 0 0', color: '#94a3b8', fontSize: '14px', lineHeight: '1.5' }}>
-              Every programming language has hidden traps! Learn about Java null pointers, Python indentation rules, C manual pointers, and JavaScript type coercion.
+              Every programming language has hidden traps! Learn about Java null pointers, Python indentation rules, C manual pointers, and Frontend (HTML/CSS/JS) type coercion.
             </p>
           </div>
         </div>
       </div>
 
-      {/* Language Selector Bar */}
-      <div style={{ display: 'flex', gap: '10px', marginBottom: '20px', flexWrap: 'wrap' }}>
-        {[
-          { id: 'Java', label: '☕ Java (Pointers & NPE)' },
-          { id: 'Python', label: '🐍 Python (Indentation & Syntax)' },
-          { id: 'C', label: '⚙️ C (Manual Pointers & Memory)' },
-          { id: 'JS', label: '🌐 JavaScript (Equality & Coercion)' }
-        ].map(lang => (
-          <button
-            key={lang.id}
-            onClick={() => handleSelectLangTab(lang.id)}
-            style={{
-              padding: '10px 16px',
-              borderRadius: '10px',
-              border: activeLangTab === lang.id ? `2px solid ${quirksData[lang.id].color}` : '1px solid #334155',
-              background: activeLangTab === lang.id ? 'rgba(56, 189, 248, 0.15)' : '#0f172a',
-              color: activeLangTab === lang.id ? quirksData[lang.id].color : '#94a3b8',
-              fontWeight: 'bold',
-              fontSize: '13px',
-              cursor: 'pointer',
-              transition: 'all 0.2s ease'
-            }}
-          >
-            {lang.label}
-          </button>
-        ))}
+      {/* Active Language Badge Indicator */}
+      <div style={{ display: 'flex', alignItems: 'center', gap: '10px', marginBottom: '20px' }}>
+        <span style={{
+          background: quirksData[activeLangTab]?.color || '#0284c7',
+          color: '#fff',
+          fontSize: '12px',
+          fontWeight: 'bold',
+          padding: '6px 14px',
+          borderRadius: '20px',
+          boxShadow: '0 0 10px rgba(0,0,0,0.3)'
+        }}>
+          {quirksData[activeLangTab]?.icon || '🌐'} Showing Quirks for {activeLangTab === 'JS' ? 'Frontend (HTML/CSS/JS)' : activeLangTab}
+        </span>
       </div>
 
       {/* Main Quirk Card */}

@@ -4,11 +4,13 @@ export default function HandsOnVariables({ selectedLang: propLang }) {
   const normLang = (l) => {
     if (!l) return 'c';
     const lower = l.toLowerCase();
-    if (lower === 'js') return 'javascript';
+    if (lower === 'js' || lower === 'frontend' || lower === 'javascript') return 'javascript';
+    if (lower === 'cpp' || lower === 'c++') return 'c';
     return lower;
   };
 
-  const activeLang = normLang(propLang);
+  const rawLang = normLang(propLang);
+  const activeLang = ['python', 'javascript', 'c', 'java'].includes(rawLang) ? rawLang : 'c';
 
   const [varName, setVarName] = useState('userAge');
   const [dataType, setDataType] = useState('int'); // int, float, char, string, boolean
@@ -57,7 +59,7 @@ export default function HandsOnVariables({ selectedLang: propLang }) {
       return `# Python (Dynamic Typing)\n${name} = ${val}`;
     }
     if (activeLang === 'javascript') {
-      return `// JavaScript (let / const)\nlet ${name} = ${val};`;
+      return `// Frontend (HTML/CSS/JS)\nlet ${name} = ${val};`;
     }
     if (activeLang === 'c') {
       if (b.type === 'int') return `// C Language\nint ${name} = ${val};`;

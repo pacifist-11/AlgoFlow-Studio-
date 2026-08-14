@@ -6,9 +6,10 @@ import WhyDSAMattersGuide from './WhyDSAMattersGuide.jsx';
 import LanguageQuirksExceptions from './LanguageQuirksExceptions.jsx';
 import HandsOnSyntaxPractice from './HandsOnSyntaxPractice.jsx';
 import LanguageCareerGuide from './LanguageCareerGuide.jsx';
+import BTechBranchLanguageGuide from './BTechBranchLanguageGuide.jsx';
 
-export default function Beginner101Visualizer({ codeLang = 'C', setCodeLang }) {
-  const [activeModule, setActiveModule] = useState('career'); // career, variables, arrays, quirks, syntax, why_sort, why_dsa
+export default function Beginner101Visualizer({ codeLang = 'C', setCodeLang, fontSize = 14 }) {
+  const [activeModule, setActiveModule] = useState('btech_branches'); // btech_branches, career, variables, arrays, quirks, syntax, why_sort, why_dsa
   const [localLang, setLocalLang] = useState(codeLang || 'C');
 
   const currentLang = setCodeLang ? codeLang : localLang;
@@ -21,103 +22,34 @@ export default function Beginner101Visualizer({ codeLang = 'C', setCodeLang }) {
   };
 
   const modules = [
-    { id: 'career', icon: '🎯', title: '1. Which Language to Pick?', desc: 'Jobs & fields guide' },
-    { id: 'variables', icon: '📦', title: '2. Variables & Data Types', desc: 'Memory storage boxes' },
-    { id: 'arrays', icon: '📊', title: '3. Arrays & Indexing', desc: 'Rows of memory boxes' },
-    { id: 'quirks', icon: '⚠️', title: '4. Quirks & Exceptions', desc: 'Java pointers, Python syntax, etc.' },
-    { id: 'syntax', icon: '✍️', title: '5. Syntax & Practice', desc: 'Fix syntax errors & sandbox' },
-    { id: 'why_sort', icon: '⚡', title: '6. Why Sorting Matters', desc: 'Interactive search game' },
-    { id: 'why_dsa', icon: '🧠', title: '7. Why DSA Matters', desc: 'Scalability, Big-O & quiz' }
+    { id: 'btech_branches', icon: '🎓', title: '1. B.Tech Branch Roadmaps', desc: 'CSE, ECE, Mech, Civil, AI & more' },
+    { id: 'career', icon: '🎯', title: '2. Language Career Guide', desc: 'Jobs & fields per language' },
+    { id: 'variables', icon: '📦', title: '3. Variables & Data Types', desc: 'Memory storage boxes' },
+    { id: 'arrays', icon: '📊', title: '4. Arrays & Indexing', desc: 'Rows of memory boxes' },
+    { id: 'quirks', icon: '⚠️', title: '5. Quirks & Exceptions', desc: 'Java pointers, Python syntax, etc.' },
+    { id: 'syntax', icon: '✍️', title: '6. Syntax & Practice', desc: 'Fix syntax errors & sandbox' },
+    { id: 'why_sort', icon: '⚡', title: '7. Why Sorting Matters', desc: 'Interactive search game' },
+    { id: 'why_dsa', icon: '🧠', title: '8. Why DSA Matters', desc: 'Scalability, Big-O & quiz' }
   ];
 
   return (
     <div style={{ padding: '20px', maxWidth: '1200px', margin: '0 auto' }}>
       
-      {/* 🌟 TOP HEADER LANGUAGE SELECTOR BAR FOR BEGINNER 101 🌟 */}
-      <div style={{
-        display: 'flex',
-        alignItems: 'center',
-        justifyContent: 'space-between',
-        background: 'rgba(15, 23, 42, 0.9)',
-        borderRadius: '14px',
-        padding: '14px 22px',
-        marginBottom: '20px',
-        border: '1.5px solid rgba(56, 189, 248, 0.3)',
-        boxShadow: '0 8px 25px rgba(0, 0, 0, 0.4)',
-        flexWrap: 'wrap',
-        gap: '12px'
-      }}>
-        <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
-          <span style={{ fontSize: '22px' }}>🌐</span>
-          <div>
-            <h3 style={{ margin: 0, fontSize: '15px', fontWeight: '700', color: '#38bdf8' }}>
-              Select Beginner Coding Language:
-            </h3>
-            <span style={{ fontSize: '12px', color: '#94a3b8' }}>
-              Changes active language for Variables, Arrays & Syntax Practice!
-            </span>
-          </div>
-        </div>
-
-        {/* Header Language Pill Buttons */}
-        <div style={{ display: 'flex', gap: '8px', flexWrap: 'wrap' }}>
-          {[
-            { id: 'C', label: '⚙️ C Language' },
-            { id: 'Java', label: '☕ Java' },
-            { id: 'Python', label: '🐍 Python' },
-            { id: 'JS', label: '🌐 JavaScript' }
-          ].map(l => {
-            const isSelected = (currentLang || 'C').toUpperCase() === l.id.toUpperCase() || ((currentLang || 'C') === 'JS' && l.id === 'JS');
-            return (
-              <button
-                key={l.id}
-                onClick={() => handleSelectLang(l.id)}
-                style={{
-                  padding: '8px 16px',
-                  borderRadius: '10px',
-                  border: isSelected ? '2px solid #38bdf8' : '1px solid #334155',
-                  background: isSelected ? '#0284c7' : '#0f172a',
-                  color: '#fff',
-                  fontWeight: 'bold',
-                  fontSize: '13px',
-                  cursor: 'pointer',
-                  transition: 'all 0.2s ease',
-                  boxShadow: isSelected ? '0 0 15px rgba(56, 189, 248, 0.4)' : 'none'
-                }}
-              >
-                {l.label}
-              </button>
-            );
-          })}
-        </div>
-      </div>
-
       {/* Main Banner / Title */}
       <div style={{
         background: 'linear-gradient(135deg, rgba(30, 41, 59, 0.9) 0%, rgba(15, 23, 42, 0.9) 100%)',
         borderRadius: '16px',
         padding: '24px',
         marginBottom: '24px',
-        border: '1px solid rgba(255, 255, 255, 0.1)',
+        border: '1.5px solid rgba(56, 189, 248, 0.3)',
         boxShadow: '0 10px 30px rgba(0,0,0,0.5)',
         display: 'flex',
-        flexWrap: 'wrap',
-        justifyContent: 'space-between',
-        alignItems: 'center',
-        gap: '16px'
+        flexDirection: 'column',
+        gap: '20px'
       }}>
+        {/* Title Header */}
         <div>
           <div style={{ display: 'flex', alignItems: 'center', gap: '8px', marginBottom: '6px' }}>
-            <span style={{
-              background: '#0284c7',
-              color: '#fff',
-              fontSize: '11px',
-              fontWeight: 'bold',
-              padding: '2px 8px',
-              borderRadius: '12px'
-            }}>
-              ACTIVE LANGUAGE: {(currentLang || 'C').toUpperCase()}
-            </span>
             <span style={{ color: '#94a3b8', fontSize: '13px' }}>Start Coding Journey Here!</span>
           </div>
           <h1 style={{ margin: 0, fontSize: '24px', fontWeight: '800', color: '#f8fafc' }}>
@@ -128,7 +60,7 @@ export default function Beginner101Visualizer({ codeLang = 'C', setCodeLang }) {
           </p>
         </div>
 
-        {/* Module Switcher Buttons */}
+        {/* Module Switcher Buttons (Position 1) */}
         <div style={{ display: 'flex', gap: '8px', flexWrap: 'wrap' }}>
           {modules.map(m => {
             const isActive = activeModule === m.id;
@@ -158,16 +90,88 @@ export default function Beginner101Visualizer({ codeLang = 'C', setCodeLang }) {
             );
           })}
         </div>
+
+        {/* Integrated Active Language Selector Bar (Hidden for Module 1 'btech_branches' and Module 2 'career' guide) */}
+        {activeModule !== 'career' && activeModule !== 'btech_branches' && (
+          <div style={{
+            display: 'flex',
+            alignItems: 'center',
+            justifyContent: 'space-between',
+            background: 'rgba(15, 23, 42, 0.9)',
+            padding: '12px 18px',
+            borderRadius: '12px',
+            border: '1.5px solid rgba(56, 189, 248, 0.3)',
+            boxShadow: '0 4px 15px rgba(0, 0, 0, 0.3)',
+            flexWrap: 'wrap',
+            gap: '12px'
+          }}>
+            <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+              <span style={{ fontSize: '18px' }}>🌐</span>
+              <span style={{
+                background: '#0284c7',
+                color: '#fff',
+                fontSize: '11px',
+                fontWeight: 'bold',
+                padding: '3px 9px',
+                borderRadius: '12px',
+                letterSpacing: '0.5px'
+              }}>
+                ACTIVE LANGUAGE:
+              </span>
+              <span style={{ fontSize: '12px', color: '#94a3b8' }}>
+                Applies to Variables, Arrays, Syntax Practice & Sorting!
+              </span>
+            </div>
+
+            <div style={{ display: 'flex', gap: '6px', flexWrap: 'wrap' }}>
+              {[
+                { id: 'C', label: '⚙️ C' },
+                { id: 'Java', label: '☕ Java' },
+                { id: 'Python', label: '🐍 Python' },
+                { id: 'Frontend', label: '🌐 Frontend (HTML/CSS/JS)' }
+              ].map(l => {
+                const cleanLang = (currentLang || 'C').toLowerCase();
+                const cleanId = l.id.toLowerCase();
+                const isSelected = 
+                  cleanLang === cleanId ||
+                  (cleanLang === 'cpp' && cleanId === 'c') ||
+                  (cleanLang === 'c++' && cleanId === 'c') ||
+                  ((cleanLang === 'js' || cleanLang === 'javascript' || cleanLang === 'frontend') && cleanId === 'frontend');
+                return (
+                  <button
+                    key={l.id}
+                    onClick={() => handleSelectLang(l.id)}
+                    style={{
+                      padding: '6px 12px',
+                      borderRadius: '8px',
+                      border: isSelected ? '2px solid #38bdf8' : '1px solid #334155',
+                      background: isSelected ? '#0284c7' : '#0f172a',
+                      color: '#fff',
+                      fontWeight: 'bold',
+                      fontSize: '12.5px',
+                      cursor: 'pointer',
+                      transition: 'all 0.2s ease',
+                      boxShadow: isSelected ? '0 0 12px rgba(56, 189, 248, 0.4)' : 'none'
+                    }}
+                  >
+                    {l.label}
+                  </button>
+                );
+              })}
+            </div>
+          </div>
+        )}
       </div>
 
       {/* Active Module View */}
-      {activeModule === 'variables' && <HandsOnVariables selectedLang={currentLang} onSelectLang={handleSelectLang} />}
-      {activeModule === 'arrays' && <HandsOnArrays selectedLang={currentLang} onSelectLang={handleSelectLang} />}
-      {activeModule === 'why_sort' && <WhySortingMattersChallenge />}
-      {activeModule === 'why_dsa' && <WhyDSAMattersGuide />}
-      {activeModule === 'quirks' && <LanguageQuirksExceptions selectedLang={currentLang} onSelectLang={handleSelectLang} />}
-      {activeModule === 'syntax' && <HandsOnSyntaxPractice selectedLang={currentLang} onSelectLang={handleSelectLang} />}
+      {activeModule === 'btech_branches' && <BTechBranchLanguageGuide />}
       {activeModule === 'career' && <LanguageCareerGuide />}
+      {activeModule === 'variables' && <HandsOnVariables selectedLang={currentLang} />}
+      {activeModule === 'arrays' && <HandsOnArrays selectedLang={currentLang} />}
+      {activeModule === 'why_sort' && <WhySortingMattersChallenge selectedLang={currentLang} />}
+      {activeModule === 'why_dsa' && <WhyDSAMattersGuide />}
+      {activeModule === 'quirks' && <LanguageQuirksExceptions selectedLang={currentLang} />}
+      {activeModule === 'syntax' && <HandsOnSyntaxPractice selectedLang={currentLang} />}
     </div>
   );
 }

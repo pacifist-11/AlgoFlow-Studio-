@@ -1,24 +1,90 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 
-export default function HandsOnSyntaxPractice({ selectedLang: propLang, onSelectLang }) {
+// Line-number integrated code editor to improve syntax error discovery and line numbering
+function CodeEditorWithLineNumbers({ value, onChange, color, borderColor, rows = 11 }) {
+  const lineCount = value.split('\n').length;
+  const lineNumbers = Array.from({ length: Math.max(1, lineCount) }, (_, i) => i + 1);
+  const lineRef = useRef(null);
+  const textareaRef = useRef(null);
+
+  const handleScroll = () => {
+    if (lineRef.current && textareaRef.current) {
+      lineRef.current.scrollTop = textareaRef.current.scrollTop;
+    }
+  };
+
+  // Sync scroll on mount or value change
+  useEffect(() => {
+    handleScroll();
+  }, [value]);
+
+  return (
+    <div style={{
+      display: 'flex',
+      background: '#090d16',
+      borderRadius: '10px',
+      border: `1px solid ${borderColor}`,
+      overflow: 'hidden',
+      fontFamily: 'Consolas, Monaco, monospace',
+      fontSize: '13.5px',
+      marginBottom: '14px'
+    }}>
+      {/* Line Numbers Column */}
+      <div
+        ref={lineRef}
+        style={{
+          padding: '14px 8px 14px 12px',
+          background: '#070a12',
+          color: '#475569',
+          textAlign: 'right',
+          userSelect: 'none',
+          overflowY: 'hidden',
+          display: 'flex',
+          flexDirection: 'column',
+          borderRight: '1px solid rgba(255,255,255,0.05)',
+          minWidth: '32px'
+        }}
+      >
+        {lineNumbers.map(n => (
+          <div key={n} style={{ height: '20px', lineHeight: '20px' }}>{n}</div>
+        ))}
+      </div>
+      {/* Textarea Column */}
+      <textarea
+        ref={textareaRef}
+        rows={rows}
+        value={value}
+        onChange={onChange}
+        onScroll={handleScroll}
+        style={{
+          flex: 1,
+          background: 'transparent',
+          color: color,
+          fontFamily: 'inherit',
+          fontSize: 'inherit',
+          lineHeight: '20px',
+          padding: '14px',
+          border: 'none',
+          boxSizing: 'border-box',
+          outline: 'none',
+          resize: 'vertical',
+          display: 'block',
+          margin: 0
+        }}
+      />
+    </div>
+  );
+}
+
+export default function HandsOnSyntaxPractice({ selectedLang: propLang }) {
   const normLang = (l) => {
     if (!l) return 'c';
     const lower = l.toLowerCase();
-    if (lower === 'js') return 'javascript';
+    if (lower === 'js' || lower === 'javascript' || lower === 'frontend') return 'frontend';
     return lower;
   };
 
-  const [internalLang, setInternalLang] = useState('c');
-  const currentLang = propLang ? normLang(propLang) : internalLang;
-  const selectedLang = currentLang;
-
-  const setSelectedLang = (langId) => {
-    setInternalLang(langId);
-    if (onSelectLang) {
-      const mapBack = { c: 'C', java: 'Java', python: 'Python', javascript: 'JS' };
-      onSelectLang(mapBack[langId] || 'C');
-    }
-  };
+  const selectedLang = normLang(propLang);
 
   const [activeTab, setActiveTab] = useState('free_sandbox'); // free_sandbox, practice, anatomy
 
@@ -92,45 +158,291 @@ function main() {
 main();`
   };
 
-  // Restored Level 1 to Level 4 Challenges
-  const challenges = [
-    {
-      id: 1,
-      title: 'Level 1: The Missing Semicolon (;)',
-      concept: 'In C and Java, every command statement ends with a semicolon (;).',
-      brokenCode: 'int score = 100\nprintf("Score: %d", score);',
-      solution: 'int score = 100;\nprintf("Score: %d", score);',
-      hint: 'Line 1 is missing a semicolon ; at the end!',
-      explanation: 'Without a semicolon ;, C treats line 1 and line 2 as a single continuous line.'
-    },
-    {
-      id: 2,
-      title: 'Level 2: The Missing Quotes (" ")',
-      concept: 'Text strings must be wrapped in double quotes "..." so the computer knows they are text words.',
-      brokenCode: 'char name[] = Alex;\nprintf("Hello %s", name);',
-      solution: 'char name[] = "Alex";\nprintf("Hello %s", name);',
-      hint: 'Wrap Alex in double quotes "Alex"!',
-      explanation: 'Without quotes, the computer searches for a variable named Alex instead of treating it as text.'
-    },
-    {
-      id: 3,
-      title: 'Level 3: The Missing Header File (#include <stdio.h>)',
-      concept: 'Before using printf(), you must include the Standard Input/Output library header.',
-      brokenCode: 'int main() {\n    printf("Hello World\\n");\n    return 0;\n}',
-      solution: '#include <stdio.h>\n\nint main() {\n    printf("Hello World\\n");\n    return 0;\n}',
-      hint: 'Add #include <stdio.h> at the very top!',
-      explanation: '#include <stdio.h> imports the dictionary containing printf().'
-    },
-    {
-      id: 4,
-      title: 'Level 4: Matching Curly Braces ({ })',
-      concept: 'Curly braces { } group code lines. Every opening { must have a matching closing }.',
-      brokenCode: 'int main() {\n    int a = 10, b = 20;\n    if (a < b) {\n        printf("A is smaller");\n    \n    return 0;\n}',
-      solution: 'int main() {\n    int a = 10, b = 20;\n    if (a < b) {\n        printf("A is smaller");\n    }\n    return 0;\n}',
-      hint: 'The if-statement is missing its closing brace } !',
-      explanation: 'Every { opens a box of code lines. You must close } every box.'
-    }
-  ];
+  // Language-Specific Level 1 to Level 6 Challenges
+  const challengesByLang = {
+    c: [
+      {
+        id: 1,
+        title: 'C Level 1: The Missing Semicolon (;)',
+        concept: 'In C, every command statement ends with a semicolon (;).',
+        brokenCode: 'int count = 5\nprintf("Count is %d", count);',
+        solution: 'int count = 5;\nprintf("Count is %d", count);',
+        hint: 'Line 1 is missing a semicolon ; at the end!',
+        explanation: 'Without a semicolon ;, C treats line 1 and line 2 as a single continuous line.'
+      },
+      {
+        id: 2,
+        title: 'C Level 2: String Formatting Placeholders',
+        concept: 'Passing an integer to a format string requires %d, not %s.',
+        brokenCode: 'int age = 19;\nprintf("I am %s years old", age);',
+        solution: 'int age = 19;\nprintf("I am %d years old", age);',
+        hint: 'Change %s to %d in the format string!',
+        explanation: '%s expects a string pointer, while %d tells the compiler to format an integer.'
+      },
+      {
+        id: 3,
+        title: 'C Level 3: Missing math.h Header File',
+        concept: 'To use math functions like sqrt(), you must include the math.h header.',
+        brokenCode: '#include <stdio.h>\nint main() {\n    double root = sqrt(16.0);\n    return 0;\n}',
+        solution: '#include <stdio.h>\n#include <math.h>\nint main() {\n    double root = sqrt(16.0);\n    return 0;\n}',
+        hint: 'Add #include <math.h> below stdio.h!',
+        explanation: 'The mathematical library functions are declared inside the math.h header file.'
+      },
+      {
+        id: 4,
+        title: 'C Level 4: Comparison vs Assignment Operator',
+        concept: 'Conditionals check equality with ==. A single = changes the value instead of comparing it.',
+        brokenCode: 'int x = 10;\nif (x = 5) {\n    printf("X is five");\n}',
+        solution: 'int x = 10;\nif (x == 5) {\n    printf("X is five");\n}',
+        hint: 'Change x = 5 to x == 5 inside the if condition!',
+        explanation: 'A single = assigns the value 5 to x, which evaluates to true. Use == for logical comparison.'
+      },
+      {
+        id: 5,
+        title: 'C Level 5: Struct Definition Semicolon',
+        concept: 'Struct declarations in C must end with a terminating semicolon ; after the closing brace.',
+        brokenCode: 'struct Student {\n    char name[20];\n    int age;\n}',
+        solution: 'struct Student {\n    char name[20];\n    int age;\n};',
+        hint: 'Add a semicolon ; at the end of the closing brace } of the struct!',
+        explanation: 'The C compiler requires a semicolon to end the struct declaration block.'
+      },
+      {
+        id: 6,
+        title: 'C Level 6: Array Bound Declarations',
+        concept: 'Ensure that the array size matches the number of elements inside the initializer list.',
+        brokenCode: 'int numbers[3] = {10, 20, 30, 40};',
+        solution: 'int numbers[4] = {10, 20, 30, 40};',
+        hint: 'Change numbers[3] to numbers[4] to accommodate all four values!',
+        explanation: 'Declaring numbers[3] leaves space for only 3 elements, causing a buffer overflow error.'
+      }
+    ],
+    javascript: [
+      {
+        id: 1,
+        title: 'JS Level 1: Variable Declaration Syntax',
+        concept: 'JavaScript uses let or const to declare variables. Do not use datatype names like int/float.',
+        brokenCode: 'int score = 100;\nconsole.log(score);',
+        solution: 'let score = 100;\nconsole.log(score);',
+        hint: 'Replace int with let or const!',
+        explanation: 'JavaScript is dynamically typed and uses let, const or var to declare variables, not int.'
+      },
+      {
+        id: 2,
+        title: 'JS Level 2: String Quote Mismatch',
+        concept: 'Single or double quotes must match on both sides of a string.',
+        brokenCode: 'let name = "Alex\';\nconsole.log(name);',
+        solution: 'let name = "Alex";\nconsole.log(name);',
+        hint: 'Match the quote types on line 1!',
+        explanation: 'Ensure you open and close strings with matching double quotes or single quotes.'
+      },
+      {
+        id: 3,
+        title: 'JS Level 3: Template Literal Syntax',
+        concept: 'To inject variables inside string values, use backticks `...` instead of single/double quotes.',
+        brokenCode: 'let val = 10;\nconsole.log("Value: ${val}");',
+        solution: 'let val = 10;\nconsole.log(`Value: ${val}`);',
+        hint: 'Change the outer quotes of the print string to backticks ``!',
+        explanation: 'Only backticks support string interpolation with ${variable} in JavaScript.'
+      },
+      {
+        id: 4,
+        title: 'JS Level 4: Unmatched Parentheses',
+        concept: 'Function calls must close their brackets correctly.',
+        brokenCode: 'console.log("Hello";',
+        solution: 'console.log("Hello");',
+        hint: 'Add a closing parenthesis ) before the semicolon!',
+        explanation: 'Ensure all opening parentheses ( are closed by a matching ) before finishing the statement.'
+      },
+      {
+        id: 5,
+        title: 'JS Level 5: Event Listener click parameter',
+        concept: 'HTML event parameters are lowercase and exclude the "on" prefix (e.g. use "click", not "onclick").',
+        brokenCode: 'btn.addEventListener("onclick", () => {\n  console.log("Clicked");\n});',
+        solution: 'btn.addEventListener("click", () => {\n  console.log("Clicked");\n});',
+        hint: 'Change "onclick" to "click"!',
+        explanation: 'addEventListener expects raw event names like "click", "mouseenter", or "submit".'
+      },
+      {
+        id: 6,
+        title: 'JS Level 6: Arrow Function Mapping syntax',
+        concept: 'Arrow functions map parameter variables to expressions with a single => indicator.',
+        brokenCode: 'const doubled = numbers.map(x => => x * 2);',
+        solution: 'const doubled = numbers.map(x => x * 2);',
+        hint: 'Remove the duplicate => indicator!',
+        explanation: 'Arrow syntax maps parameter values once: parameter => expression.'
+      }
+    ],
+    java: [
+      {
+        id: 1,
+        title: 'Java Level 1: Missing Semicolon (;)',
+        concept: 'Java statements require semicolons (;) at the end.',
+        brokenCode: 'double price = 19.99\nSystem.out.println(price);',
+        solution: 'double price = 19.99;\nSystem.out.println(price);',
+        hint: 'Add a semicolon ; at the end of line 1!',
+        explanation: 'Like C, Java will report a compiler error if statements are not terminated with a semicolon.'
+      },
+      {
+        id: 2,
+        title: 'Java Level 2: Main Method Parameters',
+        concept: 'The main method requires string array args (String[] args).',
+        brokenCode: 'public static void main(String args) {\n    System.out.println("Main method");\n}',
+        solution: 'public static void main(String[] args) {\n    System.out.println("Main method");\n}',
+        hint: 'Add square brackets [] to String args inside parameters!',
+        explanation: 'Java requires String[] to represent array strings for command arguments.'
+      },
+      {
+        id: 3,
+        title: 'Java Level 3: String Value Comparison',
+        concept: 'Compare string content in Java using .equals(), not == reference comparison.',
+        brokenCode: 'String s1 = "hello";\nif (s1 == "hello") {\n    System.out.println("Match");\n}',
+        solution: 'String s1 = "hello";\nif (s1.equals("hello")) {\n    System.out.println("Match");\n}',
+        hint: 'Change s1 == "hello" to s1.equals("hello")!',
+        explanation: '== compares variable object references. The .equals() method compares the actual text content.'
+      },
+      {
+        id: 4,
+        title: 'Java Level 4: Class Constructor Name',
+        concept: 'Constructors in Java must match the class name exactly and lack any return types.',
+        brokenCode: 'class User {\n    public void User() {\n        System.out.println("Created");\n    }\n}',
+        solution: 'class User {\n    public User() {\n        System.out.println("Created");\n    }\n}',
+        hint: 'Remove the "void" keyword from the User constructor!',
+        explanation: 'Adding void makes User a regular method instead of a constructor.'
+      },
+      {
+        id: 5,
+        title: 'Java Level 5: Array Allocator Bracket Syntax',
+        concept: 'Array allocations in Java specify sizes with square brackets [...], not parentheses.',
+        brokenCode: 'int[] list = new int(5);',
+        solution: 'int[] list = new int[5];',
+        hint: 'Change (5) to [5] at the end of the declaration!',
+        explanation: 'Square brackets are required to allocate sizes for collections in Java.'
+      },
+      {
+        id: 6,
+        title: 'Java Level 6: Missing Return Statement',
+        concept: 'Any method declaring a return type other than void must return a compatible value.',
+        brokenCode: 'public int getSum() {\n    int sum = 10 + 20;\n}',
+        solution: 'public int getSum() {\n    int sum = 10 + 20;\n    return sum;\n}',
+        hint: 'Add return sum; inside the method body!',
+        explanation: 'Methods returning numeric values must specify a return statement to return compilation output.'
+      }
+    ],
+    python: [
+      {
+        id: 1,
+        title: 'Python Level 1: Missing Block Colon (:)',
+        concept: 'Conditional blocks (if, for, while, def) in Python require a colon (:) at the end of the line.',
+        brokenCode: 'if temperature > 30\n    print("It is hot outside")',
+        solution: 'if temperature > 30:\n    print("It is hot outside")',
+        hint: 'Add a colon : after temperature > 30!',
+        explanation: 'Python uses colons to denote the start of indented statement blocks.'
+      },
+      {
+        id: 2,
+        title: 'Python Level 2: Helper Function Definition def Keyword',
+        concept: 'In Python, define function helpers using the def keyword, not function.',
+        brokenCode: 'function greet(name):\n    return "Hello " + name',
+        solution: 'def greet(name):\n    return "Hello " + name',
+        hint: 'Change function to def at the start of line 1!',
+        explanation: 'Python uses def to declare functions, not JavaScript-style function.'
+      },
+      {
+        id: 3,
+        title: 'Python Level 3: List Comprehension Mismatched brackets',
+        concept: 'List collections require matching opening and closing square brackets [...].',
+        brokenCode: 'squares = [x*x for x in range(5)}',
+        solution: 'squares = [x*x for x in range(5)]',
+        hint: 'Replace the closing curly brace } with a square bracket ]!',
+        explanation: 'List structures must begin and end with matching square brackets.'
+      },
+      {
+        id: 4,
+        title: 'Python Level 4: F-String Interpolation Curly Braces',
+        concept: 'Values inside f-strings must be enclosed inside curly braces {}, not parentheses.',
+        brokenCode: 'username = "Alex"\nmsg = f"User is (username)"',
+        solution: 'username = "Alex"\nmsg = f"User is {username}"',
+        hint: 'Change (username) to {username}!',
+        explanation: 'F-strings require curly braces to correctly interpolate Python variables.'
+      },
+      {
+        id: 5,
+        title: 'Python Level 5: Range Function Arguments Type',
+        concept: 'The range() generator takes integer values, not string representations.',
+        brokenCode: 'for i in range("10"):\n    print(i)',
+        solution: 'for i in range(10):\n    print(i)',
+        hint: 'Remove quotes from "10" inside the range parameter!',
+        explanation: 'range() parameters must be numerical integer values.'
+      },
+      {
+        id: 6,
+        title: 'Python Level 6: Dictionary colon assignment',
+        concept: 'Key-value declarations in Python dictionaries use colons (:) to bind values, not equals (=).',
+        brokenCode: 'student = {"name" = "Alex", "age" = 20}',
+        solution: 'student = {"name": "Alex", "age": 20}',
+        hint: 'Replace the = symbols inside the dictionary with colons :!',
+        explanation: 'Dictionaries map keys to values using the key: value syntax, separated by commas.'
+      }
+    ],
+    frontend: [
+      {
+        id: 1,
+        title: 'Frontend Level 1: Mismatched HTML tags',
+        concept: 'HTML tags must close with matching elements (e.g. section requires </section>).',
+        brokenCode: '<section>\n  <p>Intro text</p>\n<div>',
+        solution: '<section>\n  <p>Intro text</p>\n</section>',
+        hint: 'Change <div> on line 3 to </section>!',
+        explanation: 'Tags must match their opening containers to maintain proper document structure.'
+      },
+      {
+        id: 2,
+        title: 'Frontend Level 2: HTML Image Source attribute',
+        concept: 'Images load data links using src attributes, not SDE hyperlink href parameters.',
+        brokenCode: '<img href="logo.png" alt="Company Logo" />',
+        solution: '<img src="logo.png" alt="Company Logo" />',
+        hint: 'Change href="logo.png" to src="logo.png"!',
+        explanation: 'The <img> tag requires the src attribute to find and display the target image resource.'
+      },
+      {
+        id: 3,
+        title: 'Frontend Level 3: CSS selector name syntax',
+        concept: 'Custom class styling rules must begin with a dot (.) selector to tell the compiler it is a class.',
+        brokenCode: 'header-title {\n  font-size: 24px;\n  color: #38bdf8;\n}',
+        solution: '.header-title {\n  font-size: 24px;\n  color: #38bdf8;\n}',
+        hint: 'Add a dot . selector prefix before header-title!',
+        explanation: 'Without a dot, CSS treats header-title as a custom HTML tag instead of a class name.'
+      },
+      {
+        id: 4,
+        title: 'Frontend Level 4: CSS variable access',
+        concept: 'CSS custom properties require the var() syntax wrapper to load styling colors.',
+        brokenCode: '.card {\n  background-color: --primary-bg;\n}',
+        solution: '.card {\n  background-color: var(--primary-bg);\n}',
+        hint: 'Wrap --primary-bg inside var() wrapper!',
+        explanation: 'CSS variables must be accessed via the var(--name) syntax.'
+      },
+      {
+        id: 5,
+        title: 'Frontend Level 5: JS event handler parameter',
+        concept: 'Event handler names exclude the "on" prefix (e.g. click, not onclick).',
+        brokenCode: 'btn.addEventListener("onclick", () => {\n  console.log("Pressed");\n});',
+        solution: 'btn.addEventListener("click", () => {\n  console.log("Pressed");\n});',
+        hint: 'Change "onclick" to "click"!',
+        explanation: 'JS Event listeners register event names without the HTML attribute "on" prefix.'
+      },
+      {
+        id: 6,
+        title: 'Frontend Level 6: JS Array Arrow map return',
+        concept: 'Arrow functions map inputs using a single inline => indicator.',
+        brokenCode: 'const doubled = numbers.map(x => => x * 2);',
+        solution: 'const doubled = numbers.map(x => x * 2);',
+        hint: 'Remove the duplicate => operator!',
+        explanation: 'Arrow expressions specify parameters mapping to results: x => x * 2.'
+      }
+    ]
+  };
+
+  const challenges = challengesByLang[selectedLang] || challengesByLang['c'];
 
   const [currentIdx, setCurrentIdx] = useState(0);
   const [userChallengeCode, setUserChallengeCode] = useState(challenges[0].brokenCode);
@@ -139,11 +451,69 @@ main();`
   const [freeCode, setFreeCode] = useState(langTemplates[selectedLang] || langTemplates['c']);
   const [sandboxResult, setSandboxResult] = useState(null);
 
+  // Frontend Separated Files State
+  const [htmlCode, setHtmlCode] = useState(`<div class="welcome-box">
+  <h1>Hello from AlgoFlow!</h1>
+  <p>Click the button below to trigger an effect.</p>
+  <button id="action-btn">Click Me!</button>
+  <div id="output" class="hidden"></div>
+</div>`);
+
+  const [cssCode, setCssCode] = useState(`.welcome-box {
+  background: #1e293b;
+  border: 2px solid #38bdf8;
+  padding: 20px;
+  border-radius: 12px;
+  text-align: center;
+}
+h1 {
+  color: #38bdf8;
+  margin-bottom: 8px;
+}
+button {
+  background: #38bdf8;
+  color: #0f172a;
+  border: none;
+  padding: 8px 16px;
+  border-radius: 6px;
+  font-weight: bold;
+  cursor: pointer;
+}
+button:hover {
+  background: #0ea5e9;
+}
+.hidden {
+  display: none;
+}
+#output {
+  margin-top: 12px;
+  color: #10b981;
+  font-weight: bold;
+}`);
+
+  const [jsCode, setJsCode] = useState(`const btn = document.getElementById('action-btn');
+const out = document.getElementById('output');
+btn.addEventListener('click', () => {
+  out.textContent = "🎉 Frontend Interactivity Works!";
+  out.classList.remove('hidden');
+  btn.style.transform = 'scale(1.1)';
+  setTimeout(() => { btn.style.transform = 'scale(1)'; }, 100);
+});`);
+
+  const [activeFrontendTab, setActiveFrontendTab] = useState('html'); // 'html', 'css', 'js'
+
   useEffect(() => {
     if (langTemplates[selectedLang]) {
       setFreeCode(langTemplates[selectedLang]);
       setSandboxResult(null);
+    } else if (selectedLang === 'frontend') {
+      setSandboxResult(null);
     }
+    // Load language-specific default challenge
+    const activeChall = challengesByLang[selectedLang] || challengesByLang['c'];
+    setCurrentIdx(0);
+    setUserChallengeCode(activeChall[0].brokenCode);
+    setChallengeFeedback(null);
   }, [selectedLang]);
 
   const loadChallenge = (idx) => {
@@ -165,6 +535,67 @@ main();`
 
   // Language-Specific Syntax Validator
   const validateCustomCode = () => {
+    // Frontend Separated Validation
+    if (selectedLang === 'frontend') {
+      // 1. HTML Validation
+      const tags = [];
+      const htmlRegex = /<\/?([a-zA-Z1-6]+)(?:\s+[^>]*)?>/g;
+      let match;
+      const selfClosingTags = ['img', 'input', 'br', 'hr', 'link', 'meta'];
+      while ((match = htmlRegex.exec(htmlCode)) !== null) {
+        const tag = match[1].toLowerCase();
+        const isClosing = match[0].startsWith('</');
+        if (selfClosingTags.includes(tag)) continue;
+        if (!isClosing) {
+          tags.push({ tag, line: htmlCode.substring(0, match.index).split('\n').length });
+        } else {
+          if (tags.length === 0) {
+            setSandboxResult({ type: 'error', msg: `⚠️ HTML Syntax Error: Missing opening tag for </${tag}>` });
+            return;
+          }
+          const last = tags.pop();
+          if (last.tag !== tag) {
+            setSandboxResult({ type: 'error', msg: `⚠️ HTML Syntax Error: Unmatched Tag. Expected closing tag for <${last.tag}> (opened on line ${last.line}) but found </${tag}>` });
+            return;
+          }
+        }
+      }
+      if (tags.length > 0) {
+        const last = tags.pop();
+        setSandboxResult({ type: 'error', msg: `⚠️ HTML Syntax Error: Unmatched Tag. <${last.tag}> opened on line ${last.line} is missing a closing </${last.tag}>` });
+        return;
+      }
+
+      // 2. CSS Validation
+      const openBraces = (cssCode.match(/\{/g) || []).length;
+      const closeBraces = (cssCode.match(/\}/g) || []).length;
+      if (openBraces !== closeBraces) {
+        setSandboxResult({ type: 'error', msg: `⚠️ CSS Syntax Error: Unmatched braces. Found ${openBraces} '{' but ${closeBraces} '}'.` });
+        return;
+      }
+
+      // 3. JS Validation
+      const openBracesJS = (jsCode.match(/\{/g) || []).length;
+      const closeBracesJS = (jsCode.match(/\}/g) || []).length;
+      if (openBracesJS !== closeBracesJS) {
+        setSandboxResult({ type: 'error', msg: `⚠️ JavaScript Syntax Error: Unmatched curly braces. Found ${openBracesJS} '{' and ${closeBracesJS} '}'.` });
+        return;
+      }
+      const openParens = (jsCode.match(/\(/g) || []).length;
+      const closeParens = (jsCode.match(/\)/g) || []).length;
+      if (openParens !== closeParens) {
+        setSandboxResult({ type: 'error', msg: `⚠️ JavaScript Syntax Error: Unmatched parentheses. Found ${openParens} '(' and ${closeParens} ')'.` });
+        return;
+      }
+
+      setSandboxResult({
+        type: 'success',
+        isFrontend: true,
+        msg: '✅ Frontend HTML, CSS & JavaScript Syntax is 100% Valid!'
+      });
+      return;
+    }
+
     const code = freeCode.trim();
     if (!code) {
       setSandboxResult({ type: 'error', msg: '⚠️ Code is empty. Write some code!' });
@@ -179,9 +610,32 @@ main();`
         setSandboxResult({ type: 'error', msg: '⚠️ Missing Header: Add #include <stdio.h> at top for printf().' });
         return;
       }
+      let inMultiLineComment = false;
       for (let i = 0; i < lines.length; i++) {
-        const line = lines[i].trim();
-        if (!line || line.startsWith('//') || line.startsWith('/*') || line.startsWith('*') || line.startsWith('#') || line.endsWith('{') || line.endsWith('}') || line.endsWith(':')) continue;
+        let line = lines[i].trim();
+        
+        // Handle multi-line comment states
+        if (inMultiLineComment) {
+          if (line.includes('*/')) {
+            const index = line.indexOf('*/');
+            line = line.substring(index + 2).trim();
+            inMultiLineComment = false;
+          } else {
+            continue;
+          }
+        }
+        if (line.includes('/*')) {
+          const startIndex = line.indexOf('/*');
+          if (line.includes('*/', startIndex + 2)) {
+            const endIndex = line.indexOf('*/', startIndex + 2);
+            line = (line.substring(0, startIndex) + line.substring(endIndex + 2)).trim();
+          } else {
+            line = line.substring(0, startIndex).trim();
+            inMultiLineComment = true;
+          }
+        }
+
+        if (!line || line.startsWith('//') || line.startsWith('#') || line.endsWith('{') || line.endsWith('}') || line.endsWith(':')) continue;
         if (line.startsWith('if') || line.startsWith('else') || line.startsWith('for') || line.startsWith('while') || line.startsWith('int main')) continue;
         if (!line.endsWith(';')) {
           setSandboxResult({ type: 'error', msg: `⚠️ Missing Semicolon (;) on Line ${i + 1}: "${line}"` });
@@ -200,9 +654,32 @@ main();`
         setSandboxResult({ type: 'error', msg: '⚠️ Missing Main Method: Java requires public static void main(String[] args).' });
         return;
       }
+      let inMultiLineComment = false;
       for (let i = 0; i < lines.length; i++) {
-        const line = lines[i].trim();
-        if (!line || line.startsWith('//') || line.startsWith('/*') || line.startsWith('*') || line.startsWith('import') || line.startsWith('package') || line.endsWith('{') || line.endsWith('}')) continue;
+        let line = lines[i].trim();
+        
+        // Handle multi-line comment states
+        if (inMultiLineComment) {
+          if (line.includes('*/')) {
+            const index = line.indexOf('*/');
+            line = line.substring(index + 2).trim();
+            inMultiLineComment = false;
+          } else {
+            continue;
+          }
+        }
+        if (line.includes('/*')) {
+          const startIndex = line.indexOf('/*');
+          if (line.includes('*/', startIndex + 2)) {
+            const endIndex = line.indexOf('*/', startIndex + 2);
+            line = (line.substring(0, startIndex) + line.substring(endIndex + 2)).trim();
+          } else {
+            line = line.substring(0, startIndex).trim();
+            inMultiLineComment = true;
+          }
+        }
+
+        if (!line || line.startsWith('//') || line.startsWith('import') || line.startsWith('package') || line.endsWith('{') || line.endsWith('}')) continue;
         if (line.startsWith('public class') || line.startsWith('public static void main') || line.startsWith('if') || line.startsWith('else') || line.startsWith('for')) continue;
         if (!line.endsWith(';')) {
           setSandboxResult({ type: 'error', msg: `⚠️ Missing Semicolon (;) on Line ${i + 1}: "${line}"` });
@@ -283,7 +760,7 @@ main();`
         <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
           <span style={{ fontSize: '24px' }}>✍️</span>
           <h2 style={{ margin: 0, fontSize: '20px', fontWeight: '700', color: '#38bdf8' }}>
-            Module 4: Code Anatomy, Comments & Syntax Sandbox ({selectedLang.toUpperCase()})
+            Module 4: Code Anatomy, Comments & Syntax Sandbox ({selectedLang === 'frontend' ? 'FRONTEND (HTML/CSS/JS)' : selectedLang.toUpperCase()})
           </h2>
         </div>
         <p style={{ margin: '6px 0 0 0', color: '#94a3b8', fontSize: '13.5px' }}>
@@ -306,7 +783,7 @@ main();`
             cursor: 'pointer'
           }}
         >
-          🎨 Free Code Sandbox ({selectedLang.toUpperCase()})
+          🎨 Free Code Sandbox ({selectedLang === 'frontend' ? 'FRONTEND (HTML/CSS/JS)' : selectedLang.toUpperCase()})
         </button>
         <button
           onClick={() => setActiveTab('practice')}
@@ -350,36 +827,124 @@ main();`
         }}>
           <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '12px', flexWrap: 'wrap', gap: '10px' }}>
             <h3 style={{ margin: 0, fontSize: '16px', color: '#f1f5f9' }}>
-              ✨ Free Custom Sandbox ({selectedLang.toUpperCase()})
+              ✨ Free Custom Sandbox ({selectedLang === 'frontend' ? 'FRONTEND (HTML/CSS/JS)' : selectedLang.toUpperCase()})
             </h3>
             <span style={{ fontSize: '12px', color: '#38bdf8', fontWeight: '600' }}>
-              Active Language: <strong>{selectedLang.toUpperCase()}</strong>
+              Active Language: <strong>{selectedLang === 'frontend' ? 'FRONTEND (HTML/CSS/JS)' : selectedLang.toUpperCase()}</strong>
             </span>
           </div>
 
           <p style={{ margin: '0 0 12px 0', fontSize: '13px', color: '#94a3b8' }}>
-            Write any custom code in {selectedLang.toUpperCase()} below! Click <strong>"Check Syntax & Run Output"</strong> to test for syntax errors.
+            Write any custom code in {selectedLang === 'frontend' ? 'Frontend (HTML/CSS/JS)' : selectedLang.toUpperCase()} below! Click <strong>"Check Syntax & Run Output"</strong> to test for syntax errors.
           </p>
 
-          <textarea
-            rows={11}
-            value={freeCode}
-            onChange={e => setFreeCode(e.target.value)}
-            style={{
-              width: '100%',
-              background: '#090d16',
-              color: '#38bdf8',
-              fontFamily: 'Consolas, Monaco, monospace',
-              fontSize: '13.5px',
-              lineHeight: '1.5',
-              padding: '14px',
-              borderRadius: '10px',
-              border: '1px solid #475569',
-              boxSizing: 'border-box',
-              outline: 'none',
-              marginBottom: '14px'
-            }}
-          />
+          {selectedLang === 'frontend' ? (
+            <div style={{ display: 'flex', flexDirection: 'column', gap: '10px', marginBottom: '14px' }}>
+              <div style={{ display: 'flex', gap: '8px', background: '#090d16', padding: '4px', borderRadius: '8px', border: '1px solid #334155' }}>
+                <button
+                  type="button"
+                  onClick={() => setActiveFrontendTab('html')}
+                  style={{
+                    flex: 1,
+                    padding: '8px 12px',
+                    borderRadius: '6px',
+                    border: 'none',
+                    background: activeFrontendTab === 'html' ? '#ef4444' : 'transparent',
+                    color: '#fff',
+                    fontWeight: 'bold',
+                    fontSize: '12.5px',
+                    cursor: 'pointer',
+                    transition: 'all 0.2s ease'
+                  }}
+                >
+                  🧱 index.html
+                </button>
+                <button
+                  type="button"
+                  onClick={() => setActiveFrontendTab('css')}
+                  style={{
+                    flex: 1,
+                    padding: '8px 12px',
+                    borderRadius: '6px',
+                    border: 'none',
+                    background: activeFrontendTab === 'css' ? '#38bdf8' : 'transparent',
+                    color: '#fff',
+                    fontWeight: 'bold',
+                    fontSize: '12.5px',
+                    cursor: 'pointer',
+                    transition: 'all 0.2s ease'
+                  }}
+                >
+                  🎨 style.css
+                </button>
+                <button
+                  type="button"
+                  onClick={() => setActiveFrontendTab('js')}
+                  style={{
+                    flex: 1,
+                    padding: '8px 12px',
+                    borderRadius: '6px',
+                    border: 'none',
+                    background: activeFrontendTab === 'js' ? '#fbbf24' : 'transparent',
+                    color: activeFrontendTab === 'js' ? '#0f172a' : '#fff',
+                    fontWeight: 'bold',
+                    fontSize: '12.5px',
+                    cursor: 'pointer',
+                    transition: 'all 0.2s ease'
+                  }}
+                >
+                  ⚡ script.js
+                </button>
+              </div>
+
+              {activeFrontendTab === 'html' && (
+                <div>
+                  <div style={{ fontSize: '11px', color: '#94a3b8', marginBottom: '4px', fontWeight: 'bold' }}>HTML5 STRUCTURE:</div>
+                  <CodeEditorWithLineNumbers
+                    value={htmlCode}
+                    onChange={e => setHtmlCode(e.target.value)}
+                    color="#f87171"
+                    borderColor="#ef4444"
+                    rows={11}
+                  />
+                </div>
+              )}
+
+              {activeFrontendTab === 'css' && (
+                <div>
+                  <div style={{ fontSize: '11px', color: '#94a3b8', marginBottom: '4px', fontWeight: 'bold' }}>CSS3 STYLING:</div>
+                  <CodeEditorWithLineNumbers
+                    value={cssCode}
+                    onChange={e => setCssCode(e.target.value)}
+                    color="#60a5fa"
+                    borderColor="#38bdf8"
+                    rows={11}
+                  />
+                </div>
+              )}
+
+              {activeFrontendTab === 'js' && (
+                <div>
+                  <div style={{ fontSize: '11px', color: '#94a3b8', marginBottom: '4px', fontWeight: 'bold' }}>JAVASCRIPT LOGIC:</div>
+                  <CodeEditorWithLineNumbers
+                    value={jsCode}
+                    onChange={e => setJsCode(e.target.value)}
+                    color="#fbbf24"
+                    borderColor="#f59e0b"
+                    rows={11}
+                  />
+                </div>
+              )}
+            </div>
+          ) : (
+            <CodeEditorWithLineNumbers
+              value={freeCode}
+              onChange={e => setFreeCode(e.target.value)}
+              color="#38bdf8"
+              borderColor="#475569"
+              rows={11}
+            />
+          )}
 
           <button
             onClick={validateCustomCode}
@@ -395,7 +960,7 @@ main();`
               boxShadow: '0 4px 12px rgba(37, 99, 235, 0.4)'
             }}
           >
-            🔍 Check {selectedLang.toUpperCase()} Syntax & Run Output
+            🔍 Check {selectedLang === 'frontend' ? 'Frontend HTML/CSS/JS' : selectedLang.toUpperCase()} Syntax & Run Output
           </button>
 
           {/* Validation Feedback & Output Box */}
@@ -411,25 +976,74 @@ main();`
                 fontSize: '14px',
                 fontWeight: 'bold',
                 color: sandboxResult.type === 'success' ? '#34d399' : '#f87171',
-                marginBottom: sandboxResult.output ? '10px' : '0'
+                marginBottom: sandboxResult.output || sandboxResult.isFrontend ? '10px' : '0'
               }}>
                 {sandboxResult.msg}
               </div>
 
-              {sandboxResult.output && (
+              {sandboxResult.isFrontend ? (
                 <div style={{
                   background: '#0f172a',
                   padding: '12px',
                   borderRadius: '6px',
                   border: '1px solid rgba(255,255,255,0.08)'
                 }}>
-                  <div style={{ fontSize: '11px', color: '#64748b', marginBottom: '4px', textTransform: 'uppercase', fontWeight: 'bold' }}>
-                    💻 Output Terminal Preview:
+                  <div style={{ fontSize: '11px', color: '#64748b', marginBottom: '6px', textTransform: 'uppercase', fontWeight: 'bold' }}>
+                    🖥️ Live Interactive Result Preview (Sandboxed):
                   </div>
-                  <pre style={{ margin: 0, color: '#38bdf8', fontFamily: 'monospace', fontSize: '13px' }}>
-                    {sandboxResult.output}
-                  </pre>
+                  <iframe
+                    title="Frontend Live Preview"
+                    srcDoc={`
+                      <!DOCTYPE html>
+                      <html>
+                        <head>
+                          <style>
+                            body { font-family: system-ui, -apple-system, sans-serif; color: #f1f5f9; padding: 16px; margin: 0; background: #0b0f19; }
+                            ${cssCode}
+                          </style>
+                        </head>
+                        <body>
+                          ${htmlCode}
+                          <script>
+                            try {
+                              ${jsCode}
+                            } catch (err) {
+                              const errDiv = document.createElement('div');
+                              errDiv.style.color = '#ef4444';
+                              errDiv.style.marginTop = '12px';
+                              errDiv.style.fontWeight = 'bold';
+                              errDiv.textContent = 'JavaScript Error: ' + err.message;
+                              document.body.appendChild(errDiv);
+                            }
+                          </script>
+                        </body>
+                      </html>
+                    `}
+                    style={{
+                      width: '100%',
+                      height: '240px',
+                      border: '1.5px solid #334155',
+                      borderRadius: '8px',
+                      background: '#0b0f19'
+                    }}
+                  />
                 </div>
+              ) : (
+                sandboxResult.output && (
+                  <div style={{
+                    background: '#0f172a',
+                    padding: '12px',
+                    borderRadius: '6px',
+                    border: '1px solid rgba(255,255,255,0.08)'
+                  }}>
+                    <div style={{ fontSize: '11px', color: '#64748b', marginBottom: '4px', textTransform: 'uppercase', fontWeight: 'bold' }}>
+                      💻 Output Terminal Preview:
+                    </div>
+                    <pre style={{ margin: 0, color: '#38bdf8', fontFamily: 'monospace', fontSize: '13px' }}>
+                      {sandboxResult.output}
+                    </pre>
+                  </div>
+                )
               )}
             </div>
           )}
@@ -473,24 +1087,12 @@ main();`
               💡 {challenges[currentIdx].concept}
             </p>
 
-            <textarea
-              rows={5}
+            <CodeEditorWithLineNumbers
               value={userChallengeCode}
               onChange={e => setUserChallengeCode(e.target.value)}
-              style={{
-                width: '100%',
-                background: '#090d16',
-                color: '#38bdf8',
-                fontFamily: 'Consolas, Monaco, monospace',
-                fontSize: '13.5px',
-                lineHeight: '1.5',
-                padding: '12px',
-                borderRadius: '8px',
-                border: '1px solid #475569',
-                boxSizing: 'border-box',
-                outline: 'none',
-                marginBottom: '14px'
-              }}
+              color="#38bdf8"
+              borderColor="#475569"
+              rows={5}
             />
 
             <div style={{ display: 'flex', gap: '10px', alignItems: 'center' }}>
