@@ -2,6 +2,7 @@ import React, { useState } from 'react';
 
 export default function LanguageCareerGuide() {
   const [selectedLang, setSelectedLang] = useState('c');
+  const [hoveredLangId, setHoveredLangId] = useState(null);
   const [activeTab, setActiveTab] = useState('overview'); // 'overview', 'four_year_plan', 'moocs_challenges', 'syntax_demo'
 
   const languages = [
@@ -522,31 +523,58 @@ fn main() {
       </div>
 
       {/* Language Selector Buttons */}
+      {/* Horizontal Language Selector Buttons */}
       <div style={{ display: 'flex', gap: '10px', flexWrap: 'wrap' }}>
         {languages.map(l => {
           const isActive = selectedLang === l.id;
+          const isHovered = hoveredLangId === l.id;
           return (
             <button
               key={l.id}
               onClick={() => setSelectedLang(l.id)}
+              onMouseEnter={() => setHoveredLangId(l.id)}
+              onMouseLeave={() => setHoveredLangId(null)}
+              title={`${l.name} - ${l.tagline}`}
               style={{
+                position: 'relative',
                 display: 'flex',
                 alignItems: 'center',
                 gap: '8px',
-                padding: '10px 16px',
+                padding: '11px 18px',
                 borderRadius: '12px',
-                border: isActive ? `2px solid ${l.color}` : '1px solid #334155',
-                background: isActive ? l.accentBg : '#0f172a',
-                color: isActive ? l.color : '#cbd5e1',
+                border: isActive
+                  ? `2px solid ${l.color}`
+                  : isHovered
+                  ? `2px solid ${l.color}`
+                  : '1px solid #334155',
+                background: isActive
+                  ? `linear-gradient(135deg, ${l.accentBg} 0%, rgba(15, 23, 42, 0.95) 100%)`
+                  : isHovered
+                  ? `linear-gradient(135deg, ${l.accentBg} 0%, rgba(15, 23, 42, 0.9) 100%)`
+                  : '#0f172a',
+                color: isActive || isHovered ? '#f8fafc' : '#cbd5e1',
                 fontWeight: '700',
                 fontSize: '13px',
                 cursor: 'pointer',
-                transition: 'all 0.2s cubic-bezier(0.16, 1, 0.3, 1)',
-                boxShadow: isActive ? `0 0 16px ${l.color}25` : 'none'
+                transition: 'all 0.25s cubic-bezier(0.16, 1, 0.3, 1)',
+                transform: isHovered ? 'translateY(-3px) scale(1.02)' : isActive ? 'scale(1.01)' : 'translateY(0) scale(1)',
+                boxShadow: isHovered
+                  ? `0 0 28px ${l.color}90, 0 8px 20px rgba(0,0,0,0.5), inset 0 0 16px ${l.color}35`
+                  : isActive
+                  ? `0 0 18px ${l.color}45, inset 0 0 10px ${l.color}20`
+                  : 'none',
+                zIndex: isHovered ? 5 : 1
               }}
             >
-              <span style={{ fontSize: '18px' }}>{l.icon}</span>
-              <span>{l.name}</span>
+              <span style={{
+                fontSize: '20px',
+                filter: isHovered || isActive ? `drop-shadow(0 0 8px ${l.color})` : 'none',
+                transition: 'transform 0.2s ease',
+                transform: isHovered ? 'scale(1.15)' : 'scale(1)'
+              }}>
+                {l.icon}
+              </span>
+              <span style={{ color: isHovered || isActive ? l.color : '#f1f5f9' }}>{l.name}</span>
             </button>
           );
         })}
@@ -606,7 +634,7 @@ fn main() {
           {[
             { id: 'overview', label: '💡 Why Learn & Careers' },
             { id: 'four_year_plan', label: '📅 4-Year Language Roadmap' },
-            { id: 'moocs_challenges', label: '🏆 MOOCs, Certs & Challenges' },
+            { id: 'moocs_challenges', label: '🏆 MOOCs & Certifications' },
             { id: 'syntax_demo', label: '💻 Live Code Showcase' }
           ].map(tab => {
             const isTabActive = activeTab === tab.id;
@@ -786,26 +814,9 @@ fn main() {
           </div>
         )}
 
-        {/* TAB 3: MOOCS, CERTS & CHALLENGES */}
+        {/* TAB 3: MOOCS & CERTIFICATIONS */}
         {activeTab === 'moocs_challenges' && (
           <div style={{ display: 'flex', flexDirection: 'column', gap: '18px' }}>
-            {/* Coding Challenge Platforms */}
-            <div>
-              <h4 style={{ margin: '0 0 10px 0', fontSize: '15px', color: '#f59e0b' }}>
-                ⚔️ Recommended Practice & Challenge Platforms for {current.name}
-              </h4>
-              <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(240px, 1fr))', gap: '10px' }}>
-                {current.moocsAndCerts.challenges.map((ch, i) => (
-                  <div key={i} style={{ background: '#0f172a', padding: '12px 16px', borderRadius: '8px', border: '1px solid #334155', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-                    <span style={{ fontSize: '13px', color: '#f8fafc', fontWeight: '600' }}>{ch.name}</span>
-                    <a href={ch.url} target="_blank" rel="noopener noreferrer" style={{ color: '#38bdf8', fontSize: '12px', textDecoration: 'none', fontWeight: 'bold' }}>
-                      Practice ↗
-                    </a>
-                  </div>
-                ))}
-              </div>
-            </div>
-
             {/* MOOCs */}
             <div>
               <h4 style={{ margin: '0 0 10px 0', fontSize: '15px', color: '#38bdf8' }}>

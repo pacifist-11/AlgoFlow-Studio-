@@ -207,15 +207,35 @@
     // Safety fallback: force hide preloader after 1.5s max under all circumstances
     setTimeout(hidePreloader, 1500);
 
-    // Register Service Worker for PWA installation & offline caching
+    // Register Service Worker for PWA installation & offline caching (Production only)
     if ('serviceWorker' in navigator) {
-      window.addEventListener('load', () => {
-        navigator.serviceWorker.register('/sw.js').then((reg) => {
-          console.log('Service Worker registered successfully:', reg.scope);
-        }).catch((err) => {
-          console.error('Service Worker registration failed:', err);
+      const isLocalhost = Boolean(
+        window.location.hostname === 'localhost' ||
+        window.location.hostname === '[::1]' ||
+        window.location.hostname.match(/^127(?:\.(?:25[0-5]|2[0-4][0-9]|[01]?[0-9][0-9]?)){3}$/)
+      );
+
+      if (isLocalhost) {
+        // Automatically unregister service worker and clear caches on localhost to prevent stale dev builds
+        navigator.serviceWorker.getRegistrations().then((registrations) => {
+          for (let registration of registrations) {
+            registration.unregister();
+          }
         });
-      });
+        if ('caches' in window) {
+          caches.keys().then((keys) => {
+            keys.forEach((key) => caches.delete(key));
+          });
+        }
+      } else {
+        window.addEventListener('load', () => {
+          navigator.serviceWorker.register('/sw.js').then((reg) => {
+            console.log('Service Worker registered successfully:', reg.scope);
+          }).catch((err) => {
+            console.error('Service Worker registration failed:', err);
+          });
+        });
+      }
     }
   </script>
 </body>

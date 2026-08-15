@@ -7,9 +7,10 @@ import LanguageQuirksExceptions from './LanguageQuirksExceptions.jsx';
 import HandsOnSyntaxPractice from './HandsOnSyntaxPractice.jsx';
 import LanguageCareerGuide from './LanguageCareerGuide.jsx';
 import BTechBranchLanguageGuide from './BTechBranchLanguageGuide.jsx';
+import AiRagMentorStudio from './AiRagMentorStudio.jsx';
 
 export default function Beginner101Visualizer({ codeLang = 'C', setCodeLang, fontSize = 14 }) {
-  const [activeModule, setActiveModule] = useState('btech_branches'); // btech_branches, career, variables, arrays, quirks, syntax, why_sort, why_dsa
+  const [activeModule, setActiveModule] = useState('btech_branches'); // btech_branches, career, ai_mentor, variables, arrays, quirks, syntax, why_sort, why_dsa
   const [localLang, setLocalLang] = useState(codeLang || 'C');
 
   const currentLang = setCodeLang ? codeLang : localLang;
@@ -24,12 +25,13 @@ export default function Beginner101Visualizer({ codeLang = 'C', setCodeLang, fon
   const modules = [
     { id: 'btech_branches', icon: '🎓', title: '1. B.Tech Branch Roadmaps', desc: 'CSE, ECE, Mech, Civil, AI & more' },
     { id: 'career', icon: '🎯', title: '2. Language Career Guide', desc: 'Jobs & fields per language' },
-    { id: 'variables', icon: '📦', title: '3. Variables & Data Types', desc: 'Memory storage boxes' },
-    { id: 'arrays', icon: '📊', title: '4. Arrays & Indexing', desc: 'Rows of memory boxes' },
-    { id: 'quirks', icon: '⚠️', title: '5. Quirks & Exceptions', desc: 'Java pointers, Python syntax, etc.' },
-    { id: 'syntax', icon: '✍️', title: '6. Syntax & Practice', desc: 'Fix syntax errors & sandbox' },
-    { id: 'why_sort', icon: '⚡', title: '7. Why Sorting Matters', desc: 'Interactive search game' },
-    { id: 'why_dsa', icon: '🧠', title: '8. Why DSA Matters', desc: 'Scalability, Big-O & quiz' }
+    { id: 'ai_mentor', icon: '🤖', title: '3. AI RAG Mentor Studio', desc: 'Ask anything to AI Career Mentor' },
+    { id: 'variables', icon: '📦', title: '4. Variables & Data Types', desc: 'Memory storage boxes' },
+    { id: 'arrays', icon: '📊', title: '5. Arrays & Indexing', desc: 'Rows of memory boxes' },
+    { id: 'quirks', icon: '⚠️', title: '6. Quirks & Exceptions', desc: 'Java pointers, Python syntax, etc.' },
+    { id: 'syntax', icon: '✍️', title: '7. Syntax & Practice', desc: 'Fix syntax errors & sandbox' },
+    { id: 'why_sort', icon: '⚡', title: '8. Why Sorting Matters', desc: 'Interactive search game' },
+    { id: 'why_dsa', icon: '🧠', title: '9. Why DSA Matters', desc: 'Scalability, Big-O & quiz' }
   ];
 
   return (
@@ -91,8 +93,8 @@ export default function Beginner101Visualizer({ codeLang = 'C', setCodeLang, fon
           })}
         </div>
 
-        {/* Integrated Active Language Selector Bar (Hidden for Module 1 'btech_branches' and Module 2 'career' guide) */}
-        {activeModule !== 'career' && activeModule !== 'btech_branches' && (
+        {/* Integrated Active Language Selector Bar (Hidden for Module 1, 2, and 3 AI Mentor) */}
+        {activeModule !== 'career' && activeModule !== 'btech_branches' && activeModule !== 'ai_mentor' && (
           <div style={{
             display: 'flex',
             alignItems: 'center',
@@ -166,6 +168,7 @@ export default function Beginner101Visualizer({ codeLang = 'C', setCodeLang, fon
       {/* Active Module View */}
       {activeModule === 'btech_branches' && <BTechBranchLanguageGuide />}
       {activeModule === 'career' && <LanguageCareerGuide />}
+      {activeModule === 'ai_mentor' && <AiRagMentorStudio codeLang={currentLang} />}
       {activeModule === 'variables' && <HandsOnVariables selectedLang={currentLang} />}
       {activeModule === 'arrays' && <HandsOnArrays selectedLang={currentLang} />}
       {activeModule === 'why_sort' && <WhySortingMattersChallenge selectedLang={currentLang} />}

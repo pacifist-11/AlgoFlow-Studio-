@@ -11,6 +11,8 @@ import DPGreedyVisualizer from './DPGreedyVisualizer.jsx';
 import PatternsVisualizer from './PatternsVisualizer.jsx';
 import DSANotesVisualizer from './DSANotesVisualizer.jsx';
 import Beginner101Visualizer from './Beginner101Visualizer.jsx';
+import FloatingAiBot from './FloatingAiBot.jsx';
+import AiRagMentorStudio from './AiRagMentorStudio.jsx';
 
 // Allman brace formatter for code display
 const toAllman = code => {
@@ -620,56 +622,9 @@ const THEMES = {
   }
 };
 
-// ─── Enhanced AI ChatBot ──────────────────────────────────────────────────────
-const ChatBot = ({ customCode, codeLang, isChatOpen, setIsChatOpen, chatMessages, setChatMessages, apiKey, setApiKey, model, setModel, onShowUpcomingFeatures }) => {
-  return (
-    <div style={{ position: 'fixed', bottom: '20px', right: '20px', zIndex: 1000, display: 'flex', flexDirection: 'column', alignItems: 'flex-end' }}>
-      {isChatOpen && (
-        <div style={{
-          width: '320px',
-          height: '240px',
-          background: 'var(--bg-secondary)',
-          border: '1px solid var(--accent-primary)',
-          borderRadius: '16px',
-          marginBottom: '1rem',
-          display: 'flex',
-          flexDirection: 'column',
-          justifyContent: 'center',
-          alignItems: 'center',
-          padding: '2rem',
-          boxShadow: '0 20px 60px rgba(0,0,0,0.7)',
-          textAlign: 'center',
-          position: 'relative',
-          backdropFilter: 'blur(10px)',
-          animation: 'fadeIn 0.3s ease'
-        }}>
-          <button onClick={() => setIsChatOpen(false)} style={{ position: 'absolute', top: '12px', right: '12px', background: 'rgba(255,255,255,0.1)', border: 'none', color: 'white', cursor: 'pointer', width: '24px', height: '24px', borderRadius: '50%', fontSize: '0.85rem', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>×</button>
-          <div style={{ fontSize: '3rem', marginBottom: '0.5rem', filter: 'drop-shadow(0 0 10px var(--accent-primary))' }}>🤖</div>
-          <h3 style={{ margin: '0 0 6px 0', color: 'var(--text-primary)', fontSize: '1.25rem', fontWeight: 'bold' }}>AI Assistant</h3>
-          <span style={{ fontSize: '0.75rem', background: 'linear-gradient(135deg, var(--accent-primary), var(--accent-secondary))', color: 'white', padding: '3px 10px', borderRadius: '20px', fontWeight: 'bold', textTransform: 'uppercase', marginBottom: '12px' }}>Coming Soon</span>
-          <p style={{ margin: 0, color: 'var(--text-secondary)', fontSize: '0.82rem', lineHeight: '1.4' }}>
-            We're building a Gemini-powered AI helper to explain code, generate quiz cards, and guide your learning in real-time!
-          </p>
-        </div>
-      )}
-      <button onClick={() => onShowUpcomingFeatures ? onShowUpcomingFeatures() : setIsChatOpen(!isChatOpen)}
-        style={{ position: 'relative', width: '60px', height: '60px', borderRadius: '50%', background: 'linear-gradient(135deg, var(--accent-primary), var(--accent-secondary))', border: 'none', color: 'white', fontSize: '1.5rem', cursor: 'pointer', boxShadow: '0 6px 20px rgba(0,0,0,0.4)', display: 'flex', justifyContent: 'center', alignItems: 'center', transition: 'transform 0.3s' }}
-        onMouseOver={e => e.currentTarget.style.transform = 'scale(1.1)'}
-        onMouseOut={e => e.currentTarget.style.transform = 'scale(1)'}
-        title="AI Coding Assistant">
-        <span style={{ fontSize: '1.6rem', lineHeight: 1 }}>🤖</span>
-        <span style={{
-          position: 'absolute',
-          inset: 0,
-          borderRadius: '50%',
-          border: '2px solid var(--accent-primary)',
-          animation: 'pulse 2.5s ease-in-out infinite',
-          opacity: 0.5,
-          pointerEvents: 'none'
-        }} />
-      </button>
-    </div>
-  );
+// ─── Enhanced AI ChatBot (Powered by RAG & Gemini) ─────────────────────────
+const ChatBot = (props) => {
+  return <FloatingAiBot {...props} />;
 };
 
 // ─── PythonTutor-Style Debugger ───────────────────────────────────────────────
@@ -1075,7 +1030,6 @@ const makeCodePythonTutorRunnable = (code, lang) => {
           </div>
         )}
       </div>
-      <ChatBot customCode={localCode} codeLang={detectedLang} isChatOpen={isChatOpen} setIsChatOpen={setIsChatOpen} chatMessages={chatMessages} setChatMessages={setChatMessages} apiKey={apiKey} setApiKey={setApiKey} model={model} setModel={setModel} onShowUpcomingFeatures={onShowUpcomingFeatures} />
     </div>
   );
 };
@@ -3940,7 +3894,8 @@ function App() {
                 { id: 'MOD6_PARALLEL_BLELLOCH', mode: 'DSA_NOTES_VIS', title: 'Blelloch Parallel Prefix Scan', icon: '🚀', desc: 'Randomised & Parallel Algorithms' },
                 { id: 'DSA_NOTES_VIS', mode: 'DSA_NOTES_VIS', title: 'DSA Study & Solved Sums (Two Sum, List Reverse, Valid Parentheses, DP)', icon: '📚', desc: 'DSA Notes & Solved Problems Studio' },
                 { id: 'BTECH_ROADMAP', mode: 'BEGINNER_101_VIS', title: 'B.Tech Branch Roadmaps & Language Picker', icon: '🎓', desc: 'Which language to pick for CSE, ECE, EEE, Mech, Civil, AI/ML, Cyber Security & more' },
-                { id: 'LANG_CAREER', mode: 'BEGINNER_101_VIS', title: 'Language Career Guide', icon: '🎯', desc: 'Jobs, fields, and applications per programming language' }
+                { id: 'LANG_CAREER', mode: 'BEGINNER_101_VIS', title: 'Language Career Guide', icon: '🎯', desc: 'Jobs, fields, and applications per programming language' },
+                { id: 'AI_RAG_MENTOR', mode: 'AI_RAG_MENTOR_VIS', title: '🤖 AlgoFlow AI RAG Mentor Studio', icon: '🤖', desc: 'Ask career roadmaps, branch advice, languages & DSA questions to AI' }
               ].filter(c => c.title.toLowerCase().includes(homeSearchQuery.toLowerCase()) || c.desc.toLowerCase().includes(homeSearchQuery.toLowerCase())).map(card => (
                 <div key={card.id} className="option-card" onClick={() => setPendingModule(card)} onMouseEnter={e => gsap.to(e.currentTarget, { scale: 1.05, duration: 0.2 })} onMouseLeave={e => gsap.to(e.currentTarget, { scale: 1, duration: 0.2 })}>
                   <div className="option-icon">{card.icon}</div>
@@ -3950,6 +3905,19 @@ function App() {
               ))
             )}
           </div>
+        </div>
+      </div>
+
+      {/* AI RAG Mentor Studio Visualizer */}
+      <div style={{ display: appMode === 'AI_RAG_MENTOR_VIS' ? 'block' : 'none' }}>
+        <div style={{ padding: '16px', background: 'var(--bg-secondary)', borderBottom: '1px solid var(--glass-border)', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+          <button className="btn btn-clear" onClick={goBack} style={{ display: 'flex', alignItems: 'center', gap: '6px' }}>
+            ← 🏠 Home
+          </button>
+          <span style={{ fontWeight: 'bold', color: '#38bdf8' }}>🤖 AI RAG Mentor Studio</span>
+        </div>
+        <div style={{ padding: '20px', maxWidth: '1200px', margin: '0 auto' }}>
+          <AiRagMentorStudio codeLang={codeLang} customCode={customCode} />
         </div>
       </div>
 
@@ -4870,7 +4838,6 @@ function App() {
         )}
       </div>
 
-      <ChatBot customCode={activeCodeForChat} codeLang={activeLangForChat} isChatOpen={isChatOpen} setIsChatOpen={setIsChatOpen} chatMessages={chatMessages} setChatMessages={setChatMessages} apiKey={globalApiKey} setApiKey={setGlobalApiKey} model={globalModel} setModel={setGlobalModel} onShowUpcomingFeatures={() => setIsUpcomingOpen(true)} />
       {isSettingsOpen && renderSettingsModal()}
       {isUpcomingOpen && renderUpcomingFeaturesModal()}
 
@@ -5042,14 +5009,16 @@ function App() {
                 </div>
 
                 <div ref={feedbackScrollRef} style={{ flex: 1, overflowY: 'auto', paddingRight: '4px', display: 'flex', flexDirection: 'column', gap: '0.2rem' }}>
-                  {/* Feedback Category selection - 2x2 grid matching user screenshot */}
+                  {/* Feedback Category selection - 6 distinct categories including AI Assistant */}
                   <div className="select-group" style={{ marginBottom: '1.2rem' }}>
                     <label style={{ fontSize: '0.95rem', color: 'var(--text-primary)', fontWeight: 600, display: 'block', marginBottom: '8px' }}>Feedback Type</label>
                     <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '10px' }}>
                       {[
+                        { id: 'AI Assistant / Bot', label: 'AI Bot & Mentor', emoji: '🤖' },
                         { id: 'Bug Report', label: 'Bug Report', emoji: '🐛' },
-                        { id: 'Suggestion', label: 'Suggestion', emoji: '💡' },
+                        { id: 'DSA & Visualizer', label: 'DSA & Visualizer', emoji: '⚡' },
                         { id: 'Feature Request', label: 'Feature Request', emoji: '✨' },
+                        { id: 'Suggestion', label: 'Suggestion', emoji: '💡' },
                         { id: 'Other', label: 'Other', emoji: '📝' }
                       ].map(type => {
                         const isSelected = feedbackCategory === type.id;
@@ -5058,23 +5027,24 @@ function App() {
                             key={type.id}
                             onClick={() => setFeedbackCategory(type.id)}
                             style={{
-                              background: isSelected ? 'rgba(59, 130, 246, 0.15)' : 'rgba(30, 41, 59, 0.4)',
-                              border: isSelected ? '2px solid #3b82f6' : '1px solid var(--glass-border)',
+                              background: isSelected ? 'rgba(59, 130, 246, 0.2)' : 'rgba(30, 41, 59, 0.4)',
+                              border: isSelected ? '2px solid #38bdf8' : '1px solid var(--glass-border)',
                               borderRadius: '12px',
-                              padding: '12px 16px',
+                              padding: '10px 14px',
                               display: 'flex',
                               alignItems: 'center',
                               gap: '10px',
                               cursor: 'pointer',
                               transition: 'all 0.2s ease',
-                              color: isSelected ? '#60a5fa' : 'var(--text-primary)',
-                              fontWeight: isSelected ? 'bold' : 'normal'
+                              color: isSelected ? '#38bdf8' : 'var(--text-primary)',
+                              fontWeight: isSelected ? 'bold' : 'normal',
+                              boxShadow: isSelected ? '0 0 15px rgba(56, 189, 248, 0.25)' : 'none'
                             }}
                             onMouseEnter={e => { if(!isSelected) e.currentTarget.style.borderColor = 'rgba(255,255,255,0.2)'; }}
                             onMouseLeave={e => { if(!isSelected) e.currentTarget.style.borderColor = 'var(--glass-border)'; }}
                           >
-                            <span style={{ fontSize: '1.2rem' }}>{type.emoji}</span>
-                            <span style={{ fontSize: '0.95rem' }}>{type.label}</span>
+                            <span style={{ fontSize: '1.25rem' }}>{type.emoji}</span>
+                            <span style={{ fontSize: '0.9rem' }}>{type.label}</span>
                           </div>
                         );
                       })}
@@ -5135,13 +5105,52 @@ function App() {
                     />
                   </div>
 
+                  {/* Quick Topics & Suggestions */}
+                  <div style={{ marginBottom: '0.6rem' }}>
+                    <span style={{ fontSize: '0.8rem', color: 'var(--text-secondary)', display: 'block', marginBottom: '6px' }}>💡 Quick topics to add:</span>
+                    <div style={{ display: 'flex', gap: '6px', flexWrap: 'wrap' }}>
+                      {[
+                        { text: '🤖 AI Accuracy & Explanations', cat: 'AI Assistant / Bot' },
+                        { text: '💧 AI Transparency & Motion', cat: 'AI Assistant / Bot' },
+                        { text: '⚡ Add More DSA Patterns', cat: 'DSA & Visualizer' },
+                        { text: '🎨 UI & Theme Polish', cat: 'Suggestion' },
+                        { text: '🐞 Animation Step Bug', cat: 'Bug Report' }
+                      ].map((chip, idx) => (
+                        <button
+                          key={idx}
+                          type="button"
+                          onClick={() => {
+                            setFeedbackCategory(chip.cat);
+                            if (!feedbackText.includes(chip.text)) {
+                              setFeedbackText(prev => prev ? `${prev}\n- ${chip.text}: ` : `${chip.text}: `);
+                            }
+                          }}
+                          style={{
+                            background: 'rgba(56, 189, 248, 0.12)',
+                            border: '1px solid rgba(56, 189, 248, 0.3)',
+                            color: '#38bdf8',
+                            borderRadius: '8px',
+                            padding: '3px 8px',
+                            fontSize: '0.74rem',
+                            cursor: 'pointer',
+                            transition: 'all 0.15s'
+                          }}
+                          onMouseEnter={e => e.currentTarget.style.background = 'rgba(56, 189, 248, 0.25)'}
+                          onMouseLeave={e => e.currentTarget.style.background = 'rgba(56, 189, 248, 0.12)'}
+                        >
+                          {chip.text}
+                        </button>
+                      ))}
+                    </div>
+                  </div>
+
                   {/* Comment box */}
                   <div className="select-group" style={{ marginBottom: '1.2rem' }}>
                     <label style={{ fontSize: '0.95rem', color: 'var(--text-primary)', fontWeight: 600, display: 'block', marginBottom: '6px' }}>Your Message</label>
                     <textarea 
                       className="styled-input" 
                       style={{ width: '100%', height: '90px', resize: 'none', padding: '0.65rem 0.85rem', fontFamily: 'sans-serif', fontSize: '0.95rem', borderRadius: '8px', border: '1px solid var(--glass-border)', background: 'rgba(0,0,0,0.2)', color: '#fff' }} 
-                      placeholder="Tell us what development you want..." 
+                      placeholder="Tell us your feedback about the AI Mentor, Visualizers, DSA study notes, or features you want..." 
                       value={feedbackText} 
                       onChange={e => setFeedbackText(e.target.value)} 
                     />
@@ -5441,15 +5450,13 @@ function App() {
         setIsChatOpen={setIsChatOpen}
         chatMessages={chatMessages}
         setChatMessages={setChatMessages}
-        apiKey={globalApiKey}
-        setApiKey={(k) => {
-          setGlobalApiKey(k);
-          safeLocalStorage.setItem('gemini_api_key', k);
-        }}
-        model={globalModel}
-        setModel={(m) => {
-          setGlobalModel(m);
-          safeLocalStorage.setItem('gemini_model', m);
+        currentContext={{
+          appMode,
+          treeType,
+          globalSort,
+          globalSearch,
+          globalSortSearchTab,
+          codeLang: activeLangForChat || codeLang
         }}
       />
     </>

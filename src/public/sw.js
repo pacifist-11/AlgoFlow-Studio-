@@ -37,6 +37,8 @@ self.addEventListener('activate', (e) => {
 // Fetch Event
 self.addEventListener('fetch', (e) => {
   if (!e.request.url.startsWith('http')) return;
+  // Always bypass Service Worker cache on localhost to ensure fresh dev builds
+  if (self.location.hostname === 'localhost' || self.location.hostname === '127.0.0.1') return;
 
   // HTML / Navigation requests: Network First, fallback to cached index.html
   if (e.request.mode === 'navigate' || (e.request.headers.get('accept') && e.request.headers.get('accept').includes('text/html'))) {

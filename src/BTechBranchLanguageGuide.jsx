@@ -1,100 +1,87 @@
 import React, { useState } from 'react';
-import LanguageCareerGuide from './LanguageCareerGuide.jsx';
 
 export default function BTechBranchLanguageGuide() {
-  const [viewMode, setViewMode] = useState('branch'); // 'branch' or 'language'
   const [selectedBranch, setSelectedBranch] = useState('cse');
+  const [hoveredBranchId, setHoveredBranchId] = useState(null);
   const [activeCategory, setActiveCategory] = useState('all');
-  const [activeSubTab, setActiveSubTab] = useState('roadmap'); // 'roadmap', 'dualtrack', 'moocs_challenges', 'codepreview', 'faq'
+  const [activeSubTab, setActiveSubTab] = useState('roadmap'); // 'roadmap', 'dualtrack', 'moocs_challenges', 'codepreview', 'advisor_quiz', 'matrix'
   
   // Interactive Smart Advisor Quiz state
   const [quizBranch, setQuizBranch] = useState('cse');
   const [quizGoal, setQuizGoal] = useState('sde');
   const [quizYear, setQuizYear] = useState('1');
+  const [quizSkillLevel, setQuizSkillLevel] = useState('beginner');
   const [quizResult, setQuizResult] = useState(null);
 
   // Filter Categories
   const categories = [
     { id: 'all', label: 'All Branches' },
-    { id: 'cs_it', label: '💻 CS & IT' },
-    { id: 'circuits', label: '⚡ Electronics & Electrical' },
-    { id: 'core_eng', label: '⚙️ Mechanical & Civil' },
+    { id: 'cs_it', label: '💻 CS, IT & Software' },
     { id: 'ai_cyber', label: '🤖 AI, Data & Security' },
-    { id: 'specialized', label: '🚀 Aero, Auto & Biotech' }
+    { id: 'circuits', label: '⚡ Electronics & Electrical' },
+    { id: 'core_eng', label: '⚙️ Mechanical, Auto & Robotics' },
+    { id: 'specialized', label: '🚀 Aero, Bio, Chem & Materials' }
   ];
 
-  // Comprehensive B.Tech Branches Data
+  // Comprehensive 16 B.Tech Branches Data
   const branchData = [
     {
       id: 'cse',
-      name: 'Computer Science & Engineering (CSE / IT)',
+      shortName: 'CSE',
+      name: 'Computer Science & Engineering (CSE)',
       category: 'cs_it',
       icon: '💻',
       color: '#38bdf8',
       accentBg: 'rgba(56, 189, 248, 0.12)',
-      welcomeTitle: '🌟 Welcome to Coding Languages & Software Engineering!',
-      welcomeMessage: 'As a CSE / IT student, code is your core superpower and primary craft. Your objective is mastering problem solving, algorithms, system architecture, and scalable software development.',
+      welcomeTitle: '🌟 Welcome to Computer Science & Software Engineering!',
+      welcomeMessage: 'As a CSE student, code is your primary craft. Your objective is mastering algorithmic problem solving, scalable distributed architecture, operating systems, and high-concurrency systems.',
       difficulty: 'High in Logic & Algorithmic Thinking',
-      placementDemand: '⭐⭐⭐⭐⭐ (Highest Job Openings worldwide)',
-      coreFocus: 'Data Structures, Algorithms, Operating Systems, DBMS, Networks, Cloud & Web/Mobile Architecture.',
+      placementDemand: '⭐⭐⭐⭐⭐ (Highest Job Openings worldwide: ₹8 - 45 LPA)',
+      coreFocus: 'Data Structures & Algorithms, Operating Systems, DBMS, Computer Networks, Cloud, Distributed Systems & System Design.',
       primaryLang: {
         name: 'C++ or Java',
         badge: 'Must Learn (1st & 2nd Year)',
-        reason: 'The industry standard for Data Structures & Algorithms (DSA), competitive programming, and high-frequency technical interviews (FAANG / Product companies).'
+        reason: 'The industry gold standards for Data Structures & Algorithms (DSA), competitive programming, and technical interviews at Tier-1 product companies (Google, Amazon, Microsoft).'
       },
       secondaryLang: {
         name: 'Python & JavaScript / TypeScript',
         badge: 'Recommended (2nd & 3rd Year)',
-        reason: 'JavaScript/TypeScript powers modern Full-Stack Web/Mobile apps (React, Node.js). Python powers AI scripting, rapid prototyping, and backend microservices (FastAPI, Django).'
+        reason: 'TypeScript powers modern Full-Stack Web/Mobile engineering (React, Next.js, Node.js). Python handles AI scripting, data pipelines, and backend microservices.'
       },
-      domainTools: [
-        'Git & GitHub (Version Control)',
-        'Docker & Kubernetes (Containerization)',
-        'PostgreSQL / MongoDB (Databases)',
-        'Linux Bash & Cloud (AWS / GCP)'
-      ],
+      domainTools: ['Git & GitHub', 'Docker & Kubernetes', 'PostgreSQL / MongoDB', 'Linux Bash & AWS/GCP Cloud'],
       coreRoadmap: [
-        { year: '1st Year (Freshman)', focus: 'Programming Fundamentals in C/C++, Math, Logic Building, Git basics' },
-        { year: '2nd Year (Sophomore)', focus: 'Data Structures & Algorithms (DSA), OOPs in Java/C++, DBMS & Computer Networks' },
-        { year: '3rd Year (Junior)', focus: 'Full-Stack Web/App or Cloud/AI specialization, 2 Full Projects, Open Source, Hackathons' },
-        { year: '4th Year (Senior)', focus: 'System Design basics, LeetCode Grinding (Blind 75), Mock Interviews & Placements' }
+        { year: '1st Year (Freshman)', focus: 'Programming Fundamentals in C/C++, Math, Logic Building, Linux CLI, Git & GitHub basics' },
+        { year: '2nd Year (Sophomore)', focus: 'Data Structures & Algorithms (DSA), OOPs in Java/C++, DBMS (SQL), Operating Systems & Networks' },
+        { year: '3rd Year (Junior)', focus: 'Full-Stack Web (React/Next.js/Node) or Cloud/AI specialization, 2 Capstone Projects, Hackathons, Internships' },
+        { year: '4th Year (Senior)', focus: 'System Design (HLD/LLD), LeetCode Grinding (Blind 75 & Top 150), Mock Technical Interviews & Campus Placements' }
       ],
       dualTrack: {
         hasTransition: false,
-        coreTitle: 'Direct Software Development Route (Product & Service Giants)',
-        coreDescription: 'Standard Software Engineering track focusing on DSA, Web/Cloud Architecture, and System Design.',
+        coreTitle: 'Direct Software Development Route (Product & FAANG Giants)',
+        coreDescription: 'Standard Software Engineering track focusing on DSA, Web/Cloud Architecture, and High-Scale System Design.',
         steps: [
           'Master C++ STL or Java Collections Framework for DSA problem solving.',
-          'Solve 250+ DSA problems across Arrays, Strings, Trees, Graphs, and DP on LeetCode.',
-          'Build 2 production-grade Full-Stack projects with user authentication, database, and cloud deployment.',
-          'Study core CS subjects: Operating Systems, Computer Networks, DBMS (SQL queries & indexing), OOPs.'
+          'Solve 250+ DSA problems across Arrays, Trees, Graphs, and DP on LeetCode.',
+          'Build 2 production-grade Full-Stack projects with user authentication, database indexing, and cloud deployment.',
+          'Study core CS subjects: OS (Threads, Deadlocks, Virtual Memory), DBMS (B-Trees, ACID, Sharding), OOPs.'
         ]
       },
       moocsAndCerts: {
         moocs: [
-          { name: 'CS50x: Introduction to Computer Science', provider: 'Harvard University (edX)', link: 'https://cs50.harvard.edu/x/', tag: 'Best 1st Year Course' },
-          { name: 'Data Structures & Algorithms Specialization', provider: 'UC San Diego (Coursera)', link: 'https://coursera.org', tag: 'Core DSA' },
-          { name: 'Programming, Data Structures & Algorithms in Python/C', provider: 'NPTEL (IIT Madras / Kharagpur)', link: 'https://nptel.ac.in', tag: 'College Credit Ready' },
-          { name: 'Meta Full-Stack Developer Professional Certificate', provider: 'Meta (Coursera)', link: 'https://coursera.org', tag: 'Web Dev' }
+          { name: 'CS50x: Introduction to Computer Science', provider: 'Harvard University (edX)', tag: 'Best 1st Year Course' },
+          { name: 'Data Structures & Algorithms Specialization', provider: 'UC San Diego (Coursera)', tag: 'Core DSA' },
+          { name: 'Meta Full-Stack Developer Professional Certificate', provider: 'Meta (Coursera)', tag: 'Web Dev' }
         ],
         certifications: [
-          { name: 'AWS Certified Cloud Practitioner / Solutions Architect', issuer: 'Amazon Web Services', value: 'High' },
-          { name: 'GitHub Foundations & Actions Certified', issuer: 'GitHub', value: 'Medium-High' },
-          { name: 'Oracle Certified Associate: Java SE Programmer', issuer: 'Oracle', value: 'Good for Enterprise' },
-          { name: 'Google Associate Cloud Engineer', issuer: 'Google Cloud', value: 'High' }
-        ],
-        challenges: [
-          { name: 'LeetCode (Blind 75 & Top 150 Interview Questions)', type: 'DSA & Interviews', icon: '🔥', url: 'https://leetcode.com' },
-          { name: 'CodeChef (Monthly Star Contests & Long Challenges)', type: 'Competitive Coding', icon: '⭐', url: 'https://codechef.com' },
-          { name: 'Codeforces (Div 2 / Div 3 Speed Contests)', type: 'Speed & Logic Mastery', icon: '⚡', url: 'https://codeforces.com' },
-          { name: 'GeeksforGeeks Practice & POTD', type: 'Topic-wise Preparation', icon: '🟢', url: 'https://practice.geeksforgeeks.org' }
+          { name: 'AWS Certified Cloud Practitioner / Solutions Architect', issuer: 'Amazon Web Services' },
+          { name: 'Oracle Certified Associate: Java SE Programmer', issuer: 'Oracle' }
         ]
       },
-      topCompanies: ['Google', 'Microsoft', 'Amazon', 'Adobe', 'Uber', 'TCS Ninja/Digital', 'Infosys', 'Oracle'],
+      topCompanies: ['Google', 'Microsoft', 'Amazon', 'Adobe', 'Uber', 'Atlassian', 'Oracle', 'Goldman Sachs'],
       codeSample: {
         title: 'Binary Search Algorithm (C++)',
         language: 'cpp',
-        code: `// C++ Binary Search - Core CSE Interview Question
+        code: `// C++ Binary Search - Core CSE Technical Interview Question
 #include <iostream>
 #include <vector>
 
@@ -102,11 +89,11 @@ int binarySearch(const std::vector<int>& arr, int target) {
     int low = 0, high = arr.size() - 1;
     while (low <= high) {
         int mid = low + (high - low) / 2;
-        if (arr[mid] == target) return mid; // Found target index
+        if (arr[mid] == target) return mid;
         if (arr[mid] < target) low = mid + 1;
         else high = mid - 1;
     }
-    return -1; // Not found
+    return -1;
 }
 
 int main() {
@@ -118,17 +105,289 @@ int main() {
       }
     },
     {
+      id: 'it',
+      shortName: 'IT & Cloud',
+      name: 'Information Technology (IT & Cloud)',
+      category: 'cs_it',
+      icon: '🌐',
+      color: '#06b6d4',
+      accentBg: 'rgba(6, 182, 212, 0.12)',
+      welcomeTitle: '☁️ Welcome to Cloud Computing, Web Architecture & Enterprise Tech!',
+      welcomeMessage: 'IT engineers focus on end-to-end software delivery, cloud infrastructure, enterprise microservices, database administration, and web/mobile application architectures.',
+      difficulty: 'Moderate-High (Software Engineering & Cloud Deployments)',
+      placementDemand: '⭐⭐⭐⭐⭐ (Massive Global Openings: ₹7 - 35 LPA)',
+      coreFocus: 'Full-Stack Web Development, Cloud Services (AWS/Azure), DevOps Pipelines (CI/CD), Database Systems & Network Administration.',
+      primaryLang: {
+        name: 'Java or TypeScript',
+        badge: 'Must Learn (1st & 2nd Year)',
+        reason: 'Java powers enterprise backends (Spring Boot) and banking applications. TypeScript is the industry standard for type-safe full-stack web and cloud applications.'
+      },
+      secondaryLang: {
+        name: 'Python & Go (Golang)',
+        badge: 'Recommended (2nd & 3rd Year)',
+        reason: 'Python for cloud automation scripting and APIs. Go for cloud-native microservices, Docker, and Kubernetes tooling.'
+      },
+      domainTools: ['AWS / Azure / GCP', 'Docker & Kubernetes', 'PostgreSQL & Redis', 'Terraform & GitHub Actions'],
+      coreRoadmap: [
+        { year: '1st Year (Freshman)', focus: 'C / Java fundamentals, Web Basics (HTML/CSS/JS), Git, Linux Command Line' },
+        { year: '2nd Year (Sophomore)', focus: 'DSA in Java/C++, RDBMS & SQL, Spring Boot / Node.js backend development, REST APIs' },
+        { year: '3rd Year (Junior)', focus: 'Full-Stack Next.js apps, Docker containerization, AWS Cloud deployment, Microservices' },
+        { year: '4th Year (Senior)', focus: 'DevOps CI/CD pipelines, System Architecture, LeetCode interview prep, Campus Placements' }
+      ],
+      dualTrack: {
+        hasTransition: false,
+        coreTitle: 'Cloud Architect & Full-Stack SDE Route',
+        coreDescription: 'Standard Software Engineering track focusing on cloud computing, APIs, and scalable web apps.',
+        steps: [
+          'Master Java / TypeScript for DSA problem solving.',
+          'Build and deploy scalable Full-Stack applications on AWS / Vercel.',
+          'Learn Docker, Redis caching, and relational database indexing (PostgreSQL).'
+        ]
+      },
+      moocsAndCerts: {
+        moocs: [
+          { name: 'AWS Cloud Solutions Architect Specialization', provider: 'Coursera / AWS', tag: 'Cloud Specialization' },
+          { name: 'Full Stack Open (React, TypeScript, GraphQL)', provider: 'University of Helsinki', tag: 'Top Web Dev' }
+        ],
+        certifications: [
+          { name: 'AWS Certified Solutions Architect – Associate', issuer: 'Amazon Web Services' },
+          { name: 'Microsoft Certified: Azure Developer Associate', issuer: 'Microsoft' }
+        ]
+      },
+      topCompanies: ['Amazon AWS', 'Microsoft', 'Oracle Cloud', 'Cisco', 'Salesforce', 'Infosys Digital', 'TCS Prime', 'Accenture'],
+      codeSample: {
+        title: 'TypeScript / Node.js Express Cloud Microservice',
+        language: 'typescript',
+        code: `import express, { Request, Response } from 'express';
+
+const app = express();
+app.use(express.json());
+
+app.get('/api/health', (req: Request, res: Response) => {
+    res.status(200).json({ status: 'HEALTHY', timestamp: new Date().toISOString() });
+});
+
+app.listen(8080, () => console.log('Cloud Service listening on port 8080'));`
+      }
+    },
+    {
+      id: 'aiml',
+      shortName: 'AI & ML',
+      name: 'Artificial Intelligence & Machine Learning (AI/ML)',
+      category: 'ai_cyber',
+      icon: '🤖',
+      color: '#10b981',
+      accentBg: 'rgba(16, 185, 129, 0.12)',
+      welcomeTitle: '🧠 Welcome to Neural Networks, Deep Learning & LLMs!',
+      welcomeMessage: 'AI/ML engineers build predictive machine learning models, neural networks, computer vision apps, natural language transformers, and Generative AI agents.',
+      difficulty: 'High in Math (Linear Algebra, Probability) & Deep Learning',
+      placementDemand: '⭐⭐⭐⭐⭐ (Highest Industry Growth: ₹10 - 45 LPA)',
+      coreFocus: 'Machine Learning, Deep Learning (PyTorch), Generative AI (LLMs, RAG), Computer Vision (OpenCV), Natural Language Processing (NLP).',
+      primaryLang: {
+        name: 'Python',
+        badge: 'Absolute King & Must Master (1st to 4th Year)',
+        reason: 'The supreme global language for AI. Powers PyTorch, TensorFlow, Scikit-Learn, Hugging Face transformers, and LangChain LLM pipelines.'
+      },
+      secondaryLang: {
+        name: 'SQL, C++ & Julia',
+        badge: 'Essential (2nd & 3rd Year)',
+        reason: 'SQL extracts data from big warehouses. C++ accelerates high-speed GPU AI inference (TensorRT, ONNX Runtime, CUDA).'
+      },
+      domainTools: ['PyTorch & TensorFlow', 'Hugging Face & LangChain', 'Jupyter, Colab & Kaggle', 'Docker & MLflow'],
+      coreRoadmap: [
+        { year: '1st Year (Freshman)', focus: 'Python Mastery, Linear Algebra, Multivariable Calculus, Probability & Statistics, Git' },
+        { year: '2nd Year (Sophomore)', focus: 'Data Structures in Python, NumPy/Pandas, Scikit-Learn Supervised & Unsupervised ML, SQL' },
+        { year: '3rd Year (Junior)', focus: 'Deep Learning (PyTorch CNNs, Transformers), Computer Vision (OpenCV), Kaggle Competitions' },
+        { year: '4th Year (Senior)', focus: 'Generative AI (RAG, Vector DBs, LangChain), MLOps deployment, AI/ML Engineer Placements' }
+      ],
+      dualTrack: {
+        hasTransition: false,
+        coreTitle: 'AI / Machine Learning Engineer & Research Scientist',
+        coreDescription: 'Standard track for training neural networks, optimizing hyperparameters, and deploying AI models.',
+        steps: [
+          'Master PyTorch for building custom neural network architectures.',
+          'Compete in Kaggle competitions to build proven rankings and portfolio notebooks.',
+          'Build end-to-end GenAI applications with LangChain, FastAPI, and Pinecone Vector DB.'
+        ]
+      },
+      moocsAndCerts: {
+        moocs: [
+          { name: 'Machine Learning Specialization by Andrew Ng', provider: 'DeepLearning.AI / Stanford', tag: 'Best ML Foundation' },
+          { name: 'Deep Learning Specialization (Neural Networks & NLP)', provider: 'DeepLearning.AI', tag: 'Core DL' }
+        ],
+        certifications: [
+          { name: 'Google Cloud Professional Machine Learning Engineer', issuer: 'Google Cloud' },
+          { name: 'AWS Certified Machine Learning – Specialty', issuer: 'Amazon Web Services' }
+        ]
+      },
+      topCompanies: ['Google DeepMind', 'OpenAI', 'Microsoft AI', 'NVIDIA', 'Meta AI', 'Amazon AWS AI', 'Tiger Analytics', 'Fractal'],
+      codeSample: {
+        title: 'PyTorch: Simple Neural Network Binary Classifier',
+        language: 'python',
+        code: `import torch
+import torch.nn as nn
+
+class BinaryClassifier(nn.Module):
+    def __init__(self):
+        super().__init__()
+        self.net = nn.Sequential(
+            nn.Linear(10, 32),
+            nn.ReLU(),
+            nn.Linear(32, 1),
+            nn.Sigmoid()
+        )
+    def forward(self, x):
+        return self.net(x)
+
+model = BinaryClassifier()
+dummy_data = torch.randn(1, 10)
+print(f"Prediction: {model(dummy_data).item():.4f}")`
+      }
+    },
+    {
+      id: 'ds',
+      shortName: 'Data Science',
+      name: 'Data Science & Big Data Engineering (DS)',
+      category: 'ai_cyber',
+      icon: '📊',
+      color: '#f59e0b',
+      accentBg: 'rgba(245, 158, 11, 0.12)',
+      welcomeTitle: '📈 Welcome to Big Data, Analytics & Business Intelligence!',
+      welcomeMessage: 'Data Science engineers transform petabytes of unstructured raw data into predictive insights, business dashboards, automated data pipelines, and machine learning models.',
+      difficulty: 'Moderate-High (Statistics, Data Pipelines & SQL)',
+      placementDemand: '⭐⭐⭐⭐⭐ (Critical Shortage Across FinTech & E-commerce: ₹8 - 35 LPA)',
+      coreFocus: 'Data Analytics, Statistical Inference, Big Data Distributed Pipelines (Apache Spark, Kafka), Data Warehousing (Snowflake), Business Intelligence (Tableau).',
+      primaryLang: {
+        name: 'Python & SQL',
+        badge: 'Absolute Core (1st & 2nd Year)',
+        reason: 'Python (Pandas, NumPy, Seaborn) handles analytical modeling. SQL is the mandatory query language for querying multi-terabyte data warehouses.'
+      },
+      secondaryLang: {
+        name: 'R & Scala / Java',
+        badge: 'Recommended for Big Data (2nd & 3rd Year)',
+        reason: 'Scala/Java powers Apache Spark distributed clusters for processing millions of transactions per second. R is standard in statistical research.'
+      },
+      domainTools: ['Apache Spark & Kafka', 'Snowflake & BigQuery', 'Power BI & Tableau', 'PostgreSQL & Airflow'],
+      coreRoadmap: [
+        { year: '1st Year (Freshman)', focus: 'Python Basics, Advanced SQL Queries & Joins, Descriptive Statistics, Excel' },
+        { year: '2nd Year (Sophomore)', focus: 'Pandas, NumPy, Matplotlib/Seaborn, Exploratory Data Analysis (EDA), DSA basics' },
+        { year: '3rd Year (Junior)', focus: 'Machine Learning (Scikit-Learn), Apache Spark Big Data, Snowflake, Dashboard Building' },
+        { year: '4th Year (Senior)', focus: 'Data Engineering Pipelines (Airflow, DBT), End-to-End Analytics Capstone, Placements' }
+      ],
+      dualTrack: {
+        hasTransition: false,
+        coreTitle: 'Data Scientist & Big Data Engineer Track',
+        coreDescription: 'Standard track for designing data warehouses, Spark pipelines, and predictive analytics models.',
+        steps: [
+          'Master complex SQL queries, window functions, and database indexing.',
+          'Build interactive analytical dashboards with Power BI or Tableau.',
+          'Process big datasets using PySpark and store them in modern Cloud Data Warehouses.'
+        ]
+      },
+      moocsAndCerts: {
+        moocs: [
+          { name: 'Applied Data Science with Python Specialization', provider: 'University of Michigan', tag: 'Top Data Science' },
+          { name: 'IBM Data Engineering Professional Certificate', provider: 'IBM (Coursera)', tag: 'Big Data Pipeline' }
+        ],
+        certifications: [
+          { name: 'Databricks Certified Associate Developer for Apache Spark', issuer: 'Databricks' },
+          { name: 'Google Cloud Professional Data Engineer', issuer: 'Google Cloud' }
+        ]
+      },
+      topCompanies: ['Mu Sigma', 'Fractal Analytics', 'LatentView', 'Amazon', 'Flipkart', 'Walmart Global Tech', 'Deloitte', 'EY Analytics'],
+      codeSample: {
+        title: 'Python Pandas: Customer Cohort Analytics & Aggregation',
+        language: 'python',
+        code: `import pandas as pd
+
+data = {'OrderID': [1, 2, 3, 4], 'Revenue': [250, 450, 120, 890], 'Region': ['South', 'North', 'South', 'East']}
+df = pd.DataFrame(data)
+
+summary = df.groupby('Region')['Revenue'].agg(['count', 'sum', 'mean'])
+print("=== REGIONAL REVENUE SUMMARY ===")
+print(summary)`
+      }
+    },
+    {
+      id: 'cyber',
+      shortName: 'Cyber Security',
+      name: 'Cyber Security & Digital Forensics',
+      category: 'ai_cyber',
+      icon: '🛡️',
+      color: '#ef4444',
+      accentBg: 'rgba(239, 68, 68, 0.12)',
+      welcomeTitle: '🔒 Welcome to Ethical Hacking, Threat Defense & Cryptography!',
+      welcomeMessage: 'Cyber Security engineers safeguard global digital infrastructure. You defend networks from state-sponsored cyberattacks, analyze malware binaries, and perform penetration testing.',
+      difficulty: 'Moderate-High (OS Internals, Networking & Exploit Scripting)',
+      placementDemand: '⭐⭐⭐⭐⭐ (Huge Talent Deficit: ₹7 - 35 LPA)',
+      coreFocus: 'Penetration Testing, Ethical Hacking, Network Security, Malware Analysis, Cryptography, Cloud Security, SIEM & SOC Operations.',
+      primaryLang: {
+        name: 'Python & Linux Bash',
+        badge: 'Must Learn (1st & 2nd Year)',
+        reason: 'Python is the #1 tool for writing exploit scripts, network packet sniffers (Scapy), automation scanners, and cryptography tools. Linux Bash is the daily operating language of security analysts.'
+      },
+      secondaryLang: {
+        name: 'C & C++ / Go',
+        badge: 'Essential (2nd & 3rd Year)',
+        reason: 'C and C++ are needed to understand Buffer Overflows, reverse engineer malware binaries, and analyze OS kernel vulnerabilities. Go is favored for modern lightning-fast security tools.'
+      },
+      domainTools: ['Kali Linux & Parrot OS', 'Wireshark & Nmap', 'Burp Suite Pro & OWASP ZAP', 'Metasploit & Ghidra'],
+      coreRoadmap: [
+        { year: '1st Year (Freshman)', focus: 'Networking fundamentals (TCP/IP, OSI, DNS), Linux CLI, Python basics, Cryptography' },
+        { year: '2nd Year (Sophomore)', focus: 'Web Security (OWASP Top 10), Burp Suite, Network Sniffing with Wireshark, TryHackMe' },
+        { year: '3rd Year (Junior)', focus: 'Penetration Testing, Metasploit, Reverse Engineering with Ghidra, Cloud Security' },
+        { year: '4th Year (Senior)', focus: 'Bug Bounty hunting, Security Analyst / Pentester placements (Big 4, Defense)' }
+      ],
+      dualTrack: {
+        hasTransition: false,
+        coreTitle: 'Ethical Hacker & SOC Security Analyst Route',
+        coreDescription: 'Standard track for Red Team penetration testing and Blue Team defense.',
+        steps: [
+          'Earn foundational security certs: CompTIA Security+ or CEH.',
+          'Practice actively on TryHackMe (beginner-friendly) and Hack The Box.',
+          'Participate in public Bug Bounty programs (HackerOne, Bugcrowd).'
+        ]
+      },
+      moocsAndCerts: {
+        moocs: [
+          { name: 'Google Cybersecurity Professional Certificate', provider: 'Google (Coursera)', tag: 'Top Entry' },
+          { name: 'Information Security and Ethical Hacking', provider: 'NPTEL (IIT Kharagpur)', tag: 'College Credit' }
+        ],
+        certifications: [
+          { name: 'CompTIA Security+ (Global Standard Entry)', issuer: 'CompTIA' },
+          { name: 'Offensive Security Certified Professional (OSCP)', issuer: 'OffSec' }
+        ]
+      },
+      topCompanies: ['Palo Alto Networks', 'CrowdStrike', 'Cisco Security', 'Cloudflare', 'Mandiant (Google)', 'KPMG / Deloitte Cyber', 'Microsoft Security'],
+      codeSample: {
+        title: 'Python: TCP Port Scanner & Banner Grabber',
+        language: 'python',
+        code: `import socket
+
+def check_port(ip, port):
+    s = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
+    s.settimeout(0.8)
+    return s.connect_ex((ip, port)) == 0
+
+target = "127.0.0.1"
+for p in [22, 80, 443, 3306]:
+    if check_port(target, p):
+        print(f"Port {p} is OPEN on {target}")`
+      }
+    },
+    {
       id: 'ece',
+      shortName: 'ECE',
       name: 'Electronics & Communication Engineering (ECE)',
       category: 'circuits',
       icon: '📡',
       color: '#f59e0b',
       accentBg: 'rgba(245, 158, 11, 0.12)',
-      welcomeTitle: '⚡ Welcome to the Fusion of Hardware & Software!',
-      welcomeMessage: 'ECE engineers bridge physical silicon chips with embedded software. You control microcontrollers, IoT devices, signal processing systems, and telecommunication networks.',
+      welcomeTitle: '⚡ Welcome to the Fusion of Silicon Hardware & Software!',
+      welcomeMessage: 'ECE engineers bridge physical silicon chips with embedded software. You control microcontrollers, IoT devices, signal processing systems, VLSI semiconductors, and 5G telecommunication networks.',
       difficulty: 'Moderate-High (Hardware + Software integration)',
-      placementDemand: '⭐⭐⭐⭐ (Huge Core Semiconductor + High Software crossover)',
-      coreFocus: 'Embedded Systems, Microcontrollers (ARM Cortex, ESP32), VLSI & Chip Design, Signal Processing, IoT, 5G Telecom.',
+      placementDemand: '⭐⭐⭐⭐ (Huge Semiconductor Boom & High Software Crossover: ₹6 - 28 LPA)',
+      coreFocus: 'Embedded Systems, Microcontrollers (ARM Cortex, ESP32), VLSI & Chip Design, Digital Signal Processing (DSP), IoT, 5G Telecom.',
       primaryLang: {
         name: 'C / Embedded C',
         badge: 'Must Learn (1st & 2nd Year)',
@@ -139,14 +398,9 @@ int main() {
         badge: 'Highly Recommended (2nd & 3rd Year)',
         reason: 'C++ for Object-Oriented Embedded Systems & ROS (Robotics). Python for Signal Processing, Automation testing, IoT backend, and AI on edge (TinyML).'
       },
-      domainTools: [
-        'Verilog / VHDL & SystemVerilog (VLSI Design)',
-        'MATLAB & Simulink (DSP & Communications)',
-        'KiCAD / Altium Designer (PCB Design)',
-        'Arduino IDE / STM32CubeIDE / Keil uVision'
-      ],
+      domainTools: ['Verilog / VHDL (VLSI Design)', 'MATLAB & Simulink (DSP)', 'KiCAD / Altium (PCB Design)', 'STM32CubeIDE / Keil'],
       coreRoadmap: [
-        { year: '1st Year (Freshman)', focus: 'C Programming, Basic Electronics, Arduino prototyping, Git' },
+        { year: '1st Year (Freshman)', focus: 'C Programming, Basic Electronics, Arduino prototyping, Git, Engineering Physics' },
         { year: '2nd Year (Sophomore)', focus: 'Embedded C, 8051/ARM Microcontrollers, Digital Electronics, DSA in C++' },
         { year: '3rd Year (Junior)', focus: 'Verilog/VLSI or IoT/Robotics projects, MATLAB DSP, RTOS (FreeRTOS)' },
         { year: '4th Year (Senior)', focus: 'Core VLSI/Embedded Placements (Texas Instruments, Qualcomm) OR Software SDE prep' }
@@ -166,65 +420,47 @@ int main() {
       },
       moocsAndCerts: {
         moocs: [
-          { name: 'Embedded Systems: Shape The World (Microcontroller)', provider: 'UT Austin (edX)', link: 'https://edx.org', tag: 'Top Embedded Course' },
-          { name: 'Digital VLSI Design & Verilog', provider: 'NPTEL (IIT Roorkee)', link: 'https://nptel.ac.in', tag: 'Core VLSI Prep' },
-          { name: 'Applied Digital Signal Processing with MATLAB', provider: 'Coursera', link: 'https://coursera.org', tag: 'DSP & Telecom' },
-          { name: 'Introduction to Internet of Things (IoT)', provider: 'NPTEL (IIT Kharagpur)', link: 'https://nptel.ac.in', tag: 'IoT Specialization' }
+          { name: 'Embedded Systems: Shape The World (Microcontroller)', provider: 'UT Austin (edX)', tag: 'Top Embedded' },
+          { name: 'Digital VLSI Design & Verilog', provider: 'NPTEL (IIT Roorkee)', tag: 'Core VLSI' }
         ],
         certifications: [
-          { name: 'Arm Certified Engineer (Embedded Systems)', issuer: 'Arm Architecture', value: 'High for Core' },
-          { name: 'Cisco Certified Network Associate (CCNA)', issuer: 'Cisco', value: 'Top for Telecom & Networks' },
-          { name: 'MathWorks Certified MATLAB Associate', issuer: 'MathWorks', value: 'Core Signal Processing' },
-          { name: 'IPC PCB Design Certification', issuer: 'IPC Standards', value: 'Hardware Engineering' }
-        ],
-        challenges: [
-          { name: 'Wokwi Simulator (Online ESP32, Arduino & Pi Pico)', type: 'Virtual Hardware Coding', icon: '📟', url: 'https://wokwi.com' },
-          { name: 'EDA Playground (Online Verilog / VHDL Simulator)', type: 'VLSI Digital Design', icon: '🔬', url: 'https://edaplayground.com' },
-          { name: 'LeetCode (C++ DSA for IT Placement Transition)', type: 'DSA Problem Solving', icon: '🔥', url: 'https://leetcode.com' },
-          { name: 'Hackster.io Hardware Hackathons', type: 'IoT & Embedded Projects', icon: '🏆', url: 'https://hackster.io' }
+          { name: 'Arm Certified Engineer (Embedded Systems)', issuer: 'Arm Architecture' },
+          { name: 'Cisco Certified Network Associate (CCNA)', issuer: 'Cisco' }
         ]
       },
       topCompanies: ['Qualcomm', 'Texas Instruments', 'Intel', 'NVIDIA', 'Broadcom', 'NXP', 'Bosch', 'Samsung R&D'],
       codeSample: {
-        title: 'Embedded C: Reading Analog Sensor & Triggering Alarm',
+        title: 'Embedded C: Analog Sensor Reading & Alarm Trigger',
         language: 'c',
-        code: `// Embedded C for Microcontroller / Arduino (Reading Temperature Sensor)
-#define SENSOR_PIN A0
-#define ALERT_LED_PIN 13
-#define THRESHOLD_TEMP 75.0 // Celsius
+        code: `#define SENSOR_PIN A0
+#define ALERT_LED 13
 
 void setup() {
-    pinMode(ALERT_LED_PIN, OUTPUT);
+    pinMode(ALERT_LED, OUTPUT);
     Serial.begin(9600);
 }
 
 void loop() {
-    int rawValue = analogRead(SENSOR_PIN);
-    float voltage = rawValue * (5.0 / 1023.0);
-    float temperatureC = (voltage - 0.5) * 100.0; // TMP36 formula
-
-    if (temperatureC > THRESHOLD_TEMP) {
-        digitalWrite(ALERT_LED_PIN, HIGH); // Overheat Alarm!
-        Serial.println("ALERT: Overheating Detected!");
-    } else {
-        digitalWrite(ALERT_LED_PIN, LOW);
-    }
+    int val = analogRead(SENSOR_PIN);
+    float temp = (val * (5.0 / 1023.0) - 0.5) * 100.0;
+    digitalWrite(ALERT_LED, temp > 75.0 ? HIGH : LOW);
     delay(500);
 }`
       }
     },
     {
       id: 'eee',
+      shortName: 'EEE (Power & EV)',
       name: 'Electrical & Electronics Engineering (EEE)',
       category: 'circuits',
       icon: '⚡',
       color: '#ec4899',
       accentBg: 'rgba(236, 72, 153, 0.12)',
-      welcomeTitle: '⚡ Welcome to Power, Automation & Electric Mobility!',
+      welcomeTitle: '⚡ Welcome to Power Systems, EV Mobility & Smart Grids!',
       welcomeMessage: 'EEE engineers build the future of Electric Vehicles (EV), Smart Energy Grids, Power Electronics, Battery Management Systems (BMS), and Industrial Automation.',
       difficulty: 'Moderate-High (Circuits, Math & Control Code)',
-      placementDemand: '⭐⭐⭐⭐ (EV Boom, Power Sector, Industrial IoT & IT)',
-      coreFocus: 'Power Systems, Electric Vehicle (EV) Powertrains, BMS, PLC/SCADA Automation, Control Systems, Microcontrollers.',
+      placementDemand: '⭐⭐⭐⭐ (EV Boom, Power Sector & IT Crossover: ₹6 - 25 LPA)',
+      coreFocus: 'Power Systems, Electric Vehicle (EV) Powertrains, BMS, PLC/SCADA Automation, Control Systems, Power Electronics.',
       primaryLang: {
         name: 'C & MATLAB/Simulink',
         badge: 'Must Learn (1st & 2nd Year)',
@@ -233,14 +469,9 @@ void loop() {
       secondaryLang: {
         name: 'Python & C++',
         badge: 'Recommended (2nd & 3rd Year)',
-        reason: 'Python for smart meter data analytics, EV battery health forecasting, and machine learning in power grids. C++ for industrial robotics and high-speed motor control.'
+        reason: 'Python for smart meter analytics and EV battery health forecasting. C++ for industrial robotics and high-speed motor control.'
       },
-      domainTools: [
-        'MATLAB / Simulink (Simscape Electrical)',
-        'PLC Ladder Logic (Siemens TIA Portal / Rockwell)',
-        'PSCAD / ETAP (Power Grid Simulation)',
-        'Embedded C / CAN Bus Protocol'
-      ],
+      domainTools: ['MATLAB / Simulink', 'PLC Ladder Logic (Siemens TIA)', 'PSCAD / ETAP', 'Embedded C / CAN Bus'],
       coreRoadmap: [
         { year: '1st Year (Freshman)', focus: 'C Programming, Circuit Theory, Basic Arduino, Engineering Math' },
         { year: '2nd Year (Sophomore)', focus: 'MATLAB Simulation, Analog/Digital Electronics, Power Electronics basics, DSA fundamentals' },
@@ -249,607 +480,641 @@ void loop() {
       ],
       dualTrack: {
         hasTransition: true,
-        coreTitle: '🛠️ Core EEE & EV Route (Power, Automation & Electric Vehicles)',
-        coreDescription: 'Focus on Electric Vehicles, Battery Management Systems (BMS), Renewable Energy, and Smart Grids.',
-        transitionTitle: '💻 Software / IT SDE Transition Route',
-        transitionDescription: 'Blueprint for EEE students targeting top Software Development Engineer roles:',
+        coreTitle: '⚡ Core EEE Route (Electric Vehicles, Power & Automation)',
+        coreDescription: 'Focus on EV battery algorithms, MATLAB power simulations, and PLC automation.',
+        transitionTitle: '💻 Software IT Transition Route',
+        transitionDescription: 'Leverage your analytical skills to switch to Software Engineering:',
         steps: [
-          'Adopt C++ or Java for mastering Data Structures and Object Oriented Programming.',
-          'Practice 150+ problems on LeetCode (Focus on Arrays, Strings, Hashing, Recursion, Binary Search).',
-          'Learn SQL (Relational Databases) and Git version control.',
-          'Build a full-stack dashboard or data analysis project (e.g. EV Fleet Telemetry Web Dashboard).'
+          'Learn Java or C++ for Data Structures and Algorithms.',
+          'Build strong fundamentals in SQL and Web backend development (Spring Boot / Node.js).',
+          'Showcase an IoT Smart Energy Monitoring project combining hardware and web dashboard.'
         ]
       },
       moocsAndCerts: {
         moocs: [
-          { name: 'Introduction to Battery-Management Systems', provider: 'UC Colorado (Coursera)', link: 'https://coursera.org', tag: 'EV & BMS Core' },
-          { name: 'Power Electronics & Grid Systems', provider: 'NPTEL (IIT Delhi)', link: 'https://nptel.ac.in', tag: 'Core Electrical' },
-          { name: 'PLC Programming from Scratch (Industrial Automation)', provider: 'Udemy / Siemens', link: 'https://udemy.com', tag: 'Automation' },
-          { name: 'Control of Mobile Robots & Systems', provider: 'Georgia Tech (Coursera)', link: 'https://coursera.org', tag: 'Robotics & Control' }
+          { name: 'Introduction to Battery-Management Systems', provider: 'UC Boulder (Coursera)', tag: 'EV Specialization' },
+          { name: 'Industrial Automation and Control', provider: 'NPTEL (IIT Kharagpur)', tag: 'PLC & Automation' }
         ],
         certifications: [
-          { name: 'Certified LabVIEW Associate Developer (CLAD)', issuer: 'National Instruments', value: 'High in Test/Automation' },
-          { name: 'Siemens Certified PLC / SCADA Engineer', issuer: 'Siemens Industrial', value: 'Top for Manufacturing' },
-          { name: 'MathWorks Certified MATLAB Associate', issuer: 'MathWorks', value: 'High' }
-        ],
-        challenges: [
-          { name: 'MATLAB Onramp & Simscape Challenges', type: 'Simulink Grid Simulation', icon: '📈', url: 'https://matlab.mathworks.com' },
-          { name: 'Wokwi Simulator (Microcontroller & Relays)', type: 'Circuit & Microcontroller Coding', icon: '🔌', url: 'https://wokwi.com' },
-          { name: 'LeetCode (C++/Java SDE Prep)', type: 'DSA Placement Preparation', icon: '🔥', url: 'https://leetcode.com' },
-          { name: 'Kaggle Energy Prediction Datasets', type: 'Smart Grid & Energy Forecasting', icon: '⚡', url: 'https://kaggle.com' }
+          { name: 'Siemens Certified PLC Automation Engineer', issuer: 'Siemens SITRAIN' },
+          { name: 'MathWorks Certified MATLAB Professional', issuer: 'MathWorks' }
         ]
       },
-      topCompanies: ['ABB', 'Schneider Electric', 'Siemens', 'L&T', 'Tesla', 'Tata Power', 'Ola Electric', 'Texas Instruments'],
+      topCompanies: ['Tesla', 'Schneider Electric', 'ABB', 'Larsen & Toubro', 'Siemens', 'Tata Motors EV', 'Texas Instruments'],
       codeSample: {
-        title: 'Python: EV Battery State-of-Charge (SoC) Estimation',
+        title: 'MATLAB Script: PWM DC Motor Speed Control Calculation',
+        language: 'matlab',
+        code: `V_battery = 48.0; duty_cycle = 0.75; R_armature = 0.5;
+V_applied = V_battery * duty_cycle;
+I_motor = (V_applied - 24.0) / R_armature;
+fprintf('Applied Voltage: %.2f V | Current: %.2f A\\n', V_applied, I_motor);`
+      }
+    },
+    {
+      id: 'eie',
+      shortName: 'EIE / ICE',
+      name: 'Electronics & Instrumentation Engineering (EIE / ICE)',
+      category: 'circuits',
+      icon: '📟',
+      color: '#14b8a6',
+      accentBg: 'rgba(20, 184, 166, 0.12)',
+      welcomeTitle: '🎛️ Welcome to Smart Sensors, Industrial IoT & Process Automation!',
+      welcomeMessage: 'Instrumentation engineers automate industrial plants, refineries, biomedical sensors, and smart factories using PLC/SCADA, DCS, LabVIEW, and sensor fusion algorithms.',
+      difficulty: 'Moderate (Sensors, Control Math & Hardware Code)',
+      placementDemand: '⭐⭐⭐⭐ (Process Industries, Robotics & IT: ₹5.5 - 22 LPA)',
+      coreFocus: 'Smart Sensors, Industrial IoT, Process Control Loops (PID), PLC/SCADA, LabVIEW, Biomedical Instrumentation.',
+      primaryLang: {
+        name: 'C & Python',
+        badge: 'Must Learn (1st & 2nd Year)',
+        reason: 'C for reading analog sensor registers and microcontroller calibration. Python for sensor data logging, IoT dashboards, and automation.'
+      },
+      secondaryLang: {
+        name: 'LabVIEW (G-Code) & MATLAB',
+        badge: 'Core Tooling (2nd & 3rd Year)',
+        reason: 'LabVIEW is standard in automated testing benches (National Instruments). MATLAB tunes PID control loops.'
+      },
+      domainTools: ['LabVIEW & NI DAQ', 'PLC / SCADA (Rockwell / Siemens)', 'MATLAB Control Toolbox', 'Modbus / MQTT Protocols'],
+      coreRoadmap: [
+        { year: '1st Year (Freshman)', focus: 'C Programming, Basic Electronics, Sensor physics, Calculus' },
+        { year: '2nd Year (Sophomore)', focus: 'Operational Amplifiers, Transducers, LabVIEW basics, Python data analysis' },
+        { year: '3rd Year (Junior)', focus: 'PLC/SCADA Automation, PID Controller tuning in MATLAB, Industrial IoT' },
+        { year: '4th Year (Senior)', focus: 'Core Placements (Honeywell, Yokogawa, Emerson, Siemens) OR Software SDE' }
+      ],
+      dualTrack: {
+        hasTransition: true,
+        coreTitle: '🎛️ Core Automation & Instrumentation Track',
+        coreDescription: 'Focus on DCS systems, sensor signal conditioning, and PLC plant automation.',
+        transitionTitle: '💻 Software & IoT Cloud Transition',
+        transitionDescription: 'Bridge physical telemetry data to cloud analytics:',
+        steps: [
+          'Master Python / Java and SQL databases.',
+          'Build an IoT Telemetry Dashboard with MQTT protocol and WebSockets.',
+          'Practice standard LeetCode DSA for software roles.'
+        ]
+      },
+      moocsAndCerts: {
+        moocs: [
+          { name: 'Industrial IoT and Sensor Networks', provider: 'NPTEL (IIT Kharagpur)', tag: 'IIoT Core' },
+          { name: 'Process Control and Instrumentation', provider: 'Coursera', tag: 'Process Engineering' }
+        ],
+        certifications: [
+          { name: 'Certified LabVIEW Associate Developer (CLAD)', issuer: 'National Instruments' },
+          { name: 'ISA Certified Automation Professional (CAP)', issuer: 'International Society of Automation' }
+        ]
+      },
+      topCompanies: ['Honeywell', 'Yokogawa', 'Emerson', 'ABB', 'Siemens', 'National Instruments', 'Rockwell Automation'],
+      codeSample: {
+        title: 'Python: Reading MQTT Sensor Telemetry Stream',
         language: 'python',
-        code: `# Python script for Electric Vehicle Battery State of Charge (SoC) Calculation
-def calculate_battery_soc(voltage, max_v=4.2, min_v=3.0):
-    """
-    Estimates Lithium-Ion Battery SoC based on Open Circuit Voltage (OCV)
-    """
-    if voltage >= max_v:
-        return 100.0
-    elif voltage <= min_v:
-        return 0.0
-    
-    # Linear interpolation approximation
-    soc = ((voltage - min_v) / (max_v - min_v)) * 100.0
-    return round(soc, 2)
+        code: `import json
 
-battery_voltage = 3.82
-current_soc = calculate_battery_soc(battery_voltage)
-print(f"Current Battery Voltage: {battery_voltage}V -> Estimated SoC: {current_soc}%")`
+def process_sensor_packet(payload_str):
+    data = json.loads(payload_str)
+    pressure_psi = data.get('pressure', 0)
+    if pressure_psi > 120:
+        print(f"CRITICAL WARNING: Boiler pressure exceeds limit ({pressure_psi} PSI)!")
+    return pressure_psi
+
+process_sensor_packet('{"sensor_id": "P-101", "pressure": 134.5}')`
+      }
+    },
+    {
+      id: 'robotics',
+      shortName: 'Robotics & Mechatronics',
+      name: 'Robotics, Automation & Mechatronics',
+      category: 'core_eng',
+      icon: '🦾',
+      color: '#8b5cf6',
+      accentBg: 'rgba(139, 92, 246, 0.12)',
+      welcomeTitle: '🤖 Welcome to Autonomous Robots, Drone Avionics & Cobots!',
+      welcomeMessage: 'Mechatronics & Robotics engineers combine mechanical kinematics, electronics actuators, computer vision, and ROS 2 software to build autonomous mobile robots (AMRs), robotic arms, and drones.',
+      difficulty: 'High in Multidisciplinary Code & Kinematics',
+      placementDemand: '⭐⭐⭐⭐⭐ (Warehouse Robotics, Defence & Automotive: ₹7 - 32 LPA)',
+      coreFocus: 'Robot Operating System (ROS 2), Kinematics & Dynamics, Computer Vision (OpenCV), SLAM Navigation, Motion Planning.',
+      primaryLang: {
+        name: 'C++ & Python',
+        badge: 'Must Learn (1st & 2nd Year)',
+        reason: 'C++ is mandatory for high-speed ROS 2 nodes, trajectory calculation, and micro-controller drivers. Python is used for rapid computer vision and AI pathfinding.'
+      },
+      secondaryLang: {
+        name: 'MATLAB / Simulink & C',
+        badge: 'Essential for Simulation (2nd & 3rd Year)',
+        reason: 'MATLAB simulates multi-body robotic arm physics and inverse kinematics before deploying to real physical hardware.'
+      },
+      domainTools: ['ROS 2 (Robot Operating System)', 'Gazebo / Webots (Physics Simulator)', 'OpenCV (Computer Vision)', 'SolidWorks CAD'],
+      coreRoadmap: [
+        { year: '1st Year (Freshman)', focus: 'C/C++ basics, Arduino & ESP32 motor controls, Physics Kinematics, Python' },
+        { year: '2nd Year (Sophomore)', focus: 'ROS 2 basics, Gazebo simulation, Forward/Inverse Kinematics, OpenCV Vision' },
+        { year: '3rd Year (Junior)', focus: 'SLAM (Simultaneous Localization & Mapping), Autonomous Drone pathfinding, C++ DSA' },
+        { year: '4th Year (Senior)', focus: 'Core Robotics Placements (Boston Dynamics, GreyOrange, Addverb, ISRO) OR SDE' }
+      ],
+      dualTrack: {
+        hasTransition: true,
+        coreTitle: '🦾 Core Robotics & Autonomous Systems Track',
+        coreDescription: 'Focus on ROS 2 navigation, motor kinematics, and LIDAR computer vision.',
+        transitionTitle: '💻 Autonomous Software SDE Transition',
+        transitionDescription: 'Transitioning to Autonomous Driving and Systems Software:',
+        steps: [
+          'Master modern C++ (Smart Pointers, Multithreading, STL).',
+          'Practice algorithmic Graph Algorithms (A*, Dijkstra, BFS) on LeetCode.',
+          'Build an autonomous obstacle-avoidance simulation project.'
+        ]
+      },
+      moocsAndCerts: {
+        moocs: [
+          { name: 'Modern Robotics: Mechanics, Planning, and Control', provider: 'Northwestern University (Coursera)', tag: 'Gold Standard' },
+          { name: 'ROS 2 Basics for C++ & Python', provider: 'ConstructSim / Udemy', tag: 'Hands-on ROS' }
+        ],
+        certifications: [
+          { name: 'Certified ROS Developer (ROS 2)', issuer: 'Open Robotics / The Construct' },
+          { name: 'NVIDIA Certified Associate: Jetson AI & Robotics', issuer: 'NVIDIA' }
+        ]
+      },
+      topCompanies: ['GreyOrange', 'Addverb Technologies', 'Boston Dynamics', 'Tesla Bot', 'Fanuc', 'KUKA', 'ISRO Robotics'],
+      codeSample: {
+        title: 'C++ ROS 2 Node: Publishing Velocity Commands',
+        language: 'cpp',
+        code: `// C++ ROS 2 Publisher Node snippet
+#include <iostream>
+
+struct TwistMessage {
+    double linear_x;
+    double angular_z;
+};
+
+void publishVelocity(double forward_speed, double turn_rate) {
+    TwistMessage msg = {forward_speed, turn_rate};
+    std::cout << "Robot Moving Forward at: " << msg.linear_x << " m/s | Turning: " << msg.angular_z << " rad/s\\n";
+}
+
+int main() {
+    publishVelocity(1.5, 0.2);
+    return 0;
+}`
       }
     },
     {
       id: 'mech',
-      name: 'Mechanical & Mechatronics Engineering (MECH)',
+      shortName: 'Mechanical',
+      name: 'Mechanical Engineering',
       category: 'core_eng',
       icon: '⚙️',
-      color: '#10b981',
-      accentBg: 'rgba(16, 185, 129, 0.12)',
-      welcomeTitle: '🤖 Welcome to Robotics, CAD Automation & Simulation!',
-      welcomeMessage: 'Modern Mechanical Engineering is deeply computerized. From autonomous robot arms and self-driving cars to aerodynamic FEA/CFD simulation and CAD script automation, coding makes mechanical systems smart.',
-      difficulty: 'Moderate (Math, Physics & Scripting)',
-      placementDemand: '⭐⭐⭐⭐ (Core Automation, Robotics, Automotive & High IT Transition)',
-      coreFocus: 'Robotics & Mechatronics, CAD/CAM Automation, Finite Element Analysis (FEA), Computational Fluid Dynamics (CFD), Autonomous Drones.',
+      color: '#f97316',
+      accentBg: 'rgba(249, 115, 22, 0.12)',
+      welcomeTitle: '🦾 Welcome to Industry 4.0, Computational Design & Automation!',
+      welcomeMessage: 'Modern Mechanical Engineering combines CAD scripting, computational fluid dynamics (CFD), FEA structural simulation, and automated manufacturing pipelines.',
+      difficulty: 'Moderate in Coding (High in Physics, Thermal & Math)',
+      placementDemand: '⭐⭐⭐⭐ (Automotive, Heavy Machinery, Aerospace & IT: ₹5.5 - 20 LPA)',
+      coreFocus: 'CAD/CAM Automation, Finite Element Analysis (FEA), CFD Simulation, Thermodynamics, Mechatronics, CNC G-Code.',
       primaryLang: {
-        name: 'Python',
+        name: 'Python & MATLAB',
         badge: 'Must Learn (1st & 2nd Year)',
-        reason: 'The ultimate scripting language for automating SolidWorks/AutoCAD, processing simulation data, FEA numerical solvers, and robot trajectory calculations.'
+        reason: 'Python automates CAD designs (FreeCAD, SolidWorks macros) and handles data science. MATLAB is standard for vibration and dynamic simulations.'
       },
       secondaryLang: {
-        name: 'C++ & MATLAB',
-        badge: 'Highly Recommended (2nd & 3rd Year)',
-        reason: 'C++ is the global industry standard for ROS (Robot Operating System), high-speed physics engines, and robotics controls. MATLAB for vibration and thermal modeling.'
+        name: 'C++ & C',
+        badge: 'Recommended for Robotics (3rd Year)',
+        reason: 'C++ powers Robot Operating System (ROS 2), CNC G-code automation, and real-time robotic arm trajectory control.'
       },
-      domainTools: [
-        'ROS 2 (Robot Operating System in C++/Python)',
-        'SolidWorks API & AutoCAD AutoLISP / Python Scripting',
-        'Ansys Workbench / OpenFOAM (CFD & FEA)',
-        'Arduino & Raspberry Pi for Mechatronics'
-      ],
+      domainTools: ['SolidWorks & CATIA', 'ANSYS Mechanical & Fluent', 'ROS 2 Robotics', 'G-Code & CNC'],
       coreRoadmap: [
-        { year: '1st Year (Freshman)', focus: 'Python Basics, Engineering Mechanics, CAD 3D modeling (SolidWorks/Fusion 360)' },
-        { year: '2nd Year (Sophomore)', focus: 'C++ Basics, Arduino for Mechatronics, Numerical Methods in Python, DSA fundamentals' },
-        { year: '3rd Year (Junior)', focus: 'ROS (Robot Operating System) in C++/Python, Ansys FEA/CFD scripting, 3D printing project' },
-        { year: '4th Year (Senior)', focus: 'Core Placements (Bosch, Tata Motors, L&T, ISRO, Boeing) OR Software IT placements' }
+        { year: '1st Year (Freshman)', focus: 'Python Basics, Engineering Graphics, Math, Basic Mechanical Workshops' },
+        { year: '2nd Year (Sophomore)', focus: 'CAD 3D Modeling, MATLAB Numerical Methods, Mechanics of Solids, C basics' },
+        { year: '3rd Year (Junior)', focus: 'ANSYS FEA simulations, Python automated design optimization, ROS robotics' },
+        { year: '4th Year (Senior)', focus: 'Core Placements (Boeing, Tata Motors, L&T, ISRO, Bosch) OR IT SDE switch' }
       ],
       dualTrack: {
         hasTransition: true,
-        coreTitle: '🛠️ Core Mechatronics & Automotive Route (Robotics, CAD & Simulation)',
-        coreDescription: 'Specialize in Robotics, Autonomous Systems, CAD Scripting, and Thermal/Structural Simulation.',
-        transitionTitle: '💻 Software / IT SDE Transition Route',
-        transitionDescription: 'Step-by-step roadmap for Mechanical engineers to crack high-paying Software jobs:',
+        coreTitle: '⚙️ Core Mechanical & Simulation Route',
+        coreDescription: 'Excel in CAD automation, FEA simulation in ANSYS, and thermal engineering.',
+        transitionTitle: '💻 Non-CS to Software Engineer Transition',
+        transitionDescription: 'Over 40% of Mechanical grads succeed in high-paying IT roles:',
         steps: [
-          'Choose C++ or Java for Data Structures (C++ is already close to your mechanical robotics/simulation studies).',
-          'Learn basic DSA: Arrays, Hashing, Two Pointers, Linked Lists, Binary Trees on LeetCode.',
-          'Learn SQL and build 1 Web project (e.g. Mechanical Spare Parts Inventory or 3D Model Viewer using Three.js/React).',
-          'Highlight problem-solving ability, analytical thinking, and code projects on your resume.'
+          'Choose Python or Java as your core programming language.',
+          'Learn standard Object-Oriented Programming (OOP) and SQL Databases.',
+          'Complete 150+ DSA problems on LeetCode / GeeksforGeeks.',
+          'Build a Data Analysis or Web Application project to showcase on GitHub.'
         ]
       },
       moocsAndCerts: {
         moocs: [
-          { name: 'Modern Robotics: Mechanics, Planning, and Control', provider: 'Northwestern University (Coursera)', link: 'https://coursera.org', tag: 'Top Robotics' },
-          { name: 'Python for Mechanical Engineers & FEA', provider: 'Skill-Lync / Udemy', link: 'https://udemy.com', tag: 'CAD & Simulation' },
-          { name: 'Introduction to Robot Operating System (ROS)', provider: 'ConstructSim (edX)', link: 'https://edx.org', tag: 'ROS 2 Core' },
-          { name: 'Computer Aided Engineering Design', provider: 'NPTEL (IIT Kanpur)', link: 'https://nptel.ac.in', tag: 'CAD & Engineering' }
+          { name: 'Introduction to Mechanical Engineering & CAD', provider: 'Autodesk (Coursera)', tag: 'Core CAD' },
+          { name: 'Computational Fluid Dynamics (CFD)', provider: 'NPTEL (IIT Kharagpur)', tag: 'Simulation' }
         ],
         certifications: [
-          { name: 'Certified SOLIDWORKS Associate / Professional (CSWA / CSWP)', issuer: 'Dassault Systèmes', value: 'Industry Standard CAD' },
-          { name: 'Autodesk Certified Professional (Inventor / AutoCAD)', issuer: 'Autodesk', value: 'High for Design' },
-          { name: 'ROS Developer Certification', issuer: 'The Construct', value: 'Robotics Engineering' }
-        ],
-        challenges: [
-          { name: 'Kaggle Mechanical & Materials Datasets', type: 'Predictive Maintenance ML', icon: '📊', url: 'https://kaggle.com' },
-          { name: 'LeetCode (C++/Python SDE Prep)', type: 'DSA Coding Practice', icon: '🔥', url: 'https://leetcode.com' },
-          { name: 'GrabCAD Design & Automation Challenges', type: '3D CAD & Modeling', icon: '🛠️', url: 'https://grabcad.com' },
-          { name: 'HackerRank Problem Solving (Python/C++)', type: 'Coding Foundations', icon: '⭐', url: 'https://hackerrank.com' }
+          { name: 'Certified SolidWorks Associate / Professional (CSWP)', issuer: 'Dassault Systèmes' },
+          { name: 'ANSYS Certified FEA Associate', issuer: 'ANSYS' }
         ]
       },
-      topCompanies: ['Bosch', 'Tata Motors', 'Mahindra', 'L&T', 'Boeing', 'Tesla', 'ISRO', 'Siemens'],
+      topCompanies: ['Boeing', 'Airbus', 'Tata Motors', 'Bosch', 'ISRO', 'Larsen & Toubro', 'Mahindra & Mahindra', 'Mercedes-Benz R&D'],
       codeSample: {
-        title: 'Python: Cantilever Beam Stress & Deflection Calculation',
+        title: 'Python: Calculating Young\'s Modulus from Tensile Test',
         language: 'python',
-        code: `# Mechanical Engineering: Cantilever Beam Point Load Analysis
-import math
+        code: `import numpy as np
 
-def beam_analysis(length_m, force_n, elasticity_gpa, moment_inertia_m4):
-    """
-    Calculates Maximum Bending Moment, Maximum Stress, and Tip Deflection
-    """
-    E = elasticity_gpa * 1e9  # Convert GPa to Pascals
-    max_moment = force_n * length_m # N*m
-    # Deflection formula for cantilever beam under tip point load: (F * L^3) / (3 * E * I)
-    max_deflection = (force_n * math.pow(length_m, 3)) / (3 * E * moment_inertia_m4)
-    
-    return max_moment, max_deflection
+force = np.array([0, 5000, 10000, 15000]) # Newtons
+area = 50.0 # mm^2
+elongation = np.array([0.0, 0.05, 0.10, 0.15]) # mm
+orig_len = 100.0
 
-L, F = 2.0, 5000.0  # 2 meters beam, 5000 N tip load
-moment, deflection = beam_analysis(L, F, 200.0, 8.33e-6) # Steel properties
-print(f"Max Bending Moment: {moment:.1f} N*m")
-print(f"Max Tip Deflection: {deflection*1000:.2f} mm")`
+stress = force / area
+strain = elongation / orig_len
+youngs_modulus_gpa = (stress[1] / strain[1]) / 1000.0
+print(f"Calculated Young's Modulus: {youngs_modulus_gpa:.2f} GPa (Structural Steel)")`
+      }
+    },
+    {
+      id: 'auto',
+      shortName: 'Automobile & EV',
+      name: 'Automobile & Electric Vehicle (EV) Engineering',
+      category: 'core_eng',
+      icon: '🏎️',
+      color: '#ef4444',
+      accentBg: 'rgba(239, 68, 68, 0.12)',
+      welcomeTitle: '🔋 Welcome to Electric Vehicles, Connected Cars & Autonomous ADAS!',
+      welcomeMessage: 'Automotive engineers design EV battery management systems (BMS), electric motor powertrains, vehicle aerodynamics, and ADAS self-driving algorithms.',
+      difficulty: 'Moderate-High (Powertrain Dynamics & Embedded Electronics)',
+      placementDemand: '⭐⭐⭐⭐ (EV Revolution Boom: ₹6 - 24 LPA)',
+      coreFocus: 'EV Battery Tech, CAN Bus Telemetry, Vehicle Dynamics (CarSim), ADAS Autonomous Driving, Motor Inverter Controls.',
+      primaryLang: {
+        name: 'C & MATLAB/Simulink',
+        badge: 'Must Learn (1st & 2nd Year)',
+        reason: 'C is required for programming automotive Electronic Control Units (ECUs). MATLAB/Simulink models vehicle longitudinal dynamics and regenerative braking.'
+      },
+      secondaryLang: {
+        name: 'Python & C++',
+        badge: 'Recommended (2nd & 3rd Year)',
+        reason: 'Python for CAN bus telemetry data logging and battery predictive maintenance. C++ for ADAS camera/radar sensor fusion.'
+      },
+      domainTools: ['MATLAB Simscape Driveline', 'CANalyzer / CANoe (Vector)', 'CarSim / IPG CarMaker', 'Ansys Fluent Aero'],
+      coreRoadmap: [
+        { year: '1st Year (Freshman)', focus: 'C basics, Automotive Physics, CAD 3D modeling, Basic Electronics' },
+        { year: '2nd Year (Sophomore)', focus: 'Vehicle Dynamics, MATLAB Simulation, Power Electronics in EVs' },
+        { year: '3rd Year (Junior)', focus: 'CAN Bus Protocol, BMS Algorithm design, ADAS Computer Vision' },
+        { year: '4th Year (Senior)', focus: 'Core Automotive Placements (Tata Motors, Tesla, Ola Electric, Bosch) OR IT' }
+      ],
+      dualTrack: {
+        hasTransition: true,
+        coreTitle: '🏎️ Core EV & Powertrain Engineering Route',
+        coreDescription: 'Focus on BMS algorithms, inverter tuning, and vehicle testing.',
+        transitionTitle: '💻 Autonomous Vehicle Software Transition',
+        transitionDescription: 'Transitioning to Autonomous Vehicle & Telematics software:',
+        steps: [
+          'Learn C++ and Linux CAN networking.',
+          'Build an EV battery health monitoring web dashboard with Python and React.',
+          'Prepare DSA for mobility tech companies (Uber, Ola, Ather).'
+        ]
+      },
+      moocsAndCerts: {
+        moocs: [
+          { name: 'Self-Driving Cars Specialization', provider: 'University of Toronto (Coursera)', tag: 'ADAS & Autonomy' },
+          { name: 'Electric Vehicles Powertrain Design', provider: 'NPTEL (IIT Madras)', tag: 'EV Core' }
+        ],
+        certifications: [
+          { name: 'Vector Certified CANoe & CANalyzer Specialist', issuer: 'Vector Informatik' },
+          { name: 'ASQ Certified Automotive Quality Engineer', issuer: 'ASQ' }
+        ]
+      },
+      topCompanies: ['Tata Motors EV', 'Tesla', 'Ola Electric', 'Ather Energy', 'Bosch Automotive', 'Mahindra Electric', 'Maruti Suzuki R&D'],
+      codeSample: {
+        title: 'Python: CAN Bus Telemetry Packet Decoder',
+        language: 'python',
+        code: `def decode_ev_battery_can(hex_payload):
+    # Simulated CAN packet: Byte 0-1 (Voltage), Byte 2-3 (Current)
+    raw_volts = int(hex_payload[0:4], 16) * 0.1
+    raw_amps = int(hex_payload[4:8], 16) * 0.1
+    power_kw = (raw_volts * raw_amps) / 1000.0
+    return {"PackVoltage": raw_volts, "PackCurrent": raw_amps, "PowerKW": power_kw}
+
+print(decode_ev_battery_can("0E1000C8")) # 360.0V, 20.0A`
+      }
+    },
+    {
+      id: 'aero',
+      shortName: 'Aerospace',
+      name: 'Aerospace & Aeronautical Engineering',
+      category: 'specialized',
+      icon: '🚀',
+      color: '#38bdf8',
+      accentBg: 'rgba(56, 189, 248, 0.12)',
+      welcomeTitle: '🛰️ Welcome to Supersonic Aerodynamics, Orbital Dynamics & SpaceTech!',
+      welcomeMessage: 'Aerospace engineers develop satellite orbits, rocket propulsion systems, supersonic aircraft, autonomous flight control autopilots, and space telescopes.',
+      difficulty: 'High in Fluid Dynamics, Flight Mechanics & Physics',
+      placementDemand: '⭐⭐⭐⭐ (SpaceTech Boom, Defense & Simulation Tech: ₹7 - 28 LPA)',
+      coreFocus: 'Aerodynamics, Flight Dynamics & Control, Orbital Trajectories, Propulsion, CFD (ANSYS Fluent / OpenFOAM), Avionics (NASA cFS).',
+      primaryLang: {
+        name: 'Python & MATLAB/Simulink',
+        badge: 'Must Learn (1st & 2nd Year)',
+        reason: 'MATLAB/Simulink is mandatory for autopilot control systems and attitude dynamics. Python optimizes launch trajectories and CFD post-processing.'
+      },
+      secondaryLang: {
+        name: 'C++ & Fortran / C',
+        badge: 'Essential for Avionics & High-Speed CFD (2nd & 3rd Year)',
+        reason: 'C++ powers NASA core flight software (cFS) and real-time avionics autopilot computers. Fortran/C still powers heavy aerodynamic solvers.'
+      },
+      domainTools: ['MATLAB Aerospace Blockset', 'ANSYS Fluent / OpenFOAM', 'NASA cFS & ROS 2', 'CATIA Aerospace'],
+      coreRoadmap: [
+        { year: '1st Year (Freshman)', focus: 'Python Basics, Physics of Flight, Engineering Mechanics, CAD 3D modeling' },
+        { year: '2nd Year (Sophomore)', focus: 'MATLAB Flight Control, Fluid Mechanics, Aerodynamics calculations, C basics' },
+        { year: '3rd Year (Junior)', focus: 'ANSYS Fluent CFD simulations, Autopilot control tuning, Orbital mechanics' },
+        { year: '4th Year (Senior)', focus: 'Core SpaceTech Placements (ISRO, DRDO, Boeing, Airbus, Skyroot) OR SDE' }
+      ],
+      dualTrack: {
+        hasTransition: true,
+        coreTitle: '🚀 Core Aerospace & SpaceTech Route',
+        coreDescription: 'Focus on Flight Control Systems, Aerodynamics with OpenFOAM, and Avionics.',
+        transitionTitle: '💻 Autonomous Flight Software SDE Transition',
+        transitionDescription: 'High demand in Drone Software, Robotics, and Simulation:',
+        steps: [
+          'Master C++ and ROS 2 for Drone autonomous pathfinding.',
+          'Learn Computer Vision (OpenCV) for aerial target detection.',
+          'Prepare DSA for general software engineering interviews.'
+        ]
+      },
+      moocsAndCerts: {
+        moocs: [
+          { name: 'Introduction to Aerodynamics', provider: 'MIT (edX)', tag: 'Core Aero' },
+          { name: 'Flight Dynamics and Controls', provider: 'NPTEL (IIT Kanpur)', tag: 'SpaceTech' }
+        ],
+        certifications: [
+          { name: 'MathWorks Certified Aerospace & Control Systems Associate', issuer: 'MathWorks' },
+          { name: 'CATIA Certified Aerospace Structural Specialist', issuer: 'Dassault Systèmes' }
+        ]
+      },
+      topCompanies: ['ISRO', 'DRDO', 'Boeing', 'Airbus', 'Skyroot Aerospace', 'Agnikul Cosmos', 'Lockheed Martin', 'HAL'],
+      codeSample: {
+        title: 'Python: Orbital Speed & Escape Velocity Calculation',
+        language: 'python',
+        code: `import math
+
+G = 6.67430e-11; M_earth = 5.972e24; R_earth = 6371000
+altitude = 400000 # 400 km ISS orbit
+r = R_earth + altitude
+v_orbital = math.sqrt((G * M_earth) / r)
+print(f"ISS Orbital Velocity: {v_orbital / 1000.0:.2f} km/s (~27,600 km/h)")`
       }
     },
     {
       id: 'civil',
-      name: 'Civil & Structural Engineering (CIVIL)',
-      category: 'core_eng',
-      icon: '🏗️',
-      color: '#a855f7',
-      accentBg: 'rgba(168, 85, 247, 0.12)',
-      welcomeTitle: '🏗️ Welcome to Smart Cities, BIM Automation & Spatial Tech!',
-      welcomeMessage: 'Civil Engineering in the 21st century revolves around Building Information Modeling (BIM), Geographic Information Systems (GIS), structural automation scripts, and smart infrastructure sensor monitoring.',
-      difficulty: 'Moderate (Structural Math & Visual Modeling)',
-      placementDemand: '⭐⭐⭐ (Infrastructure Boom, BIM Tech & IT Transition)',
-      coreFocus: 'Structural Analysis, BIM Automation (Revit/Dynamo), GIS Spatial Analysis, Smart City Sensors, Geotechnical Optimization.',
-      primaryLang: {
-        name: 'Python',
-        badge: 'Must Learn (1st & 2nd Year)',
-        reason: 'Automates structural load calculations, GIS spatial mapping (QGIS/ArcGIS Python plugins), environmental modeling, and automated site data analysis.'
-      },
-      secondaryLang: {
-        name: 'C# (.NET) & SQL',
-        badge: 'Highly Recommended (2nd & 3rd Year)',
-        reason: 'C# is the native language for building Autodesk Revit and AutoCAD plugins (BIM Automation). SQL is critical for managing urban planning and GIS databases.'
-      },
-      domainTools: [
-        'Dynamo & Grasshopper (Visual Parametric Scripting)',
-        'Autodesk Revit API & AutoCAD .NET / AutoLISP',
-        'QGIS / ArcGIS Python API (GeoPandas, Shapely)',
-        'ETABS / STAAD.Pro (Structural Analysis API)'
-      ],
-      coreRoadmap: [
-        { year: '1st Year (Freshman)', focus: 'Python Programming, Engineering Graphics, AutoCAD basics, Math' },
-        { year: '2nd Year (Sophomore)', focus: 'Structural Analysis, Python for GeoPandas/GIS, SQL databases, Dynamo visual scripting' },
-        { year: '3rd Year (Junior)', focus: 'BIM Automation with C# Revit API, STAAD.Pro/ETABS structural scripting, Green building project' },
-        { year: '4th Year (Senior)', focus: 'Core Placements (L&T, Afcons, Atkins, Bentley Systems) OR Software IT roles' }
-      ],
-      dualTrack: {
-        hasTransition: true,
-        coreTitle: '🛠️ Core BIM & Structural Tech Route (Smart Infrastructure & GIS)',
-        coreDescription: 'Master BIM Modeling, Computational Structural Design, GIS mapping, and infrastructure project management.',
-        transitionTitle: '💻 Software / IT SDE Transition Route',
-        transitionDescription: 'Roadmap for Civil engineering students looking to switch to IT/Software jobs:',
-        steps: [
-          'Learn Java or Python + Data Structures & Algorithms (DSA).',
-          'Practice basic-to-medium problems on LeetCode / GeeksforGeeks.',
-          'Learn Full-Stack Web Development (HTML, CSS, JavaScript, React) or SQL Database Engineering.',
-          'Build an interactive Web GIS or Real Estate mapping web app as your capstone project.'
-        ]
-      },
-      moocsAndCerts: {
-        moocs: [
-          { name: 'BIM: From Sketch to Digital Twin (Revit & Dynamo)', provider: 'ETH Zurich (edX)', link: 'https://edx.org', tag: 'Top BIM Course' },
-          { name: 'Spatial Data Science and Applications (GIS & Python)', provider: 'Yonsei University (Coursera)', link: 'https://coursera.org', tag: 'GIS Specialization' },
-          { name: 'Advanced Concrete Technology & Structural Analysis', provider: 'NPTEL (IIT Madras)', link: 'https://nptel.ac.in', tag: 'Core Structural' },
-          { name: 'Building Information Modeling with Revit API', provider: 'Udemy', link: 'https://udemy.com', tag: 'Revit C# Coding' }
-        ],
-        certifications: [
-          { name: 'Autodesk Certified Professional: Revit for Structural / Architectural Design', issuer: 'Autodesk', value: 'Global BIM Standard' },
-          { name: 'Bentley Systems Structural Certification (STAAD.Pro)', issuer: 'Bentley', value: 'High in Core' },
-          { name: 'Esri Technical Certification (ArcGIS / Spatial)', issuer: 'Esri GIS', value: 'Top for GIS/Urban' }
-        ],
-        challenges: [
-          { name: 'Kaggle Geospatial Analytics Datasets', type: 'Satellite & GIS Python Analysis', icon: '🗺️', url: 'https://kaggle.com' },
-          { name: 'LeetCode (Python/Java DSA for IT)', type: 'DSA Problem Solving', icon: '🔥', url: 'https://leetcode.com' },
-          { name: 'HackerRank SQL Challenges', type: 'Database Query Mastery', icon: '💾', url: 'https://hackerrank.com' },
-          { name: 'CodeChef Beginners Track', type: 'Logic & Algorithm Speed', icon: '⭐', url: 'https://codechef.com' }
-        ]
-      },
-      topCompanies: ['L&T Construction', 'Atkins (SNC-Lavalin)', 'Bentley Systems', 'Afcons', 'AECOM', 'Jacobs', 'Tata Projects'],
-      codeSample: {
-        title: 'Python: Haversine Formula for GIS GPS Distance Mapping',
-        language: 'python',
-        code: `# Civil & GIS Engineering: GPS Distance Calculation between Construction Sites
-import math
-
-def haversine_distance_km(lat1, lon1, lat2, lon2):
-    """
-    Calculates great-circle distance between two GPS coordinates on Earth
-    """
-    R = 6371.0  # Earth radius in kilometers
-    dLat = math.radians(lat2 - lat1)
-    dLon = math.radians(lon2 - lon1)
-    
-    a = math.sin(dLat / 2)**2 + math.cos(math.radians(lat1)) * math.cos(math.radians(lat2)) * math.sin(dLon / 2)**2
-    c = 2 * math.atan2(math.sqrt(a), math.sqrt(1 - a))
-    
-    return R * c
-
-# Site A (Delhi) to Site B (Noida Metro Project)
-dist = haversine_distance_km(28.6139, 77.2090, 28.5355, 77.3910)
-print(f"Geodesic Distance between Construction Sites: {dist:.2f} km")`
-      }
-    },
-    {
-      id: 'aids',
-      name: 'AI & Data Science (AIDS / AIML)',
-      category: 'ai_cyber',
-      icon: '🤖',
-      color: '#06b6d4',
-      accentBg: 'rgba(6, 182, 212, 0.12)',
-      welcomeTitle: '🧠 Welcome to Artificial Intelligence, Machine Learning & Big Data!',
-      welcomeMessage: 'As an AI & Data Science engineer, you are shaping the future of intelligent systems, neural networks, Generative AI (LLMs), Computer Vision, and Predictive Analytics.',
-      difficulty: 'High in Math, Statistics & Matrix Computing',
-      placementDemand: '⭐⭐⭐⭐⭐ (Exploding Market for AI & Data Engineers)',
-      coreFocus: 'Machine Learning, Deep Learning (PyTorch), Natural Language Processing (NLP), Large Language Models (LLMs), Big Data Pipelines, Vector DBs.',
-      primaryLang: {
-        name: 'Python',
-        badge: 'Must Learn (1st & 2nd Year)',
-        reason: 'The uncontested global king of AI, Machine Learning, Data Science, and Deep Learning with PyTorch, TensorFlow, Pandas, and NumPy.'
-      },
-      secondaryLang: {
-        name: 'SQL, R & C++',
-        badge: 'Highly Recommended (2nd & 3rd Year)',
-        reason: 'SQL is mandatory for data querying from warehouses (Snowflake, BigQuery). C++ is essential for low-latency AI model inference, CUDA GPU programming, and TensorRT optimization.'
-      },
-      domainTools: [
-        'PyTorch & Hugging Face (Deep Learning & Transformers)',
-        'Pandas, NumPy, Scikit-Learn (Data Wrangling & ML)',
-        'Jupyter Lab, MLflow, LangChain / LlamaIndex (GenAI)',
-        'Vector Databases (Chroma, Pinecone, Milvus)'
-      ],
-      coreRoadmap: [
-        { year: '1st Year (Freshman)', focus: 'Python Mastery, Linear Algebra, Probability & Statistics, Git, Jupyter' },
-        { year: '2nd Year (Sophomore)', focus: 'Data Wrangling (Pandas/NumPy), SQL, Classical ML (Scikit-Learn), DSA in Python/C++' },
-        { year: '3rd Year (Junior)', focus: 'Deep Learning (PyTorch), NLP & Computer Vision, Generative AI (LLM fine-tuning, RAG)' },
-        { year: '4th Year (Senior)', focus: 'Kaggle Competitions (Expert/Master), Research Paper implementation, AI Placements' }
-      ],
-      dualTrack: {
-        hasTransition: false,
-        coreTitle: 'Direct AI / ML Engineer & Data Scientist Track',
-        coreDescription: 'Standard career track for Machine Learning Engineers, Data Analysts, MLOps Engineers, and GenAI specialists.',
-        steps: [
-          'Master Python programming and mathematical foundations (Calculus, Linear Algebra, Probability).',
-          'Participate actively in Kaggle competitions to build proven problem-solving credentials.',
-          'Build end-to-end AI applications (e.g. RAG Q&A chatbot, Computer Vision Object Detector) deployed on Hugging Face or Streamlit Cloud.',
-          'Learn basic DSA in Python/C++ for company technical screening rounds.'
-        ]
-      },
-      moocsAndCerts: {
-        moocs: [
-          { name: 'Machine Learning Specialization', provider: 'Andrew Ng / DeepLearning.AI (Coursera)', link: 'https://coursera.org', tag: 'Gold Standard ML' },
-          { name: 'Deep Learning Specialization (Neural Networks & PyTorch)', provider: 'DeepLearning.AI (Coursera)', link: 'https://coursera.org', tag: 'Deep Learning Core' },
-          { name: 'Applied Data Science with Python', provider: 'University of Michigan (Coursera)', link: 'https://coursera.org', tag: 'Data Science' },
-          { name: 'Data Mining & Machine Learning', provider: 'NPTEL (IIT Kharagpur)', link: 'https://nptel.ac.in', tag: 'College Credit' }
-        ],
-        certifications: [
-          { name: 'TensorFlow Developer Certificate / PyTorch Deep Learning Certificate', issuer: 'Google / Linux Foundation', value: 'High for CV/NLP' },
-          { name: 'AWS Certified Machine Learning - Specialty', issuer: 'Amazon Web Services', value: 'Top Industry Value' },
-          { name: 'Databricks Certified Machine Learning Associate / Professional', issuer: 'Databricks', value: 'High in Big Data' }
-        ],
-        challenges: [
-          { name: 'Kaggle (Competitions, Notebooks & Grandmaster Tracks)', type: 'Data Science Competitions', icon: '🏆', url: 'https://kaggle.com' },
-          { name: 'DrivenData (Social Impact & Machine Learning Challenges)', type: 'Real-world ML Contests', icon: '🌍', url: 'https://drivendata.org' },
-          { name: 'Hugging Face Spaces (Build & Host AI Demos)', type: 'LLM & GenAI Projects', icon: '🤗', url: 'https://huggingface.co' },
-          { name: 'LeetCode (Python DSA & SQL 50 Badge)', type: 'Coding & SQL Interviews', icon: '🔥', url: 'https://leetcode.com' }
-        ]
-      },
-      topCompanies: ['OpenAI', 'Google DeepMind', 'Microsoft', 'NVIDIA', 'Amazon AWS', 'Fractal Analytics', 'Tiger Analytics', 'Meta'],
-      codeSample: {
-        title: 'Python: Neural Network Forward Pass (PyTorch)',
-        language: 'python',
-        code: `# PyTorch: Simple Feedforward Neural Network for Classification
-import torch
-import torch.nn as nn
-
-class ClassifierNN(nn.Module):
-    def __init__(self, input_dim, hidden_dim, output_dim):
-        super(ClassifierNN, self).__init__()
-        self.layer1 = nn.Linear(input_dim, hidden_dim)
-        self.relu = nn.ReLU()
-        self.layer2 = nn.Linear(hidden_dim, output_dim)
-    
-    def forward(self, x):
-        out = self.layer1(x)
-        out = self.relu(out)
-        out = self.layer2(out)
-        return out
-
-# Initialize model with 10 features, 32 hidden neurons, 2 output classes
-model = ClassifierNN(input_dim=10, hidden_dim=32, output_dim=2)
-dummy_input = torch.randn(4, 10) # Batch size of 4
-output = model(dummy_input)
-print("Model Prediction Logits Shape:", output.shape)`
-      }
-    },
-    {
-      id: 'cyber',
-      name: 'Cyber Security & Forensics (CSE-CY / CYS)',
-      category: 'ai_cyber',
-      icon: '🛡️',
-      color: '#e11d48',
-      accentBg: 'rgba(225, 29, 72, 0.12)',
-      welcomeTitle: '🔒 Welcome to Ethical Hacking, Defense & Cryptography!',
-      welcomeMessage: 'Cyber Security engineers protect digital infrastructure from sophisticated attacks. You audit systems, find zero-day vulnerabilities, reverse engineer malware, and build secure network defenses.',
-      difficulty: 'High in System Internals, OS & Networking',
-      placementDemand: '⭐⭐⭐⭐⭐ (Critical shortage of qualified security specialists)',
-      coreFocus: 'Penetration Testing, Ethical Hacking, Network Security, Reverse Engineering, Cryptography, SOC Analysis, Cloud Security.',
-      primaryLang: {
-        name: 'Python',
-        badge: 'Must Learn (1st & 2nd Year)',
-        reason: 'The ultimate weapon for building penetration testing scripts, packet sniffing tools (Scapy), automated exploit scripts, and security log analyzers.'
-      },
-      secondaryLang: {
-        name: 'C / C++, Bash & Go',
-        badge: 'Highly Recommended (2nd & 3rd Year)',
-        reason: 'C/C++ for memory corruption exploits (Buffer Overflows), kernel exploits, and reverse engineering. Go for writing fast, concurrent network scanning and security tools.'
-      },
-      domainTools: [
-        'Wireshark, Nmap, Burp Suite (Network & Web Pentesting)',
-        'Ghidra / IDA Pro / x64dbg (Binary Reverse Engineering)',
-        'Metasploit Framework, Kali Linux',
-        'Splunk / Elastic SIEM (SOC Operations)'
-      ],
-      coreRoadmap: [
-        { year: '1st Year (Freshman)', focus: 'Python Scripting, Linux CLI (Ubuntu/Kali), Computer Networking (OSI, TCP/IP)' },
-        { year: '2nd Year (Sophomore)', focus: 'C Programming, Memory Internals (Stack/Heap), Cryptography basics, CTF challenges' },
-        { year: '3rd Year (Junior)', focus: 'Web Security (OWASP Top 10), Reverse Engineering (Ghidra), Bash/Go tools, Bug Bounty' },
-        { year: '4th Year (Senior)', focus: 'Security Analyst / Pentester placements (PwC, EY, CrowdStrike, Cisco) OR SDE security roles' }
-      ],
-      dualTrack: {
-        hasTransition: false,
-        coreTitle: 'Direct Cyber Security & Ethical Hacking Track',
-        coreDescription: 'Standard career track for SOC Analysts, Penetration Testers, Security Engineers, and Vulnerability Researchers.',
-        steps: [
-          'Master Linux terminal operations, Bash scripting, and Python network programming.',
-          'Play Catch-the-Flag (CTF) challenges on TryHackMe, Hack The Box, and PicoCTF.',
-          'Master OWASP Top 10 vulnerabilities (SQLi, XSS, CSRF, IDOR) on PortSwigger Web Security Academy.',
-          'Build custom tools (e.g. Port Scanner, Keylogger detector, Log anomaly detector in Python).'
-        ]
-      },
-      moocsAndCerts: {
-        moocs: [
-          { name: 'Introduction to Cyber Security Specialization', provider: 'NYU (Coursera)', link: 'https://coursera.org', tag: 'Core Fundamentals' },
-          { name: 'Ethical Hacking & Penetration Testing', provider: 'NPTEL (IIT Kharagpur)', link: 'https://nptel.ac.in', tag: 'Academic Credit' },
-          { name: 'PortSwigger Web Security Academy', provider: 'PortSwigger (Free)', link: 'https://portswigger.net/web-security', tag: 'Top Web Security' },
-          { name: 'Practical Ethical Hacking (TCM Security)', provider: 'TCM Academy', link: 'https://tcm-sec.com', tag: 'Hands-on Pentesting' }
-        ],
-        certifications: [
-          { name: 'CompTIA Security+ (SY0-701)', issuer: 'CompTIA', value: 'Best 1st Industry Cert' },
-          { name: 'Certified Ethical Hacker (CEH) / Practical', issuer: 'EC-Council', value: 'Recognized by HR' },
-          { name: 'eJPT (eLearnSecurity Junior Penetration Tester)', issuer: 'INE Security', value: 'Hands-on Gold Standard' },
-          { name: 'Cisco Certified CyberOps Associate', issuer: 'Cisco', value: 'High for SOC roles' }
-        ],
-        challenges: [
-          { name: 'TryHackMe (Guided Security Rooms & Paths)', type: 'Hands-on Pentesting Labs', icon: '🎯', url: 'https://tryhackme.com' },
-          { name: 'Hack The Box (HTB Real Machine Exploits)', type: 'Advanced CTF & Pwning', icon: '📦', url: 'https://hackthebox.com' },
-          { name: 'PicoCTF (Beginner friendly CTF contests)', type: 'Student CTF Challenges', icon: '🚩', url: 'https://picoctf.org' },
-          { name: 'OverTheWire (Bandit Linux Wargame)', type: 'Linux CLI & Security Basics', icon: '💻', url: 'https://overthewire.org' }
-        ]
-      },
-      topCompanies: ['CrowdStrike', 'Palo Alto Networks', 'Cisco Security', 'FireEye / Mandiant', 'PwC', 'Deloitte', 'Qualys', 'Kroll'],
-      codeSample: {
-        title: 'Python: Simple TCP Port Scanner Script',
-        language: 'python',
-        code: `# Python Cyber Security: Multi-Port Scanner for Security Auditing
-import socket
-
-def scan_port(host, port):
-    """
-    Attempts TCP 3-way handshake on target host and port
-    """
-    s = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
-    s.settimeout(0.5) # Short timeout for speed
-    try:
-        result = s.connect_ex((host, port))
-        if result == 0:
-            print(f"[+] Port {port:5d} is OPEN on {host}")
-        s.close()
-    except Exception as e:
-        pass
-
-target_host = "127.0.0.1"
-common_ports = [21, 22, 80, 443, 3306, 8080]
-print(f"Scanning target {target_host} for open ports...")
-for p in common_ports:
-    scan_port(target_host, p)`
-      }
-    },
-    {
-      id: 'chem_bio',
-      name: 'Chemical & Biotechnology Engineering (CHEM / BT / BME)',
+      shortName: 'Civil & Infra',
+      name: 'Civil & Structural Engineering (BIM & GIS)',
       category: 'specialized',
-      icon: '🧬',
+      icon: '🏗️',
       color: '#84cc16',
       accentBg: 'rgba(132, 204, 22, 0.12)',
-      welcomeTitle: '🧪 Welcome to Computational Biology, Drug AI & Process Simulation!',
-      welcomeMessage: 'Biotech and Chemical engineers use computational tools to model chemical reactions, analyze genomic sequences, simulate industrial reactors, and discover new pharmaceuticals using AI.',
-      difficulty: 'Moderate (Organic Chemistry, Biology & Data)',
-      placementDemand: '⭐⭐⭐ (Pharma, Bio-Tech, Process Engineering & High IT Transition)',
-      coreFocus: 'Bioinformatics, Computational Drug Discovery, Chemical Process Simulation, Genomic Sequence Analysis, Molecular Dynamics.',
+      welcomeTitle: '🌍 Welcome to Smart Infrastructure, BIM Modeling & Web-GIS!',
+      welcomeMessage: 'Modern Civil Engineers design sustainable skyscrapers, smart transportation networks, and geospatial systems using BIM, GIS mapping, and Python structural automation.',
+      difficulty: 'Low-Moderate in Coding (Math & Spatial Analysis)',
+      placementDemand: '⭐⭐⭐ (Government Infrastructure, Smart Cities, BIM & IT: ₹5 - 18 LPA)',
+      coreFocus: 'Building Information Modeling (BIM), GIS Spatial Analytics, Structural Analysis (STAAD Pro), Geotechnical Engineering, Smart Transport.',
       primaryLang: {
-        name: 'Python',
+        name: 'Python & SQL',
         badge: 'Must Learn (1st & 2nd Year)',
-        reason: 'Python is the undisputed king of Bioinformatics (Biopython), Cheminformatics (RDKit), molecular simulations, and biological machine learning.'
+        reason: 'Python automates Revit/AutoCAD designs (Dynamo scripting), structural calculations, and analyzes Geographic Information Systems (GIS) data.'
       },
       secondaryLang: {
-        name: 'R & MATLAB / C++',
-        badge: 'Highly Recommended (2nd & 3rd Year)',
-        reason: 'R is the global standard for statistical genomics, microarray data, and clinical trial biostatistics. C++ for high-performance molecular dynamics solvers (GROMACS, LAMMPS).'
+        name: 'JavaScript (Web-GIS)',
+        badge: 'Recommended (3rd Year)',
+        reason: 'JavaScript (Leaflet.js, Mapbox, Cesium 3D) powers Interactive Web-GIS maps for municipal smart city dashboards and traffic monitoring.'
       },
-      domainTools: [
-        'Biopython & RDKit (Cheminformatics & DNA Analysis)',
-        'Aspen Plus / DWSIM (Chemical Process Simulation)',
-        'PyMOL & AlphaFold (Protein Structure Modeling)',
-        'GROMACS / AutoDock (Molecular Docking)'
-      ],
+      domainTools: ['Autodesk AutoCAD & Revit', 'STAAD.Pro / ETABS', 'QGIS / ArcGIS', 'Dynamo Python for BIM'],
       coreRoadmap: [
-        { year: '1st Year (Freshman)', focus: 'Python Basics, Chemistry/Biology Fundamentals, Biopython introduction, Git' },
-        { year: '2nd Year (Sophomore)', focus: 'R for Biostatistics, Sequence Alignment algorithms (BLAST logic in Python), SQL' },
-        { year: '3rd Year (Junior)', focus: 'Computational Drug Discovery (RDKit / AutoDock), Aspen Plus process simulation' },
-        { year: '4th Year (Senior)', focus: 'Core Pharma/Biotech Placements (Biocon, Dr. Reddy, Reliance Chem) OR Software IT jobs' }
+        { year: '1st Year (Freshman)', focus: 'AutoCAD Basics, Python fundamentals, Surveying, Engineering Mechanics' },
+        { year: '2nd Year (Sophomore)', focus: 'STAAD.Pro structural modeling, Concrete Technology, GIS basics in QGIS' },
+        { year: '3rd Year (Junior)', focus: 'Revit BIM Modeling + Dynamo Python automation, Geotechnical analysis' },
+        { year: '4th Year (Senior)', focus: 'Core Placements (L&T, Shapoorji, NHAI) OR Web-GIS / IT Software jobs' }
       ],
       dualTrack: {
         hasTransition: true,
-        coreTitle: '🛠️ Core Bioinformatics & Pharma Tech Route',
-        coreDescription: 'Specialize in Drug Discovery, Genomics, Bioinformatics, and Chemical Process Modeling.',
-        transitionTitle: '💻 Software / Data Science Transition Route',
-        transitionDescription: 'Roadmap for Biotech/Chem students targeting IT, Data Analyst, and Software jobs:',
+        coreTitle: '🏗️ Core Civil, BIM & Smart Infrastructure Route',
+        coreDescription: 'Specialize in BIM Modeling (Revit), Structural Analysis (ETABS), and Geospatial Tech.',
+        transitionTitle: '💻 Non-CS to IT & Geospatial Data Analytics Route',
+        transitionDescription: 'Transitioning to Data Analytics, GIS Software, or General IT:',
         steps: [
-          'Leverage your Python skills to master Data Analysis (Pandas, NumPy, Matplotlib) and SQL.',
-          'Learn basic DSA (Arrays, Strings, HashMaps, Trees) in Python or Java on LeetCode.',
-          'Build 1 Data Science / Machine Learning capstone project (e.g. Disease Prediction Model or Clinical Data Dashboard).',
-          'Apply for Data Analyst, Business Analyst, and Junior Software Engineer roles.'
+          'Master Python libraries (Pandas, GeoPandas) and SQL for relational data queries.',
+          'Learn Web-GIS with JavaScript (Mapbox API) for city planning dashboards.',
+          'Prepare DSA in Python or Java for IT recruitment drives.'
         ]
       },
       moocsAndCerts: {
         moocs: [
-          { name: 'Bioinformatics Specialization (Genomic Data Science)', provider: 'UC San Diego (Coursera)', link: 'https://coursera.org', tag: 'Top Bioinformatics' },
-          { name: 'Computational Systems Biology', provider: 'NPTEL (IIT Madras)', link: 'https://nptel.ac.in', tag: 'Core Biotechnology' },
-          { name: 'Chemical Process Simulation with DWSIM/Aspen', provider: 'Udemy', link: 'https://udemy.com', tag: 'Process Engineering' },
-          { name: 'Genomic Data Science with Python & R', provider: 'Johns Hopkins (Coursera)', link: 'https://coursera.org', tag: 'Genomics' }
+          { name: 'BIM Fundamentals for Engineers', provider: 'National Taiwan University (Coursera)', tag: 'Core BIM' },
+          { name: 'Geographic Information Systems (GIS) Specialization', provider: 'UC Davis (Coursera)', tag: 'GIS Analytics' }
         ],
         certifications: [
-          { name: 'SAS Certified Clinical Trials Programmer', issuer: 'SAS Institute', value: 'High in Pharma' },
-          { name: 'Aspen Plus Certified User', issuer: 'AspenTech', value: 'Gold Standard in Chemical' },
-          { name: 'MathWorks Certified MATLAB Associate', issuer: 'MathWorks', value: 'High' }
-        ],
-        challenges: [
-          { name: 'Rosalind (Bioinformatics Coding Challenges)', type: 'DNA & Protein Algorithm Problems', icon: '🧬', url: 'https://rosalind.info' },
-          { name: 'Kaggle Healthcare & Molecule Contests', type: 'Drug Discovery & Medical AI', icon: '💊', url: 'https://kaggle.com' },
-          { name: 'LeetCode (Python DSA for IT Placements)', type: 'DSA Problem Solving', icon: '🔥', url: 'https://leetcode.com' },
-          { name: 'HackerRank Python Track', type: 'Python Logic Practice', icon: '⭐', url: 'https://hackerrank.com' }
+          { name: 'Autodesk Certified Professional: Revit for Structural Design', issuer: 'Autodesk' },
+          { name: 'Bentley STAAD.Pro Certified Professional', issuer: 'Bentley Systems' }
         ]
       },
-      topCompanies: ['Biocon', 'Dr. Reddy’s Labs', 'Reliance Life Sciences', 'Pfizer', 'Schrödinger', 'Syngene', 'Thermo Fisher'],
+      topCompanies: ['Larsen & Toubro (L&T ECC)', 'Shapoorji Pallonji', 'Tata Projects', 'AECOM', 'Atkins', 'Jacobs', 'Arcadis'],
       codeSample: {
-        title: 'Python: DNA Sequence GC-Content & Reverse Complement',
+        title: 'Python: Flood Elevation Risk Analyzer for Smart City',
         language: 'python',
-        code: `# Biotechnology: DNA Sequence Analysis in Python
-def analyze_dna(sequence):
-    """
-    Calculates GC-Content % and finds the Reverse Complement of a DNA strand
-    """
-    seq = sequence.upper()
-    gc_count = seq.count('G') + seq.count('C')
-    gc_percentage = (gc_count / len(seq)) * 100.0
-    
-    complement = {'A': 'T', 'T': 'A', 'C': 'G', 'G': 'C'}
-    reverse_comp = "".join(complement.get(base, 'N') for base in reversed(seq))
-    
-    return round(gc_percentage, 2), reverse_comp
-
-dna_strand = "ATGCGATCGATCGATCGAATCGCTA"
-gc_pct, rev_comp = analyze_dna(dna_strand)
-print(f"DNA Strand: {dna_strand}")
-print(f"GC-Content: {gc_pct}%")
-print(f"Reverse Complement: {rev_comp}")`
+        code: `elevations = {"Plot_A": 12.5, "Plot_B": 4.2, "Plot_C": 8.1}
+FLOOD_THRESHOLD = 5.0
+for p, elev in elevations.items():
+    status = "⚠️ FLOOD RISK" if elev < FLOOD_THRESHOLD else "✅ SAFE"
+    print(f"{p} ({elev}m): {status}")`
       }
     },
     {
-      id: 'aero_auto',
-      name: 'Aerospace & Automobile Engineering (AERO / AUTO)',
+      id: 'biotech',
+      shortName: 'Biotech & Biomedical',
+      name: 'Biotechnology & Biomedical Engineering',
       category: 'specialized',
-      icon: '🚀',
-      color: '#f97316',
-      accentBg: 'rgba(249, 115, 22, 0.12)',
-      welcomeTitle: '🚀 Welcome to Flight Dynamics, Autonomous Driving & Avionics!',
-      welcomeMessage: 'Aerospace and Automobile engineers design supersonic aircraft, autonomous vehicles, rockets, flight telemetry computers, and smart automotive ECUs.',
-      difficulty: 'High in Aerodynamics, Dynamics & Control Math',
-      placementDemand: '⭐⭐⭐⭐ (SpaceTech, Defense, EV Automotive Boom & Software crossover)',
-      coreFocus: 'Flight Control Dynamics, Avionics Software, Autonomous Vehicle Navigation, CFD Aerodynamics, Telemetry & Sensor Fusion.',
+      icon: '🧬',
+      color: '#a855f7',
+      accentBg: 'rgba(168, 85, 247, 0.12)',
+      welcomeTitle: '🧪 Welcome to Bioinformatics, Genomic Data Science & AlphaFold!',
+      welcomeMessage: 'Biotech and Biomedical engineers use computational biology, protein 3D folding simulations (AlphaFold), DNA sequence analysis, and medical imaging to design targeted therapies and medical devices.',
+      difficulty: 'Low-Moderate in Coding (Biology/Genetics + Data Science)',
+      placementDemand: '⭐⭐⭐⭐ (Pharma Giants, BioTech R&D, HealthTech & IT: ₹6 - 22 LPA)',
+      coreFocus: 'Bioinformatics, Genomics Data Science, Molecular Dynamics (PyMOL), Next-Gen Sequencing (NGS), Biomedical Device Electronics.',
       primaryLang: {
-        name: 'C++ & Python',
+        name: 'Python & R',
         badge: 'Must Learn (1st & 2nd Year)',
-        reason: 'C++ is mandatory for hard real-time flight control computers, autonomous vehicle sensor fusion, and ROS 2. Python for aerodynamics data, flight telemetry, and CFD scripts.'
+        reason: 'Python (Biopython, RDKit) and R (Bioconductor) are the worldwide standards for DNA sequence analysis, drug discovery, and clinical trial statistics.'
       },
       secondaryLang: {
-        name: 'MATLAB / Simulink & C',
-        badge: 'Highly Recommended (2nd & 3rd Year)',
-        reason: 'MATLAB/Simulink is the worldwide aerospace standard for auto-generating DO-178C flight control code and vehicle suspension/traction modeling.'
+        name: 'C++ or MATLAB',
+        badge: 'Recommended (3rd Year)',
+        reason: 'C++ for high-performance molecular dynamics simulations (GROMACS). MATLAB for biomedical ECG/EEG signal processing.'
       },
-      domainTools: [
-        'MATLAB / Simulink (Aerospace Blockset)',
-        'ROS 2 (Robot Operating System / Autonomous Drones)',
-        'Ansys Fluent / OpenFOAM (CFD Aerodynamic Simulation)',
-        'CANape / CANoe (Automotive ECU Communication)'
-      ],
+      domainTools: ['Biopython & RDKit', 'PyMOL & ChimeraX', 'NCBI BLAST & GROMACS', 'R Bioconductor'],
       coreRoadmap: [
-        { year: '1st Year (Freshman)', focus: 'C/C++ Programming, Physics of Flight/Automotive, Engineering Math, Git' },
-        { year: '2nd Year (Sophomore)', focus: 'MATLAB & Simulink for Dynamics, Python for Telemetry analysis, DSA basics' },
-        { year: '3rd Year (Junior)', focus: 'Flight Control / Autonomous driving simulation in ROS, Ansys CFD aerodynamics project' },
-        { year: '4th Year (Senior)', focus: 'Core Placements (ISRO, DRDO, Boeing, Airbus, Tesla, Mahindra) OR Software roles' }
+        { year: '1st Year (Freshman)', focus: 'Python Programming, Organic Chemistry / Cell Biology, Math, Biopython basics' },
+        { year: '2nd Year (Sophomore)', focus: 'Bioinformatics algorithms, R programming, Genomic sequencing methods' },
+        { year: '3rd Year (Junior)', focus: 'Molecular docking simulations (PyMOL), Machine Learning for Drug Discovery' },
+        { year: '4th Year (Senior)', focus: 'Core Pharma/Biotech Placements (Biocon, Pfizer, Dr. Reddy\'s) OR HealthTech IT' }
       ],
       dualTrack: {
         hasTransition: true,
-        coreTitle: '🛠️ Core Aerospace & Autonomous Vehicle Route',
-        coreDescription: 'Focus on Flight Dynamics, Avionics, Drone Autopilot (PX4), and Automotive ECUs.',
-        transitionTitle: '💻 Software / IT SDE Transition Route',
-        transitionDescription: 'Roadmap for Aero/Auto students targeting top Software Engineering jobs:',
+        coreTitle: '🧪 Core Biotech, Genomics & Pharma Track',
+        coreDescription: 'Specialize in Drug Discovery, Genomics Data Science, or Bio-Instrumentation.',
+        transitionTitle: '💻 Non-CS to Data Science & HealthTech IT',
+        transitionDescription: 'Strong statistical background makes transitioning to Data Science natural:',
         steps: [
-          'Choose C++ as your primary coding language (you already use it for physics & simulations).',
-          'Practice 200+ DSA questions on LeetCode (Focus on Graphs, BFS/DFS, Trees, Hashing).',
-          'Learn Database Management Systems (SQL) & Operating Systems basics.',
-          'Build an interactive 3D Vehicle Telemetry Dashboard using React, Node.js & Three.js.'
+          'Master Python libraries (Pandas, Scikit-Learn) for predictive analytics.',
+          'Learn SQL to manage large healthcare and clinical trial datasets.',
+          'Target HealthTech and Life Sciences software companies (IQVIA, Optum, Cerner).'
         ]
       },
       moocsAndCerts: {
         moocs: [
-          { name: 'Self-Driving Cars Specialization', provider: 'University of Toronto (Coursera)', link: 'https://coursera.org', tag: 'Top Autonomous Vehicle' },
-          { name: 'Flight Dynamics & Control', provider: 'NPTEL (IIT Kanpur)', link: 'https://nptel.ac.in', tag: 'Core Aerospace' },
-          { name: 'Introduction to Autonomous Drone Navigation with ROS', provider: 'edX', link: 'https://edx.org', tag: 'Drone Robotics' },
-          { name: 'Automotive Embedded Systems & CAN Bus', provider: 'Udemy', link: 'https://udemy.com', tag: 'Automotive ECU' }
+          { name: 'Bioinformatics Specialization (Genomic Data Science)', provider: 'UC San Diego (Coursera)', tag: 'Core Bioinformatics' },
+          { name: 'Computational Systems Biology', provider: 'NPTEL (IIT Madras)', tag: 'Systems Biology' }
         ],
         certifications: [
-          { name: 'MathWorks Certified MATLAB Associate / Professional', issuer: 'MathWorks', value: 'High in Aerospace' },
-          { name: 'Certified SOLIDWORKS Professional (CSWP)', issuer: 'Dassault Systèmes', value: 'High for CAD' },
-          { name: 'Ansys Certified Simulation Professional (CFD)', issuer: 'Ansys', value: 'High in Aerodynamics' }
-        ],
-        challenges: [
-          { name: 'PX4 Autopilot & ArduPilot Open Source Simulators', type: 'Drone & Aircraft Coding', icon: '🛸', url: 'https://px4.io' },
-          { name: 'CARLA Autonomous Driving Simulator', type: 'Self-Driving AI Simulation', icon: '🚗', url: 'https://carla.org' },
-          { name: 'LeetCode (C++ DSA for Placements)', type: 'DSA Coding Practice', icon: '🔥', url: 'https://leetcode.com' },
-          { name: 'Kaggle Space & Flight Datasets', type: 'Telemetry Data Analysis', icon: '🚀', url: 'https://kaggle.com' }
+          { name: 'Bioinformatics Certified Associate', issuer: 'ISCB' },
+          { name: 'Certified Genomics Data Analyst', issuer: 'BioMed Informatics' }
         ]
       },
-      topCompanies: ['ISRO', 'DRDO', 'Boeing', 'Airbus', 'Collins Aerospace', 'Tesla', 'Mahindra Racing', 'Mercedes-Benz R&D'],
+      topCompanies: ['Biocon', 'Dr. Reddy\'s Laboratories', 'Pfizer', 'Novartis', 'Serum Institute', 'IQVIA', 'Schrödinger', 'Optum Health'],
       codeSample: {
-        title: 'Python: Rocket Trajectory & Gravity Turn Calculator',
+        title: 'Python: DNA Sequence GC-Content & RNA Transcription',
         language: 'python',
-        code: `# Aerospace Engineering: Rocket Altitude & Velocity Kinematics
-import math
+        code: `def analyze_dna(seq):
+    seq = seq.upper()
+    gc = (seq.count('G') + seq.count('C')) / len(seq) * 100.0
+    return gc, seq.replace('T', 'U')
 
-def rocket_stage_burn(dry_mass_kg, fuel_mass_kg, thrust_n, burn_time_s, isp_s):
-    """
-    Calculates final velocity (Tsiolkovsky rocket equation) and burn acceleration
-    """
-    g0 = 9.80665  # Earth gravitational acceleration (m/s^2)
-    initial_mass = dry_mass_kg + fuel_mass_kg
-    final_mass = dry_mass_kg
-    
-    # Delta-V formula = Isp * g0 * ln(m0 / mf)
-    delta_v = isp_s * g0 * math.log(initial_mass / final_mass)
-    avg_thrust_acc = (thrust_n / (initial_mass / 2 + final_mass / 2)) - g0
-    
-    return round(delta_v, 2), round(avg_thrust_acc, 2)
+gc_pct, rna = analyze_dna("ATGCGATCGATCGATATAGCGATAGCTAG")
+print(f"GC-Content: {gc_pct:.1f}% | Transcribed RNA: {rna}")`
+      }
+    },
+    {
+      id: 'chemical',
+      shortName: 'Chemical & Petroleum',
+      name: 'Chemical & Petroleum Engineering',
+      category: 'specialized',
+      icon: '🧪',
+      color: '#f43f5e',
+      accentBg: 'rgba(244, 63, 94, 0.12)',
+      welcomeTitle: '⚗️ Welcome to Chemical Process Simulation, Energy & Green Hydrogen!',
+      welcomeMessage: 'Chemical engineers design sustainable mega-refineries, green hydrogen plants, battery chemistries, and drug manufacturing systems using Aspen Plus and Python process optimization.',
+      difficulty: 'Moderate in Coding (High in Thermodynamics & Mass Transfer)',
+      placementDemand: '⭐⭐⭐⭐ (Oil & Gas, Energy, Petrochem & IT: ₹6 - 22 LPA)',
+      coreFocus: 'Process Simulation (Aspen Plus), Reaction Kinetics, Heat & Mass Transfer, Plant Automation, Green Energy / Carbon Capture.',
+      primaryLang: {
+        name: 'Python & MATLAB',
+        badge: 'Must Learn (1st & 2nd Year)',
+        reason: 'Python automates chemical reactor mass balances and Aspen simulations. MATLAB solves differential equations for reaction kinetics.'
+      },
+      secondaryLang: {
+        name: 'C++ or SQL',
+        badge: 'Recommended (3rd Year)',
+        reason: 'SQL for refinery telemetry databases. C++ for high-performance computational chemistry and fluid dynamics.'
+      },
+      domainTools: ['Aspen Plus / Aspen HYSYS', 'MATLAB Chemical Toolbox', 'DWSIM (Open Source Chem Sim)', 'Ansys Fluent CFD'],
+      coreRoadmap: [
+        { year: '1st Year (Freshman)', focus: 'Python Basics, Chemistry, Fluid Flow, Thermodynamics fundamentals' },
+        { year: '2nd Year (Sophomore)', focus: 'Mass Transfer, Heat Transfer, MATLAB Reaction kinetics simulation' },
+        { year: '3rd Year (Junior)', focus: 'Aspen Plus Chemical Plant Simulation, Distillation Column Design, Python optimization' },
+        { year: '4th Year (Senior)', focus: 'Core Energy Placements (Reliance, Shell, ONGC, ExxonMobil) OR Tech switch' }
+      ],
+      dualTrack: {
+        hasTransition: true,
+        coreTitle: '⚗️ Core Process Simulation & Refinery Route',
+        coreDescription: 'Focus on Aspen HYSYS design, reactor scale-up, and refinery operations.',
+        transitionTitle: '💻 Energy Tech & Data Analytics Transition',
+        transitionDescription: 'Strong numerical modeling skills allow easy transition to Tech:',
+        steps: [
+          'Master Python for data analytics and predictive process control.',
+          'Learn SQL and Tableau for energy supply-chain optimization.',
+          'Prepare DSA in Python or Java for software engineering drives.'
+        ]
+      },
+      moocsAndCerts: {
+        moocs: [
+          { name: 'Aspen Plus Chemical Engineering Plant Design', provider: 'Udemy / AspenTech', tag: 'Process Simulation' },
+          { name: 'Chemical Reaction Engineering', provider: 'NPTEL (IIT Bombay)', tag: 'Core Theory' }
+        ],
+        certifications: [
+          { name: 'Certified Aspen Plus Chemical Process Engineer', issuer: 'AspenTech' },
+          { name: 'AIChE Process Safety Certification', issuer: 'American Institute of Chemical Engineers' }
+        ]
+      },
+      topCompanies: ['Reliance Industries', 'Shell', 'ONGC', 'ExxonMobil', 'Schlumberger (SLB)', 'Indian Oil (IOCL)', 'BASF', 'Linde'],
+      codeSample: {
+        title: 'Python: First-Order Reaction Kinetics Concentration Decay',
+        language: 'python',
+        code: `import numpy as np
 
-# Small sounding rocket stage calculation
-dv, acc = rocket_stage_burn(dry_mass_kg=50.0, fuel_mass_kg=150.0, thrust_n=4000.0, burn_time_s=12.0, isp_s=250.0)
-print(f"Calculated Stage Delta-V: {dv} m/s")
-print(f"Estimated Net Acceleration: {acc} m/s^2 (~{acc/9.81:.1f} Gs)")`
+k = 0.05 # Rate constant (1/min)
+C0 = 10.0 # Initial concentration (mol/L)
+time_mins = np.array([0, 10, 20, 30, 60])
+C_t = C0 * np.exp(-k * time_mins)
+
+print("=== REACTION CONCENTRATION OVER TIME ===")
+for t, c in zip(time_mins, C_t):
+    print(f"Time: {t:2d} min -> Concentration: {c:.2f} mol/L")`
+      }
+    },
+    {
+      id: 'metallurgy',
+      shortName: 'Materials & Metallurgy',
+      name: 'Materials Science & Metallurgy Engineering',
+      category: 'specialized',
+      icon: '⛏️',
+      color: '#eab308',
+      accentBg: 'rgba(234, 179, 8, 0.12)',
+      welcomeTitle: '🔬 Welcome to Superalloys, Nanomaterials & Semiconductor Materials!',
+      welcomeMessage: 'Materials engineers develop high-temperature turbine alloys, lithium-ion battery electrodes, silicon crystal wafers for chip manufacturing, and carbon-fiber composites.',
+      difficulty: 'Low-Moderate in Coding (High in Physics & Metallurgy)',
+      placementDemand: '⭐⭐⭐⭐ (Steel Giants, Semiconductor Fabs, EV Battery & IT: ₹5.5 - 20 LPA)',
+      coreFocus: 'Crystallography, Semiconductor Silicon Materials, Phase Diagrams (Thermo-Calc), Nanomaterials, Corrosion & Failure Analysis.',
+      primaryLang: {
+        name: 'Python & MATLAB',
+        badge: 'Must Learn (1st & 2nd Year)',
+        reason: 'Python (pymatgen, ASE - Atomic Simulation Environment) analyzes crystal lattices and materials property databases. MATLAB models phase equilibria.'
+      },
+      secondaryLang: {
+        name: 'C++ or SQL',
+        badge: 'Recommended (3rd Year)',
+        reason: 'C++ for molecular dynamics atomistic modeling (LAMMPS). SQL for quality inspection databases in steel and semiconductor plants.'
+      },
+      domainTools: ['Thermo-Calc & DICTRA', 'pymatgen (Python Materials Gen)', 'VASP & LAMMPS', 'ImageJ (Microstructure)'],
+      coreRoadmap: [
+        { year: '1st Year (Freshman)', focus: 'Python Basics, Chemistry, Physics of Solids, Engineering Math' },
+        { year: '2nd Year (Sophomore)', focus: 'Physical Metallurgy, Crystal Structures, Python pymatgen basics' },
+        { year: '3rd Year (Junior)', focus: 'Thermo-Calc simulation, Semiconductor materials, Failure analysis' },
+        { year: '4th Year (Senior)', focus: 'Core Placements (Tata Steel, JSW, Applied Materials, ISRO) OR IT SDE' }
+      ],
+      dualTrack: {
+        hasTransition: true,
+        coreTitle: '🔬 Core Metallurgy, Semiconductor Fabs & Steel Track',
+        coreDescription: 'Focus on alloy design, semiconductor silicon purification, and failure analysis.',
+        transitionTitle: '💻 Materials Informatics & Tech SDE Transition',
+        transitionDescription: 'Transitioning to Data Science / Materials Informatics:',
+        steps: [
+          'Learn Machine Learning with Python to predict materials properties.',
+          'Master SQL databases and Tableau for supply chain analytics.',
+          'Practice standard LeetCode DSA for software placements.'
+        ]
+      },
+      moocsAndCerts: {
+        moocs: [
+          { name: 'Materials Science: 10 Things Every Engineer Should Know', provider: 'UC Davis (Coursera)', tag: 'Materials Core' },
+          { name: 'Computational Materials Science', provider: 'NPTEL (IIT Madras)', tag: 'Simulation' }
+        ],
+        certifications: [
+          { name: 'Certified Materials Characterization Specialist', issuer: 'ASM International' },
+          { name: 'Six Sigma Green Belt in Manufacturing', issuer: 'ASQ' }
+        ]
+      },
+      topCompanies: ['Tata Steel', 'JSW Steel', 'Applied Materials', 'Vedanta', 'ISRO Materials Division', 'ArcelorMittal', 'Corning'],
+      codeSample: {
+        title: 'Python: Calculating Theoretical Density of FCC Crystal Lattice',
+        language: 'python',
+        code: `def calc_fcc_density(atomic_weight_g_mol, lattice_param_angstrom):
+    N_A = 6.022e23
+    num_atoms = 4 # 4 atoms per FCC unit cell
+    volume_cm3 = (lattice_param_angstrom * 1e-8) ** 3
+    density = (num_atoms * atomic_weight_g_mol) / (volume_cm3 * N_A)
+    return density
+
+cu_density = calc_fcc_density(63.55, 3.615)
+print(f"Theoretical Density of Copper (FCC): {cu_density:.2f} g/cm^3")`
       }
     }
   ];
@@ -858,49 +1123,178 @@ print(f"Estimated Net Acceleration: {acc} m/s^2 (~{acc/9.81:.1f} Gs)")`
   const filteredBranches = branchData.filter(b => activeCategory === 'all' || b.category === activeCategory);
   const currentBranch = branchData.find(b => b.id === selectedBranch) || branchData[0];
 
-  // Handle Smart Advisor Quiz calculation
+  // Supercharged Year-Specific Smart Advisor Quiz Calculation
   const handleRunAdvisor = () => {
     const branchInfo = branchData.find(b => b.id === quizBranch) || branchData[0];
+    
     let recommendedPrimary = 'Python';
     let recommendedSecondary = 'C++';
-    let nextStep = '';
+    let yearGoalTitle = '';
+    let immediateAction = '';
+    let milestones30_60_90 = [];
     let projects = [];
+    let avoidMistake = '';
+    let salaryRange = '₹8 - 25 LPA';
+
+    const isCSBranch = ['cse', 'it', 'aiml', 'ds', 'cyber'].includes(quizBranch);
 
     if (quizGoal === 'sde') {
-      recommendedPrimary = quizBranch === 'cse' ? 'C++ or Java (for DSA)' : 'C++ (DSA) + Python (Web/Scripting)';
-      recommendedSecondary = 'JavaScript / TypeScript (Full-Stack)';
-      nextStep = `Start 60-day DSA plan on LeetCode solving 2 questions daily in ${recommendedPrimary.split(' ')[0]}. Build 1 Full-Stack project with database.`;
-      projects = ['E-Commerce Store with Payment Integration', 'Real-Time Chat App with WebSockets', 'Collaborative Code Editor'];
+      recommendedPrimary = isCSBranch ? 'C++ or Java (for DSA)' : 'C++ (DSA & Problem Solving)';
+      recommendedSecondary = 'JavaScript / TypeScript (Full-Stack Web)';
+      salaryRange = '₹10 - 45 LPA (Product / FAANG / Fintech)';
+      
+      if (quizYear === '1') {
+        yearGoalTitle = '🎯 1st Year (Freshman): Build Core Logic & Programming Habits';
+        immediateAction = 'Do not jump straight into complex frameworks. Master syntax in C/C++, solve 50 beginner logic questions, learn Git & GitHub, and keep college CGPA above 8.0.';
+        milestones30_60_90 = [
+          'Day 1-30: Master C/C++ loops, arrays, functions, and pointers fundamentals.',
+          'Day 31-60: Learn Git, create a GitHub profile, push 5 mini CLI projects.',
+          'Day 61-90: Solve first 50 Easy problems on LeetCode/HackerRank in C++.'
+        ];
+        projects = ['CLI Student Record Management System', 'Text-Based Tic-Tac-Toe Game with AI Minimax', 'Personal Portfolio Webpage'];
+        avoidMistake = 'Do not get stuck in "tutorial hell" watching endless YouTube videos without typing code yourself daily.';
+      } else if (quizYear === '2') {
+        yearGoalTitle = '🎯 2nd Year (Sophomore): Master DSA & Core CS Subjects';
+        immediateAction = 'This is the most critical year! Master Data Structures (Linked Lists, Trees, Graphs, DP) in C++ STL or Java Collections. Learn DBMS & SQL.';
+        milestones30_60_90 = [
+          'Day 1-30: Complete Arrays, Strings, HashMaps, and Two-Pointer problems on LeetCode.',
+          'Day 31-60: Master Recursion, Binary Trees, BFS/DFS Graphs, and SQL relational queries.',
+          'Day 61-90: Build your first Full-Stack Web application with React and Node.js.'
+        ];
+        projects = ['Full-Stack E-Commerce Store with Stripe Payments', 'DSA Visualizer / Pathfinding Tool in React', 'Social Network REST API with JWT Auth'];
+        avoidMistake = 'Do not ignore core subjects (Operating Systems & DBMS) — top companies test them in technical interview rounds.';
+      } else if (quizYear === '3') {
+        yearGoalTitle = '🎯 3rd Year (Junior): Projects, Open-Source & Internship Crack';
+        immediateAction = 'Grind the LeetCode Blind 75 list, build 2 production-grade projects with real user auth and databases, and apply aggressively for summer internships.';
+        milestones30_60_90 = [
+          'Day 1-30: Solve 80+ Medium LeetCode questions (Dynamic Programming, Graphs, Heaps).',
+          'Day 31-60: Build a full production-grade SaaS project with Docker and Cloud deployment.',
+          'Day 61-90: Create a tailored single-page LaTeX resume and apply to 100+ internship openings.'
+        ];
+        projects = ['Real-Time Collaborative Code Editor with WebSockets', 'Cloud File Storage Service with AWS S3', 'High-Concurrency Redis Caching Microservice'];
+        avoidMistake = 'Do not wait until final year to make your resume. Apply for 3rd-year internships early in July-September.';
+      } else {
+        yearGoalTitle = '🎯 4th Year (Senior): High-Speed Placement Grinding & System Design';
+        immediateAction = 'Focus 100% on cracking interviews: solve Top 150 Interview Questions on LeetCode, practice Low-Level (LLD) & High-Level (HLD) System Design, and do daily mock interviews.';
+        milestones30_60_90 = [
+          'Day 1-30: Revise Blind 75 DSA questions with strict 25-minute timers.',
+          'Day 31-60: Study System Design (Scalability, Sharding, Load Balancers, Caching).',
+          'Day 61-90: Give 10+ Mock Interviews on Pramp/Interviewing.io and attend placement drives.'
+        ];
+        projects = ['Distributed Message Queue / Pub-Sub Engine', 'URL Shortener with 10M QPS System Architecture', 'Microservices API Gateway with Docker/K8s'];
+        avoidMistake = 'Do not panic if you get rejected in initial rounds. Consistency across 15-20 company drives guarantees a great offer.';
+      }
+    } else if (quizGoal === 'ai_ds') {
+      recommendedPrimary = 'Python (NumPy, Pandas, PyTorch)';
+      recommendedSecondary = 'SQL & C++ (for TensorRT Inference)';
+      salaryRange = '₹10 - 40 LPA (AI Labs, Global Product R&D)';
+      
+      if (quizYear === '1') {
+        yearGoalTitle = '🎯 1st Year (Freshman): Python & Mathematical Foundations';
+        immediateAction = 'Master Python syntax and build strong mathematical intuition in Linear Algebra (Matrices, Eigenvalues), Calculus, and Probability.';
+        milestones30_60_90 = [
+          'Day 1-30: Master Python data structures (Lists, Dicts, Tuples, Sets, Functions).',
+          'Day 31-60: Complete 3Blue1Brown Essence of Linear Algebra series on YouTube.',
+          'Day 61-90: Start analyzing datasets with Pandas & Matplotlib.'
+        ];
+        projects = ['Automated Web Scraper with BeautifulSoup', 'Exploratory Data Analysis on COVID / Titanic Dataset', 'Statistical Weather Analyzer'];
+        avoidMistake = 'Do not skip math! Deep learning models cannot be debugged without linear algebra intuition.';
+      } else if (quizYear === '2') {
+        yearGoalTitle = '🎯 2nd Year (Sophomore): Classical ML & First Kaggle Contests';
+        immediateAction = 'Complete Andrew Ng Machine Learning Specialization, master Scikit-Learn algorithms (Regression, Decision Trees, SVM, Random Forests), and learn SQL.';
+        milestones30_60_90 = [
+          'Day 1-30: Implement Regression and Classification models from scratch in Scikit-Learn.',
+          'Day 31-60: Learn SQL queries (JOINs, Window Functions) and Kaggle data pipelines.',
+          'Day 61-90: Compete in 2 Kaggle Beginner Competitions (House Prices, Spaceship Titanic).'
+        ];
+        projects = ['Customer Churn Prediction with Random Forests', 'Credit Card Fraud Detection with Anomaly Detection', 'House Price Prediction with XGBoost'];
+        avoidMistake = 'Do not jump to Neural Networks before mastering Feature Engineering and Scikit-Learn.';
+      } else if (quizYear === '3') {
+        yearGoalTitle = '🎯 3rd Year (Junior): Deep Learning, PyTorch & LLM RAG Pipelines';
+        immediateAction = 'Master PyTorch for Deep Learning (CNNs, RNNs, Transformers) and build Generative AI applications with LangChain, Vector DBs, and Hugging Face.';
+        milestones30_60_90 = [
+          'Day 1-30: Train Computer Vision models with PyTorch & Transfer Learning.',
+          'Day 31-60: Build a RAG (Retrieval-Augmented Generation) pipeline with LangChain.',
+          'Day 61-90: Deploy your AI models as REST APIs using FastAPI and Docker.'
+        ];
+        projects = ['Document Q&A RAG Chatbot with LangChain & Pinecone', 'Medical Image X-Ray Classification with PyTorch CNN', 'Autonomous Self-Driving Car Lane Tracker'];
+        avoidMistake = 'Do not leave your models in Jupyter Notebooks. Wrap them in a live FastAPI web app and deploy them.';
+      } else {
+        yearGoalTitle = '🎯 4th Year (Senior): MLOps, LLM Fine-Tuning & AI Placements';
+        immediateAction = 'Focus on MLOps pipelines (Docker, MLflow, ONNX), model quantization, fine-tuning open-source LLMs (Llama 3), and clearing AI technical rounds.';
+        milestones30_60_90 = [
+          'Day 1-30: Fine-tune an open-source LLM using LoRA / QLoRA.',
+          'Day 31-60: Build an automated ML CI/CD training pipeline with MLflow.',
+          'Day 61-90: Prepare ML System Design interviews (Recommendation Systems, Search Ranking).'
+        ];
+        projects = ['End-to-End Enterprise RAG Agent with Multi-Agent Workflows', 'Real-Time Edge Computer Vision with TensorRT', 'Full MLOps Pipeline with Automated Model Drift Monitoring'];
+        avoidMistake = 'Make sure you can explain the exact loss functions, gradients, and trade-offs of all models on your resume.';
+      }
     } else if (quizGoal === 'core') {
       recommendedPrimary = branchInfo.primaryLang.name;
       recommendedSecondary = branchInfo.secondaryLang.name;
-      nextStep = `Master ${branchInfo.primaryLang.name} and build 2 domain hardware/simulation projects using ${branchInfo.domainTools[0]}.`;
-      projects = [`Domain Project for ${branchInfo.name}`, 'Automation & Simulation Pipeline', 'Hardware / Sensor Interfacing System'];
-    } else if (quizGoal === 'ai_ds') {
-      recommendedPrimary = 'Python (NumPy, Pandas, PyTorch)';
-      recommendedSecondary = 'SQL & C++ (Inference)';
-      nextStep = 'Complete Andrew Ng ML Specialization on Coursera and participate in your first Kaggle competition.';
-      projects = ['Generative AI RAG Q&A System', 'Computer Vision Object Detection App', 'Predictive Stock/Sensor Analytics Dashboard'];
+      salaryRange = '₹6 - 22 LPA (Semiconductor, Automotive, EV, Aerospace R&D)';
+      
+      yearGoalTitle = `🎯 Year ${quizYear} Core Engineering Action Plan for ${branchInfo.name.split('(')[0]}`;
+      if (quizYear === '1' || quizYear === '2') {
+        immediateAction = `Master ${branchInfo.primaryLang.name} and get hands-on experience with ${branchInfo.domainTools[0]}. Maintain strong foundational core subject grades.`;
+        milestones30_60_90 = [
+          `Day 1-30: Master ${branchInfo.primaryLang.name} and fundamental engineering math.`,
+          `Day 31-60: Learn simulation modeling using ${branchInfo.domainTools[0]}.`,
+          `Day 61-90: Build your first mini hardware prototype or domain simulation project.`
+        ];
+      } else {
+        immediateAction = `Build 2 high-impact domain projects using ${branchInfo.domainTools.slice(0, 2).join(' and ')}, learn standard DSA in C++ for backup IT eligibility, and target core placement drives.`;
+        milestones30_60_90 = [
+          `Day 1-30: Complete an advanced design simulation in ${branchInfo.domainTools[0]}.`,
+          `Day 31-60: Prepare standard DSA in C++ to qualify for high-paying product tech rounds.`,
+          `Day 61-90: Connect with alumni on LinkedIn working in ${branchInfo.topCompanies.slice(0, 3).join(', ')}.`
+        ];
+      }
+      projects = [`Domain Project for ${branchInfo.name.split('(')[0]}`, `Automated Simulation Pipeline in ${branchInfo.domainTools[0]}`, 'Industrial Sensor & Data Logging System'];
+      avoidMistake = 'Do not neglect software tools! Modern core engineering is 70% software simulation, automation, and data.';
     } else if (quizGoal === 'cyber') {
       recommendedPrimary = 'Python & Linux Bash';
-      recommendedSecondary = 'C / C++ (Memory Internals)';
-      nextStep = 'Create a free TryHackMe account and complete the "Pre-Security" and "Complete Beginner" paths.';
-      projects = ['Automated Port Scanner & Vulnerability Checker', 'Packet Sniffer & Analyzer', 'Password Strength & Hasher Tool'];
-    } else { // higher studies / gate
-      recommendedPrimary = 'C & Python';
-      recommendedSecondary = 'MATLAB or C++';
-      nextStep = 'Focus on Engineering Mathematics, core branch theory, and competitive academic coding.';
-      projects = ['Research Paper Implementation Project', 'Numerical Simulation Solver', 'Algorithm Benchmark Suite'];
+      recommendedSecondary = 'C & C++ / Go';
+      salaryRange = '₹8 - 30 LPA (Cyber Security, Red Team & SOC)';
+      
+      yearGoalTitle = `🎯 Year ${quizYear} Cyber Security & Ethical Hacking Track`;
+      immediateAction = 'Master Linux terminal navigation, TCP/IP network packet analysis with Wireshark, and solve hands-on CTF challenges on TryHackMe.';
+      milestones30_60_90 = [
+        'Day 1-30: Master Linux command line and complete TryHackMe "Pre-Security" path.',
+        'Day 31-60: Learn Web Security (OWASP Top 10) with Burp Suite.',
+        'Day 61-90: Write automated custom port scanners and exploit scripts in Python.'
+      ];
+      projects = ['Automated Vulnerability & Port Scanner in Python', 'Packet Sniffer & Intrusion Detection Tool with Scapy', 'Secure Password Vault with AES-256 Encryption'];
+      avoidMistake = 'Never hack real-world systems without authorization. Stick to legal practice platforms like TryHackMe and Hack The Box.';
+    } else { // higher studies
+      recommendedPrimary = 'Python & C/C++';
+      recommendedSecondary = 'MATLAB';
+      salaryRange = '₹12 - 35 LPA post-MS / M.Tech Research Stipend';
+      
+      yearGoalTitle = `🎯 Year ${quizYear} GATE / GRE / M.Tech Research Roadmap`;
+      immediateAction = 'Focus heavily on Engineering Mathematics, core branch theoretical concepts, standard textbook problem solving, and GATE mock test series.';
+      milestones30_60_90 = [
+        'Day 1-30: Complete Engineering Mathematics and General Aptitude syllabus.',
+        'Day 31-60: Finish 2 major core branch technical subjects with past 15-year GATE questions.',
+        'Day 61-90: Join a national GATE/GRE test series and give weekly topic-wise tests.'
+      ];
+      projects = ['Research Paper Implementation Project in Python', 'Numerical Analysis Computational Solver', 'Algorithm Benchmark & Complexity Analyzer'];
+      avoidMistake = 'Do not leave previous year questions (PYQs) for the last month. Solve them continuously from Year 2.';
     }
 
     setQuizResult({
       branchName: branchInfo.name,
       recommendedPrimary,
       recommendedSecondary,
-      nextStep,
+      yearGoalTitle,
+      immediateAction,
+      milestones30_60_90,
       projects,
-      topCert: branchInfo.moocsAndCerts.certifications[0]?.name || 'AWS Cloud Practitioner',
-      topChallenge: branchInfo.moocsAndCerts.challenges[0]?.name || 'LeetCode'
+      avoidMistake,
+      salaryRange,
+      topCert: branchInfo.moocsAndCerts.certifications[0]?.name || 'AWS Certified Solutions Architect',
+      topMooc: branchInfo.moocsAndCerts.moocs[0]?.name || 'CS50x Harvard University'
     });
   };
 
@@ -925,74 +1319,23 @@ print(f"Estimated Net Acceleration: {acc} m/s^2 (~{acc/9.81:.1f} Gs)")`
         border: '1px solid rgba(255, 255, 255, 0.08)',
         boxShadow: '0 8px 24px rgba(0,0,0,0.3)'
       }}>
-        <div style={{ display: 'flex', alignItems: 'center', gap: '12px', marginBottom: '12px' }}>
+        <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
           <span style={{ fontSize: '28px' }}>🎓</span>
           <div>
             <h2 style={{ margin: 0, fontSize: '22px', fontWeight: '800', color: '#38bdf8' }}>
-              Which Programming Language to Pick? (B.Tech Branches & Language Career Guide)
+              🎓 B.Tech Engineering Branch Roadmaps (16 Branches & Smart Advisor)
             </h2>
             <p style={{ margin: '4px 0 0 0', color: '#94a3b8', fontSize: '13.5px', lineHeight: '1.5' }}>
-              Explore comprehensive 4-year learning roadmaps either by your <strong>Engineering Branch</strong> (CSE, ECE, Mech, Civil, AI/DS...) or directly by <strong>Programming Language</strong> (C, C++, Java, Python, JavaScript, Go, Rust)!
+              Explore comprehensive 4-year coding roadmaps, primary & secondary programming languages, and core vs. IT placement transition guides for all engineering branches!
             </p>
           </div>
         </div>
-
-        {/* View Mode Toggle: Branch vs Language */}
-        <div style={{ display: 'flex', gap: '10px', flexWrap: 'wrap', paddingTop: '10px', borderTop: '1px solid rgba(255, 255, 255, 0.08)' }}>
-          <button
-            onClick={() => setViewMode('branch')}
-            style={{
-              display: 'flex',
-              alignItems: 'center',
-              gap: '8px',
-              padding: '9px 18px',
-              borderRadius: '10px',
-              border: viewMode === 'branch' ? '2px solid #38bdf8' : '1px solid #334155',
-              background: viewMode === 'branch' ? 'rgba(56, 189, 248, 0.2)' : '#0f172a',
-              color: viewMode === 'branch' ? '#38bdf8' : '#94a3b8',
-              fontSize: '13px',
-              fontWeight: '700',
-              cursor: 'pointer',
-              transition: 'all 0.2s ease',
-              boxShadow: viewMode === 'branch' ? '0 0 15px rgba(56, 189, 248, 0.25)' : 'none'
-            }}
-          >
-            <span>🎓</span>
-            <span>Explore by B.Tech Branch (4-Year Roadmap)</span>
-          </button>
-
-          <button
-            onClick={() => setViewMode('language')}
-            style={{
-              display: 'flex',
-              alignItems: 'center',
-              gap: '8px',
-              padding: '9px 18px',
-              borderRadius: '10px',
-              border: viewMode === 'language' ? '2px solid #f59e0b' : '1px solid #334155',
-              background: viewMode === 'language' ? 'rgba(245, 158, 11, 0.2)' : '#0f172a',
-              color: viewMode === 'language' ? '#f59e0b' : '#94a3b8',
-              fontSize: '13px',
-              fontWeight: '700',
-              cursor: 'pointer',
-              transition: 'all 0.2s ease',
-              boxShadow: viewMode === 'language' ? '0 0 15px rgba(245, 158, 11, 0.25)' : 'none'
-            }}
-          >
-            <span>🎯</span>
-            <span>Explore by Programming Language (C, C++, Java, Python, JS, Go, Rust)</span>
-          </button>
-        </div>
       </div>
 
-      {viewMode === 'language' ? (
-        <LanguageCareerGuide />
-      ) : (
-        <>
-        {/* ── Category Filter Bar ── */}
-        <div style={{ display: 'flex', gap: '8px', flexWrap: 'wrap', alignItems: 'center' }}>
-          <span style={{ fontSize: '12px', fontWeight: 'bold', color: '#94a3b8', marginRight: '4px' }}>FILTER:</span>
-          {categories.map(c => {
+      {/* ── Category Filter Bar ── */}
+      <div style={{ display: 'flex', gap: '8px', flexWrap: 'wrap', alignItems: 'center' }}>
+        <span style={{ fontSize: '12px', fontWeight: 'bold', color: '#94a3b8', marginRight: '4px' }}>FILTER:</span>
+        {categories.map(c => {
           const isActive = activeCategory === c.id;
           return (
             <button
@@ -1016,427 +1359,279 @@ print(f"Estimated Net Acceleration: {acc} m/s^2 (~{acc/9.81:.1f} Gs)")`
         })}
       </div>
 
-      {/* ── Horizontal Branch Selector Buttons ── */}
+      {/* ── Horizontal Branch Selector Buttons Grid (16 Branches) ── */}
       <div style={{
         display: 'grid',
-        gridTemplateColumns: 'repeat(auto-fit, minmax(200px, 1fr))',
+        gridTemplateColumns: 'repeat(auto-fill, minmax(180px, 1fr))',
         gap: '10px'
       }}>
         {filteredBranches.map(b => {
           const isSelected = selectedBranch === b.id;
+          const isHovered = hoveredBranchId === b.id;
           return (
-            <button
+            <div
               key={b.id}
-              onClick={() => setSelectedBranch(b.id)}
-              style={{
-                display: 'flex',
-                alignItems: 'center',
-                gap: '10px',
-                padding: '12px 14px',
-                borderRadius: '12px',
-                border: isSelected ? `2px solid ${b.color}` : '1px solid #334155',
-                background: isSelected ? b.accentBg : '#0f172a',
-                color: isSelected ? b.color : '#cbd5e1',
-                fontSize: '13px',
-                fontWeight: '700',
-                cursor: 'pointer',
-                textAlign: 'left',
-                transition: 'all 0.2s cubic-bezier(0.16, 1, 0.3, 1)',
-                boxShadow: isSelected ? `0 0 16px ${b.color}25` : 'none'
-              }}
+              style={{ position: 'relative' }}
+              onMouseEnter={() => setHoveredBranchId(b.id)}
+              onMouseLeave={() => setHoveredBranchId(null)}
             >
-              <span style={{ fontSize: '20px' }}>{b.icon}</span>
-              <span style={{ whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>{b.name.split('(')[0]}</span>
-            </button>
+              <button
+                onClick={() => setSelectedBranch(b.id)}
+                title={`${b.name} - Click to explore full 4-year roadmap`}
+                style={{
+                  width: '100%',
+                  position: 'relative',
+                  display: 'flex',
+                  alignItems: 'center',
+                  gap: '10px',
+                  padding: isHovered ? '12px 14px' : '11px 13px',
+                  borderRadius: '12px',
+                  border: isSelected
+                    ? `2px solid ${b.color}`
+                    : isHovered
+                    ? `2px solid ${b.color}`
+                    : '1px solid #334155',
+                  background: isSelected
+                    ? `linear-gradient(135deg, ${b.accentBg} 0%, rgba(15, 23, 42, 0.95) 100%)`
+                    : isHovered
+                    ? `linear-gradient(135deg, ${b.accentBg} 0%, rgba(15, 23, 42, 0.95) 100%)`
+                    : '#0f172a',
+                  color: isSelected || isHovered ? '#f8fafc' : '#cbd5e1',
+                  fontSize: '12.5px',
+                  fontWeight: '700',
+                  cursor: 'pointer',
+                  textAlign: 'left',
+                  transition: 'all 0.22s cubic-bezier(0.16, 1, 0.3, 1)',
+                  transform: isHovered ? 'translateY(-3px) scale(1.03)' : isSelected ? 'scale(1.01)' : 'translateY(0) scale(1)',
+                  boxShadow: isHovered
+                    ? `0 0 30px ${b.color}95, 0 8px 24px rgba(0,0,0,0.6), inset 0 0 16px ${b.color}35`
+                    : isSelected
+                    ? `0 0 16px ${b.color}40, inset 0 0 8px ${b.color}15`
+                    : 'none',
+                  zIndex: isHovered ? 20 : 1
+                }}
+              >
+                <span style={{
+                  fontSize: '20px',
+                  filter: isHovered || isSelected ? `drop-shadow(0 0 8px ${b.color})` : 'none',
+                  transition: 'transform 0.2s ease',
+                  transform: isHovered ? 'scale(1.15)' : 'scale(1)',
+                  flexShrink: 0
+                }}>
+                  {b.icon}
+                </span>
+                <div style={{ display: 'flex', flexDirection: 'column', gap: '2px', minWidth: 0, flex: 1, overflow: 'hidden' }}>
+                  <span style={{
+                    fontSize: isHovered ? '12px' : '12.5px',
+                    fontWeight: '700',
+                    color: isHovered || isSelected ? b.color : '#f1f5f9',
+                    lineHeight: '1.3',
+                    whiteSpace: isHovered ? 'normal' : 'nowrap',
+                    overflow: isHovered ? 'visible' : 'hidden',
+                    textOverflow: isHovered ? 'clip' : 'ellipsis',
+                    wordBreak: isHovered ? 'break-word' : 'normal',
+                    transition: 'all 0.2s ease'
+                  }}>
+                    {b.name}
+                  </span>
+                  {isHovered && (
+                    <span style={{
+                      fontSize: '10.5px',
+                      color: '#94a3b8',
+                      display: 'flex',
+                      alignItems: 'center',
+                      gap: '4px',
+                      marginTop: '2px'
+                    }}>
+                      <span>⚡ Primary:</span> <strong style={{ color: '#38bdf8' }}>{b.primaryLang.name.split(' ')[0]}</strong>
+                    </span>
+                  )}
+                </div>
+              </button>
+            </div>
           );
         })}
       </div>
 
-      {/* ── Dynamic Branch Welcome & Context Header ── */}
+      {/* ── Active Branch Header Showcase ── */}
       <div style={{
-        background: `linear-gradient(135deg, ${currentBranch.accentBg} 0%, rgba(15, 23, 42, 0.8) 100%)`,
-        borderRadius: '14px',
-        padding: '20px 24px',
-        border: `1.5px solid ${currentBranch.color}60`,
+        background: `linear-gradient(135deg, ${currentBranch.accentBg} 0%, rgba(15, 23, 42, 0.9) 100%)`,
+        borderRadius: '16px',
+        padding: '24px',
+        border: `1.5px solid ${currentBranch.color}40`,
         display: 'flex',
         flexDirection: 'column',
-        gap: '12px',
-        boxShadow: `0 8px 30px ${currentBranch.color}15`
+        gap: '16px'
       }}>
-        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', flexWrap: 'wrap', gap: '12px' }}>
+        <div style={{
+          display: 'flex',
+          justifyContent: 'space-between',
+          alignItems: 'flex-start',
+          borderBottom: '1px solid rgba(255, 255, 255, 0.08)',
+          paddingBottom: '16px',
+          flexWrap: 'wrap',
+          gap: '12px'
+        }}>
           <div>
-            <span style={{
-              background: currentBranch.color,
-              color: '#050510',
-              padding: '3px 10px',
-              borderRadius: '12px',
-              fontSize: '11px',
-              fontWeight: '800',
-              letterSpacing: '0.5px'
-            }}>
-              BRANCH SELECTED
-            </span>
-            <h3 style={{ margin: '8px 0 0 0', fontSize: '20px', fontWeight: '800', color: currentBranch.color }}>
-              {currentBranch.welcomeTitle}
-            </h3>
-            <p style={{ margin: '6px 0 0 0', color: '#f1f5f9', fontSize: '13.5px', lineHeight: '1.5', maxWidth: '850px' }}>
+            <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
+              <span style={{ fontSize: '28px' }}>{currentBranch.icon}</span>
+              <h3 style={{ margin: 0, fontSize: '22px', fontWeight: '800', color: currentBranch.color }}>
+                {currentBranch.name}
+              </h3>
+            </div>
+            <p style={{ margin: '8px 0 0 0', color: '#cbd5e1', fontSize: '13.5px', maxWidth: '850px', lineHeight: '1.5' }}>
               {currentBranch.welcomeMessage}
             </p>
           </div>
 
-          <div style={{ display: 'flex', flexDirection: 'column', gap: '6px', textAlign: 'right' }}>
-            <span style={{ fontSize: '11.5px', color: '#94a3b8' }}>Placement Demand:</span>
-            <span style={{ fontSize: '12.5px', fontWeight: 'bold', color: '#fbbf24', cursor: 'help' }} title={currentBranch.placementDemand}>
-              {currentBranch.placementDemand.split(' ')[0]}
+          <div style={{ display: 'flex', flexDirection: 'column', gap: '6px', alignItems: 'flex-end' }}>
+            <span style={{ background: 'rgba(15, 23, 42, 0.8)', padding: '4px 10px', borderRadius: '8px', fontSize: '12px', color: '#38bdf8', border: '1px solid rgba(56, 189, 248, 0.3)' }}>
+              💼 <strong>Placement Demand:</strong> {currentBranch.placementDemand}
+            </span>
+            <span style={{ background: 'rgba(15, 23, 42, 0.8)', padding: '4px 10px', borderRadius: '8px', fontSize: '12px', color: '#cbd5e1', border: '1px solid rgba(255,255,255,0.1)' }}>
+              📊 <strong>Difficulty:</strong> {currentBranch.difficulty}
             </span>
           </div>
         </div>
 
-        {/* Quick Branch Tags */}
-        <div style={{ display: 'flex', gap: '8px', flexWrap: 'wrap', marginTop: '4px' }}>
-          <span style={{ background: 'rgba(15, 23, 42, 0.8)', padding: '4px 10px', borderRadius: '8px', fontSize: '12px', color: '#cbd5e1', border: '1px solid rgba(255,255,255,0.1)' }}>
-            🎯 <strong>Core Focus:</strong> {currentBranch.coreFocus}
-          </span>
-          <span style={{ background: 'rgba(15, 23, 42, 0.8)', padding: '4px 10px', borderRadius: '8px', fontSize: '12px', color: '#cbd5e1', border: '1px solid rgba(255,255,255,0.1)' }}>
-            📊 <strong>Difficulty:</strong> {currentBranch.difficulty}
-          </span>
+        {/* ── Sub Tabs Navigation ── */}
+        <div style={{
+          display: 'flex',
+          gap: '8px',
+          borderBottom: '1.5px solid #334155',
+          paddingBottom: '10px',
+          flexWrap: 'wrap'
+        }}>
+          {[
+            { id: 'roadmap', label: '🗺️ Which Language & 4-Year Plan', icon: '🗺️' },
+            { id: 'dualtrack', label: '⚖️ Core vs Software SDE Route', icon: '⚖️' },
+            { id: 'moocs_challenges', label: '🏆 MOOCs & Certifications', icon: '🏆' },
+            { id: 'codepreview', label: '💻 Branch Code Preview', icon: '💻' },
+            { id: 'advisor_quiz', label: '🤖 Smart Branch Advisor Quiz', icon: '🤖' },
+            { id: 'matrix', label: '📊 All-Branch Comparison Table', icon: '📊' }
+          ].map(tab => {
+            const isActive = activeSubTab === tab.id;
+            return (
+              <button
+                key={tab.id}
+                onClick={() => setActiveSubTab(tab.id)}
+                style={{
+                  display: 'flex',
+                  alignItems: 'center',
+                  gap: '6px',
+                  padding: '8px 16px',
+                  borderRadius: '8px',
+                  border: 'none',
+                  background: isActive ? currentBranch.color : 'rgba(30, 41, 59, 0.6)',
+                  color: isActive ? '#0f172a' : '#cbd5e1',
+                  fontSize: '13px',
+                  fontWeight: '700',
+                  cursor: 'pointer',
+                  transition: 'all 0.2s ease'
+                }}
+              >
+                {tab.label}
+              </button>
+            );
+          })}
         </div>
-      </div>
-
-      {/* ── Sub Tabs Navigation ── */}
-      <div style={{
-        display: 'flex',
-        gap: '8px',
-        borderBottom: '1.5px solid #334155',
-        paddingBottom: '10px',
-        flexWrap: 'wrap'
-      }}>
-        {[
-          { id: 'roadmap', label: '🗺️ Which Language & 4-Year Plan', icon: '🗺️' },
-          { id: 'dualtrack', label: '⚖️ Core vs Software SDE Route', icon: '⚖️' },
-          { id: 'moocs_challenges', label: '🏆 MOOCs, Certs & LeetCode/Kaggle', icon: '🏆' },
-          { id: 'codepreview', label: '💻 Branch Code Preview', icon: '💻' },
-          { id: 'advisor_quiz', label: '🤖 Smart Branch Advisor Quiz', icon: '🤖' },
-          { id: 'matrix', label: '📊 All-Branch Comparison Table', icon: '📊' }
-        ].map(tab => {
-          const isActive = activeSubTab === tab.id;
-          return (
-            <button
-              key={tab.id}
-              onClick={() => setActiveSubTab(tab.id)}
-              style={{
-                display: 'flex',
-                alignItems: 'center',
-                gap: '6px',
-                padding: '8px 16px',
-                borderRadius: '8px',
-                border: 'none',
-                background: isActive ? '#38bdf8' : 'rgba(30, 41, 59, 0.6)',
-                color: isActive ? '#0f172a' : '#cbd5e1',
-                fontSize: '13px',
-                fontWeight: '700',
-                cursor: 'pointer',
-                transition: 'all 0.2s ease'
-              }}
-            >
-              {tab.label}
-            </button>
-          );
-        })}
       </div>
 
       {/* ── SUB TAB 1: Which Language & 4-Year Plan ── */}
       {activeSubTab === 'roadmap' && (
         <div style={{ display: 'flex', flexDirection: 'column', gap: '20px' }}>
-          {/* Language Cards Grid */}
-          <div style={{
-            display: 'grid',
-            gridTemplateColumns: 'repeat(auto-fit, minmax(300px, 1fr))',
-            gap: '16px'
-          }}>
-            {/* Primary Language Card */}
-            <div style={{
-              background: '#0f172a',
-              borderRadius: '12px',
-              padding: '18px',
-              border: `1.5px solid ${currentBranch.color}`,
-              boxShadow: `0 0 15px ${currentBranch.color}15`
-            }}>
+          {/* Languages Recommendation Cards */}
+          <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(320px, 1fr))', gap: '16px' }}>
+            <div style={{ background: '#0f172a', padding: '18px', borderRadius: '12px', border: '1.5px solid #38bdf8' }}>
               <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '8px' }}>
-                <span style={{ fontSize: '11px', fontWeight: 'bold', color: currentBranch.color, textTransform: 'uppercase' }}>
-                  {currentBranch.primaryLang.badge}
+                <span style={{ fontSize: '11px', fontWeight: 'bold', background: '#0284c7', color: '#fff', padding: '2px 8px', borderRadius: '6px' }}>
+                  PRIMARY LANGUAGE
                 </span>
-                <span style={{ fontSize: '18px' }}>🥇</span>
+                <span style={{ fontSize: '11.5px', color: '#94a3b8' }}>{currentBranch.primaryLang.badge}</span>
               </div>
-              <h4 style={{ margin: '0 0 8px 0', fontSize: '17px', color: '#f8fafc', fontWeight: '800' }}>
-                Primary: {currentBranch.primaryLang.name}
-              </h4>
-              <p style={{ margin: 0, fontSize: '13px', color: '#cbd5e1', lineHeight: '1.5' }}>
+              <h4 style={{ margin: 0, fontSize: '18px', color: '#38bdf8' }}>{currentBranch.primaryLang.name}</h4>
+              <p style={{ margin: '8px 0 0 0', fontSize: '13px', color: '#cbd5e1', lineHeight: '1.5' }}>
                 {currentBranch.primaryLang.reason}
               </p>
             </div>
 
-            {/* Secondary Language Card */}
-            <div style={{
-              background: '#0f172a',
-              borderRadius: '12px',
-              padding: '18px',
-              border: '1.5px solid #334155'
-            }}>
+            <div style={{ background: '#0f172a', padding: '18px', borderRadius: '12px', border: '1.5px solid #f59e0b' }}>
               <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '8px' }}>
-                <span style={{ fontSize: '11px', fontWeight: 'bold', color: '#38bdf8', textTransform: 'uppercase' }}>
-                  {currentBranch.secondaryLang.badge}
+                <span style={{ fontSize: '11px', fontWeight: 'bold', background: '#d97706', color: '#fff', padding: '2px 8px', borderRadius: '6px' }}>
+                  SECONDARY LANGUAGE
                 </span>
-                <span style={{ fontSize: '18px' }}>🥈</span>
+                <span style={{ fontSize: '11.5px', color: '#94a3b8' }}>{currentBranch.secondaryLang.badge}</span>
               </div>
-              <h4 style={{ margin: '0 0 8px 0', fontSize: '17px', color: '#f8fafc', fontWeight: '800' }}>
-                Secondary: {currentBranch.secondaryLang.name}
-              </h4>
-              <p style={{ margin: 0, fontSize: '13px', color: '#cbd5e1', lineHeight: '1.5' }}>
+              <h4 style={{ margin: 0, fontSize: '18px', color: '#f59e0b' }}>{currentBranch.secondaryLang.name}</h4>
+              <p style={{ margin: '8px 0 0 0', fontSize: '13px', color: '#cbd5e1', lineHeight: '1.5' }}>
                 {currentBranch.secondaryLang.reason}
               </p>
             </div>
-
-            {/* Domain & Hardware Tools */}
-            <div style={{
-              background: '#0f172a',
-              borderRadius: '12px',
-              padding: '18px',
-              border: '1.5px solid #334155'
-            }}>
-              <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '8px' }}>
-                <span style={{ fontSize: '11px', fontWeight: 'bold', color: '#a855f7', textTransform: 'uppercase' }}>
-                  Domain & Industry Stack
-                </span>
-                <span style={{ fontSize: '18px' }}>🛠️</span>
-              </div>
-              <h4 style={{ margin: '0 0 8px 0', fontSize: '17px', color: '#f8fafc', fontWeight: '800' }}>
-                Specialized Tools
-              </h4>
-              <ul style={{ margin: 0, paddingLeft: '18px', fontSize: '12.5px', color: '#cbd5e1', lineHeight: '1.6' }}>
-                {currentBranch.domainTools.map((tool, i) => (
-                  <li key={i}>{tool}</li>
-                ))}
-              </ul>
-            </div>
           </div>
 
-          {/* 4-Year Milestone Roadmap */}
-          <div style={{
-            background: 'rgba(30, 41, 59, 0.7)',
-            borderRadius: '14px',
-            padding: '20px',
-            border: '1px solid #334155'
-          }}>
-            <h4 style={{ margin: '0 0 16px 0', fontSize: '16px', color: '#38bdf8', display: 'flex', alignItems: 'center', gap: '8px' }}>
-              <span>📅</span> 4-Year B.Tech Milestone Roadmap for {currentBranch.name.split('(')[0]}
+          {/* 4-Year Academic Progression Timeline */}
+          <div>
+            <h4 style={{ margin: '0 0 12px 0', fontSize: '15px', color: currentBranch.color }}>
+              📅 4-Year Recommended Action Plan for {currentBranch.name.split('(')[0]}
             </h4>
-
-            <div style={{
-              display: 'grid',
-              gridTemplateColumns: 'repeat(auto-fit, minmax(230px, 1fr))',
-              gap: '14px'
-            }}>
-              {currentBranch.coreRoadmap.map((step, idx) => (
-                <div key={idx} style={{
-                  background: '#0f172a',
-                  padding: '14px',
-                  borderRadius: '10px',
-                  borderTop: `3px solid ${idx === 0 ? '#38bdf8' : idx === 1 ? '#f59e0b' : idx === 2 ? '#10b981' : '#ec4899'}`,
-                  display: 'flex',
-                  flexDirection: 'column',
-                  gap: '6px'
-                }}>
-                  <span style={{ fontSize: '13px', fontWeight: '800', color: '#f8fafc' }}>
-                    {step.year}
-                  </span>
-                  <p style={{ margin: 0, fontSize: '12.5px', color: '#94a3b8', lineHeight: '1.4' }}>
-                    {step.focus}
+            <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(240px, 1fr))', gap: '12px' }}>
+              {currentBranch.coreRoadmap.map((r, i) => (
+                <div key={i} style={{ background: '#0f172a', padding: '14px', borderRadius: '10px', border: '1px solid #334155' }}>
+                  <div style={{ fontSize: '12px', fontWeight: 'bold', color: currentBranch.color, marginBottom: '4px' }}>
+                    {r.year}
+                  </div>
+                  <p style={{ margin: 0, fontSize: '13px', color: '#f1f5f9', lineHeight: '1.4' }}>
+                    {r.focus}
                   </p>
                 </div>
               ))}
             </div>
           </div>
 
-          {/* Top Companies Hiring */}
-          <div style={{
-            background: '#090d16',
-            padding: '14px 18px',
-            borderRadius: '10px',
-            border: '1px solid rgba(255,255,255,0.06)',
-            display: 'flex',
-            alignItems: 'center',
-            gap: '12px',
-            flexWrap: 'wrap'
-          }}>
-            <span style={{ fontSize: '12px', color: '#94a3b8', fontWeight: 'bold' }}>
-              🏢 Top Hiring Giants for {currentBranch.name.split('(')[0]}:
+          {/* Top Hiring Companies */}
+          <div style={{ background: 'rgba(15, 23, 42, 0.6)', padding: '14px 18px', borderRadius: '10px', border: '1px dashed #334155' }}>
+            <span style={{ fontSize: '12.5px', fontWeight: 'bold', color: '#94a3b8' }}>🏢 Top Hiring Companies for this Branch: </span>
+            <span style={{ fontSize: '13px', color: '#f8fafc', fontWeight: '600' }}>
+              {currentBranch.topCompanies.join(' • ')}
             </span>
-            <div style={{ display: 'flex', gap: '8px', flexWrap: 'wrap' }}>
-              {currentBranch.topCompanies.map((c, i) => (
-                <span key={i} style={{
-                  background: 'rgba(56, 189, 248, 0.1)',
-                  color: '#38bdf8',
-                  padding: '4px 10px',
-                  borderRadius: '6px',
-                  fontSize: '12px',
-                  fontWeight: '600',
-                  border: '1px solid rgba(56, 189, 248, 0.2)'
-                }}>
-                  {c}
-                </span>
-              ))}
-            </div>
           </div>
         </div>
       )}
 
-      {/* ── SUB TAB 2: Dual Track (Core vs Software SDE Route) ── */}
+      {/* ── SUB TAB 2: Core vs Software SDE Route ── */}
       {activeSubTab === 'dualtrack' && (
-        <div style={{ display: 'flex', flexDirection: 'column', gap: '18px' }}>
-          <div style={{
-            background: 'rgba(30, 41, 59, 0.6)',
-            borderRadius: '12px',
-            padding: '16px 20px',
-            borderLeft: '4px solid #38bdf8'
-          }}>
-            <h4 style={{ margin: '0 0 6px 0', fontSize: '15px', color: '#38bdf8' }}>
-              💡 Dual-Track Career Strategy
+        <div style={{ display: 'flex', flexDirection: 'column', gap: '16px' }}>
+          <div style={{ background: '#0f172a', padding: '18px', borderRadius: '12px', border: '1px solid #38bdf8' }}>
+            <h4 style={{ margin: '0 0 6px 0', fontSize: '16px', color: '#38bdf8' }}>
+              {currentBranch.dualTrack.coreTitle}
             </h4>
-            <p style={{ margin: 0, fontSize: '13px', color: '#cbd5e1', lineHeight: '1.5' }}>
-              Whether you want to build a career in your <strong>Core Engineering discipline</strong> or transition to high-paying <strong>IT / Software Product companies (SDE)</strong>, here is your exact blueprint!
+            <p style={{ margin: 0, fontSize: '13.5px', color: '#cbd5e1' }}>
+              {currentBranch.dualTrack.coreDescription}
             </p>
           </div>
 
-          <div style={{
-            display: 'grid',
-            gridTemplateColumns: 'repeat(auto-fit, minmax(320px, 1fr))',
-            gap: '16px'
-          }}>
-            {/* Track 1: Core Engineering */}
-            <div style={{
-              background: '#0f172a',
-              borderRadius: '12px',
-              padding: '20px',
-              border: `1.5px solid ${currentBranch.color}`
-            }}>
-              <div style={{ display: 'flex', alignItems: 'center', gap: '8px', marginBottom: '12px' }}>
-                <span style={{ fontSize: '20px' }}>🛠️</span>
-                <h4 style={{ margin: 0, fontSize: '16px', color: currentBranch.color, fontWeight: '800' }}>
-                  {currentBranch.dualTrack.coreTitle}
-                </h4>
-              </div>
-              <p style={{ margin: '0 0 14px 0', fontSize: '13px', color: '#94a3b8', lineHeight: '1.5' }}>
-                {currentBranch.dualTrack.coreDescription}
-              </p>
-              <div style={{
-                background: 'rgba(15, 23, 42, 0.8)',
-                padding: '12px 14px',
-                borderRadius: '8px',
-                border: '1px solid #334155'
-              }}>
-                <span style={{ fontSize: '11.5px', fontWeight: 'bold', color: '#38bdf8', textTransform: 'uppercase' }}>
-                  Recommended Focus:
-                </span>
-                <p style={{ margin: '6px 0 0 0', fontSize: '12.5px', color: '#e2e8f0', lineHeight: '1.5' }}>
-                  Master <strong>{currentBranch.primaryLang.name}</strong> + specialized tools (<strong>{currentBranch.domainTools.slice(0, 2).join(', ')}</strong>). 
-                  Aim for GATE / PSU exams, core tech R&D, or specialized industry product design roles.
-                </p>
-              </div>
-            </div>
-
-            {/* Track 2: Software SDE Transition */}
-            <div style={{
-              background: '#0f172a',
-              borderRadius: '12px',
-              padding: '20px',
-              border: '1.5px solid #38bdf8'
-            }}>
-              <div style={{ display: 'flex', alignItems: 'center', gap: '8px', marginBottom: '12px' }}>
-                <span style={{ fontSize: '20px' }}>💻</span>
-                <h4 style={{ margin: 0, fontSize: '16px', color: '#38bdf8', fontWeight: '800' }}>
-                  {currentBranch.dualTrack.transitionTitle || 'Direct Software Engineering Track'}
-                </h4>
-              </div>
-              <p style={{ margin: '0 0 14px 0', fontSize: '13px', color: '#94a3b8', lineHeight: '1.5' }}>
-                {currentBranch.dualTrack.transitionDescription || 'Standard software engineering roadmap for product and tier-1 companies.'}
-              </p>
-
-              <div style={{ display: 'flex', flexDirection: 'column', gap: '8px' }}>
-                <span style={{ fontSize: '12px', fontWeight: 'bold', color: '#10b981' }}>
-                  Step-by-Step Transition Checklist:
-                </span>
-                {currentBranch.dualTrack.steps.map((step, idx) => (
-                  <div key={idx} style={{ display: 'flex', alignItems: 'flex-start', gap: '8px', fontSize: '12.5px', color: '#cbd5e1', lineHeight: '1.4' }}>
-                    <span style={{ color: '#38bdf8', fontWeight: 'bold' }}>✓</span>
-                    <span>{step}</span>
-                  </div>
-                ))}
-              </div>
-            </div>
-          </div>
-        </div>
-      )}
-
-      {/* ── SUB TAB 3: MOOCs, Certifications & Challenges Hub ── */}
-      {activeSubTab === 'moocs_challenges' && (
-        <div style={{ display: 'flex', flexDirection: 'column', gap: '20px' }}>
-          {/* Coding Challenge & Practice Platforms */}
-          <div>
-            <h4 style={{ margin: '0 0 12px 0', fontSize: '16px', color: '#f59e0b', display: 'flex', alignItems: 'center', gap: '8px' }}>
-              <span>⚔️</span> Top Coding & Competitive Platforms for {currentBranch.name.split('(')[0]}
+          <div style={{ background: '#0f172a', padding: '18px', borderRadius: '12px', border: '1.5px solid #10b981' }}>
+            <h4 style={{ margin: '0 0 6px 0', fontSize: '16px', color: '#10b981' }}>
+              {currentBranch.dualTrack.transitionTitle || '💻 Software SDE Strategy'}
             </h4>
-            <div style={{
-              display: 'grid',
-              gridTemplateColumns: 'repeat(auto-fit, minmax(240px, 1fr))',
-              gap: '12px'
-            }}>
-              {currentBranch.moocsAndCerts.challenges.map((ch, idx) => (
-                <div key={idx} style={{
-                  background: '#0f172a',
-                  padding: '16px',
-                  borderRadius: '10px',
-                  border: '1px solid #334155',
-                  display: 'flex',
-                  flexDirection: 'column',
-                  gap: '8px'
-                }}>
-                  <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
-                    <span style={{ fontSize: '20px' }}>{ch.icon}</span>
-                    <span style={{
-                      background: 'rgba(245, 158, 11, 0.15)',
-                      color: '#f59e0b',
-                      fontSize: '10.5px',
-                      fontWeight: 'bold',
-                      padding: '2px 8px',
-                      borderRadius: '10px'
-                    }}>
-                      {ch.type}
-                    </span>
-                  </div>
-                  <strong style={{ fontSize: '13.5px', color: '#f8fafc' }}>{ch.name}</strong>
-                  <a
-                    href={ch.url}
-                    target="_blank"
-                    rel="noopener noreferrer"
-                    style={{
-                      marginTop: '4px',
-                      color: '#38bdf8',
-                      fontSize: '12px',
-                      textDecoration: 'none',
-                      display: 'flex',
-                      alignItems: 'center',
-                      gap: '4px',
-                      fontWeight: '600'
-                    }}
-                  >
-                    Open Platform ↗
-                  </a>
+            <p style={{ margin: '0 0 12px 0', fontSize: '13.5px', color: '#cbd5e1' }}>
+              {currentBranch.dualTrack.transitionDescription || 'How to stand out in software campus placements:'}
+            </p>
+            <div style={{ display: 'flex', flexDirection: 'column', gap: '8px' }}>
+              {currentBranch.dualTrack.steps.map((step, idx) => (
+                <div key={idx} style={{ display: 'flex', alignItems: 'flex-start', gap: '8px', fontSize: '13px', color: '#f1f5f9' }}>
+                  <span style={{ color: '#10b981', fontWeight: 'bold' }}>✓</span>
+                  <span>{step}</span>
                 </div>
               ))}
             </div>
           </div>
+        </div>
+      )}
 
+      {/* ── SUB TAB 3: MOOCs & Certifications Hub ── */}
+      {activeSubTab === 'moocs_challenges' && (
+        <div style={{ display: 'flex', flexDirection: 'column', gap: '20px' }}>
           {/* MOOCs (Harvard, NPTEL, Coursera, edX) */}
           <div>
             <h4 style={{ margin: '0 0 12px 0', fontSize: '16px', color: '#38bdf8', display: 'flex', alignItems: 'center', gap: '8px' }}>
@@ -1472,46 +1667,33 @@ print(f"Estimated Net Acceleration: {acc} m/s^2 (~{acc/9.81:.1f} Gs)")`
                     <h5 style={{ margin: '8px 0 4px 0', fontSize: '14px', color: '#f1f5f9' }}>{m.name}</h5>
                     <span style={{ fontSize: '12px', color: '#94a3b8' }}>{m.provider}</span>
                   </div>
-                  <a
-                    href={m.link}
-                    target="_blank"
-                    rel="noopener noreferrer"
-                    style={{ color: '#38bdf8', fontSize: '12px', textDecoration: 'none', fontWeight: 'bold' }}
-                  >
-                    View Course ↗
-                  </a>
                 </div>
               ))}
             </div>
           </div>
 
-          {/* Recognized Industry Certifications */}
+          {/* Industry Certifications */}
           <div>
             <h4 style={{ margin: '0 0 12px 0', fontSize: '16px', color: '#10b981', display: 'flex', alignItems: 'center', gap: '8px' }}>
-              <span>📜</span> Top Recognized Industry Certifications
+              <span>📜</span> Top Recognized Industry Certifications for Placements
             </h4>
             <div style={{
               display: 'grid',
-              gridTemplateColumns: 'repeat(auto-fit, minmax(240px, 1fr))',
+              gridTemplateColumns: 'repeat(auto-fit, minmax(280px, 1fr))',
               gap: '12px'
             }}>
               {currentBranch.moocsAndCerts.certifications.map((c, idx) => (
                 <div key={idx} style={{
                   background: '#0f172a',
-                  padding: '14px 16px',
+                  padding: '16px',
                   borderRadius: '10px',
                   border: '1px solid #334155',
                   display: 'flex',
                   flexDirection: 'column',
                   gap: '6px'
                 }}>
-                  <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-                    <strong style={{ fontSize: '13px', color: '#f8fafc' }}>{c.name}</strong>
-                  </div>
-                  <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: '12px', color: '#94a3b8' }}>
-                    <span>Issuer: <strong>{c.issuer}</strong></span>
-                    <span style={{ color: '#10b981', fontWeight: 'bold' }}>{c.value}</span>
-                  </div>
+                  <strong style={{ fontSize: '14px', color: '#f8fafc' }}>{c.name}</strong>
+                  <span style={{ fontSize: '12px', color: '#94a3b8' }}>Issuer: <span style={{ color: '#cbd5e1' }}>{c.issuer}</span></span>
                 </div>
               ))}
             </div>
@@ -1519,39 +1701,12 @@ print(f"Estimated Net Acceleration: {acc} m/s^2 (~{acc/9.81:.1f} Gs)")`
         </div>
       )}
 
-      {/* ── SUB TAB 4: Branch Real-World Code Preview ── */}
+      {/* ── SUB TAB 4: Branch Code Preview ── */}
       {activeSubTab === 'codepreview' && (
-        <div style={{ display: 'flex', flexDirection: 'column', gap: '16px' }}>
-          <div style={{
-            display: 'flex',
-            justifyContent: 'space-between',
-            alignItems: 'center',
-            flexWrap: 'wrap',
-            gap: '10px'
-          }}>
-            <div>
-              <h4 style={{ margin: 0, fontSize: '16px', color: currentBranch.color }}>
-                {currentBranch.codeSample.title}
-              </h4>
-              <p style={{ margin: '4px 0 0 0', fontSize: '13px', color: '#94a3b8' }}>
-                See how coding is directly used to solve real-world problems in {currentBranch.name.split('(')[0]}.
-              </p>
-            </div>
-            <span style={{
-              background: '#0f172a',
-              border: `1px solid ${currentBranch.color}`,
-              color: currentBranch.color,
-              padding: '4px 12px',
-              borderRadius: '6px',
-              fontSize: '12px',
-              fontWeight: 'bold',
-              textTransform: 'uppercase'
-            }}>
-              {currentBranch.codeSample.language}
-            </span>
-          </div>
-
-          {/* Syntax Highlighted Box */}
+        <div style={{ display: 'flex', flexDirection: 'column', gap: '14px' }}>
+          <h4 style={{ margin: 0, fontSize: '16px', color: currentBranch.color }}>
+            💻 Real-World Code Sample: {currentBranch.codeSample.title}
+          </h4>
           <pre style={{
             background: '#090d16',
             padding: '18px',
@@ -1569,23 +1724,23 @@ print(f"Estimated Net Acceleration: {acc} m/s^2 (~{acc/9.81:.1f} Gs)")`
         </div>
       )}
 
-      {/* ── SUB TAB 5: Smart Advisor Quiz ── */}
+      {/* ── SUB TAB 5: Supercharged Smart Advisor Quiz ── */}
       {activeSubTab === 'advisor_quiz' && (
         <div style={{
           background: 'rgba(30, 41, 59, 0.7)',
           borderRadius: '14px',
           padding: '24px',
-          border: '1px solid rgba(56, 189, 248, 0.3)',
+          border: '1.5px solid rgba(56, 189, 248, 0.3)',
           display: 'flex',
           flexDirection: 'column',
           gap: '20px'
         }}>
           <div>
             <h4 style={{ margin: 0, fontSize: '18px', color: '#38bdf8', fontWeight: '800' }}>
-              🤖 Interactive Smart Advisor: Find Your Personalized Language & Action Plan
+              🤖 Interactive Smart Advisor: Generate Your Year-Specific Roadmap
             </h4>
             <p style={{ margin: '6px 0 0 0', color: '#94a3b8', fontSize: '13.5px' }}>
-              Answer 3 quick questions about your branch, career goal, and college year to generate a customized 90-day learning roadmap!
+              Select your B.Tech branch, target career dream role, and current college year to generate a customized 30-60-90 day milestone plan!
             </p>
           </div>
 
@@ -1597,7 +1752,7 @@ print(f"Estimated Net Acceleration: {acc} m/s^2 (~{acc/9.81:.1f} Gs)")`
             {/* Question 1: Branch */}
             <div>
               <label style={{ display: 'block', fontSize: '12.5px', fontWeight: 'bold', color: '#cbd5e1', marginBottom: '6px' }}>
-                1. Your B.Tech Branch:
+                1. Your B.Tech Branch (16 Options):
               </label>
               <select
                 value={quizBranch}
@@ -1613,7 +1768,7 @@ print(f"Estimated Net Acceleration: {acc} m/s^2 (~{acc/9.81:.1f} Gs)")`
                 }}
               >
                 {branchData.map(b => (
-                  <option key={b.id} value={b.id}>{b.name}</option>
+                  <option key={b.id} value={b.id}>{b.icon} {b.name}</option>
                 ))}
               </select>
             </div>
@@ -1636,11 +1791,11 @@ print(f"Estimated Net Acceleration: {acc} m/s^2 (~{acc/9.81:.1f} Gs)")`
                   fontSize: '13px'
                 }}
               >
-                <option value="sde">💻 Software SDE / Tier-1 Product Company</option>
-                <option value="core">🛠️ Core Engineering Specialist (Hardware/R&D)</option>
+                <option value="sde">💻 Software SDE / FAANG / Tier-1 Product Company</option>
                 <option value="ai_ds">🤖 AI, Machine Learning & Data Science</option>
+                <option value="core">🛠️ Core Engineering R&D (Semiconductor / EV / CAD)</option>
                 <option value="cyber">🔒 Cyber Security & Ethical Hacking</option>
-                <option value="higher_studies">🎓 GATE / M.Tech / MS Research</option>
+                <option value="higher_studies">🎓 GATE / GRE / M.Tech / MS Research</option>
               </select>
             </div>
 
@@ -1662,10 +1817,34 @@ print(f"Estimated Net Acceleration: {acc} m/s^2 (~{acc/9.81:.1f} Gs)")`
                   fontSize: '13px'
                 }}
               >
-                <option value="1">1st Year (Freshman)</option>
-                <option value="2">2nd Year (Sophomore)</option>
-                <option value="3">3rd Year (Junior)</option>
-                <option value="4">4th Year (Senior)</option>
+                <option value="1">🌱 1st Year (Freshman)</option>
+                <option value="2">🌿 2nd Year (Sophomore)</option>
+                <option value="3">🚀 3rd Year (Junior)</option>
+                <option value="4">🎓 4th Year (Senior / Final Year)</option>
+              </select>
+            </div>
+
+            {/* Question 4: Current Skill Level */}
+            <div>
+              <label style={{ display: 'block', fontSize: '12.5px', fontWeight: 'bold', color: '#cbd5e1', marginBottom: '6px' }}>
+                4. Current Coding Level:
+              </label>
+              <select
+                value={quizSkillLevel}
+                onChange={e => setQuizSkillLevel(e.target.value)}
+                style={{
+                  width: '100%',
+                  padding: '10px 12px',
+                  borderRadius: '8px',
+                  background: '#0f172a',
+                  border: '1.5px solid #334155',
+                  color: '#fff',
+                  fontSize: '13px'
+                }}
+              >
+                <option value="beginner">🐣 Absolute Beginner (Zero coding experience)</option>
+                <option value="intermediate">⚡ Intermediate (Know basics, starting DSA)</option>
+                <option value="advanced">🔥 Advanced (Practicing LeetCode & Projects)</option>
               </select>
             </div>
           </div>
@@ -1674,7 +1853,7 @@ print(f"Estimated Net Acceleration: {acc} m/s^2 (~{acc/9.81:.1f} Gs)")`
             onClick={handleRunAdvisor}
             style={{
               alignSelf: 'flex-start',
-              padding: '10px 22px',
+              padding: '11px 24px',
               borderRadius: '8px',
               background: 'linear-gradient(135deg, #0284c7, #38bdf8)',
               color: '#04101e',
@@ -1685,72 +1864,111 @@ print(f"Estimated Net Acceleration: {acc} m/s^2 (~{acc/9.81:.1f} Gs)")`
               boxShadow: '0 4px 15px rgba(56, 189, 248, 0.3)'
             }}
           >
-            ⚡ Generate My Custom Roadmap
+            ⚡ Generate My Year-{quizYear} Custom Roadmap
           </button>
 
-          {/* Quiz Result Box */}
+          {/* Supercharged Year-Specific Result Box */}
           {quizResult && (
             <div style={{
               background: '#0f172a',
               borderRadius: '12px',
-              padding: '20px',
+              padding: '22px',
               border: '2px solid #38bdf8',
               display: 'flex',
               flexDirection: 'column',
-              gap: '14px',
+              gap: '16px',
               boxShadow: '0 0 25px rgba(56, 189, 248, 0.2)'
             }}>
-              <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
-                <span style={{ fontSize: '24px' }}>🎯</span>
-                <h4 style={{ margin: 0, fontSize: '17px', color: '#38bdf8', fontWeight: '800' }}>
-                  Personalized Recommendation for Year {quizYear} ({quizResult.branchName.split('(')[0]})
-                </h4>
+              {/* Header Title */}
+              <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', flexWrap: 'wrap', gap: '10px', borderBottom: '1px solid #334155', paddingBottom: '12px' }}>
+                <div>
+                  <h4 style={{ margin: 0, fontSize: '18px', color: '#38bdf8', fontWeight: '800' }}>
+                    {quizResult.yearGoalTitle}
+                  </h4>
+                  <span style={{ fontSize: '12.5px', color: '#94a3b8' }}>
+                    Branch: <strong>{quizResult.branchName}</strong> | Expected Package: <strong style={{ color: '#34d399' }}>{quizResult.salaryRange}</strong>
+                  </span>
+                </div>
+                <span style={{ background: 'rgba(56, 189, 248, 0.15)', color: '#38bdf8', padding: '4px 12px', borderRadius: '12px', fontSize: '12px', fontWeight: 'bold' }}>
+                  🎯 Year {quizYear} Action Plan
+                </span>
               </div>
 
+              {/* Language Cards */}
               <div style={{
                 display: 'grid',
                 gridTemplateColumns: 'repeat(auto-fit, minmax(220px, 1fr))',
                 gap: '12px'
               }}>
-                <div style={{ background: '#1e293b', padding: '12px', borderRadius: '8px' }}>
-                  <span style={{ fontSize: '11px', color: '#94a3b8', textTransform: 'uppercase' }}>Primary Language Today</span>
-                  <p style={{ margin: '4px 0 0 0', fontWeight: '800', color: '#38bdf8', fontSize: '14px' }}>
+                <div style={{ background: '#1e293b', padding: '14px', borderRadius: '8px', border: '1px solid rgba(56, 189, 248, 0.3)' }}>
+                  <span style={{ fontSize: '11px', color: '#38bdf8', textTransform: 'uppercase', fontWeight: 'bold' }}>Primary Language Today</span>
+                  <p style={{ margin: '4px 0 0 0', fontWeight: '800', color: '#fff', fontSize: '15px' }}>
                     {quizResult.recommendedPrimary}
                   </p>
                 </div>
 
-                <div style={{ background: '#1e293b', padding: '12px', borderRadius: '8px' }}>
-                  <span style={{ fontSize: '11px', color: '#94a3b8', textTransform: 'uppercase' }}>Secondary Stack</span>
-                  <p style={{ margin: '4px 0 0 0', fontWeight: '800', color: '#f59e0b', fontSize: '14px' }}>
+                <div style={{ background: '#1e293b', padding: '14px', borderRadius: '8px', border: '1px solid rgba(245, 158, 11, 0.3)' }}>
+                  <span style={{ fontSize: '11px', color: '#f59e0b', textTransform: 'uppercase', fontWeight: 'bold' }}>Secondary Tech Stack</span>
+                  <p style={{ margin: '4px 0 0 0', fontWeight: '800', color: '#fff', fontSize: '15px' }}>
                     {quizResult.recommendedSecondary}
                   </p>
                 </div>
 
-                <div style={{ background: '#1e293b', padding: '12px', borderRadius: '8px' }}>
-                  <span style={{ fontSize: '11px', color: '#94a3b8', textTransform: 'uppercase' }}>Target Challenge Platform</span>
-                  <p style={{ margin: '4px 0 0 0', fontWeight: '800', color: '#10b981', fontSize: '14px' }}>
-                    {quizResult.topChallenge}
+                <div style={{ background: '#1e293b', padding: '14px', borderRadius: '8px', border: '1px solid rgba(16, 185, 129, 0.3)' }}>
+                  <span style={{ fontSize: '11px', color: '#10b981', textTransform: 'uppercase', fontWeight: 'bold' }}>Recommended Cert / MOOC</span>
+                  <p style={{ margin: '4px 0 0 0', fontWeight: '800', color: '#fff', fontSize: '13.5px' }}>
+                    {quizResult.topCert}
                   </p>
                 </div>
               </div>
 
-              <div>
-                <span style={{ fontSize: '12px', fontWeight: 'bold', color: '#f8fafc' }}>
-                  🚀 Next 90-Day Milestone:
+              {/* Immediate Focus */}
+              <div style={{ background: 'rgba(56, 189, 248, 0.08)', padding: '14px 18px', borderRadius: '8px', border: '1px solid rgba(56, 189, 248, 0.2)' }}>
+                <span style={{ fontSize: '13px', fontWeight: 'bold', color: '#38bdf8' }}>
+                  ⚡ Immediate Action Focus for Year {quizYear}:
                 </span>
-                <p style={{ margin: '4px 0 10px 0', fontSize: '13px', color: '#cbd5e1', lineHeight: '1.5' }}>
-                  {quizResult.nextStep}
+                <p style={{ margin: '4px 0 0 0', fontSize: '13.5px', color: '#e2e8f0', lineHeight: '1.5' }}>
+                  {quizResult.immediateAction}
                 </p>
+              </div>
 
-                <span style={{ fontSize: '12px', fontWeight: 'bold', color: '#f8fafc' }}>
-                  💡 High-Impact Resume Projects to Build:
+              {/* 30-60-90 Day Milestones */}
+              <div>
+                <span style={{ fontSize: '13px', fontWeight: 'bold', color: '#f59e0b' }}>
+                  📅 Your 30-60-90 Day Milestone Execution Plan:
                 </span>
-                <ul style={{ margin: '4px 0 0 0', paddingLeft: '20px', fontSize: '12.5px', color: '#94a3b8', lineHeight: '1.5' }}>
+                <div style={{ display: 'flex', flexDirection: 'column', gap: '6px', marginTop: '6px' }}>
+                  {quizResult.milestones30_60_90.map((m, idx) => (
+                    <div key={idx} style={{ display: 'flex', alignItems: 'flex-start', gap: '8px', fontSize: '13px', color: '#cbd5e1' }}>
+                      <span style={{ color: '#f59e0b', fontWeight: 'bold' }}>📌</span>
+                      <span>{m}</span>
+                    </div>
+                  ))}
+                </div>
+              </div>
+
+              {/* Targeted Resume Projects */}
+              <div>
+                <span style={{ fontSize: '13px', fontWeight: 'bold', color: '#34d399' }}>
+                  💡 Top 3 High-Impact Resume Projects for Year {quizYear}:
+                </span>
+                <ul style={{ margin: '6px 0 0 0', paddingLeft: '20px', fontSize: '13px', color: '#cbd5e1', lineHeight: '1.6' }}>
                   {quizResult.projects.map((p, i) => (
-                    <li key={i}><strong style={{ color: '#e2e8f0' }}>{p}</strong></li>
+                    <li key={i}><strong style={{ color: '#f8fafc' }}>{p}</strong></li>
                   ))}
                 </ul>
               </div>
+
+              {/* Common Trap to Avoid */}
+              <div style={{ background: 'rgba(239, 68, 68, 0.1)', padding: '12px 16px', borderRadius: '8px', border: '1px solid rgba(239, 68, 68, 0.25)' }}>
+                <span style={{ fontSize: '12.5px', fontWeight: 'bold', color: '#ef4444' }}>
+                  ⚠️ Critical Trap to Avoid in Year {quizYear}:
+                </span>
+                <p style={{ margin: '2px 0 0 0', fontSize: '12.5px', color: '#fca5a5' }}>
+                  {quizResult.avoidMistake}
+                </p>
+              </div>
+
             </div>
           )}
         </div>
@@ -1772,81 +1990,37 @@ print(f"Estimated Net Acceleration: {acc} m/s^2 (~{acc/9.81:.1f} Gs)")`
                   <th style={{ padding: '12px 14px' }}>Branch</th>
                   <th style={{ padding: '12px 14px' }}>Primary Language</th>
                   <th style={{ padding: '12px 14px' }}>Secondary Stack</th>
-                  <th style={{ padding: '12px 14px' }}>Key Challenge Platform</th>
-                  <th style={{ padding: '12px 14px' }}>Software SDE Transition</th>
+                  <th style={{ padding: '12px 14px' }}>Key Industry Domain</th>
+                  <th style={{ padding: '12px 14px' }}>Placement Demand</th>
                 </tr>
               </thead>
               <tbody>
-                {branchData.map((b, i) => (
+                {branchData.map((b, idx) => (
                   <tr key={b.id} style={{
-                    background: i % 2 === 0 ? '#0f172a' : '#131d31',
+                    background: idx % 2 === 0 ? 'rgba(15, 23, 42, 0.6)' : 'rgba(30, 41, 59, 0.4)',
                     borderBottom: '1px solid #334155'
                   }}>
-                    <td style={{ padding: '12px 14px', fontWeight: 'bold', color: '#f8fafc' }}>
-                      <span style={{ marginRight: '6px' }}>{b.icon}</span>
-                      {b.name.split('(')[0]}
+                    <td style={{ padding: '12px 14px', fontWeight: 'bold', color: b.color }}>
+                      <span style={{ marginRight: '6px' }}>{b.icon}</span> {b.name.split('(')[0]}
                     </td>
-                    <td style={{ padding: '12px 14px', color: b.color, fontWeight: '700' }}>
+                    <td style={{ padding: '12px 14px', color: '#f1f5f9', fontWeight: '600' }}>
                       {b.primaryLang.name}
                     </td>
                     <td style={{ padding: '12px 14px', color: '#cbd5e1' }}>
                       {b.secondaryLang.name}
                     </td>
-                    <td style={{ padding: '12px 14px', color: '#f59e0b' }}>
-                      {b.moocsAndCerts.challenges[0]?.name.split('(')[0]}
+                    <td style={{ padding: '12px 14px', color: '#94a3b8', fontSize: '12.5px' }}>
+                      {b.coreFocus.split(',').slice(0, 3).join(', ')}...
                     </td>
-                    <td style={{ padding: '12px 14px', color: b.id === 'cse' ? '#10b981' : '#38bdf8' }}>
-                      {b.id === 'cse' ? 'Native Track' : 'Smooth via C++/Java DSA'}
+                    <td style={{ padding: '12px 14px', color: '#facc15', fontWeight: 'bold', fontSize: '12px' }}>
+                      {b.placementDemand.split('(')[0]}
                     </td>
                   </tr>
                 ))}
               </tbody>
             </table>
           </div>
-
-          {/* Student FAQs */}
-          <div style={{
-            background: 'rgba(30, 41, 59, 0.6)',
-            borderRadius: '12px',
-            padding: '20px',
-            border: '1px solid #334155'
-          }}>
-            <h4 style={{ margin: '0 0 14px 0', fontSize: '16px', color: '#38bdf8' }}>
-              ❓ Frequently Asked Questions for B.Tech Beginners
-            </h4>
-
-            <div style={{ display: 'flex', flexDirection: 'column', gap: '14px' }}>
-              <div>
-                <strong style={{ fontSize: '13.5px', color: '#f8fafc' }}>
-                  Q: Can Non-CSE students (ECE, Mech, Civil, EEE) get high-paying Software SDE jobs in FAANG/Product companies?
-                </strong>
-                <p style={{ margin: '4px 0 0 0', fontSize: '12.5px', color: '#94a3b8', lineHeight: '1.5' }}>
-                  <strong>Yes, 100%!</strong> Over 40% of software engineers in top tech companies come from non-CSE backgrounds. Companies test Data Structures, Problem Solving, and basic CS fundamentals (OOPs, DBMS, OS), which anyone can master in 6 to 9 months of consistent practice.
-                </p>
-              </div>
-
-              <div>
-                <strong style={{ fontSize: '13.5px', color: '#f8fafc' }}>
-                  Q: Should 1st year students start with C or Python?
-                </strong>
-                <p style={{ margin: '4px 0 0 0', fontSize: '12.5px', color: '#94a3b8', lineHeight: '1.5' }}>
-                  If you want to understand how RAM, pointers, and CPU memory work, start with <strong>C</strong>. If your goal is AI/Data Science or fast web prototyping, start with <strong>Python</strong>.
-                </p>
-              </div>
-
-              <div>
-                <strong style={{ fontSize: '13.5px', color: '#f8fafc' }}>
-                  Q: Which is better for DSA & Placements: C++ or Java?
-                </strong>
-                <p style={{ margin: '4px 0 0 0', fontSize: '12.5px', color: '#94a3b8', lineHeight: '1.5' }}>
-                  Both are Tier-1 choices. <strong>C++</strong> is faster for competitive programming (STL). <strong>Java</strong> is widely used in enterprise server backends (Spring Boot) and Android. Choose either and stick to it for at least 150+ LeetCode problems.
-                </p>
-              </div>
-            </div>
-          </div>
         </div>
-      )}
-      </>
       )}
 
     </div>

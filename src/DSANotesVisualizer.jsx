@@ -18,6 +18,35 @@ const toAllman = code => {
   return out.join('\n');
 };
 
+// ─── Robust Multi-Language Code Extractor (Prevents empty/missing code) ────
+export const getSafeCode = (codeObj, lang) => {
+  if (!codeObj || typeof codeObj !== 'object') return '';
+  if (codeObj[lang] && typeof codeObj[lang] === 'string' && codeObj[lang].trim().length > 0) {
+    return codeObj[lang];
+  }
+  const aliases = {
+    'C': ['C', 'C++', 'Cpp', 'cpp', 'c'],
+    'C++': ['C++', 'C', 'Cpp', 'cpp', 'c'],
+    'JS': ['JS', 'JavaScript', 'js', 'javascript'],
+    'Python': ['Python', 'python', 'Py', 'py'],
+    'Java': ['Java', 'java']
+  };
+  const list = aliases[lang] || [lang];
+  for (const alt of list) {
+    if (codeObj[alt] && typeof codeObj[alt] === 'string' && codeObj[alt].trim().length > 0) {
+      return codeObj[alt];
+    }
+  }
+  const available = ['C++', 'C', 'Java', 'Python', 'JS', 'JavaScript'];
+  for (const k of available) {
+    if (codeObj[k] && typeof codeObj[k] === 'string' && codeObj[k].trim().length > 0) {
+      return codeObj[k];
+    }
+  }
+  const firstKey = Object.keys(codeObj)[0];
+  return (firstKey && typeof codeObj[firstKey] === 'string') ? codeObj[firstKey] : '';
+};
+
 // ─── Semantic Log Highlighter ────────────────────────────────────────────────
 const highlightLogText = (text) => {
   if (!text) return '';
@@ -410,6 +439,296 @@ public static boolean search(int[] arr, int target) {
         if (x == target) return true;
     }
     return false;
+}`
+    }
+  },
+
+  LESSON_TWO_POINTERS: {
+    title: "9. Two Pointers Technique",
+    desc: "The Two Pointers pattern utilizes two memory index pointers that traverse an array or string either from opposite ends towards the center (e.g. 2Sum in Sorted Array, Palindrome, Container With Most Water) or in the same direction at varying speeds (Fast & Slow pointers for cycle detection). It reduces time complexity from O(N^2) brute force to linear O(N).",
+    analogy: "Imagine two people walking towards each other from opposite ends of a bridge to find a meeting landmark, instead of one person walking back and forth repeatedly.",
+    code: {
+      JS: `// Opposite-Direction Two Pointers (2Sum in Sorted Array)
+function twoSumSorted(arr, target) {
+  let left = 0, right = arr.length - 1;
+  while (left < right) {
+    const sum = arr[left] + arr[right];
+    if (sum === target) return [left, right];
+    else if (sum < target) left++; // Need a larger sum
+    else right--; // Need a smaller sum
+  }
+  return [];
+}`,
+      Python: `# Opposite-Direction Two Pointers
+def two_sum_sorted(arr, target):
+    left, right = 0, len(arr) - 1
+    while left < right:
+        current_sum = arr[left] + arr[right]
+        if current_sum == target:
+            return [left, right]
+        elif current_sum < target:
+            left += 1
+        else:
+            right -= 1
+    return []`,
+      "C++": `// Opposite-Direction Two Pointers
+#include <vector>
+using namespace std;
+
+vector<int> twoSumSorted(const vector<int>& arr, int target) {
+    int left = 0, right = arr.size() - 1;
+    while (left < right) {
+        int sum = arr[left] + arr[right];
+        if (sum == target) return {left, right};
+        else if (sum < target) left++;
+        else right--;
+    }
+    return {};
+}`,
+      C: `// C Implementation of Two Pointers
+int twoSumSorted(int arr[], int n, int target, int* outL, int* outR) {
+    int left = 0, right = n - 1;
+    while (left < right) {
+        int sum = arr[left] + arr[right];
+        if (sum == target) {
+            *outL = left; *outR = right;
+            return 1;
+        }
+        else if (sum < target) left++;
+        else right--;
+    }
+    return 0;
+}`,
+      Java: `public class TwoPointers {
+    public static int[] twoSumSorted(int[] arr, int target) {
+        int left = 0, right = arr.length - 1;
+        while (left < right) {
+            int sum = arr[left] + arr[right];
+            if (sum == target) return new int[] { left, right };
+            else if (sum < target) left++;
+            else right--;
+        }
+        return new int[0];
+    }
+}`
+    }
+  },
+
+  LESSON_SLIDING_WINDOW: {
+    title: "10. Sliding Window Technique",
+    desc: "The Sliding Window pattern maintains a continuous subsegment (window) of an array or string between indices [L...R]. Instead of recalculating the window properties in O(K) every time, we slide the window by adding the incoming element on the right and subtracting the outgoing element on the left in O(1) time.",
+    analogy: "Like a magnifying glass sliding across a newspaper column: you only read new words entering the lens on the right and forget the words leaving on the left, rather than re-reading the entire paragraph.",
+    code: {
+      JS: `// Fixed-Size Sliding Window: Max Sum Subarray of size K
+function maxSumSubarray(arr, k) {
+  if (arr.length < k) return 0;
+  let windowSum = 0;
+  for (let i = 0; i < k; i++) windowSum += arr[i];
+  let maxSum = windowSum;
+
+  for (let r = k; r < arr.length; r++) {
+    windowSum += arr[r] - arr[r - k]; // Add new right, subtract old left
+    maxSum = Math.max(maxSum, windowSum);
+  }
+  return maxSum;
+}`,
+      Python: `# Fixed-Size Sliding Window
+def max_sum_subarray(arr, k):
+    if len(arr) < k: return 0
+    window_sum = sum(arr[:k])
+    max_sum = window_sum
+    for r in range(k, len(arr)):
+        window_sum += arr[r] - arr[r - k]
+        max_sum = max(max_sum, window_sum)
+    return max_sum`,
+      "C++": `// Fixed-Size Sliding Window
+#include <vector>
+#include <algorithm>
+using namespace std;
+
+int maxSumSubarray(const vector<int>& arr, int k) {
+    if (arr.size() < k) return 0;
+    int windowSum = 0;
+    for (int i = 0; i < k; i++) windowSum += arr[i];
+    int maxSum = windowSum;
+    for (size_t r = k; r < arr.size(); r++) {
+        windowSum += arr[r] - arr[r - k];
+        maxSum = max(maxSum, windowSum);
+    }
+    return maxSum;
+}`,
+      C: `int maxSumSubarray(int arr[], int n, int k) {
+    if (n < k) return 0;
+    int windowSum = 0;
+    for (int i = 0; i < k; i++) windowSum += arr[i];
+    int maxSum = windowSum;
+    for (int r = k; r < n; r++) {
+        windowSum += arr[r] - arr[r - k];
+        if (windowSum > maxSum) maxSum = windowSum;
+    }
+    return maxSum;
+}`,
+      Java: `public class SlidingWindow {
+    public static int maxSumSubarray(int[] arr, int k) {
+        if (arr.length < k) return 0;
+        int windowSum = 0;
+        for (int i = 0; i < k; i++) windowSum += arr[i];
+        int maxSum = windowSum;
+        for (int r = k; r < arr.length; r++) {
+            windowSum += arr[r] - arr[r - k];
+            maxSum = Math.max(maxSum, windowSum);
+        }
+        return maxSum;
+    }
+}`
+    }
+  },
+
+  LESSON_PREFIX_SUM: {
+    title: "11. Prefix Sum & Range Query Technique",
+    desc: "A Prefix Sum array precomputes cumulative sums such that prefix[i] = arr[0] + ... + arr[i]. This enables querying the sum of any contiguous subarray arr[L...R] in strictly O(1) constant time as prefix[R] - prefix[L-1].",
+    analogy: "Like an odometer in a car: to calculate how far you traveled between city L and city R, you subtract your odometer reading at city L from your odometer reading at city R, instead of measuring each mile manually.",
+    code: {
+      JS: `// Prefix Sum Precomputation & O(1) Query
+class PrefixSum {
+  constructor(arr) {
+    this.prefix = [arr[0]];
+    for (let i = 1; i < arr.length; i++) {
+      this.prefix[i] = this.prefix[i - 1] + arr[i];
+    }
+  }
+  query(L, R) {
+    if (L === 0) return this.prefix[R];
+    return this.prefix[R] - this.prefix[L - 1]; // O(1) Range Sum
+  }
+}`,
+      Python: `# Prefix Sum Class
+class PrefixSum:
+    def __init__(self, arr):
+        self.prefix = [arr[0]]
+        for i in range(1, len(arr)):
+            self.prefix.append(self.prefix[-1] + arr[i])
+            
+    def query(self, L, R):
+        if L == 0: return self.prefix[R]
+        return self.prefix[R] - self.prefix[L - 1]`,
+      "C++": `// Prefix Sum Class
+#include <vector>
+using namespace std;
+
+class PrefixSum {
+    vector<int> prefix;
+public:
+    PrefixSum(const vector<int>& arr) {
+        prefix.resize(arr.size());
+        prefix[0] = arr[0];
+        for (size_t i = 1; i < arr.size(); i++) {
+            prefix[i] = prefix[i - 1] + arr[i];
+        }
+    }
+    int query(int L, int R) {
+        if (L == 0) return prefix[R];
+        return prefix[R] - prefix[L - 1];
+    }
+};`,
+      C: `void buildPrefix(int arr[], int prefix[], int n) {
+    prefix[0] = arr[0];
+    for (int i = 1; i < n; i++) prefix[i] = prefix[i - 1] + arr[i];
+}
+int queryRange(int prefix[], int L, int R) {
+    if (L == 0) return prefix[R];
+    return prefix[R] - prefix[L - 1];
+}`,
+      Java: `public class PrefixSum {
+    private int[] prefix;
+    public PrefixSum(int[] arr) {
+        prefix = new int[arr.length];
+        prefix[0] = arr[0];
+        for (int i = 1; i < arr.length; i++) {
+            prefix[i] = prefix[i - 1] + arr[i];
+        }
+    }
+    public int query(int L, int R) {
+        if (L == 0) return prefix[R];
+        return prefix[R] - prefix[L - 1];
+    }
+}`
+    }
+  },
+
+  LESSON_DUTCH_FLAG: {
+    title: "12. Dutch National Flag (3-Way Partitioning)",
+    desc: "The Dutch National Flag algorithm partitions an array with 3 distinct values (e.g. 0s, 1s, 2s) in a single pass O(N) time and O(1) space using three pointers: low, mid, and high.",
+    analogy: "Like sorting laundry into 3 baskets (Whites, Colors, Darks) by looking at each piece once from left to right and tossing it into the appropriate bin.",
+    code: {
+      JS: `// Dutch National Flag (Sort 0s, 1s, 2s)
+function sortColors(nums) {
+  let low = 0, mid = 0, high = nums.length - 1;
+  while (mid <= high) {
+    if (nums[mid] === 0) {
+      [nums[low], nums[mid]] = [nums[mid], nums[low]];
+      low++; mid++;
+    } else if (nums[mid] === 1) {
+      mid++;
+    } else {
+      [nums[mid], nums[high]] = [nums[high], nums[mid]];
+      high--;
+    }
+  }
+}`,
+      Python: `# Dutch National Flag 3-Way Partitioning
+def sort_colors(nums):
+    low, mid, high = 0, 0, len(nums) - 1
+    while mid <= high:
+        if nums[mid] == 0:
+            nums[low], nums[mid] = nums[mid], nums[low]
+            low += 1; mid += 1
+        elif nums[mid] == 1:
+            mid += 1
+        else:
+            nums[mid], nums[high] = nums[high], nums[mid]
+            high -= 1`,
+      "C++": `// Dutch National Flag (Sort Colors)
+#include <vector>
+#include <utility>
+using namespace std;
+
+void sortColors(vector<int>& nums) {
+    int low = 0, mid = 0, high = nums.size() - 1;
+    while (mid <= high) {
+        if (nums[mid] == 0) {
+            swap(nums[low++], nums[mid++]);
+        } else if (nums[mid] == 1) {
+            mid++;
+        } else {
+            swap(nums[mid], nums[high--]);
+        }
+    }
+}`,
+      C: `void swap(int* a, int* b) { int t = *a; *a = *b; *b = t; }
+void sortColors(int nums[], int n) {
+    int low = 0, mid = 0, high = n - 1;
+    while (mid <= high) {
+        if (nums[mid] == 0) swap(&nums[low++], &nums[mid++]);
+        else if (nums[mid] == 1) mid++;
+        else swap(&nums[mid], &nums[high--]);
+    }
+}`,
+      Java: `public class DutchNationalFlag {
+    public static void sortColors(int[] nums) {
+        int low = 0, mid = 0, high = nums.length - 1;
+        while (mid <= high) {
+            if (nums[mid] == 0) {
+                int temp = nums[low]; nums[low] = nums[mid]; nums[mid] = temp;
+                low++; mid++;
+            } else if (nums[mid] == 1) {
+                mid++;
+            } else {
+                int temp = nums[mid]; nums[mid] = nums[high]; nums[high] = temp;
+                high--;
+            }
+        }
+    }
 }`
     }
   },
@@ -2443,6 +2762,349 @@ private void traverse(TreeNode node, List<Integer> res) {
       steps.push({ line: 9, msg: "Return true.", variables: { slow: arr[slow], fast: arr[fast] }, pointers: { slow, fast }, completed: true, result: true });
       return steps;
     }
+  },
+  TWO_POINTERS_TARGET: {
+    title: "11. Two Pointers: 2Sum in Sorted Array",
+    difficulty: "Medium",
+    category: "Array Pointers",
+    notes: {
+      desc: "Given a 1-indexed array of integers numbers that is already sorted in non-decreasing order, find two numbers such that they add up to a specific target number.",
+      intuition: "Initialize left = 0 and right = n - 1. If numbers[left] + numbers[right] == target, we found the pair! If sum < target, increment left to increase the sum. If sum > target, decrement right to decrease the sum.",
+      complexity: "Time Complexity: O(N) | Space Complexity: O(1)"
+    },
+    code: {
+      JS: `function twoSumSorted(numbers, target) {
+  let left = 0, right = numbers.length - 1;
+  while (left < right) {
+    const sum = numbers[left] + numbers[right];
+    if (sum === target) return [left + 1, right + 1];
+    else if (sum < target) left++;
+    else right--;
+  }
+  return [];
+}`,
+      Python: `def two_sum_sorted(numbers, target):
+    left, right = 0, len(numbers) - 1
+    while left < right:
+        current_sum = numbers[left] + numbers[right]
+        if current_sum == target:
+            return [left + 1, right + 1]
+        elif current_sum < target:
+            left += 1
+        else:
+            right -= 1
+    return []`,
+      "C++": `vector<int> twoSumSorted(vector<int>& numbers, int target) {
+    int left = 0, right = numbers.size() - 1;
+    while (left < right) {
+        int sum = numbers[left] + numbers[right];
+        if (sum == target) return {left + 1, right + 1};
+        else if (sum < target) left++;
+        else right--;
+    }
+    return {};
+}`,
+      C: `int twoSumSorted(int numbers[], int n, int target, int* outL, int* outR) {
+    int left = 0, right = n - 1;
+    while (left < right) {
+        int sum = numbers[left] + numbers[right];
+        if (sum == target) {
+            *outL = left + 1; *outR = right + 1;
+            return 1;
+        }
+        else if (sum < target) left++;
+        else right--;
+    }
+    return 0;
+}`,
+      Java: `public int[] twoSum(int[] numbers, int target) {
+    int left = 0, right = numbers.length - 1;
+    while (left < right) {
+        int sum = numbers[left] + numbers[right];
+        if (sum == target) return new int[] { left + 1, right + 1 };
+        else if (sum < target) left++;
+        else right--;
+    }
+    return new int[0];
+}`
+    },
+    generator: (numbers = [2, 7, 11, 15, 18], target = 18) => {
+      const steps = [];
+      let left = 0, right = numbers.length - 1;
+      steps.push({ line: 1, msg: `Initialize left pointer at index 0 (${numbers[left]}), right pointer at index ${right} (${numbers[right]}). Target = ${target}.`, variables: { arr: numbers, left, right, sum: "-" }, pointers: { left, right } });
+      
+      while (left < right) {
+        const sum = numbers[left] + numbers[right];
+        steps.push({ line: 3, msg: `Calculate sum: numbers[${left}] (${numbers[left]}) + numbers[${right}] (${numbers[right]}) = ${sum}.`, variables: { arr: numbers, left, right, sum }, pointers: { left, right } });
+        
+        if (sum === target) {
+          steps.push({ line: 4, msg: `Sum ${sum} matches target ${target}! Pair found at indices [${left}, ${right}].`, variables: { arr: numbers, left, right, sum }, pointers: { left, right }, matched: true, completed: true, result: [left + 1, right + 1] });
+          return steps;
+        } else if (sum < target) {
+          steps.push({ line: 5, msg: `Sum ${sum} < target ${target}. Increment left pointer to increase sum.`, variables: { arr: numbers, left: left + 1, right, sum }, pointers: { left: left + 1, right } });
+          left++;
+        } else {
+          steps.push({ line: 6, msg: `Sum ${sum} > target ${target}. Decrement right pointer to decrease sum.`, variables: { arr: numbers, left, right: right - 1, sum }, pointers: { left, right: right - 1 } });
+          right--;
+        }
+      }
+      steps.push({ line: 8, msg: "Pointers crossed without finding target sum.", variables: { arr: numbers, left, right, sum: "-" }, completed: true, result: [] });
+      return steps;
+    }
+  },
+  SLIDING_WINDOW_MAX_K: {
+    title: "12. Sliding Window: Max Sum Subarray of Size K",
+    difficulty: "Medium",
+    category: "Sliding Window",
+    notes: {
+      desc: "Given an array of integers arr and a positive integer k, find the maximum sum of any contiguous subarray of size k.",
+      intuition: "Compute the sum of the first window of size k. Then slide the window one element at a time: add the next element arr[r] and subtract the element leaving the window arr[r - k]. Update maxSum = max(maxSum, windowSum) in O(1) per step.",
+      complexity: "Time Complexity: O(N) | Space Complexity: O(1)"
+    },
+    code: {
+      JS: `function maxSubarraySumK(arr, k) {
+  let windowSum = 0;
+  for (let i = 0; i < k; i++) windowSum += arr[i];
+  let maxSum = windowSum;
+
+  for (let r = k; r < arr.length; r++) {
+    windowSum += arr[r] - arr[r - k];
+    maxSum = Math.max(maxSum, windowSum);
+  }
+  return maxSum;
+}`,
+      Python: `def max_subarray_sum_k(arr, k):
+    window_sum = sum(arr[:k])
+    max_sum = window_sum
+    for r in range(k, len(arr)):
+        window_sum += arr[r] - arr[r - k]
+        max_sum = max(max_sum, window_sum)
+    return max_sum`,
+      "C++": `int maxSubarraySumK(vector<int>& arr, int k) {
+    int windowSum = 0;
+    for (int i = 0; i < k; i++) windowSum += arr[i];
+    int maxSum = windowSum;
+    for (size_t r = k; r < arr.size(); r++) {
+        windowSum += arr[r] - arr[r - k];
+        maxSum = max(maxSum, windowSum);
+    }
+    return maxSum;
+}`,
+      C: `int maxSubarraySumK(int arr[], int n, int k) {
+    int windowSum = 0;
+    for (int i = 0; i < k; i++) windowSum += arr[i];
+    int maxSum = windowSum;
+    for (int r = k; r < n; r++) {
+        windowSum += arr[r] - arr[r - k];
+        if (windowSum > maxSum) maxSum = windowSum;
+    }
+    return maxSum;
+}`,
+      Java: `public int maxSubarraySumK(int[] arr, int k) {
+    int windowSum = 0;
+    for (int i = 0; i < k; i++) windowSum += arr[i];
+    int maxSum = windowSum;
+    for (int r = k; r < arr.length; r++) {
+        windowSum += arr[r] - arr[r - k];
+        maxSum = Math.max(maxSum, windowSum);
+    }
+    return maxSum;
+}`
+    },
+    generator: (arr = [2, 1, 5, 1, 3, 2], k = 3) => {
+      const steps = [];
+      let windowSum = 0;
+      for (let i = 0; i < k; i++) windowSum += arr[i];
+      let maxSum = windowSum;
+      
+      steps.push({ line: 1, msg: `Initialize first window [0...${k-1}]. Window sum = ${windowSum}, Max sum = ${maxSum}.`, variables: { arr, window: `[0...${k-1}]`, windowSum, maxSum }, windowRange: [0, k-1] });
+      
+      for (let r = k; r < arr.length; r++) {
+        const entering = arr[r];
+        const exiting = arr[r - k];
+        windowSum += entering - exiting;
+        const updated = windowSum > maxSum;
+        if (updated) maxSum = windowSum;
+        
+        steps.push({ 
+          line: 5, 
+          msg: `Slide window to [${r - k + 1}...${r}]. Add arr[${r}] (${entering}), remove arr[${r - k}] (${exiting}). WindowSum = ${windowSum}. MaxSum = ${maxSum}.`, 
+          variables: { arr, window: `[${r - k + 1}...${r}]`, windowSum, maxSum },
+          windowRange: [r - k + 1, r],
+          updated
+        });
+      }
+      steps.push({ line: 8, msg: `Finished scanning all windows. Maximum window sum of size ${k} is ${maxSum}.`, variables: { arr, windowSum, maxSum }, completed: true, result: maxSum });
+      return steps;
+    }
+  },
+  DUTCH_FLAG_SORT: {
+    title: "13. Dutch National Flag: Sort 0s, 1s, 2s",
+    difficulty: "Medium",
+    category: "Array Pointers",
+    notes: {
+      desc: "Given an array nums with n objects colored 0, 1, or 2, sort them in-place so that objects of the same color are adjacent.",
+      intuition: "Maintain 3 pointers: low = 0 (boundary for 0s), mid = 0 (current element), high = n - 1 (boundary for 2s). If nums[mid] == 0, swap with low and increment both. If 1, just increment mid. If 2, swap with high and decrement high.",
+      complexity: "Time Complexity: O(N) | Space Complexity: O(1)"
+    },
+    code: {
+      JS: `function sortColors(nums) {
+  let low = 0, mid = 0, high = nums.length - 1;
+  while (mid <= high) {
+    if (nums[mid] === 0) {
+      [nums[low], nums[mid]] = [nums[mid], nums[low]];
+      low++; mid++;
+    } else if (nums[mid] === 1) {
+      mid++;
+    } else {
+      [nums[mid], nums[high]] = [nums[high], nums[mid]];
+      high--;
+    }
+  }
+}`,
+      Python: `def sort_colors(nums):
+    low, mid, high = 0, 0, len(nums) - 1
+    while mid <= high:
+        if nums[mid] == 0:
+            nums[low], nums[mid] = nums[mid], nums[low]
+            low += 1; mid += 1
+        elif nums[mid] == 1:
+            mid += 1
+        else:
+            nums[mid], nums[high] = nums[high], nums[mid]
+            high -= 1`,
+      "C++": `void sortColors(vector<int>& nums) {
+    int low = 0, mid = 0, high = nums.size() - 1;
+    while (mid <= high) {
+        if (nums[mid] == 0) {
+            swap(nums[low++], nums[mid++]);
+        } else if (nums[mid] == 1) {
+            mid++;
+        } else {
+            swap(nums[mid], nums[high--]);
+        }
+    }
+}`,
+      C: `void swap(int* a, int* b) { int t = *a; *a = *b; *b = t; }
+void sortColors(int nums[], int n) {
+    int low = 0, mid = 0, high = n - 1;
+    while (mid <= high) {
+        if (nums[mid] == 0) swap(&nums[low++], &nums[mid++]);
+        else if (nums[mid] == 1) mid++;
+        else swap(&nums[mid], &nums[high--]);
+    }
+}`,
+      Java: `public void sortColors(int[] nums) {
+    int low = 0, mid = 0, high = nums.length - 1;
+    while (mid <= high) {
+        if (nums[mid] == 0) {
+            int t = nums[low]; nums[low] = nums[mid]; nums[mid] = t;
+            low++; mid++;
+        } else if (nums[mid] == 1) {
+            mid++;
+        } else {
+            int t = nums[mid]; nums[mid] = nums[high]; nums[high] = t;
+            high--;
+        }
+    }
+}`
+    },
+    generator: (nums = [2, 0, 2, 1, 1, 0]) => {
+      const arr = [...nums];
+      const steps = [];
+      let low = 0, mid = 0, high = arr.length - 1;
+      
+      steps.push({ line: 1, msg: `Initialize low = 0, mid = 0, high = ${high}. Array: [${arr.join(', ')}].`, variables: { arr: [...arr], low, mid, high }, pointers: { low, mid, high } });
+      
+      while (mid <= high) {
+        steps.push({ line: 3, msg: `Inspect mid index ${mid} (value ${arr[mid]}).`, variables: { arr: [...arr], low, mid, high }, pointers: { low, mid, high } });
+        if (arr[mid] === 0) {
+          const t = arr[low]; arr[low] = arr[mid]; arr[mid] = t;
+          steps.push({ line: 4, msg: `Found 0. Swap arr[${low}] and arr[${mid}]. Increment low to ${low+1} and mid to ${mid+1}.`, variables: { arr: [...arr], low: low+1, mid: mid+1, high }, pointers: { low: low+1, mid: mid+1, high } });
+          low++; mid++;
+        } else if (arr[mid] === 1) {
+          steps.push({ line: 6, msg: `Found 1. 1 is in correct middle bucket. Increment mid to ${mid+1}.`, variables: { arr: [...arr], low, mid: mid+1, high }, pointers: { low, mid: mid+1, high } });
+          mid++;
+        } else {
+          const t = arr[mid]; arr[mid] = arr[high]; arr[high] = t;
+          steps.push({ line: 8, msg: `Found 2. Swap arr[${mid}] and arr[${high}]. Decrement high to ${high-1}.`, variables: { arr: [...arr], low, mid, high: high-1 }, pointers: { low, mid, high: high-1 } });
+          high--;
+        }
+      }
+      steps.push({ line: 11, msg: `Partition complete! Fully sorted colors: [${arr.join(', ')}].`, variables: { arr: [...arr], low, mid, high }, completed: true, result: [...arr] });
+      return steps;
+    }
+  },
+  PREFIX_SUM_SUBARRAY: {
+    title: "14. Prefix Sum: Subarray Range Sum",
+    difficulty: "Easy",
+    category: "Prefix Sum",
+    notes: {
+      desc: "Given an integer array nums, precompute the prefix sum array to answer multiple range sum queries (L, R) in O(1) time.",
+      intuition: "Construct prefix[i] = prefix[i-1] + nums[i]. For any query (L, R), if L == 0, answer is prefix[R]. Otherwise, answer is prefix[R] - prefix[L-1].",
+      complexity: "Time Complexity: O(N) Precompute, O(1) per Query | Space Complexity: O(N)"
+    },
+    code: {
+      JS: `function rangeSum(nums, L, R) {
+  const prefix = [nums[0]];
+  for (let i = 1; i < nums.length; i++) {
+    prefix[i] = prefix[i - 1] + nums[i];
+  }
+  return L === 0 ? prefix[R] : prefix[R] - prefix[L - 1];
+}`,
+      Python: `def range_sum(nums, L, R):
+    prefix = [nums[0]]
+    for i in range(1, len(nums)):
+        prefix.append(prefix[-1] + nums[i])
+    return prefix[R] if L == 0 else prefix[R] - prefix[L - 1]`,
+      "C++": `int rangeSum(vector<int>& nums, int L, int R) {
+    vector<int> prefix(nums.size());
+    prefix[0] = nums[0];
+    for (size_t i = 1; i < nums.size(); i++) {
+        prefix[i] = prefix[i - 1] + nums[i];
+    }
+    return (L == 0) ? prefix[R] : prefix[R] - prefix[L - 1];
+}`,
+      C: `int rangeSum(int nums[], int n, int L, int R) {
+    int prefix[100];
+    prefix[0] = nums[0];
+    for (int i = 1; i < n; i++) prefix[i] = prefix[i - 1] + nums[i];
+    return (L == 0) ? prefix[R] : prefix[R] - prefix[L - 1];
+}`,
+      Java: `public int rangeSum(int[] nums, int L, int R) {
+    int[] prefix = new int[nums.length];
+    prefix[0] = nums[0];
+    for (int i = 1; i < nums.length; i++) {
+        prefix[i] = prefix[i - 1] + nums[i];
+    }
+    return (L == 0) ? prefix[R] : prefix[R] - prefix[L - 1];
+}`
+    },
+    generator: (nums = [3, 1, 4, 1, 5, 9, 2], query = [2, 5]) => {
+      const steps = [];
+      const prefix = [nums[0]];
+      steps.push({ line: 1, msg: `Initialize prefix[0] = nums[0] = ${nums[0]}.`, variables: { arr: nums, prefix: [...prefix], i: 0 } });
+      
+      for (let i = 1; i < nums.length; i++) {
+        prefix[i] = prefix[i - 1] + nums[i];
+        steps.push({ 
+          line: 3, 
+          msg: `prefix[${i}] = prefix[${i-1}] (${prefix[i-1]}) + nums[${i}] (${nums[i]}) = ${prefix[i]}.`, 
+          variables: { arr: nums, prefix: [...prefix], i } 
+        });
+      }
+      
+      const [L, R] = query;
+      const ans = L === 0 ? prefix[R] : prefix[R] - prefix[L - 1];
+      steps.push({ 
+        line: 5, 
+        msg: `Query Range [${L}...${R}]: Sum = prefix[${R}] (${prefix[R]}) - prefix[${L-1}] (${prefix[L-1]}) = ${ans}.`, 
+        variables: { arr: nums, prefix: [...prefix], L, R, sum: ans },
+        completed: true, 
+        result: ans 
+      });
+      return steps;
+    }
   }
 };
 
@@ -2487,12 +3149,13 @@ const DSANotesVisualizer = ({ onBack, openSettings, fontSize = 14, wordWrap = 'o
         difficulty: "Lesson", 
         category: "Theory", 
         notes: { desc: activeLesson.desc, intuition: activeLesson.analogy, complexity: "N/A" }, 
-        code: activeLesson.code || { JS: '', Python: '', C: '', Java: '' }, 
+        code: activeLesson.code || { JS: '', Python: '', C: '', Java: '', "C++": '' }, 
         generator: () => [] 
       } 
     : activeProblem;
 
-  const codeLines = problem.code && problem.code[activeLang] ? problem.code[activeLang].split('\n') : [];
+  const rawActiveCode = getSafeCode(problem.code, activeLang);
+  const codeLines = rawActiveCode ? rawActiveCode.split('\n') : [];
 
   // Sync prop font size
   useEffect(() => {
@@ -3163,6 +3826,173 @@ const DSANotesVisualizer = ({ onBack, openSettings, fontSize = 14, wordWrap = 'o
         </svg>
       );
     }
+
+    if (selectedProbKey === 'TWO_POINTERS_TARGET') {
+      const arr = activeFrame.variables.arr || [2, 7, 11, 15, 18];
+      const pointers = activeFrame.pointers || { left: 0, right: arr.length - 1 };
+      const currentSum = activeFrame.variables.sum;
+      const matched = activeFrame.matched;
+
+      return (
+        <svg viewBox={`0 0 ${width} ${height}`} width="100%" height="100%" style={{ overflow: 'visible' }}>
+          <text x={20} y={35} fill="var(--text-secondary)" fontSize="12" fontWeight="bold">SORTED ARRAY (numbers)</text>
+          {arr.map((num, idx) => {
+            const isLeft = (idx === pointers.left);
+            const isRight = (idx === pointers.right);
+            const isSelected = isLeft || isRight;
+            return (
+              <g key={idx} transform={`translate(${40 + idx * 80}, 55)`}>
+                <rect x={0} y={0} width={70} height={48} rx={8} 
+                  fill={matched && isSelected ? 'rgba(52,211,153,0.25)' : isSelected ? 'rgba(251,191,36,0.2)' : 'rgba(255,255,255,0.05)'} 
+                  stroke={matched && isSelected ? '#34d399' : isSelected ? '#fbbf24' : 'rgba(255,255,255,0.1)'} 
+                  strokeWidth="2"
+                />
+                <text x={35} y={30} fill="#ffffff" textAnchor="middle" fontSize="16" fontWeight="bold">{num}</text>
+                <text x={35} y={64} fill="var(--text-secondary)" textAnchor="middle" fontSize="11">idx {idx + 1}</text>
+                {isLeft && <text x={35} y={-10} fill="#38bdf8" textAnchor="middle" fontSize="13" fontWeight="bold">👆 Left</text>}
+                {isRight && <text x={35} y={-10} fill="#f472b6" textAnchor="middle" fontSize="13" fontWeight="bold">👆 Right</text>}
+              </g>
+            );
+          })}
+
+          {/* Active Variable State */}
+          <text x={20} y={160} fill="var(--text-secondary)" fontSize="12" fontWeight="bold">POINTER SUM CALCULATION</text>
+          <g transform="translate(20, 170)">
+            <rect width={280} height={50} rx={8} fill="rgba(0,0,0,0.25)" stroke="rgba(255,255,255,0.06)" />
+            <text x={15} y={30} fill="var(--text-secondary)" fontSize="13">Current Sum = </text>
+            <text x={115} y={31} fill={matched ? '#34d399' : '#fbbf24'} fontSize="18" fontWeight="bold">{currentSum}</text>
+            {matched && <text x={160} y={30} fill="#34d399" fontSize="11" fontWeight="bold">✦ TARGET MATCHED!</text>}
+          </g>
+        </svg>
+      );
+    }
+
+    if (selectedProbKey === 'SLIDING_WINDOW_MAX_K') {
+      const arr = activeFrame.variables.arr || [2, 1, 5, 1, 3, 2];
+      const [wL, wR] = activeFrame.windowRange || [0, 2];
+      const windowSum = activeFrame.variables.windowSum;
+      const maxSum = activeFrame.variables.maxSum;
+      const updated = activeFrame.updated;
+
+      return (
+        <svg viewBox={`0 0 ${width} ${height}`} width="100%" height="100%" style={{ overflow: 'visible' }}>
+          <text x={20} y={35} fill="var(--text-secondary)" fontSize="12" fontWeight="bold">ARRAY & SLIDING WINDOW [K = 3]</text>
+          {arr.map((num, idx) => {
+            const inWindow = (idx >= wL && idx <= wR);
+            return (
+              <g key={idx} transform={`translate(${40 + idx * 75}, 55)`}>
+                <rect x={0} y={0} width={65} height={45} rx={8} 
+                  fill={inWindow ? 'rgba(56,189,248,0.22)' : 'rgba(255,255,255,0.05)'} 
+                  stroke={inWindow ? '#38bdf8' : 'rgba(255,255,255,0.1)'} 
+                  strokeWidth={inWindow ? "2.5" : "1"}
+                />
+                <text x={32.5} y={28} fill="#ffffff" textAnchor="middle" fontSize="16" fontWeight="bold">{num}</text>
+                <text x={32.5} y={60} fill="var(--text-secondary)" textAnchor="middle" fontSize="11">idx {idx}</text>
+                {idx === wL && <text x={32.5} y={-10} fill="#38bdf8" textAnchor="middle" fontSize="12" fontWeight="bold">L</text>}
+                {idx === wR && <text x={32.5} y={-10} fill="#38bdf8" textAnchor="middle" fontSize="12" fontWeight="bold">R</text>}
+              </g>
+            );
+          })}
+
+          {/* Active Variable State */}
+          <text x={20} y={160} fill="var(--text-secondary)" fontSize="12" fontWeight="bold">WINDOW METRICS</text>
+          <g transform="translate(20, 170)">
+            <rect width={320} height={50} rx={8} fill="rgba(0,0,0,0.25)" stroke="rgba(255,255,255,0.06)" />
+            <text x={15} y={30} fill="var(--text-secondary)" fontSize="13">Window Sum: </text>
+            <text x={105} y={31} fill="#38bdf8" fontSize="16" fontWeight="bold">{windowSum}</text>
+            
+            <text x={160} y={30} fill="var(--text-secondary)" fontSize="13">Max Sum: </text>
+            <text x={235} y={31} fill={updated ? '#34d399' : '#fbbf24'} fontSize="16" fontWeight="bold">{maxSum}</text>
+          </g>
+        </svg>
+      );
+    }
+
+    if (selectedProbKey === 'DUTCH_FLAG_SORT') {
+      const arr = activeFrame.variables.arr || [2, 0, 2, 1, 1, 0];
+      const pointers = activeFrame.pointers || { low: 0, mid: 0, high: arr.length - 1 };
+
+      return (
+        <svg viewBox={`0 0 ${width} ${height}`} width="100%" height="100%" style={{ overflow: 'visible' }}>
+          <text x={20} y={35} fill="var(--text-secondary)" fontSize="12" fontWeight="bold">DUTCH NATIONAL FLAG (0s, 1s, 2s)</text>
+          {arr.map((num, idx) => {
+            const isLow = (idx === pointers.low);
+            const isMid = (idx === pointers.mid);
+            const isHigh = (idx === pointers.high);
+            const colorBg = num === 0 ? 'rgba(239, 68, 68, 0.25)' : num === 1 ? 'rgba(255, 255, 255, 0.2)' : 'rgba(59, 130, 246, 0.25)';
+            const colorStroke = num === 0 ? '#ef4444' : num === 1 ? '#e2e8f0' : '#3b82f6';
+            return (
+              <g key={idx} transform={`translate(${40 + idx * 75}, 55)`}>
+                <rect x={0} y={0} width={65} height={45} rx={8} 
+                  fill={colorBg} 
+                  stroke={colorStroke} 
+                  strokeWidth="2"
+                />
+                <text x={32.5} y={28} fill="#ffffff" textAnchor="middle" fontSize="16" fontWeight="bold">{num}</text>
+                <text x={32.5} y={60} fill="var(--text-secondary)" textAnchor="middle" fontSize="11">idx {idx}</text>
+                {isLow && <text x={32.5} y={-10} fill="#ef4444" textAnchor="middle" fontSize="11" fontWeight="bold">Low</text>}
+                {isMid && <text x={32.5} y={-24} fill="#fbbf24" textAnchor="middle" fontSize="11" fontWeight="bold">Mid</text>}
+                {isHigh && <text x={32.5} y={-10} fill="#3b82f6" textAnchor="middle" fontSize="11" fontWeight="bold">High</text>}
+              </g>
+            );
+          })}
+
+          <text x={20} y={160} fill="var(--text-secondary)" fontSize="12" fontWeight="bold">COLOR PARTITIONS</text>
+          <g transform="translate(20, 170)">
+            <rect width={340} height={45} rx={8} fill="rgba(0,0,0,0.25)" stroke="rgba(255,255,255,0.06)" />
+            <text x={15} y={28} fill="#ef4444" fontSize="13" fontWeight="bold">🔴 0s: [0...Low-1]</text>
+            <text x={135} y={28} fill="#e2e8f0" fontSize="13" fontWeight="bold">⚪ 1s: [Low...Mid-1]</text>
+            <text x={255} y={28} fill="#3b82f6" fontSize="13" fontWeight="bold">🔵 2s: [High+1...N]</text>
+          </g>
+        </svg>
+      );
+    }
+
+    if (selectedProbKey === 'PREFIX_SUM_SUBARRAY') {
+      const arr = activeFrame.variables.arr || [3, 1, 4, 1, 5, 9, 2];
+      const prefix = activeFrame.variables.prefix || [3, 4, 8, 9, 14, 23, 25];
+      const { L, R, sum } = activeFrame.variables;
+
+      return (
+        <svg viewBox={`0 0 ${width} ${height}`} width="100%" height="100%" style={{ overflow: 'visible' }}>
+          <text x={20} y={25} fill="var(--text-secondary)" fontSize="12" fontWeight="bold">ORIGINAL ARRAY (nums)</text>
+          {arr.map((num, idx) => (
+            <g key={idx} transform={`translate(${30 + idx * 65}, 35)`}>
+              <rect x={0} y={0} width={55} height={35} rx={6} fill="rgba(255,255,255,0.05)" stroke="rgba(255,255,255,0.15)" />
+              <text x={27.5} y={23} fill="#ffffff" textAnchor="middle" fontSize="14" fontWeight="bold">{num}</text>
+              <text x={27.5} y={48} fill="var(--text-secondary)" textAnchor="middle" fontSize="10">i={idx}</text>
+            </g>
+          ))}
+
+          <text x={20} y={115} fill="var(--text-secondary)" fontSize="12" fontWeight="bold">PREFIX SUM ARRAY (cumulative)</text>
+          {prefix.map((pVal, idx) => {
+            const isLMinus1 = (L !== undefined && idx === L - 1);
+            const isR = (R !== undefined && idx === R);
+            return (
+              <g key={idx} transform={`translate(${30 + idx * 65}, 125)`}>
+                <rect x={0} y={0} width={55} height={35} rx={6} 
+                  fill={isR ? 'rgba(52,211,153,0.25)' : isLMinus1 ? 'rgba(239,68,68,0.25)' : 'rgba(56,189,248,0.15)'} 
+                  stroke={isR ? '#34d399' : isLMinus1 ? '#ef4444' : '#38bdf8'} 
+                  strokeWidth="1.5"
+                />
+                <text x={27.5} y={23} fill="#ffffff" textAnchor="middle" fontSize="14" fontWeight="bold">{pVal}</text>
+                {isR && <text x={27.5} y={48} fill="#34d399" textAnchor="middle" fontSize="10" fontWeight="bold">Prefix[R]</text>}
+                {isLMinus1 && <text x={27.5} y={48} fill="#ef4444" textAnchor="middle" fontSize="10" fontWeight="bold">Prefix[L-1]</text>}
+              </g>
+            );
+          })}
+
+          {sum !== undefined && (
+            <g transform="translate(20, 195)">
+              <rect width={340} height={45} rx={8} fill="rgba(0,0,0,0.25)" stroke="rgba(52,211,153,0.3)" />
+              <text x={15} y={28} fill="#34d399" fontSize="13" fontWeight="bold">
+                Range [{L}...{R}] Sum = Prefix[{R}] - Prefix[{L-1}] = {sum}
+              </text>
+            </g>
+          )}
+        </svg>
+      );
+    }
   };
 
   const renderHighlightedCode = () => {
@@ -3387,6 +4217,44 @@ const DSANotesVisualizer = ({ onBack, openSettings, fontSize = 14, wordWrap = 'o
             <div style={{ background: 'rgba(16,185,129,0.1)', padding: '1rem 1.5rem', borderRadius: '12px', border: '1px solid rgba(16,185,129,0.25)', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
               <span style={{ fontWeight: 'bold', color: '#34d399' }}>Complexity Analysis:</span>
               <span style={{ fontFamily: 'monospace', color: '#fff', fontSize: '1.1rem' }}>{problem.notes.complexity}</span>
+            </div>
+
+            {/* Complete Solution Code Block with Language Selector */}
+            <div style={{ background: 'var(--bg-secondary)', borderRadius: '16px', border: '1px solid var(--glass-border)', overflow: 'hidden' }}>
+              <div style={{ padding: '8px 12px', display: 'flex', alignItems: 'center', gap: '5px', borderBottom: '1px solid var(--glass-border)', flexWrap: 'wrap', background: 'var(--bg-secondary)' }}>
+                <span style={{ fontSize: '0.78rem', fontWeight: 700, color: 'var(--text-secondary)', whiteSpace: 'nowrap' }}>💻 Code Solution:</span>
+                {['JS', 'Python', 'C', 'Java'].map(lang => (
+                  <button key={lang} onClick={() => setActiveLang(lang)}
+                    style={{
+                      padding: '2px 9px',
+                      fontSize: '0.74rem',
+                      borderRadius: '5px',
+                      border: activeLang === lang ? '1.5px solid var(--accent-primary)' : '1px solid var(--glass-border)',
+                      background: activeLang === lang ? 'var(--accent-primary)' : 'transparent',
+                      color: activeLang === lang ? '#fff' : 'var(--text-secondary)',
+                      cursor: 'pointer',
+                      fontWeight: activeLang === lang ? 700 : 400,
+                      transition: 'all 0.15s'
+                    }}
+                  >{lang === 'JS' ? 'JavaScript' : lang}</button>
+                ))}
+              </div>
+              <pre style={{
+                margin: 0,
+                padding: '12px 16px',
+                background: 'var(--bg-primary, rgba(0,0,0,0.18))',
+                color: 'var(--text-primary)',
+                fontFamily: "'Fira Code', monospace",
+                fontSize: '0.86rem',
+                lineHeight: '1.6',
+                overflowX: 'auto'
+              }}>
+                {toAllman(getSafeCode(problem.code, activeLang)).split('\n').map((lineText, idx) => (
+                  <div key={idx} style={{ padding: '1px 0', whiteSpace: 'pre', fontFamily: "'Fira Code', monospace", color: 'var(--text-primary)' }}>
+                    {lineText || ' '}
+                  </div>
+                ))}
+              </pre>
             </div>
           </div>
         );
