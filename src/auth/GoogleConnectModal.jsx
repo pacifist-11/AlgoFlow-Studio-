@@ -1,5 +1,7 @@
 import React, { useState, useEffect, useRef } from 'react';
 import { 
+  getSavedAccounts,
+  saveAccountToList,
   quickConnectUser, 
   continueAsGuest, 
   setOnboardingSeen,
@@ -8,10 +10,12 @@ import {
 } from './userAuthService.js';
 
 export default function GoogleConnectModal({ isOpen, onClose, onUserConnected }) {
-  const [emailInput, setEmailInput] = useState('');
-  const [nameInput, setNameInput] = useState('');
+  const [accounts, setAccounts] = useState(() => getSavedAccounts());
+  const [isAddingNew, setIsAddingNew] = useState(false);
+  const [newEmail, setNewEmail] = useState('');
+  const [newName, setNewName] = useState('');
   const [errorMsg, setErrorMsg] = useState('');
-  const [isSubmitting, setIsSubmitting] = useState(false);
+  const [hoveredIdx, setHoveredIdx] = useState(null);
   const googleBtnRef = useRef(null);
 
   // Initialize official Google Identity Services (GIS) if Client ID is configured
@@ -21,7 +25,6 @@ export default function GoogleConnectModal({ isOpen, onClose, onUserConnected })
     const clientId = import.meta.env?.VITE_GOOGLE_CLIENT_ID;
     if (!clientId) return;
 
-    // Load Google GIS script dynamically if not already loaded
     if (!window.google?.accounts?.id) {
       const script = document.createElement('script');
       script.src = 'https://accounts.google.com/gsi/client';
@@ -38,20 +41,14 @@ export default function GoogleConnectModal({ isOpen, onClose, onUserConnected })
         window.google.accounts.id.initialize({
           client_id: cId,
           callback: handleGoogleCredentialResponse,
-          auto_select: false
+          auto_select: false,
+          prompt_parent_id: 'g-one-tap-container'
         });
 
-        if (googleBtnRef.current) {
-          window.google.accounts.id.renderButton(googleBtnRef.current, {
-            theme: 'filled_blue',
-            size: 'large',
-            shape: 'pill',
-            text: 'continue_with',
-            width: 320
-          });
-        }
+        // Trigger Google native one tap prompt if active
+        window.google.accounts.id.prompt();
       } catch (err) {
-        console.warn('Google GIS initialization notice:', err);
+        console.warn('Google GIS notice:', err);
       }
     }
   }, [isOpen]);
@@ -70,6 +67,12 @@ export default function GoogleConnectModal({ isOpen, onClose, onUserConnected })
         connectedAt: new Date().toISOString(),
         authProvider: 'google'
       };
+      saveAccountToList({
+        name: profile.name,
+        email: profile.email,
+        initial: profile.initial,
+        color: '#0284c7'
+      });
       setActiveUser(profile);
       setOnboardingSeen();
       if (onUserConnected) onUserConnected(profile);
@@ -77,27 +80,40 @@ export default function GoogleConnectModal({ isOpen, onClose, onUserConnected })
     }
   };
 
-  const handleQuickConnect = (e) => {
+  const handleSelectAccount = (acc) => {
+    const profile = quickConnectUser(acc.email, acc.name);
+    if (profile) {
+      saveAccountToList(acc);
+      if (onUserConnected) onUserConnected(profile);
+      if (onClose) onClose();
+    }
+  };
+
+  const handleAddNewAccount = (e) => {
     if (e) e.preventDefault();
     setErrorMsg('');
 
-    if (!emailInput || !emailInput.includes('@') || !emailInput.includes('.')) {
+    if (!newEmail || !newEmail.includes('@') || !newEmail.includes('.')) {
       setErrorMsg('Please enter a valid Google/Gmail address');
       return;
     }
 
-    setIsSubmitting(true);
-    try {
-      const profile = quickConnectUser(emailInput, nameInput);
-      if (profile) {
-        if (onUserConnected) onUserConnected(profile);
-        if (onClose) onClose();
-      }
-    } catch {
-      setErrorMsg('Failed to connect. Please try again.');
-    } finally {
-      setIsSubmitting(false);
-    }
+    const cleanEmail = newEmail.trim().toLowerCase();
+    const cleanName = newName.trim() || cleanEmail
+      .split('@')[0]
+      .replace(/[._-]+/g, ' ')
+      .replace(/\b\w/g, l => l.toUpperCase());
+
+    const newAcc = {
+      name: cleanName,
+      email: cleanEmail,
+      initial: (cleanName[0] || 'U').toUpperCase(),
+      color: '#0284c7'
+    };
+
+    saveAccountToList(newAcc);
+    setAccounts(getSavedAccounts());
+    handleSelectAccount(newAcc);
   };
 
   const handleGuest = () => {
@@ -113,8 +129,8 @@ export default function GoogleConnectModal({ isOpen, onClose, onUserConnected })
       className="modal-overlay" 
       style={{ 
         zIndex: 9999,
-        background: 'rgba(5, 11, 24, 0.82)',
-        backdropFilter: 'blur(12px)',
+        background: 'rgba(5, 11, 24, 0.86)',
+        backdropFilter: 'blur(16px)',
         display: 'flex',
         alignItems: 'center',
         justifyContent: 'center',
@@ -128,31 +144,20 @@ export default function GoogleConnectModal({ isOpen, onClose, onUserConnected })
       <div 
         className="modal-content"
         style={{
-          maxWidth: '520px',
+          maxWidth: '460px',
           width: '100%',
-          background: 'linear-gradient(145deg, rgba(15, 23, 42, 0.95), rgba(30, 41, 59, 0.98))',
-          border: '1.5px solid rgba(56, 189, 248, 0.35)',
-          boxShadow: '0 25px 60px rgba(0, 0, 0, 0.8), 0 0 35px rgba(56, 189, 248, 0.15)',
+          background: '#18181b',
+          border: '1px solid #27272a',
+          boxShadow: '0 25px 60px rgba(0, 0, 0, 0.9), 0 0 40px rgba(56, 189, 248, 0.12)',
           borderRadius: '24px',
-          padding: '2.2rem',
+          padding: '2rem 1.8rem 1.6rem 1.8rem',
           position: 'relative',
           overflow: 'hidden',
-          color: '#f8fafc'
+          color: '#f8fafc',
+          fontFamily: '-apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif'
         }}
         onClick={e => e.stopPropagation()}
       >
-        {/* Glow accent */}
-        <div style={{
-          position: 'absolute',
-          top: '-60px',
-          right: '-60px',
-          width: '180px',
-          height: '180px',
-          borderRadius: '50%',
-          background: 'radial-gradient(circle, rgba(56, 189, 248, 0.25) 0%, transparent 70%)',
-          pointerEvents: 'none'
-        }} />
-
         {/* Close Button */}
         <button
           onClick={() => {
@@ -161,255 +166,329 @@ export default function GoogleConnectModal({ isOpen, onClose, onUserConnected })
           }}
           style={{
             position: 'absolute',
-            top: '20px',
-            right: '20px',
-            background: 'rgba(255, 255, 255, 0.06)',
-            border: '1px solid rgba(255, 255, 255, 0.12)',
-            color: '#94a3b8',
-            width: '34px',
-            height: '34px',
+            top: '18px',
+            right: '18px',
+            background: 'transparent',
+            border: 'none',
+            color: '#71717a',
+            width: '32px',
+            height: '32px',
             borderRadius: '50%',
             cursor: 'pointer',
-            fontSize: '15px',
+            fontSize: '16px',
             display: 'flex',
             alignItems: 'center',
             justifyContent: 'center',
-            transition: 'all 0.2s'
+            transition: 'color 0.2s'
           }}
-          onMouseEnter={e => {
-            e.currentTarget.style.color = '#fff';
-            e.currentTarget.style.background = 'rgba(255, 255, 255, 0.15)';
-          }}
-          onMouseLeave={e => {
-            e.currentTarget.style.color = '#94a3b8';
-            e.currentTarget.style.background = 'rgba(255, 255, 255, 0.06)';
-          }}
+          onMouseEnter={e => e.currentTarget.style.color = '#ffffff'}
+          onMouseLeave={e => e.currentTarget.style.color = '#71717a'}
         >
           ✕
         </button>
 
-        {/* Header Icon + Title */}
-        <div style={{ textAlign: 'center', marginBottom: '1.4rem' }}>
+        {/* Top Header: Logo, Title & Mascot (Matching Google / Figma Layout) */}
+        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', marginBottom: '1.6rem' }}>
+          <div>
+            {/* AlgoFlow Colorful Logo Icon */}
+            <div style={{ marginBottom: '14px' }}>
+              <svg width="34" height="34" viewBox="0 0 40 40" fill="none">
+                <rect width="40" height="40" rx="10" fill="#0f172a" />
+                <path d="M12 12C12 9.79086 13.7909 8 16 8H20V16H16C13.7909 16 12 14.2091 12 12Z" fill="#F24E1E"/>
+                <path d="M20 8H24C26.2091 8 28 9.79086 28 12C28 14.2091 26.2091 16 24 16H20V8Z" fill="#FF7262"/>
+                <path d="M12 20C12 17.7909 13.7909 16 16 16H20V24H16C13.7909 24 12 22.2091 12 20Z" fill="#A259FF"/>
+                <path d="M12 28C12 25.7909 13.7909 24 16 24H20V32H16C13.7909 32 12 30.2091 12 28Z" fill="#0ACF83"/>
+                <circle cx="24" cy="20" r="4" fill="#1ABCFE"/>
+              </svg>
+            </div>
+
+            <h2 style={{
+              fontSize: '1.65rem',
+              fontWeight: '700',
+              margin: '0 0 4px 0',
+              color: '#ffffff',
+              letterSpacing: '-0.4px'
+            }}>
+              Choose an account
+            </h2>
+            <div style={{
+              fontSize: '0.95rem',
+              color: '#94a3b8'
+            }}>
+              to continue to <strong style={{ color: '#38bdf8' }}>AlgoFlow Studio</strong>
+            </div>
+          </div>
+
+          {/* Cool Robot AI Mascot (like the mascot in Figma's Google dialog) */}
           <div style={{
-            width: '60px',
-            height: '60px',
-            margin: '0 auto 12px auto',
-            borderRadius: '18px',
-            background: 'linear-gradient(135deg, rgba(56, 189, 248, 0.2), rgba(129, 140, 248, 0.25))',
-            border: '1.5px solid rgba(56, 189, 248, 0.4)',
-            display: 'flex',
-            alignItems: 'center',
-            justifyContent: 'center',
-            boxShadow: '0 8px 24px rgba(56, 189, 248, 0.25)'
+            flexShrink: 0,
+            animation: 'floatSlow 4s ease-in-out infinite',
+            marginTop: '-5px'
           }}>
-            {/* Google G / Personalized Sparkle SVG */}
-            <svg width="32" height="32" viewBox="0 0 24 24" fill="none">
-              <path d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92c-.26 1.37-1.04 2.53-2.21 3.31v2.77h3.57c2.08-1.92 3.28-4.74 3.28-8.09z" fill="#4285F4"/>
-              <path d="M12 23c2.97 0 5.46-.98 7.28-2.66l-3.57-2.77c-.98.66-2.23 1.06-3.71 1.06-2.86 0-5.29-1.93-6.16-4.53H2.18v2.84C3.99 20.53 7.7 23 12 23z" fill="#34A853"/>
-              <path d="M5.84 14.09c-.22-.66-.35-1.36-.35-2.09s.13-1.43.35-2.09V7.06H2.18C1.43 8.55 1 10.22 1 12s.43 3.45 1.18 4.94l2.85-2.22.81-.63z" fill="#FBBC05"/>
-              <path d="M12 5.38c1.62 0 3.06.56 4.21 1.64l3.15-3.15C17.45 2.09 14.97 1 12 1 7.7 1 3.99 3.47 2.18 7.06l3.66 2.84c.87-2.6 3.3-4.52 6.16-4.52z" fill="#EA4335"/>
+            <svg width="68" height="68" viewBox="0 0 64 64" fill="none">
+              {/* Ears */}
+              <circle cx="16" cy="18" r="8" fill="#475569" stroke="#38bdf8" strokeWidth="1.5" />
+              <circle cx="16" cy="18" r="5" fill="#e11d48" />
+              <circle cx="48" cy="18" r="8" fill="#475569" stroke="#38bdf8" strokeWidth="1.5" />
+              <circle cx="48" cy="18" r="5" fill="#e11d48" />
+              {/* Head / Helmet */}
+              <rect x="14" y="16" width="36" height="28" rx="14" fill="#1e293b" stroke="#38bdf8" strokeWidth="2" />
+              {/* Face Visor */}
+              <rect x="18" y="20" width="28" height="18" rx="9" fill="#090d16" />
+              {/* Glowing Ninja Eyes */}
+              <path d="M22 28L28 27L22 30Z" fill="#38bdf8" />
+              <path d="M42 28L36 27L42 30Z" fill="#38bdf8" />
+              {/* Cyber Mouth Line */}
+              <path d="M28 34H36" stroke="#38bdf8" strokeWidth="1.5" strokeLinecap="round" />
+              {/* Body */}
+              <path d="M22 44L20 58H44L42 44H22Z" fill="#e11d48" />
+              {/* Collar & Tech Badge */}
+              <rect x="27" y="47" width="10" height="4" rx="2" fill="#38bdf8" />
             </svg>
           </div>
-
-          <h2 style={{
-            fontSize: '1.65rem',
-            fontWeight: '800',
-            margin: '0 0 6px 0',
-            background: 'linear-gradient(135deg, #ffffff 40%, #38bdf8 100%)',
-            WebkitBackgroundClip: 'text',
-            WebkitTextFillColor: 'transparent'
-          }}>
-            Welcome to AlgoFlow Studio
-          </h2>
-          <p style={{
-            fontSize: '0.88rem',
-            color: '#94a3b8',
-            margin: 0,
-            lineHeight: '1.4'
-          }}>
-            Connect with your existing Google account for seamless AI mentoring, saved chats, and instant feedback.
-          </p>
         </div>
 
-        {/* Feature Cards */}
+        {/* ── Google Account Chooser List ── */}
         <div style={{
-          display: 'grid',
-          gridTemplateColumns: '1fr',
-          gap: '8px',
-          marginBottom: '1.4rem'
+          borderTop: '1px solid #27272a',
+          marginBottom: '1rem'
         }}>
-          <div style={{
-            padding: '10px 14px',
-            borderRadius: '12px',
-            background: 'rgba(255, 255, 255, 0.03)',
-            border: '1px solid rgba(255, 255, 255, 0.08)',
-            display: 'flex',
-            alignItems: 'center',
-            gap: '12px'
-          }}>
-            <span style={{ fontSize: '1.3rem' }}>⚡</span>
-            <div>
-              <div style={{ fontSize: '0.85rem', fontWeight: '700', color: '#f1f5f9' }}>Zero-Typing Feedback &amp; Bug Reports</div>
-              <div style={{ fontSize: '0.74rem', color: '#94a3b8' }}>Never re-type your name or email when submitting feedback.</div>
-            </div>
-          </div>
+          {accounts.map((acc, index) => {
+            const isHovered = hoveredIdx === index;
+            const bgLetterColor = acc.color || (index % 3 === 0 ? '#8b5cf6' : index % 3 === 1 ? '#3b82f6' : '#16a34a');
 
-          <div style={{
-            padding: '10px 14px',
-            borderRadius: '12px',
-            background: 'rgba(255, 255, 255, 0.03)',
-            border: '1px solid rgba(255, 255, 255, 0.08)',
-            display: 'flex',
-            alignItems: 'center',
-            gap: '12px'
-          }}>
-            <span style={{ fontSize: '1.3rem' }}>💾</span>
-            <div>
-              <div style={{ fontSize: '0.85rem', fontWeight: '700', color: '#38bdf8' }}>Saved AI Mentor Conversations</div>
-              <div style={{ fontSize: '0.74rem', color: '#94a3b8' }}>Your DSA roadmaps, code debugs &amp; chats stay saved next time.</div>
-            </div>
-          </div>
+            return (
+              <div
+                key={acc.email}
+                onClick={() => handleSelectAccount(acc)}
+                onMouseEnter={() => setHoveredIdx(index)}
+                onMouseLeave={() => setHoveredIdx(null)}
+                style={{
+                  display: 'flex',
+                  alignItems: 'center',
+                  gap: '14px',
+                  padding: '12px 10px',
+                  borderBottom: '1px solid #27272a',
+                  cursor: 'pointer',
+                  borderRadius: '12px',
+                  background: isHovered ? 'rgba(255, 255, 255, 0.05)' : 'transparent',
+                  transition: 'background 0.15s ease'
+                }}
+              >
+                {/* Account Avatar Circle */}
+                <div style={{
+                  width: '38px',
+                  height: '38px',
+                  borderRadius: '50%',
+                  background: bgLetterColor,
+                  color: '#ffffff',
+                  fontSize: '17px',
+                  fontWeight: '700',
+                  display: 'flex',
+                  alignItems: 'center',
+                  justifyContent: 'center',
+                  flexShrink: 0,
+                  boxShadow: '0 2px 8px rgba(0,0,0,0.3)'
+                }}>
+                  {acc.initial || acc.name?.[0] || 'U'}
+                </div>
 
-          <div style={{
-            padding: '10px 14px',
-            borderRadius: '12px',
-            background: 'rgba(255, 255, 255, 0.03)',
-            border: '1px solid rgba(255, 255, 255, 0.08)',
-            display: 'flex',
-            alignItems: 'center',
-            gap: '12px'
-          }}>
-            <span style={{ fontSize: '1.3rem' }}>🧠</span>
-            <div>
-              <div style={{ fontSize: '0.85rem', fontWeight: '700', color: '#a78bfa' }}>Habituated AI Learning &amp; Topics</div>
-              <div style={{ fontSize: '0.74rem', color: '#94a3b8' }}>AlgoFlow AI remembers your frequent topics and favorite language.</div>
-            </div>
-          </div>
+                {/* Account Info */}
+                <div style={{ flex: 1, minWidth: 0 }}>
+                  <div style={{
+                    fontSize: '0.94rem',
+                    fontWeight: '600',
+                    color: '#ffffff',
+                    whiteSpace: 'nowrap',
+                    overflow: 'hidden',
+                    textOverflow: 'ellipsis'
+                  }}>
+                    {acc.name}
+                  </div>
+                  <div style={{
+                    fontSize: '0.84rem',
+                    color: '#a1a1aa',
+                    whiteSpace: 'nowrap',
+                    overflow: 'hidden',
+                    textOverflow: 'ellipsis',
+                    marginTop: '1px'
+                  }}>
+                    {acc.email}
+                  </div>
+                </div>
+
+                {/* Right Arrow on Hover */}
+                {isHovered && (
+                  <span style={{ color: '#38bdf8', fontSize: '13px', fontWeight: 'bold' }}>
+                    →
+                  </span>
+                )}
+              </div>
+            );
+          })}
         </div>
 
-        {/* Official Google Button (if GIS is configured) */}
-        <div ref={googleBtnRef} style={{ display: 'flex', justifyContent: 'center', marginBottom: '10px' }} />
-
-        {/* Smart Quick Connect Form */}
-        <form onSubmit={handleQuickConnect} style={{ display: 'flex', flexDirection: 'column', gap: '10px' }}>
-          <div>
-            <label style={{ fontSize: '0.78rem', fontWeight: '700', color: '#94a3b8', display: 'block', marginBottom: '4px' }}>
-              Your Google / Gmail Address
-            </label>
-            <div style={{
-              display: 'flex',
-              alignItems: 'center',
-              background: '#0f172a',
-              border: '1.5px solid #334155',
-              borderRadius: '12px',
-              padding: '0 12px',
-              transition: 'border-color 0.2s'
-            }}>
-              <span style={{ marginRight: '8px', color: '#64748b' }}>✉</span>
-              <input
-                type="email"
-                placeholder="yourname@gmail.com"
-                value={emailInput}
-                onChange={e => setEmailInput(e.target.value)}
-                required
-                style={{
-                  width: '100%',
-                  padding: '10px 0',
-                  background: 'transparent',
-                  border: 'none',
-                  outline: 'none',
-                  color: '#f8fafc',
-                  fontSize: '0.9rem'
-                }}
-              />
-            </div>
-          </div>
-
-          <div>
-            <label style={{ fontSize: '0.78rem', fontWeight: '700', color: '#94a3b8', display: 'block', marginBottom: '4px' }}>
-              Your Name <span style={{ fontWeight: '400', color: '#64748b' }}>(Optional)</span>
-            </label>
-            <div style={{
-              display: 'flex',
-              alignItems: 'center',
-              background: '#0f172a',
-              border: '1.5px solid #334155',
-              borderRadius: '12px',
-              padding: '0 12px'
-            }}>
-              <span style={{ marginRight: '8px', color: '#64748b' }}>👤</span>
-              <input
-                type="text"
-                placeholder="e.g. Yeswanth"
-                value={nameInput}
-                onChange={e => setNameInput(e.target.value)}
-                style={{
-                  width: '100%',
-                  padding: '10px 0',
-                  background: 'transparent',
-                  border: 'none',
-                  outline: 'none',
-                  color: '#f8fafc',
-                  fontSize: '0.9rem'
-                }}
-              />
-            </div>
-          </div>
-
-          {errorMsg && (
-            <div style={{ color: '#ef4444', fontSize: '0.8rem', fontWeight: '600', marginTop: '2px' }}>
-              ⚠️ {errorMsg}
-            </div>
-          )}
-
-          <button
-            type="submit"
-            disabled={isSubmitting}
+        {/* ── Use Another Account Option ── */}
+        {!isAddingNew ? (
+          <div
+            onClick={() => setIsAddingNew(true)}
             style={{
-              width: '100%',
-              padding: '12px',
+              display: 'flex',
+              alignItems: 'center',
+              gap: '14px',
+              padding: '10px',
               borderRadius: '12px',
-              background: 'linear-gradient(135deg, #0284c7, #38bdf8)',
-              color: '#ffffff',
-              border: 'none',
-              fontWeight: '700',
-              fontSize: '0.95rem',
-              cursor: isSubmitting ? 'not-allowed' : 'pointer',
-              boxShadow: '0 4px 16px rgba(56, 189, 248, 0.35)',
+              cursor: 'pointer',
+              color: '#d4d4d8',
+              fontSize: '0.9rem',
+              fontWeight: '500',
+              transition: 'background 0.15s'
+            }}
+            onMouseEnter={e => {
+              e.currentTarget.style.background = 'rgba(255, 255, 255, 0.04)';
+              e.currentTarget.style.color = '#38bdf8';
+            }}
+            onMouseLeave={e => {
+              e.currentTarget.style.background = 'transparent';
+              e.currentTarget.style.color = '#d4d4d8';
+            }}
+          >
+            <div style={{
+              width: '38px',
+              height: '38px',
+              borderRadius: '50%',
+              background: 'rgba(255, 255, 255, 0.08)',
               display: 'flex',
               alignItems: 'center',
               justifyContent: 'center',
-              gap: '8px',
-              marginTop: '4px',
-              transition: 'transform 0.15s, box-shadow 0.15s'
-            }}
-            onMouseEnter={e => e.currentTarget.style.transform = 'translateY(-1px)'}
-            onMouseLeave={e => e.currentTarget.style.transform = 'translateY(0)'}
-          >
-            <span>🔗 Connect with Google</span>
-          </button>
-        </form>
+              fontSize: '18px',
+              color: '#a1a1aa'
+            }}>
+              +
+            </div>
+            <span>Use another account</span>
+          </div>
+        ) : (
+          <form onSubmit={handleAddNewAccount} style={{
+            background: 'rgba(255, 255, 255, 0.03)',
+            border: '1px solid #334155',
+            borderRadius: '14px',
+            padding: '12px',
+            marginBottom: '10px'
+          }}>
+            <div style={{ fontSize: '0.82rem', fontWeight: '700', color: '#38bdf8', marginBottom: '8px' }}>
+              Add Another Google Account:
+            </div>
+            <input
+              type="email"
+              placeholder="Enter your Gmail address"
+              value={newEmail}
+              onChange={e => setNewEmail(e.target.value)}
+              required
+              autoFocus
+              style={{
+                width: '100%',
+                padding: '9px 12px',
+                borderRadius: '8px',
+                background: '#090d16',
+                border: '1px solid #334155',
+                color: '#fff',
+                fontSize: '0.88rem',
+                outline: 'none',
+                marginBottom: '8px'
+              }}
+            />
+            <input
+              type="text"
+              placeholder="Full Name (optional)"
+              value={newName}
+              onChange={e => setNewName(e.target.value)}
+              style={{
+                width: '100%',
+                padding: '8px 12px',
+                borderRadius: '8px',
+                background: '#090d16',
+                border: '1px solid #334155',
+                color: '#fff',
+                fontSize: '0.88rem',
+                outline: 'none',
+                marginBottom: '8px'
+              }}
+            />
+            {errorMsg && (
+              <div style={{ color: '#ef4444', fontSize: '0.78rem', marginBottom: '8px' }}>
+                ⚠️ {errorMsg}
+              </div>
+            )}
+            <div style={{ display: 'flex', gap: '8px' }}>
+              <button
+                type="submit"
+                style={{
+                  flex: 1,
+                  padding: '8px',
+                  borderRadius: '8px',
+                  background: 'linear-gradient(135deg, #0284c7, #38bdf8)',
+                  color: '#fff',
+                  border: 'none',
+                  fontWeight: '700',
+                  fontSize: '0.85rem',
+                  cursor: 'pointer'
+                }}
+              >
+                Sign In
+              </button>
+              <button
+                type="button"
+                onClick={() => setIsAddingNew(false)}
+                style={{
+                  padding: '8px 14px',
+                  borderRadius: '8px',
+                  background: 'transparent',
+                  border: '1px solid #475569',
+                  color: '#94a3b8',
+                  fontSize: '0.85rem',
+                  cursor: 'pointer'
+                }}
+              >
+                Cancel
+              </button>
+            </div>
+          </form>
+        )}
 
-        {/* Skip / Guest Option */}
-        <div style={{ textAlign: 'center', marginTop: '1rem' }}>
+        {/* Benefits Note & Skip Option */}
+        <div style={{
+          marginTop: '1.2rem',
+          paddingTop: '1rem',
+          borderTop: '1px solid #27272a',
+          display: 'flex',
+          justifyContent: 'space-between',
+          alignItems: 'center',
+          fontSize: '0.78rem'
+        }}>
+          <span style={{ color: '#71717a' }}>
+            ✓ Auto-fills feedback • Saves chats
+          </span>
           <button
             type="button"
             onClick={handleGuest}
             style={{
               background: 'transparent',
               border: 'none',
-              color: '#64748b',
-              fontSize: '0.82rem',
+              color: '#94a3b8',
               cursor: 'pointer',
               textDecoration: 'underline',
-              transition: 'color 0.2s'
+              fontSize: '0.78rem'
             }}
-            onMouseEnter={e => e.currentTarget.style.color = '#94a3b8'}
-            onMouseLeave={e => e.currentTarget.style.color = '#64748b'}
+            onMouseEnter={e => e.currentTarget.style.color = '#ffffff'}
+            onMouseLeave={e => e.currentTarget.style.color = '#94a3b8'}
           >
-            Skip for now and continue as Guest →
+            Continue as Guest →
           </button>
         </div>
+
+        {/* Google One Tap Anchor Container */}
+        <div id="g-one-tap-container" style={{ position: 'absolute', top: '10px', right: '10px' }} />
       </div>
     </div>
   );

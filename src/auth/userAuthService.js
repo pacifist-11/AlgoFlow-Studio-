@@ -3,6 +3,61 @@
 
 const ACTIVE_USER_KEY = 'algoflow_active_user';
 const ONBOARDING_SEEN_KEY = 'algoflow_onboarding_seen';
+const SAVED_ACCOUNTS_KEY = 'algoflow_saved_accounts_list';
+
+export const DEFAULT_SAVED_ACCOUNTS = [
+  {
+    name: 'Yeswanth Pothala',
+    email: 'pothalayeswanth11@gmail.com',
+    initial: 'Y',
+    color: '#8b5cf6'
+  },
+  {
+    name: 'Yeswanth Pothala',
+    email: 'pothalayeswanth29@gmail.com',
+    initial: 'Y',
+    color: '#8b5cf6'
+  },
+  {
+    name: 'kannamnaidu kolli',
+    email: 'kannamnaidukolli54@gmail.com',
+    initial: 'k',
+    color: '#3b82f6'
+  },
+  {
+    name: 'Pothala Yegnashe',
+    email: 'piggu3275@gmail.com',
+    initial: 'P',
+    color: '#16a34a'
+  }
+];
+
+export function getSavedAccounts() {
+  try {
+    const raw = localStorage.getItem(SAVED_ACCOUNTS_KEY);
+    if (raw) {
+      const parsed = JSON.parse(raw);
+      if (Array.isArray(parsed) && parsed.length > 0) {
+        return parsed;
+      }
+    }
+  } catch (err) {
+    console.warn('Error reading saved accounts list:', err);
+  }
+  return DEFAULT_SAVED_ACCOUNTS;
+}
+
+export function saveAccountToList(account) {
+  if (!account || !account.email) return;
+  try {
+    const existing = getSavedAccounts();
+    const filtered = existing.filter(a => a.email.toLowerCase() !== account.email.toLowerCase());
+    const updated = [account, ...filtered];
+    localStorage.setItem(SAVED_ACCOUNTS_KEY, JSON.stringify(updated));
+  } catch (err) {
+    console.warn('Error saving account to list:', err);
+  }
+}
 
 /**
  * Decode JWT token returned by Google Identity Services
