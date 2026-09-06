@@ -4,20 +4,21 @@
 const ACTIVE_USER_KEY = 'algoflow_active_user';
 const ONBOARDING_SEEN_KEY = 'algoflow_onboarding_seen';
 const GOOGLE_CLIENT_ID_KEY = 'algoflow_google_client_id';
+const DEFAULT_GOOGLE_CLIENT_ID = '896580003359-2sgpbjbjukcidci5u1pbv7744fimamda.apps.googleusercontent.com';
 
 /**
- * Resolve the Google OAuth Client ID (from localStorage or Vite env)
+ * Resolve the Google OAuth Client ID (from env, localStorage, or default)
  */
 export function getGoogleClientId() {
-  try {
-    const saved = localStorage.getItem(GOOGLE_CLIENT_ID_KEY);
-    if (saved && saved.trim()) return saved.trim();
-  } catch {}
   try {
     const envId = import.meta.env?.VITE_GOOGLE_CLIENT_ID;
     if (envId && envId.trim()) return envId.trim();
   } catch {}
-  return '';
+  try {
+    const saved = localStorage.getItem(GOOGLE_CLIENT_ID_KEY);
+    if (saved && saved.trim()) return saved.trim();
+  } catch {}
+  return DEFAULT_GOOGLE_CLIENT_ID;
 }
 
 /**
