@@ -7,9 +7,10 @@ import LanguageQuirksExceptions from './LanguageQuirksExceptions.jsx';
 import HandsOnSyntaxPractice from './HandsOnSyntaxPractice.jsx';
 import LanguageCareerGuide from './LanguageCareerGuide.jsx';
 import BTechBranchLanguageGuide from './BTechBranchLanguageGuide.jsx';
-import AiRagMentorStudio from './AiRagMentorStudio.jsx';
+import AiRagMentorStudio from '../airag/AiRagMentorStudio.jsx';
+import { isLineDebuggerSupported } from '../languageUtils.js';
 
-export default function Beginner101Visualizer({ codeLang = 'C', setCodeLang, fontSize = 14 }) {
+export default function Beginner101Visualizer({ codeLang = 'C', setCodeLang, fontSize = 14, onOpenDebugger }) {
   const [activeModule, setActiveModule] = useState('btech_branches'); // btech_branches, career, ai_mentor, variables, arrays, quirks, syntax, why_sort, why_dsa
   const [localLang, setLocalLang] = useState(codeLang || 'C');
 
@@ -25,7 +26,7 @@ export default function Beginner101Visualizer({ codeLang = 'C', setCodeLang, fon
   const modules = [
     { id: 'btech_branches', icon: '🎓', title: '1. B.Tech Branch Roadmaps', desc: 'CSE, ECE, Mech, Civil, AI & more' },
     { id: 'career', icon: '🎯', title: '2. Language Career Guide', desc: 'Jobs & fields per language' },
-    { id: 'ai_mentor', icon: '🤖', title: '3. AI RAG Mentor Studio', desc: 'Ask anything to AI Career Mentor' },
+    { id: 'ai_mentor', icon: '✨', title: '3. AI RAG Mentor Studio', desc: 'Ask anything to AI Career Mentor' },
     { id: 'variables', icon: '📦', title: '4. Variables & Data Types', desc: 'Memory storage boxes' },
     { id: 'arrays', icon: '📊', title: '5. Arrays & Indexing', desc: 'Rows of memory boxes' },
     { id: 'quirks', icon: '⚠️', title: '6. Quirks & Exceptions', desc: 'Java pointers, Python syntax, etc.' },
@@ -60,6 +61,7 @@ export default function Beginner101Visualizer({ codeLang = 'C', setCodeLang, fon
           <p style={{ margin: '6px 0 0 0', color: '#cbd5e1', fontSize: '14px' }}>
             Learn variables, arrays, why sorting & DSA matter, language quirks, syntax rules, and discover which programming language to choose for your target career!
           </p>
+          
         </div>
 
         {/* Module Switcher Buttons (Position 1) */}
@@ -93,8 +95,8 @@ export default function Beginner101Visualizer({ codeLang = 'C', setCodeLang, fon
           })}
         </div>
 
-        {/* Integrated Active Language Selector Bar (Hidden for Module 1, 2, and 3 AI Mentor) */}
-        {activeModule !== 'career' && activeModule !== 'btech_branches' && activeModule !== 'ai_mentor' && (
+        {/* Integrated Active Language Selector Bar (Only shown for code-syntax modules: Variables, Arrays, Quirks, Syntax) */}
+        {['variables', 'arrays', 'quirks', 'syntax'].includes(activeModule) && (
           <div style={{
             display: 'flex',
             alignItems: 'center',
@@ -121,45 +123,73 @@ export default function Beginner101Visualizer({ codeLang = 'C', setCodeLang, fon
                 ACTIVE LANGUAGE:
               </span>
               <span style={{ fontSize: '12px', color: '#94a3b8' }}>
-                Applies to Variables, Arrays, Syntax Practice & Sorting!
+                Applies to Variables, Arrays, Quirks & Syntax Practice!
               </span>
             </div>
 
-            <div style={{ display: 'flex', gap: '6px', flexWrap: 'wrap' }}>
-              {[
-                { id: 'C', label: '⚙️ C' },
-                { id: 'Java', label: '☕ Java' },
-                { id: 'Python', label: '🐍 Python' },
-                { id: 'Frontend', label: '🌐 Frontend (HTML/CSS/JS)' }
-              ].map(l => {
-                const cleanLang = (currentLang || 'C').toLowerCase();
-                const cleanId = l.id.toLowerCase();
-                const isSelected = 
-                  cleanLang === cleanId ||
-                  (cleanLang === 'cpp' && cleanId === 'c') ||
-                  (cleanLang === 'c++' && cleanId === 'c') ||
-                  ((cleanLang === 'js' || cleanLang === 'javascript' || cleanLang === 'frontend') && cleanId === 'frontend');
-                return (
-                  <button
-                    key={l.id}
-                    onClick={() => handleSelectLang(l.id)}
-                    style={{
-                      padding: '6px 12px',
-                      borderRadius: '8px',
-                      border: isSelected ? '2px solid #38bdf8' : '1px solid #334155',
-                      background: isSelected ? '#0284c7' : '#0f172a',
-                      color: '#fff',
-                      fontWeight: 'bold',
-                      fontSize: '12.5px',
-                      cursor: 'pointer',
-                      transition: 'all 0.2s ease',
-                      boxShadow: isSelected ? '0 0 12px rgba(56, 189, 248, 0.4)' : 'none'
-                    }}
-                  >
-                    {l.label}
-                  </button>
-                );
-              })}
+            <div style={{ display: 'flex', gap: '8px', alignItems: 'center', flexWrap: 'wrap' }}>
+              <div style={{ display: 'flex', gap: '6px', flexWrap: 'wrap' }}>
+                {[
+                  { id: 'C', label: '⚙️ C' },
+                  { id: 'Java', label: '☕ Java' },
+                  { id: 'Python', label: '🐍 Python' },
+                  { id: 'Frontend', label: '🌐 Frontend (HTML/CSS/JS)' }
+                ].map(l => {
+                  const cleanLang = (currentLang || 'C').toLowerCase();
+                  const cleanId = l.id.toLowerCase();
+                  const isSelected = 
+                    cleanLang === cleanId ||
+                    (cleanLang === 'cpp' && cleanId === 'c') ||
+                    (cleanLang === 'c++' && cleanId === 'c') ||
+                    ((cleanLang === 'js' || cleanLang === 'javascript' || cleanLang === 'frontend') && cleanId === 'frontend');
+                  return (
+                    <button
+                      key={l.id}
+                      onClick={() => handleSelectLang(l.id)}
+                      style={{
+                        padding: '6px 12px',
+                        borderRadius: '8px',
+                        border: isSelected ? '2px solid #38bdf8' : '1px solid #334155',
+                        background: isSelected ? '#0284c7' : '#0f172a',
+                        color: '#fff',
+                        fontWeight: 'bold',
+                        fontSize: '12.5px',
+                        cursor: 'pointer',
+                        transition: 'all 0.2s ease',
+                        boxShadow: isSelected ? '0 0 12px rgba(56, 189, 248, 0.4)' : 'none'
+                      }}
+                    >
+                      {l.label}
+                    </button>
+                  );
+                })}
+              </div>
+
+              {/* Only show Line Debugger button if the active language is supported; for Frontend/HTML/CSS or unsupported languages, do not show */}
+              {onOpenDebugger && isLineDebuggerSupported(currentLang) && (
+                <button
+                  onClick={() => onOpenDebugger('', currentLang)}
+                  style={{
+                    display: 'flex',
+                    alignItems: 'center',
+                    gap: '6px',
+                    padding: '6px 14px',
+                    borderRadius: '8px',
+                    border: '1.5px solid #38bdf8',
+                    background: 'rgba(56, 189, 248, 0.15)',
+                    color: '#38bdf8',
+                    fontWeight: 'bold',
+                    fontSize: '12px',
+                    cursor: 'pointer',
+                    transition: 'all 0.2s',
+                    boxShadow: '0 0 10px rgba(56, 189, 248, 0.2)'
+                  }}
+                  title={`Open Line-by-Line Debugger for ${currentLang}`}
+                >
+                  <span>🐞</span>
+                  <span>Line Debugger ({currentLang})</span>
+                </button>
+              )}
             </div>
           </div>
         )}

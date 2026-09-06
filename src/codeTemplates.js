@@ -20,7 +20,16 @@ export const getFullCodeTemplate = (lang, type, operations) => {
   } else {
     if (type === 'SEGMENT_TREE' || type === 'FENWICK_TREE') {
       let finalArr = [];
-      operations.forEach(o => { if (o.op === 'insert') finalArr.push(o.val); else finalArr = finalArr.filter(v => v !== o.val); });
+      operations.forEach(o => {
+        if (o.op === 'insert') finalArr.push(o.val);
+        else if (o.op === 'update') {
+          if (finalArr[o.idx - 1] !== undefined) finalArr[o.idx - 1] += o.val;
+        } else if (o.op === 'delete' && o.val === 'last') {
+          finalArr.pop();
+        } else {
+          finalArr = finalArr.filter(v => v !== o.val);
+        }
+      });
       
       if (type === 'SEGMENT_TREE') {
         if (lang === 'C++') {

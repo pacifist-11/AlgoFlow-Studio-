@@ -1,9 +1,10 @@
 import React, { useState } from 'react';
+import { isLineDebuggerSupported } from '../languageUtils.js';
 
 export default function LanguageCareerGuide() {
   const [selectedLang, setSelectedLang] = useState('c');
   const [hoveredLangId, setHoveredLangId] = useState(null);
-  const [activeTab, setActiveTab] = useState('overview'); // 'overview', 'four_year_plan', 'moocs_challenges', 'syntax_demo'
+  const [activeTab, setActiveTab] = useState('overview'); // 'overview', 'language_info', 'four_year_plan', 'moocs_challenges', 'syntax_demo'
 
   const languages = [
     {
@@ -31,6 +32,35 @@ export default function LanguageCareerGuide() {
       ],
       famousApps: ['Linux OS Kernel', 'Windows Kernel', 'Git VCS', 'Python Interpreter (CPython)', 'Redis In-Memory DB'],
       whyLearn: 'If you master C, learning any other language like Java, Python, or JS becomes effortlessly easy because C teaches you how the computer hardware, CPU registers, and RAM memory actually work under the hood!',
+      languageInfo: {
+        creator: 'Dennis Ritchie (Bell Labs)',
+        yearCreated: 1972,
+        paradigm: 'Procedural, Imperative, Structured',
+        typing: 'Static, Weak / Permissive, Manifest',
+        executionModel: 'Compiled directly to Native Machine Code (GCC, Clang, MSVC)',
+        memoryModel: 'Manual (Stack & Heap via malloc/free, no Garbage Collector)',
+        superpowers: [
+          'Direct hardware register and RAM manipulation with raw pointer arithmetic',
+          'Near zero-overhead runtime with minimal binary size and extreme execution speed',
+          'Universal cross-platform compiler support on virtually every CPU architecture on Earth'
+        ],
+        limitations: [
+          'No automatic memory management (risk of memory leaks, buffer overflows, segfaults)',
+          'No built-in generic collections or Standard Template Library (STL)',
+          'Lack of native OOP support (classes, inheritance, runtime polymorphism)'
+        ],
+        popularFrameworks: ['POSIX Threads (pthread)', 'GTK', 'OpenGL Core', 'FreeRTOS', 'SQLite Engine', 'Redis Core'],
+        salaryBands: {
+          entry: '$85,000 - $115,000 / yr (₹8 - 15 LPA)',
+          senior: '$145,000 - $220,000+ / yr (₹25 - 60+ LPA)'
+        },
+        keyConcepts: [
+          { term: 'Pointers & Addresses', desc: 'Direct memory references (*ptr and &var) allowing low-level RAM control.' },
+          { term: 'Dynamic Memory (malloc/free)', desc: 'Heap allocation requiring explicit developer deallocation to avoid leaks.' },
+          { term: 'Preprocessors & Macros', desc: '#define, #include, and #ifdef directives evaluated before compilation.' },
+          { term: 'Structs & Memory Alignment', desc: 'Custom composite data types aligned to specific byte boundaries in RAM.' }
+        ]
+      },
       fourYearRoadmap: [
         { year: '1st Year (Freshman)', milestone: 'C Basics, Data Types, Control Structures, Functions & Pointers fundamentals' },
         { year: '2nd Year (Sophomore)', milestone: 'Dynamic Memory Allocation (malloc/free), Structs, Linked Lists & Pointers in C' },
@@ -96,6 +126,35 @@ int main() {
       ],
       famousApps: ['Unreal Engine 5', 'Adobe Photoshop', 'Google Chrome Core', 'Microsoft Office', 'Oracle Database Core'],
       whyLearn: 'C++ combines the raw bare-metal execution speed of C with powerful Object-Oriented features and the Standard Template Library (STL). It is the #1 preferred language worldwide for cracking LeetCode DSA interviews and high-frequency trading.',
+      languageInfo: {
+        creator: 'Bjarne Stroustrup (Bell Labs)',
+        yearCreated: 1979,
+        paradigm: 'Multi-paradigm (Procedural, Functional, OOP, Generic)',
+        typing: 'Static, Strong, Nominally typed',
+        executionModel: 'Compiled directly to Native Machine Code (GCC, Clang, MSVC)',
+        memoryModel: 'Deterministic RAII + Smart Pointers (unique_ptr, shared_ptr) + Manual Heap',
+        superpowers: [
+          'Zero-cost abstractions: compile-time templates and inlining with zero runtime speed penalty',
+          'Standard Template Library (STL) providing lightning-fast O(1) and O(log N) containers',
+          'Industry king for High-Frequency Trading (HFT), AAA game engines, and low-latency systems'
+        ],
+        limitations: [
+          'High complexity and vast syntax surface area across modern standards (C++11/17/20/23)',
+          'Long compilation times for large templated codebases',
+          'Dangling pointers and undefined behavior if smart pointers / RAII are misused'
+        ],
+        popularFrameworks: ['Unreal Engine 5', 'Boost C++ Libraries', 'OpenCV', 'Google V8 Engine', 'Qt GUI Framework'],
+        salaryBands: {
+          entry: '$95,000 - $130,000 / yr (₹10 - 20 LPA)',
+          senior: '$160,000 - $275,000+ / yr (₹35 - 80+ LPA)'
+        },
+        keyConcepts: [
+          { term: 'STL Containers & Iterators', desc: 'Vector, Map, Unordered_map, and Priority_queue for O(1)/O(log N) efficiency.' },
+          { term: 'RAII (Resource Acquisition Is Init)', desc: 'Automatic resource management bound to object lifetime in stack scope.' },
+          { term: 'Move Semantics & R-Values (&&)', desc: 'Transfer resources between objects without costly deep memory copies.' },
+          { term: 'Smart Pointers', desc: 'std::unique_ptr (exclusive) and std::shared_ptr (reference counted) for safe memory.' }
+        ]
+      },
       fourYearRoadmap: [
         { year: '1st Year (Freshman)', milestone: 'C++ Syntax, Fast I/O, OOPs (Classes, Inheritance, Polymorphism), Basics of STL (Vectors, Sets)' },
         { year: '2nd Year (Sophomore)', milestone: 'Data Structures & Algorithms (STL Maps, Queues, Heaps, Trees, Graphs, DP) on LeetCode' },
@@ -163,6 +222,35 @@ int main() {
       ],
       famousApps: ['YouTube Web App', 'Netflix Web App', 'VS Code Editor', 'Discord App', 'Spotify Web Player'],
       whyLearn: 'Frontend development is powered by the legendary Holy Trinity of the Web: HTML builds the skeleton, CSS crafts the beautiful design and animations, and JavaScript/TypeScript brings dynamic interactivity and React components to life!',
+      languageInfo: {
+        creator: 'Tim Berners-Lee (HTML, 1993), Håkon Wium Lie (CSS, 1996), Brendan Eich (JS, 1995)',
+        yearCreated: 1995,
+        paradigm: 'Event-Driven, Functional, Prototype-based OOP, Declarative UI',
+        typing: 'Dynamic & Weak (JavaScript) / Static & Strong (TypeScript)',
+        executionModel: 'JIT Compiled & Interpreted by Browser Engines (V8, SpiderMonkey) + Node/Bun',
+        memoryModel: 'Automatic Garbage Collection (Mark-and-Sweep) with Single-Threaded Event Loop',
+        superpowers: [
+          'Runs natively in 100% of modern web browsers with zero installation requirements',
+          'Instant visual feedback loop with Hot Module Replacement (HMR) and reactive UI state',
+          'Massive NPM package registry with over 2.5 million open-source libraries and components'
+        ],
+        limitations: [
+          'Cross-browser rendering differences and responsive mobile layout edge cases',
+          'JavaScript implicit type coercion quirks (solved with TypeScript)',
+          'Single-threaded main thread requires careful async optimization to avoid UI jank'
+        ],
+        popularFrameworks: ['React.js', 'Next.js', 'Tailwind CSS', 'Vue.js', 'Vite', 'GSAP Animation', 'TypeScript'],
+        salaryBands: {
+          entry: '$75,000 - $105,000 / yr (₹6 - 14 LPA)',
+          senior: '$135,000 - $200,000+ / yr (₹22 - 50+ LPA)'
+        },
+        keyConcepts: [
+          { term: 'DOM & Virtual DOM', desc: 'Tree representation of UI elements enabling fast surgical updates via React diffing.' },
+          { term: 'Event Loop & Promises', desc: 'Call stack, Task queue, and Microtask queue managing asynchronous non-blocking I/O.' },
+          { term: 'CSS Box Model & Flex/Grid', desc: 'Content, padding, border, and margin geometry powering responsive layouts.' },
+          { term: 'Component State & Hooks', desc: 'Isolated functional UI units with useState and useEffect lifecycle reactive triggers.' }
+        ]
+      },
       fourYearRoadmap: [
         { year: '1st Year (Freshman)', milestone: 'HTML5 Semantic Tags, CSS3 (Flexbox/Grid, Responsive Media Queries), JavaScript ES6+ & Git' },
         { year: '2nd Year (Sophomore)', milestone: 'React.js Component Architecture, Hooks (useState, useEffect), Tailwind CSS, TypeScript' },
@@ -250,6 +338,35 @@ int main() {
       ],
       famousApps: ['Android OS', 'Minecraft', 'Amazon Backend Services', 'Uber Backend Architecture', 'Netflix Streaming Engine'],
       whyLearn: 'Java is famous for "Write Once, Run Anywhere" via the JVM. It dominates enterprise corporate backends, banking systems, and large-scale cloud microservices. Mastering Java ensures solid placement opportunities across product and service companies alike.',
+      languageInfo: {
+        creator: 'James Gosling & Sun Microsystems',
+        yearCreated: 1995,
+        paradigm: 'Object-Oriented (Class-based), Concurrent, Structured',
+        typing: 'Static, Strong, Safe',
+        executionModel: 'Bytecode executed on Java Virtual Machine (JVM) with HotSpot JIT Compiler',
+        memoryModel: 'Automatic Generational Garbage Collection (Eden, Survivor, Tenured, G1GC/ZGC)',
+        superpowers: [
+          'Platform independence: "Write Once, Run Anywhere" (WORA) on any JVM-supported OS',
+          'Rock-solid backward compatibility and unmatched stability across multi-decade systems',
+          'Unrivaled enterprise microservice ecosystem (Spring Boot, Kafka, Spark) and Android native'
+        ],
+        limitations: [
+          'Verbose syntax requiring more boilerplate compared to modern languages like Go or Python',
+          'Higher initial memory (RAM) baseline footprint and JVM warmup time',
+          'Garbage collector pauses (though heavily mitigated by modern ZGC and Shenandoah)'
+        ],
+        popularFrameworks: ['Spring Boot', 'Hibernate ORM', 'Apache Kafka', 'Apache Spark', 'Android SDK', 'JUnit 5'],
+        salaryBands: {
+          entry: '$85,000 - $115,000 / yr (₹7 - 16 LPA)',
+          senior: '$140,000 - $220,000+ / yr (₹24 - 55+ LPA)'
+        },
+        keyConcepts: [
+          { term: 'JVM Architecture', desc: 'Class loader, Bytecode Verifier, Execution Engine (JIT), and Memory Areas.' },
+          { term: 'Java Collections (JCF)', desc: 'ArrayList, LinkedList, HashMap, HashSet, and PriorityQueue utility APIs.' },
+          { term: 'Multithreading & Concurrency', desc: 'java.util.concurrent, ExecutorService, Synchronized locks, and Virtual Threads.' },
+          { term: 'Dependency Injection (DI)', desc: 'Inversion of Control (IoC) pattern decoupling classes in Spring frameworks.' }
+        ]
+      },
       fourYearRoadmap: [
         { year: '1st Year (Freshman)', milestone: 'Core Java, JVM Architecture, OOPs (Encapsulation, Interfaces, Abstract Classes), Exceptions' },
         { year: '2nd Year (Sophomore)', milestone: 'Java Collections Framework (ArrayList, HashMap, PriorityQueue), DSA on LeetCode, JDBC SQL' },
@@ -324,6 +441,35 @@ public class Main {
       ],
       famousApps: ['ChatGPT / OpenAI Backend', 'Instagram Backend (Django)', 'Spotify Recommendation Engine', 'Netflix AI Algorithm', 'Dropbox'],
       whyLearn: 'Python has the gentlest learning curve and the most vibrant open-source ecosystem in the world. If your goal is AI, Machine Learning, Data Analytics, or rapid web app development, Python is mandatory.',
+      languageInfo: {
+        creator: 'Guido van Rossum (CWI, Netherlands)',
+        yearCreated: 1991,
+        paradigm: 'Multi-paradigm (Imperative, OOP, Functional, Reflective)',
+        typing: 'Dynamic, Strong, Duck-typed',
+        executionModel: 'Interpreted Bytecode via CPython Virtual Machine (with PyPy JIT alternatives)',
+        memoryModel: 'Automatic Reference Counting + Generational Garbage Collector (cyclic detector)',
+        superpowers: [
+          'Unrivaled #1 programming language for Artificial Intelligence, Machine Learning, and LLMs',
+          'Exceptionally clean English-like syntax enabling 3x-5x faster prototyping speed',
+          'Rich ecosystem of C-optimized mathematical libraries (NumPy, SciPy, PyTorch, Pandas)'
+        ],
+        limitations: [
+          'Slower pure CPU execution speed compared to compiled languages like C++, Rust, or Go',
+          'Global Interpreter Lock (GIL) historically constrains multi-threaded CPU bound tasks',
+          'Runtime dynamic type errors unless Type Hints and mypy static checks are used'
+        ],
+        popularFrameworks: ['PyTorch', 'TensorFlow', 'FastAPI', 'Django', 'Pandas', 'NumPy', 'Hugging Face Transformers'],
+        salaryBands: {
+          entry: '$90,000 - $125,000 / yr (₹8 - 18 LPA)',
+          senior: '$155,000 - $250,000+ / yr (₹28 - 65+ LPA)'
+        },
+        keyConcepts: [
+          { term: 'List Comprehensions & Generators', desc: 'Elegant concise syntax for creating collections with lazy iterator memory.' },
+          { term: 'Duck Typing & Dunder Methods', desc: '"If it quacks like a duck" polymorphism with __init__, __str__, __len__ hooks.' },
+          { term: 'Vectorization (NumPy)', desc: 'SIMD hardware accelerated matrix operations without slow Python for-loops.' },
+          { term: 'Decorators (@)', desc: 'Higher-order wrapper functions extending behavior dynamically at runtime.' }
+        ]
+      },
       fourYearRoadmap: [
         { year: '1st Year (Freshman)', milestone: 'Python Syntax, Data Structures (Lists, Dicts, Tuples, Sets), File Handling, Basic Git' },
         { year: '2nd Year (Sophomore)', milestone: 'Data Wrangling with Pandas & NumPy, SQL Databases, Basic DSA in Python, OOPs' },
@@ -383,6 +529,35 @@ print(df.groupby('Branch')['LeetCode_Solved'].mean())`
       ],
       famousApps: ['Docker', 'Kubernetes', 'Terraform', 'Twitch Video Streaming Backend', 'Cloudflare Proxy'],
       whyLearn: 'Created by Google, Go is designed for building fast, concurrent network servers and distributed cloud platforms. Its lightweight Goroutines make handling millions of simultaneous user connections incredibly simple.',
+      languageInfo: {
+        creator: 'Robert Griesemer, Rob Pike, Ken Thompson (Google)',
+        yearCreated: 2009,
+        paradigm: 'Concurrent, Imperative, Structured',
+        typing: 'Static, Strong, Inferred',
+        executionModel: 'Statically Compiled directly to single Standalone Native Binaries',
+        memoryModel: 'Automatic Concurrent Mark-and-Sweep Garbage Collector + Stack Escape Analysis',
+        superpowers: [
+          'Goroutines: ultra-lightweight green threads (only ~2 KB initial stack vs 1 MB OS thread)',
+          'Built-in CSP Channels enabling safe lock-free communication between concurrent routines',
+          'Single standalone statically linked binary output with zero external runtime dependencies'
+        ],
+        limitations: [
+          'No classical OOP inheritance (deliberately uses composition and structural interfaces)',
+          'Explicit repetitive error handling checks (if err != nil) throughout codebases',
+          'Younger generics system compared to C++ or Java'
+        ],
+        popularFrameworks: ['Gin Gonic', 'Fiber', 'gRPC-Go', 'Echo', 'Cobra CLI', 'GORM'],
+        salaryBands: {
+          entry: '$95,000 - $130,000 / yr (₹10 - 20 LPA)',
+          senior: '$160,000 - $260,000+ / yr (₹30 - 70+ LPA)'
+        },
+        keyConcepts: [
+          { term: 'Goroutines (go fn())', desc: 'Multiplexed lightweight threads managed entirely by the Go M:N runtime scheduler.' },
+          { term: 'Channels (make(chan T))', desc: 'Thread-safe conduits for synchronizing data between goroutines without explicit mutexes.' },
+          { term: 'Structural Interfaces', desc: 'Implicit interface satisfaction: types implement interfaces simply by defining the methods.' },
+          { term: 'Defer Statement', desc: 'Guarantees execution of cleanup logic (closing files/connections) when enclosing function exits.' }
+        ]
+      },
       fourYearRoadmap: [
         { year: '1st Year (Freshman)', milestone: 'Go Syntax, Structs, Pointers, Slices & Basic CLI Applications' },
         { year: '2nd Year (Sophomore)', milestone: 'Concurrency with Goroutines & Channels, Interfaces, Error Handling, REST APIs' },
@@ -453,6 +628,35 @@ func main() {
       ],
       famousApps: ['Linux Kernel (Rust support)', 'Discord Real-time Core', 'Cloudflare Workers', 'Solana Blockchain', 'Figma WebAssembly Engine'],
       whyLearn: 'Rust provides C++ speed while completely eliminating memory corruption bugs and segmentation faults at compile time through its revolutionary Ownership and Borrowing system.',
+      languageInfo: {
+        creator: 'Graydon Hoare (Mozilla Research)',
+        yearCreated: 2010,
+        paradigm: 'Multi-paradigm (Concurrent, Functional, Generic, Imperative)',
+        typing: 'Static, Strong, Nominally typed with full Type Inference',
+        executionModel: 'Compiled directly to Native Machine Code via LLVM with zero-cost abstractions',
+        memoryModel: 'Compile-Time Ownership & Borrow Checker (Zero GC, Zero Manual Free leaks)',
+        superpowers: [
+          'Guaranteed memory safety without a garbage collector: prevents segfaults and data races at compile time',
+          'Fearless concurrency: type system prevents multi-threading data races before code even runs',
+          'Modern cargo package manager with built-in testing, documentation, and zero-dependency ecosystem'
+        ],
+        limitations: [
+          'Steep initial learning curve fighting the borrow checker rules and lifetime annotations',
+          'Longer compile times due to aggressive LLVM optimization and borrow checking passes',
+          'Smaller hiring market compared to Java/Python, though rapidly expanding in top infrastructure firms'
+        ],
+        popularFrameworks: ['Tokio (Async I/O)', 'Actix-web', 'Axum', 'Tauri (Desktop UI)', 'Wasm-pack', 'Rayon (Data Parallelism)'],
+        salaryBands: {
+          entry: '$105,000 - $145,000 / yr (₹12 - 24 LPA)',
+          senior: '$175,000 - $290,000+ / yr (₹35 - 85+ LPA)'
+        },
+        keyConcepts: [
+          { term: 'Ownership & Move Semantics', desc: 'Each value has exactly one owner; when owner goes out of scope, memory is freed immediately.' },
+          { term: 'Borrowing & References (&, &mut)', desc: 'Any number of immutable borrows (&T) OR exactly one mutable borrow (&mut T) at any time.' },
+          { term: 'Traits & Pattern Matching', desc: 'Interface-like polymorphism combined with exhaustive match statements on Enums.' },
+          { term: 'Option<T> & Result<T, E>', desc: 'Replaces dangerous null/nil pointers with explicit compile-time error handling.' }
+        ]
+      },
       fourYearRoadmap: [
         { year: '1st Year (Freshman)', milestone: 'Rust Syntax, Cargo Build System, Basic Data Types, Pattern Matching' },
         { year: '2nd Year (Sophomore)', milestone: 'Ownership, References & Borrow Checker, Structs, Enums & Traits' },
@@ -516,14 +720,29 @@ fn main() {
               Which Programming Language to Pick? (Language Career Guide & 4-Year Roadmaps)
             </h2>
             <p style={{ margin: '4px 0 0 0', color: '#94a3b8', fontSize: '13.5px', lineHeight: '1.5' }}>
-              Deep dive into every major language and stack: <strong>C, C++, Frontend Web Dev (HTML, CSS & JS), Java, Python, Go, and Rust</strong>. Explore why learn it, 4-year learning roadmaps, target job roles, MOOCs, certifications, and coding challenges!
+              Deep dive into every major language and stack: <strong>C, C++, Frontend Web Dev (HTML, CSS & JS), Java, Python, Go, and Rust</strong>. Explore why learn it, technical specs, 4-year learning roadmaps, target job roles, MOOCs, and coding challenges!
             </p>
+            {/* General College / Curriculum Advisory Note */}
+            <div style={{
+              marginTop: '10px',
+              padding: '8px 12px',
+              background: 'rgba(56, 189, 248, 0.08)',
+              borderLeft: '3px solid #38bdf8',
+              borderRadius: '6px',
+              display: 'flex',
+              alignItems: 'center',
+              gap: '8px'
+            }}>
+              <span style={{ fontSize: '15px' }}>💡</span>
+              <span style={{ fontSize: '12.5px', color: '#cbd5e1', lineHeight: '1.4' }}>
+                <strong style={{ color: '#38bdf8' }}>Curriculum Note:</strong> Primary programming languages (such as C, C++, Java, or Python) taught in 1st & 2nd year may vary depending on your college or university syllabus and department specializations.
+              </span>
+            </div>
           </div>
         </div>
       </div>
 
       {/* Language Selector Buttons */}
-      {/* Horizontal Language Selector Buttons */}
       <div style={{ display: 'flex', gap: '10px', flexWrap: 'wrap' }}>
         {languages.map(l => {
           const isActive = selectedLang === l.id;
@@ -605,7 +824,29 @@ fn main() {
             </div>
           </div>
 
-          <div style={{ display: 'flex', gap: '8px', flexWrap: 'wrap' }}>
+          <div style={{ display: 'flex', gap: '8px', flexWrap: 'wrap', alignItems: 'center' }}>
+            <button
+              type="button"
+              onClick={() => setActiveTab('language_info')}
+              style={{
+                background: activeTab === 'language_info' ? current.color : 'rgba(56, 189, 248, 0.18)',
+                color: activeTab === 'language_info' ? '#0f172a' : current.color,
+                padding: '6px 12px',
+                borderRadius: '8px',
+                border: `1.5px solid ${current.color}`,
+                fontSize: '12px',
+                fontWeight: '800',
+                cursor: 'pointer',
+                display: 'flex',
+                alignItems: 'center',
+                gap: '5px',
+                transition: 'all 0.2s',
+                boxShadow: activeTab === 'language_info' ? `0 0 14px ${current.color}60` : 'none'
+              }}
+              title="Click to view full language technical specifications and deep dive"
+            >
+              ℹ️ Language Info
+            </button>
             <div style={{
               background: 'rgba(15, 23, 42, 0.8)',
               padding: '6px 12px',
@@ -626,6 +867,24 @@ fn main() {
             }}>
               Industry Demand: <strong style={{ color: '#fbbf24', cursor: 'help' }} title={current.industryDemand}>{current.industryDemand.split(' ')[0]}</strong>
             </div>
+
+            {/* Line-by-Line Debugger Status - only shown for supported languages */}
+            {isLineDebuggerSupported(current.id) && (
+              <div style={{
+                background: 'rgba(16, 185, 129, 0.15)',
+                padding: '6px 12px',
+                borderRadius: '8px',
+                border: '1px solid rgba(16, 185, 129, 0.3)',
+                fontSize: '12px',
+                color: '#34d399',
+                display: 'flex',
+                alignItems: 'center',
+                gap: '6px'
+              }}>
+                <span>🐞</span>
+                <span>Line Debugger: <strong>Supported</strong></span>
+              </div>
+            )}
           </div>
         </div>
 
@@ -633,6 +892,7 @@ fn main() {
         <div style={{ display: 'flex', gap: '8px', borderBottom: '1px solid #334155', paddingBottom: '10px', flexWrap: 'wrap' }}>
           {[
             { id: 'overview', label: '💡 Why Learn & Careers' },
+            { id: 'language_info', label: 'ℹ️ Language Info & Specs' },
             { id: 'four_year_plan', label: '📅 4-Year Language Roadmap' },
             { id: 'moocs_challenges', label: '🏆 MOOCs & Certifications' },
             { id: 'syntax_demo', label: '💻 Live Code Showcase' }
@@ -651,7 +911,8 @@ fn main() {
                   fontSize: '12.5px',
                   fontWeight: '700',
                   cursor: 'pointer',
-                  transition: 'all 0.2s ease'
+                  transition: 'all 0.2s ease',
+                  boxShadow: isTabActive ? `0 0 12px ${current.color}40` : 'none'
                 }}
               >
                 {tab.label}
@@ -677,7 +938,6 @@ fn main() {
               </p>
             </div>
 
-            {/* Special Highlight for Frontend Trio if selected */}
             {current.id === 'frontend' && (
               <div style={{
                 display: 'grid',
@@ -698,10 +958,10 @@ fn main() {
                   </p>
                 </div>
 
-                <div style={{ background: '#0f172a', padding: '14px', borderRadius: '10px', border: '1px solid #fbbf24' }}>
-                  <span style={{ color: '#fbbf24', fontWeight: 'bold', fontSize: '13px' }}>⚡ 3. JavaScript / React (Logic)</span>
+                <div style={{ background: '#0f172a', padding: '14px', borderRadius: '10px', border: '1px solid #f59e0b' }}>
+                  <span style={{ color: '#f59e0b', fontWeight: 'bold', fontSize: '13px' }}>⚡ 3. JavaScript / React (Logic)</span>
                   <p style={{ margin: '6px 0 0 0', fontSize: '12px', color: '#cbd5e1', lineHeight: '1.4' }}>
-                    DOM manipulation, ES6+ async/await, API data fetching, React components, state hooks, and Next.js.
+                    DOM manipulation, ES6+ arrow functions, asynchronous fetch APIs, and dynamic React components.
                   </p>
                 </div>
               </div>
@@ -710,67 +970,44 @@ fn main() {
             <div style={{
               display: 'grid',
               gridTemplateColumns: 'repeat(auto-fit, minmax(280px, 1fr))',
-              gap: '16px'
+              gap: '14px'
             }}>
-              {/* Fields */}
-              <div style={{
-                background: '#0f172a',
-                padding: '16px',
-                borderRadius: '10px',
-                border: '1px solid #334155'
-              }}>
-                <h4 style={{ margin: '0 0 12px 0', fontSize: '14px', color: '#38bdf8', display: 'flex', alignItems: 'center', gap: '6px' }}>
-                  <span>🚀</span> Fields & Industries
+              <div style={{ background: '#0f172a', padding: '16px', borderRadius: '10px', border: '1px solid #334155' }}>
+                <h4 style={{ margin: '0 0 10px 0', fontSize: '14px', color: current.color }}>
+                  🌐 Primary Industry Domains & Applications
                 </h4>
-                <ul style={{ margin: 0, paddingLeft: '18px', color: '#cbd5e1', fontSize: '13px', lineHeight: '1.6' }}>
+                <ul style={{ margin: 0, paddingLeft: '18px', fontSize: '12.5px', color: '#cbd5e1', lineHeight: '1.6' }}>
                   {current.fields.map((f, i) => (
                     <li key={i}>{f}</li>
                   ))}
                 </ul>
               </div>
 
-              {/* Job Titles */}
-              <div style={{
-                background: '#0f172a',
-                padding: '16px',
-                borderRadius: '10px',
-                border: '1px solid #334155'
-              }}>
-                <h4 style={{ margin: '0 0 12px 0', fontSize: '14px', color: '#34d399', display: 'flex', alignItems: 'center', gap: '6px' }}>
-                  <span>💼</span> Target Job Roles
+              <div style={{ background: '#0f172a', padding: '16px', borderRadius: '10px', border: '1px solid #334155' }}>
+                <h4 style={{ margin: '0 0 10px 0', fontSize: '14px', color: '#10b981' }}>
+                  💼 Target Job Roles & Career Profiles
                 </h4>
-                <ul style={{ margin: 0, paddingLeft: '18px', color: '#cbd5e1', fontSize: '13px', lineHeight: '1.6' }}>
-                  {current.jobTitles.map((j, i) => (
-                    <li key={i}><strong>{j}</strong></li>
+                <ul style={{ margin: 0, paddingLeft: '18px', fontSize: '12.5px', color: '#cbd5e1', lineHeight: '1.6' }}>
+                  {current.jobTitles.map((t, i) => (
+                    <li key={i}><strong style={{ color: '#f8fafc' }}>{t}</strong></li>
                   ))}
                 </ul>
               </div>
             </div>
 
-            {/* Famous Apps */}
-            <div style={{
-              background: '#090d16',
-              padding: '14px 18px',
-              borderRadius: '10px',
-              display: 'flex',
-              alignItems: 'center',
-              gap: '12px',
-              flexWrap: 'wrap',
-              border: '1px solid rgba(255,255,255,0.06)'
-            }}>
-              <span style={{ fontSize: '12px', color: '#94a3b8', fontWeight: 'bold' }}>
-                🌟 Famous Software Built With {current.name}:
+            <div style={{ background: '#0f172a', padding: '14px 18px', borderRadius: '10px', border: '1px solid #334155' }}>
+              <span style={{ fontSize: '13px', color: '#94a3b8', fontWeight: 'bold' }}>
+                🚀 Built with {current.name}:
               </span>
-              <div style={{ display: 'flex', gap: '8px', flexWrap: 'wrap' }}>
+              <div style={{ display: 'flex', gap: '8px', flexWrap: 'wrap', marginTop: '6px' }}>
                 {current.famousApps.map((app, i) => (
                   <span key={i} style={{
-                    background: 'rgba(255, 255, 255, 0.08)',
-                    border: '1px solid rgba(255, 255, 255, 0.12)',
-                    padding: '4px 10px',
+                    background: 'rgba(56, 189, 248, 0.1)',
+                    padding: '3px 10px',
                     borderRadius: '6px',
                     fontSize: '12px',
-                    color: '#f1f5f9',
-                    fontWeight: '600'
+                    color: '#38bdf8',
+                    border: '1px solid rgba(56, 189, 248, 0.2)'
                   }}>
                     {app}
                   </span>
@@ -780,23 +1017,171 @@ fn main() {
           </div>
         )}
 
-        {/* TAB 2: 4-YEAR LANGUAGE ROADMAP */}
-        {activeTab === 'four_year_plan' && (
-          <div style={{ display: 'flex', flexDirection: 'column', gap: '16px' }}>
-            <h4 style={{ margin: 0, fontSize: '16px', color: '#f8fafc', fontWeight: '800' }}>
-              📅 4-Year Progressive Learning Roadmap for {current.name}
-            </h4>
+        {/* TAB 2: LANGUAGE INFO & SPECS */}
+        {activeTab === 'language_info' && current.languageInfo && (
+          <div style={{ display: 'flex', flexDirection: 'column', gap: '20px' }}>
+            <div>
+              <h4 style={{ margin: '0 0 12px 0', fontSize: '15px', color: current.color, display: 'flex', alignItems: 'center', gap: '6px' }}>
+                <span>🧬</span> Core Language Specifications & Architecture
+              </h4>
+              <div style={{
+                display: 'grid',
+                gridTemplateColumns: 'repeat(auto-fit, minmax(220px, 1fr))',
+                gap: '12px'
+              }}>
+                <div style={{ background: '#0f172a', padding: '14px 16px', borderRadius: '10px', border: '1px solid rgba(255,255,255,0.08)' }}>
+                  <span style={{ fontSize: '11px', color: '#94a3b8', textTransform: 'uppercase', letterSpacing: '0.5px', fontWeight: 'bold' }}>🏛️ Creator & Year</span>
+                  <div style={{ marginTop: '4px', fontSize: '13.5px', fontWeight: '700', color: '#f8fafc' }}>{current.languageInfo.creator}</div>
+                  <div style={{ fontSize: '11.5px', color: current.color, marginTop: '2px', fontWeight: 'bold' }}>First Released: {current.languageInfo.yearCreated}</div>
+                </div>
+                <div style={{ background: '#0f172a', padding: '14px 16px', borderRadius: '10px', border: '1px solid rgba(255,255,255,0.08)' }}>
+                  <span style={{ fontSize: '11px', color: '#94a3b8', textTransform: 'uppercase', letterSpacing: '0.5px', fontWeight: 'bold' }}>🧠 Programming Paradigm</span>
+                  <div style={{ marginTop: '4px', fontSize: '13.5px', fontWeight: '700', color: '#f8fafc' }}>{current.languageInfo.paradigm}</div>
+                </div>
+                <div style={{ background: '#0f172a', padding: '14px 16px', borderRadius: '10px', border: '1px solid rgba(255,255,255,0.08)' }}>
+                  <span style={{ fontSize: '11px', color: '#94a3b8', textTransform: 'uppercase', letterSpacing: '0.5px', fontWeight: 'bold' }}>🔒 Type System</span>
+                  <div style={{ marginTop: '4px', fontSize: '13.5px', fontWeight: '700', color: '#f8fafc' }}>{current.languageInfo.typing}</div>
+                </div>
+                <div style={{ background: '#0f172a', padding: '14px 16px', borderRadius: '10px', border: '1px solid rgba(255,255,255,0.08)' }}>
+                  <span style={{ fontSize: '11px', color: '#94a3b8', textTransform: 'uppercase', letterSpacing: '0.5px', fontWeight: 'bold' }}>⚙️ Execution Model</span>
+                  <div style={{ marginTop: '4px', fontSize: '13.5px', fontWeight: '700', color: '#f8fafc' }}>{current.languageInfo.executionModel}</div>
+                </div>
+                <div style={{ background: '#0f172a', padding: '14px 16px', borderRadius: '10px', border: '1px solid rgba(255,255,255,0.08)', gridColumn: 'span 2' }}>
+                  <span style={{ fontSize: '11px', color: '#94a3b8', textTransform: 'uppercase', letterSpacing: '0.5px', fontWeight: 'bold' }}>🧹 Memory Management Model</span>
+                  <div style={{ marginTop: '4px', fontSize: '13px', fontWeight: '600', color: '#e2e8f0' }}>{current.languageInfo.memoryModel}</div>
+                </div>
+              </div>
+            </div>
 
             <div style={{
               display: 'grid',
-              gridTemplateColumns: 'repeat(auto-fit, minmax(230px, 1fr))',
+              gridTemplateColumns: 'repeat(auto-fit, minmax(300px, 1fr))',
+              gap: '14px'
+            }}>
+              <div style={{
+                background: 'rgba(16, 185, 129, 0.06)',
+                padding: '16px 18px',
+                borderRadius: '12px',
+                border: '1px solid rgba(16, 185, 129, 0.3)',
+                display: 'flex',
+                flexDirection: 'column',
+                gap: '8px'
+              }}>
+                <h4 style={{ margin: 0, fontSize: '14.5px', color: '#34d399', display: 'flex', alignItems: 'center', gap: '6px' }}>
+                  <span>🚀</span> Core Superpowers & Strengths
+                </h4>
+                <ul style={{ margin: '4px 0 0 0', paddingLeft: '18px', fontSize: '12.5px', color: '#cbd5e1', lineHeight: '1.6' }}>
+                  {current.languageInfo.superpowers.map((sp, i) => (
+                    <li key={i} style={{ marginBottom: '4px' }}>{sp}</li>
+                  ))}
+                </ul>
+              </div>
+              <div style={{
+                background: 'rgba(245, 158, 11, 0.06)',
+                padding: '16px 18px',
+                borderRadius: '12px',
+                border: '1px solid rgba(245, 158, 11, 0.3)',
+                display: 'flex',
+                flexDirection: 'column',
+                gap: '8px'
+              }}>
+                <h4 style={{ margin: 0, fontSize: '14.5px', color: '#fbbf24', display: 'flex', alignItems: 'center', gap: '6px' }}>
+                  <span>⚠️</span> Key Trade-Offs & Watch-Outs
+                </h4>
+                <ul style={{ margin: '4px 0 0 0', paddingLeft: '18px', fontSize: '12.5px', color: '#cbd5e1', lineHeight: '1.6' }}>
+                  {current.languageInfo.limitations.map((lim, i) => (
+                    <li key={i} style={{ marginBottom: '4px' }}>{lim}</li>
+                  ))}
+                </ul>
+              </div>
+            </div>
+
+            <div style={{
+              display: 'grid',
+              gridTemplateColumns: 'repeat(auto-fit, minmax(280px, 1fr))',
+              gap: '14px'
+            }}>
+              <div style={{ background: '#0f172a', padding: '16px 18px', borderRadius: '12px', border: '1px solid rgba(255,255,255,0.08)' }}>
+                <h4 style={{ margin: '0 0 10px 0', fontSize: '14px', color: current.color }}>
+                  📦 Top Frameworks, Engines & Tools
+                </h4>
+                <div style={{ display: 'flex', flexWrap: 'wrap', gap: '6px' }}>
+                  {current.languageInfo.popularFrameworks.map((fw, i) => (
+                    <span key={i} style={{
+                      background: 'rgba(255,255,255,0.06)',
+                      padding: '4px 10px',
+                      borderRadius: '6px',
+                      fontSize: '12px',
+                      fontWeight: '600',
+                      color: '#f1f5f9',
+                      border: '1px solid rgba(255,255,255,0.1)'
+                    }}>
+                      {fw}
+                    </span>
+                  ))}
+                </div>
+              </div>
+              <div style={{ background: '#0f172a', padding: '16px 18px', borderRadius: '12px', border: '1px solid rgba(255,255,255,0.08)' }}>
+                <h4 style={{ margin: '0 0 10px 0', fontSize: '14px', color: '#10b981' }}>
+                  💰 Average Industry Salary Bands
+                </h4>
+                <div style={{ display: 'flex', flexDirection: 'column', gap: '8px' }}>
+                  <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: '12.5px' }}>
+                    <span style={{ color: '#94a3b8' }}>🌱 Entry-Level (0 - 2 yrs):</span>
+                    <strong style={{ color: '#38bdf8' }}>{current.languageInfo.salaryBands.entry}</strong>
+                  </div>
+                  <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: '12.5px' }}>
+                    <span style={{ color: '#94a3b8' }}>🚀 Senior SDE / Lead (5+ yrs):</span>
+                    <strong style={{ color: '#10b981' }}>{current.languageInfo.salaryBands.senior}</strong>
+                  </div>
+                </div>
+              </div>
+            </div>
+
+            <div>
+              <h4 style={{ margin: '0 0 12px 0', fontSize: '15px', color: '#a78bfa', display: 'flex', alignItems: 'center', gap: '6px' }}>
+                <span>💡</span> Signature Concepts & Mental Models ({current.name})
+              </h4>
+              <div style={{
+                display: 'grid',
+                gridTemplateColumns: 'repeat(auto-fit, minmax(240px, 1fr))',
+                gap: '10px'
+              }}>
+                {current.languageInfo.keyConcepts.map((kc, i) => (
+                  <div key={i} style={{
+                    background: '#090d16',
+                    padding: '14px',
+                    borderRadius: '10px',
+                    border: '1px solid rgba(167, 139, 250, 0.2)'
+                  }}>
+                    <strong style={{ fontSize: '13px', color: '#c4b5fd' }}>{kc.term}</strong>
+                    <p style={{ margin: '4px 0 0 0', fontSize: '12px', color: '#cbd5e1', lineHeight: '1.5' }}>
+                      {kc.desc}
+                    </p>
+                  </div>
+                ))}
+              </div>
+            </div>
+          </div>
+        )}
+
+        {/* TAB 3: 4-YEAR PLAN */}
+        {activeTab === 'four_year_plan' && (
+          <div style={{ display: 'flex', flexDirection: 'column', gap: '16px' }}>
+            <h4 style={{ margin: 0, fontSize: '15px', color: current.color }}>
+              📅 4-Year University Learning Roadmap for {current.name}
+            </h4>
+            <div style={{
+              display: 'grid',
+              gridTemplateColumns: 'repeat(auto-fit, minmax(240px, 1fr))',
               gap: '14px'
             }}>
               {current.fourYearRoadmap.map((step, idx) => (
                 <div key={idx} style={{
                   background: '#0f172a',
                   padding: '16px',
-                  borderRadius: '10px',
+                  borderRadius: '12px',
+                  border: '1px solid #334155',
                   borderTop: `3px solid ${idx === 0 ? '#38bdf8' : idx === 1 ? '#f59e0b' : idx === 2 ? '#10b981' : '#ec4899'}`,
                   display: 'flex',
                   flexDirection: 'column',
@@ -814,10 +1199,9 @@ fn main() {
           </div>
         )}
 
-        {/* TAB 3: MOOCS & CERTIFICATIONS */}
+        {/* TAB 4: MOOCS & CERTIFICATIONS */}
         {activeTab === 'moocs_challenges' && (
           <div style={{ display: 'flex', flexDirection: 'column', gap: '18px' }}>
-            {/* MOOCs */}
             <div>
               <h4 style={{ margin: '0 0 10px 0', fontSize: '15px', color: '#38bdf8' }}>
                 🎓 Top MOOCs & Courses for {current.name}
@@ -831,8 +1215,6 @@ fn main() {
                 ))}
               </div>
             </div>
-
-            {/* Certifications */}
             <div>
               <h4 style={{ margin: '0 0 10px 0', fontSize: '15px', color: '#10b981' }}>
                 📜 Industry Recognized Certifications
@@ -849,7 +1231,7 @@ fn main() {
           </div>
         )}
 
-        {/* TAB 4: CODE SHOWCASE */}
+        {/* TAB 5: CODE SHOWCASE */}
         {activeTab === 'syntax_demo' && (
           <div style={{ display: 'flex', flexDirection: 'column', gap: '12px' }}>
             <h4 style={{ margin: 0, fontSize: '15px', color: current.color }}>

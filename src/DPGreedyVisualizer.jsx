@@ -95,6 +95,30 @@ const getDPComplexityInfo = (algo) => {
           { op: 'Min Coins (Greedy)', time: 'O(C log C + N)', space: 'O(C)' }
         ]
       };
+    case 'NQueens':
+      return {
+        title: 'N-Queens Backtracking Problem',
+        operations: [
+          { op: 'Full Backtrack Search', time: 'O(N!)', space: 'O(N) Recursion' },
+          { op: 'Single Solution (Avg)', time: 'O(c^N)', space: 'O(N)' }
+        ]
+      };
+    case 'Huffman':
+      return {
+        title: 'Huffman Coding & Compression',
+        operations: [
+          { op: 'Build Tree (Min-Heap)', time: 'O(N log N)', space: 'O(N)' },
+          { op: 'Encode / Decode Message', time: 'O(L)', space: 'O(N)' }
+        ]
+      };
+    case 'Needleman':
+      return {
+        title: 'Needleman-Wunsch DNA Alignment (DP)',
+        operations: [
+          { op: 'Matrix Score Fill', time: 'O(N * M)', space: 'O(N * M)' },
+          { op: 'Traceback Alignment', time: 'O(N + M)', space: 'O(1)' }
+        ]
+      };
     default:
       return null;
   }
@@ -300,6 +324,16 @@ const DPGreedyVisualizer = ({ onBack, openSettings, initialTab = 'LCS', onCopyCo
   // Coin Change Inputs
   const [coinInput, setCoinInput] = useState('1, 3, 4');
   const [coinTarget, setCoinTarget] = useState(6);
+
+  // N-Queens Inputs
+  const [nQueensSize, setNQueensSize] = useState(4);
+
+  // Huffman Inputs
+  const [huffmanInput, setHuffmanInput] = useState('A:5, B:9, C:12, D:13, E:16, F:45');
+
+  // Needleman-Wunsch DNA Inputs
+  const [needleSeq1, setNeedleSeq1] = useState('GATTACA');
+  const [needleSeq2, setNeedleSeq2] = useState('GCATGCU');
 
   // Timeline / Frames
   const [timeline, setTimeline] = useState([]);
@@ -1079,6 +1113,281 @@ const DPGreedyVisualizer = ({ onBack, openSettings, initialTab = 'LCS', onCopyCo
     setIsPlaying(true);
   };
 
+  const solveNQueens = () => {
+    const N = nQueensSize;
+    const frames = [];
+    const logs = [];
+    const board = Array(N).fill(-1);
+    const solutions = [];
+
+    logs.push(`👑 Starting N-Queens Solver for N = ${N} on ${N}x${N} board.`);
+    frames.push({
+      nQueensBoard: [...board],
+      nQueensRow: 0,
+      nQueensCol: -1,
+      nQueensSolutions: [],
+      logs: [...logs],
+      msg: `Initialized empty ${N}x${N} chessboard.`
+    });
+
+    const isSafe = (row, col) => {
+      for (let r = 0; r < row; r++) {
+        if (board[r] === col || Math.abs(board[r] - col) === Math.abs(r - row)) return false;
+      }
+      return true;
+    };
+
+    const backtrack = (row) => {
+      if (row === N) {
+        solutions.push([...board]);
+        logs.push(`🎉 Solution #${solutions.length} Found! Queen columns: [${board.join(', ')}]`);
+        frames.push({
+          nQueensBoard: [...board],
+          nQueensRow: row,
+          nQueensCol: -1,
+          nQueensSolutions: [...solutions],
+          logs: [...logs],
+          msg: `Solution #${solutions.length} found! Placement: [${board.join(', ')}].`
+        });
+        return;
+      }
+
+      for (let col = 0; col < N; col++) {
+        const safe = isSafe(row, col);
+        if (safe) {
+          board[row] = col;
+          logs.push(`Row ${row}, Col ${col}: Safe! Placed Queen 👑 at (${row}, ${col}).`);
+          frames.push({
+            nQueensBoard: [...board],
+            nQueensRow: row,
+            nQueensCol: col,
+            nQueensSolutions: [...solutions],
+            logs: [...logs],
+            msg: `Row ${row}: Placed Queen 👑 at (${row}, ${col}). Proceeding to row ${row + 1}.`
+          });
+
+          backtrack(row + 1);
+
+          board[row] = -1;
+          logs.push(`Backtrack: Removed Queen from Row ${row}, Col ${col}.`);
+          frames.push({
+            nQueensBoard: [...board],
+            nQueensRow: row,
+            nQueensCol: col,
+            nQueensSolutions: [...solutions],
+            logs: [...logs],
+            msg: `Backtracking from Row ${row}: cleared cell (${row}, ${col}).`
+          });
+        } else {
+          logs.push(`Row ${row}, Col ${col}: Conflict! Under attack.`);
+          frames.push({
+            nQueensBoard: [...board],
+            nQueensRow: row,
+            nQueensCol: col,
+            nQueensConflict: true,
+            nQueensSolutions: [...solutions],
+            logs: [...logs],
+            msg: `Row ${row}, Col ${col} is attacked by existing Queen. Trying next column.`
+          });
+        }
+      }
+    };
+
+    backtrack(0);
+
+    logs.push(`Completed N-Queens exploration. Total solutions: ${solutions.length}.`);
+    frames.push({
+      nQueensBoard: solutions.length > 0 ? solutions[0] : Array(N).fill(-1),
+      nQueensRow: N,
+      nQueensCol: -1,
+      nQueensSolutions: [...solutions],
+      logs: [...logs],
+      msg: `Finished! Found ${solutions.length} valid solution(s) for N = ${N}.`
+    });
+
+    setTimeline(frames);
+    setCurrentStep(0);
+    setIsPlaying(true);
+  };
+
+  const solveHuffman = () => {
+    const frames = [];
+    const logs = [];
+
+    const items = huffmanInput.split(',').map(part => {
+      const [char, freq] = part.split(':').map(s => s.trim());
+      return { char: char || '?', freq: parseInt(freq) || 1, left: null, right: null, id: Math.random().toString(36).substr(2, 6) };
+    }).filter(i => i.freq > 0);
+
+    if (items.length === 0) return;
+
+    logs.push(`🌲 Building Huffman Tree for ${items.length} symbols: ${items.map(i => `${i.char}:${i.freq}`).join(', ')}`);
+    frames.push({
+      huffmanNodes: items.map(i => ({ ...i })),
+      huffmanCodes: {},
+      logs: [...logs],
+      msg: `Initialized Min-Heap with ${items.length} character frequency leaf nodes.`
+    });
+
+    let pq = items.map(i => ({ ...i }));
+    pq.sort((a, b) => a.freq - b.freq);
+
+    let step = 1;
+    while (pq.length > 1) {
+      const left = pq.shift();
+      const right = pq.shift();
+      const parent = {
+        char: `(${left.char}+${right.char})`,
+        freq: left.freq + right.freq,
+        left,
+        right,
+        id: `m_${step++}`
+      };
+
+      pq.push(parent);
+      pq.sort((a, b) => a.freq - b.freq);
+
+      logs.push(`Merge lowest: '${left.char}' (${left.freq}) + '${right.char}' (${right.freq}) ➔ '${parent.char}' (${parent.freq})`);
+      frames.push({
+        huffmanNodes: pq.map(i => ({ ...i })),
+        huffmanMerged: { left, right, parent },
+        huffmanCodes: {},
+        logs: [...logs],
+        msg: `Step ${step - 1}: Merged lowest frequency nodes '${left.char}' and '${right.char}' into combined node (freq: ${parent.freq}).`
+      });
+    }
+
+    const root = pq[0];
+    const codes = {};
+    const traverse = (node, code = '') => {
+      if (!node) return;
+      if (!node.left && !node.right) {
+        codes[node.char] = code || '0';
+        return;
+      }
+      traverse(node.left, code + '0');
+      traverse(node.right, code + '1');
+    };
+    traverse(root, '');
+
+    logs.push(`✅ Huffman Tree constructed! Generated Prefix Codes: ${Object.entries(codes).map(([c, cd]) => `${c}: ${cd}`).join(', ')}`);
+    frames.push({
+      huffmanRoot: root,
+      huffmanNodes: [root],
+      huffmanCodes: codes,
+      logs: [...logs],
+      msg: `Huffman Compression completed! Variable-length prefix codes successfully assigned.`
+    });
+
+    setTimeline(frames);
+    setCurrentStep(0);
+    setIsPlaying(true);
+  };
+
+  const solveNeedleman = () => {
+    const s1 = needleSeq1.toUpperCase().trim();
+    const s2 = needleSeq2.toUpperCase().trim();
+    const n = s1.length;
+    const m = s2.length;
+    const match = 1, mismatch = -1, gap = -2;
+
+    const frames = [];
+    const logs = [];
+    const dp = Array(n + 1).fill(0).map(() => Array(m + 1).fill(0));
+    const arrows = Array(n + 1).fill(null).map(() => Array(m + 1).fill(null));
+
+    for (let i = 0; i <= n; i++) {
+      dp[i][0] = i * gap;
+      if (i > 0) arrows[i][0] = 'UP';
+    }
+    for (let j = 0; j <= m; j++) {
+      dp[0][j] = j * gap;
+      if (j > 0) arrows[0][j] = 'LEFT';
+    }
+
+    logs.push(`🧬 Needleman-Wunsch Alignment for Seq1="${s1}" (len ${n}) and Seq2="${s2}" (len ${m}).`);
+    frames.push({
+      needleDP: dp.map(row => [...row]),
+      needleArrows: arrows.map(row => [...row]),
+      needleI: -1,
+      needleJ: -1,
+      needleS1: s1,
+      needleS2: s2,
+      logs: [...logs],
+      msg: `Initialized (${n+1}x${m+1}) DP matrix with gap penalty = ${gap}.`
+    });
+
+    for (let i = 1; i <= n; i++) {
+      for (let j = 1; j <= m; j++) {
+        const isMatch = (s1[i - 1] === s2[j - 1]);
+        const scoreDiag = dp[i - 1][j - 1] + (isMatch ? match : mismatch);
+        const scoreUp = dp[i - 1][j] + gap;
+        const scoreLeft = dp[i][j - 1] + gap;
+
+        const maxScore = Math.max(scoreDiag, scoreUp, scoreLeft);
+        dp[i][j] = maxScore;
+
+        if (maxScore === scoreDiag) arrows[i][j] = 'DIAG';
+        else if (maxScore === scoreUp) arrows[i][j] = 'UP';
+        else arrows[i][j] = 'LEFT';
+
+        logs.push(`Cell (${i}, ${j}) [${s1[i-1]} vs ${s2[j-1]}]: Diag=${scoreDiag}, Up=${scoreUp}, Left=${scoreLeft} ➔ Max=${maxScore} (${arrows[i][j]})`);
+        frames.push({
+          needleDP: dp.map(row => [...row]),
+          needleArrows: arrows.map(row => [...row]),
+          needleI: i,
+          needleJ: j,
+          needleS1: s1,
+          needleS2: s2,
+          logs: [...logs],
+          msg: `Filling cell (${i}, ${j}) for '${s1[i-1]}' vs '${s2[j-1]}': max score = ${maxScore}.`
+        });
+      }
+    }
+
+    let align1 = '', align2 = '';
+    let currI = n, currJ = m;
+    const path = [];
+
+    while (currI > 0 || currJ > 0) {
+      path.push({ i: currI, j: currJ });
+      const dir = arrows[currI][currJ];
+      if (dir === 'DIAG') {
+        align1 = s1[currI - 1] + align1;
+        align2 = s2[currJ - 1] + align2;
+        currI--; currJ--;
+      } else if (dir === 'UP') {
+        align1 = s1[currI - 1] + align1;
+        align2 = '-' + align2;
+        currI--;
+      } else {
+        align1 = '-' + align1;
+        align2 = s2[currJ - 1] + align2;
+        currJ--;
+      }
+    }
+    path.push({ i: 0, j: 0 });
+
+    logs.push(`✅ Alignment complete! Score = ${dp[n][m]}. Aligned: "${align1}" / "${align2}"`);
+    frames.push({
+      needleDP: dp.map(row => [...row]),
+      needleArrows: arrows.map(row => [...row]),
+      needleI: n,
+      needleJ: m,
+      needleS1: s1,
+      needleS2: s2,
+      needlePath: path,
+      needleAlign1: align1,
+      needleAlign2: align2,
+      logs: [...logs],
+      msg: `Global DNA Alignment complete! Alignment Score = ${dp[n][m]}. Traceback found optimal sequence pairs.`
+    });
+
+    setTimeline(frames);
+    setCurrentStep(0);
+    setIsPlaying(true);
+  };
+
   const currentFrame = timeline[currentStep] || {
     dp: [],
     arrows: [],
@@ -1602,6 +1911,259 @@ const DPGreedyVisualizer = ({ onBack, openSettings, initialTab = 'LCS', onCopyCo
     );
   };
 
+  const renderNQueensGrid = () => {
+    const { nQueensBoard = [], nQueensRow = 0, nQueensCol = -1, nQueensConflict = false, nQueensSolutions = [] } = currentFrame;
+    const N = nQueensSize;
+
+    if (nQueensBoard.length === 0 && !currentFrame.msg) {
+      return (
+        <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', height: '100%', color: 'var(--text-secondary)', fontStyle: 'italic' }}>
+          Select board size and click Animate N-Queens to start backtracking visualization.
+        </div>
+      );
+    }
+
+    const board = nQueensBoard.length === N ? nQueensBoard : Array(N).fill(-1);
+    const tileSize = Math.min(60, Math.floor(340 / N));
+
+    return (
+      <div style={{ display: 'grid', gridTemplateColumns: '1.2fr 1fr', height: '100%', gap: '1.5rem', padding: '1.2rem', overflowY: 'auto' }}>
+        {/* Left: Chessboard */}
+        <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', background: 'rgba(255,255,255,0.01)', border: '1px solid var(--glass-border)', borderRadius: '12px', padding: '1.2rem' }}>
+          <h3 className="title-gradient" style={{ fontSize: '1.1rem', marginBottom: '1rem' }}>
+            👑 {N}x{N} Chessboard Simulation
+          </h3>
+
+          <div style={{
+            display: 'grid',
+            gridTemplateColumns: `repeat(${N}, ${tileSize}px)`,
+            gridTemplateRows: `repeat(${N}, ${tileSize}px)`,
+            border: '3px solid rgba(255,255,255,0.2)',
+            borderRadius: '8px',
+            boxShadow: '0 8px 32px rgba(0,0,0,0.4)',
+            overflow: 'hidden'
+          }}>
+            {Array.from({ length: N }).map((_, r) =>
+              Array.from({ length: N }).map((_, c) => {
+                const isDark = (r + c) % 2 === 1;
+                const hasQueen = (board[r] === c);
+                const isCurrent = (nQueensRow === r && nQueensCol === c);
+
+                let bg = isDark ? '#1e293b' : '#334155';
+                let border = '1px solid rgba(255,255,255,0.05)';
+
+                if (isCurrent && nQueensConflict) {
+                  bg = 'rgba(239, 68, 68, 0.45)';
+                  border = '2px solid #ef4444';
+                } else if (isCurrent) {
+                  bg = 'rgba(251, 191, 36, 0.45)';
+                  border = '2px solid #fbbf24';
+                } else if (hasQueen) {
+                  bg = 'rgba(16, 185, 129, 0.35)';
+                }
+
+                return (
+                  <div key={`${r}-${c}`} style={{
+                    width: `${tileSize}px`, height: `${tileSize}px`,
+                    background: bg, border,
+                    display: 'flex', alignItems: 'center', justifyContent: 'center',
+                    fontSize: `${tileSize * 0.55}px`,
+                    transition: 'all 0.15s ease',
+                    position: 'relative'
+                  }}>
+                    {hasQueen && <span>👑</span>}
+                    {isCurrent && nQueensConflict && <span style={{ color: '#ef4444', fontWeight: 'bold' }}>✕</span>}
+                  </div>
+                );
+              })
+            )}
+          </div>
+        </div>
+
+        {/* Right: State & Solutions */}
+        <div style={{ display: 'flex', flexDirection: 'column', gap: '1rem', background: 'rgba(255,255,255,0.01)', border: '1px solid var(--glass-border)', borderRadius: '12px', padding: '1.2rem' }}>
+          <h3 className="title-gradient" style={{ fontSize: '1.1rem', margin: 0 }}>
+            🧠 Backtrack State
+          </h3>
+
+          <div style={{ background: 'rgba(0,0,0,0.2)', padding: '12px', borderRadius: '8px', fontSize: '0.88rem', display: 'flex', flexDirection: 'column', gap: '8px' }}>
+            <div style={{ display: 'flex', justifyContent: 'space-between' }}>
+              <span style={{ color: 'var(--text-secondary)' }}>Row Index:</span>
+              <strong style={{ color: '#38bdf8' }}>{nQueensRow < N ? nQueensRow : 'Done (All rows)'}</strong>
+            </div>
+            <div style={{ display: 'flex', justifyContent: 'space-between' }}>
+              <span style={{ color: 'var(--text-secondary)' }}>Testing Column:</span>
+              <strong style={{ color: '#fbbf24' }}>{nQueensCol >= 0 ? nQueensCol : '-'}</strong>
+            </div>
+            <div style={{ display: 'flex', justifyContent: 'space-between' }}>
+              <span style={{ color: 'var(--text-secondary)' }}>Placement Status:</span>
+              <strong style={{ color: nQueensConflict ? '#ef4444' : '#34d399' }}>
+                {nQueensConflict ? '⚠️ Attack Conflict' : nQueensRow === N ? '🎉 Solved' : 'Safe / Exploring'}
+              </strong>
+            </div>
+          </div>
+
+          <div style={{ flex: 1, display: 'flex', flexDirection: 'column', overflow: 'hidden' }}>
+            <span style={{ fontSize: '0.85rem', fontWeight: 'bold', color: 'var(--text-secondary)', marginBottom: '6px' }}>
+              Distinct Solutions Found ({nQueensSolutions.length}):
+            </span>
+            <div style={{ flex: 1, overflowY: 'auto', display: 'flex', flexDirection: 'column', gap: '6px' }}>
+              {nQueensSolutions.map((sol, sIdx) => (
+                <div key={sIdx} style={{ background: 'rgba(16,185,129,0.1)', border: '1px solid rgba(16,185,129,0.25)', padding: '6px 12px', borderRadius: '6px', fontSize: '0.82rem', fontFamily: 'monospace', color: '#34d399' }}>
+                  Solution #{sIdx + 1}: [{sol.join(', ')}]
+                </div>
+              ))}
+              {nQueensSolutions.length === 0 && (
+                <div style={{ fontStyle: 'italic', fontSize: '0.8rem', color: 'var(--text-secondary)' }}>Searching tree branches...</div>
+              )}
+            </div>
+          </div>
+        </div>
+      </div>
+    );
+  };
+
+  const renderHuffmanGrid = () => {
+    const { huffmanNodes = [], huffmanCodes = {}, huffmanMerged } = currentFrame;
+
+    return (
+      <div style={{ display: 'grid', gridTemplateColumns: '1.2fr 1fr', height: '100%', gap: '1.5rem', padding: '1.2rem', overflowY: 'auto' }}>
+        {/* Left: Min-Heap Nodes */}
+        <div style={{ display: 'flex', flexDirection: 'column', background: 'rgba(255,255,255,0.01)', border: '1px solid var(--glass-border)', borderRadius: '12px', padding: '1.2rem' }}>
+          <h3 className="title-gradient" style={{ fontSize: '1.1rem', marginBottom: '1rem' }}>
+            🌲 Active Min-Heap Priority Queue
+          </h3>
+
+          <div style={{ display: 'flex', flexWrap: 'wrap', gap: '10px', alignItems: 'center', justifyContent: 'center', flex: 1, padding: '10px' }}>
+            {huffmanNodes.map((node, idx) => (
+              <div key={idx} style={{
+                background: 'linear-gradient(135deg, rgba(59,130,246,0.15), rgba(139,92,246,0.15))',
+                border: '1.5px solid rgba(59,130,246,0.3)',
+                borderRadius: '10px', padding: '10px 16px',
+                display: 'flex', flexDirection: 'column', alignItems: 'center', gap: '4px',
+                boxShadow: '0 4px 12px rgba(0,0,0,0.2)'
+              }}>
+                <span style={{ fontSize: '1.1rem', fontWeight: 'bold', color: '#60a5fa' }}>{node.char}</span>
+                <span style={{ fontSize: '0.82rem', color: '#fbbf24', background: 'rgba(251,191,36,0.1)', padding: '2px 8px', borderRadius: '12px' }}>
+                  Freq: {node.freq}
+                </span>
+              </div>
+            ))}
+          </div>
+        </div>
+
+        {/* Right: Prefix Codes */}
+        <div style={{ display: 'flex', flexDirection: 'column', background: 'rgba(255,255,255,0.01)', border: '1px solid var(--glass-border)', borderRadius: '12px', padding: '1.2rem' }}>
+          <h3 className="title-gradient" style={{ fontSize: '1.1rem', marginBottom: '1rem' }}>
+            📜 Generated Prefix Codes
+          </h3>
+
+          <div style={{ display: 'flex', flexDirection: 'column', gap: '8px', flex: 1, overflowY: 'auto' }}>
+            {Object.entries(huffmanCodes).map(([char, code]) => (
+              <div key={char} style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', background: 'rgba(255,255,255,0.03)', border: '1px solid var(--glass-border)', borderRadius: '8px', padding: '8px 14px' }}>
+                <span style={{ fontSize: '1rem', fontWeight: 'bold', color: '#fff' }}>Char: &apos;{char}&apos;</span>
+                <span style={{ fontFamily: 'monospace', fontSize: '1rem', fontWeight: 'bold', color: '#34d399', background: 'rgba(52,211,153,0.15)', padding: '2px 10px', borderRadius: '6px' }}>
+                  {code}
+                </span>
+              </div>
+            ))}
+            {Object.keys(huffmanCodes).length === 0 && (
+              <div style={{ fontStyle: 'italic', fontSize: '0.85rem', color: 'var(--text-secondary)', textAlign: 'center', marginTop: '2rem' }}>
+                Codes will appear once tree merge completes.
+              </div>
+            )}
+          </div>
+        </div>
+      </div>
+    );
+  };
+
+  const renderNeedlemanGrid = () => {
+    const { needleDP = [], needleArrows = [], needleI = -1, needleJ = -1, needleS1 = '', needleS2 = '', needlePath = [], needleAlign1 = '', needleAlign2 = '' } = currentFrame;
+
+    if (needleDP.length === 0) {
+      return (
+        <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', height: '100%', color: 'var(--text-secondary)', fontStyle: 'italic' }}>
+          Configure DNA sequences and click Align to visualize the Needleman-Wunsch DP matrix.
+        </div>
+      );
+    }
+
+    const s1 = ' ' + needleS1;
+    const s2 = ' ' + needleS2;
+
+    return (
+      <div style={{ display: 'flex', flexDirection: 'column', height: '100%', overflow: 'auto', padding: '1rem' }}>
+        {needleAlign1 && (
+          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', background: 'rgba(52,211,153,0.15)', border: '1px solid rgba(52,211,153,0.3)', borderRadius: '10px', padding: '8px 16px', marginBottom: '1rem', flexShrink: 0 }}>
+            <span style={{ fontWeight: 'bold', color: '#34d399' }}>Optimal Global DNA Alignment:</span>
+            <span style={{ fontFamily: 'monospace', fontSize: '1.1rem', color: '#fff', letterSpacing: '3px' }}>
+              {needleAlign1} / {needleAlign2}
+            </span>
+          </div>
+        )}
+
+        <div style={{ flex: 1, display: 'flex', justifyContent: 'center', alignItems: 'center', overflow: 'auto' }}>
+          <table style={{ borderCollapse: 'collapse', color: 'white', fontFamily: 'monospace' }}>
+            <thead>
+              <tr>
+                <th style={{ width: '45px', height: '45px', border: '1px solid var(--glass-border)' }}></th>
+                {s1.split('').map((char, idx) => (
+                  <th key={idx} style={{
+                    width: '45px', height: '45px',
+                    border: '1px solid var(--glass-border)',
+                    background: idx === needleJ ? 'rgba(59,130,246,0.3)' : 'rgba(255,255,255,0.02)',
+                    color: idx === needleJ ? '#60a5fa' : 'var(--text-secondary)',
+                    fontWeight: 'bold', fontSize: '1rem'
+                  }}>
+                    {idx === 0 ? 'Ø' : char}
+                  </th>
+                ))}
+              </tr>
+            </thead>
+            <tbody>
+              {s2.split('').map((char, r) => (
+                <tr key={r}>
+                  <td style={{
+                    width: '45px', height: '45px',
+                    border: '1px solid var(--glass-border)',
+                    background: r === needleI ? 'rgba(236,72,153,0.3)' : 'rgba(255,255,255,0.02)',
+                    color: r === needleI ? '#f472b6' : 'var(--text-secondary)',
+                    fontWeight: 'bold', textAlign: 'center', fontSize: '1rem'
+                  }}>
+                    {r === 0 ? 'Ø' : char}
+                  </td>
+                  {needleDP[r] && needleDP[r].map((val, c) => {
+                    const isCurrent = (r === needleI && c === needleJ);
+                    const isPath = needlePath.some(p => p.i === r && p.j === c);
+                    const arrow = needleArrows[r] ? needleArrows[r][c] : null;
+
+                    let bg = isPath ? 'rgba(52,211,153,0.25)' : isCurrent ? 'rgba(251,191,36,0.3)' : 'transparent';
+                    let border = isPath ? '2px solid #34d399' : isCurrent ? '2px solid #fbbf24' : '1px solid var(--glass-border)';
+
+                    return (
+                      <td key={c} style={{
+                        width: '45px', height: '45px',
+                        border, background: bg,
+                        textAlign: 'center', fontSize: '0.9rem', fontWeight: isPath ? 'bold' : 'normal',
+                        position: 'relative'
+                      }}>
+                        {val}
+                        {arrow === 'DIAG' && <span style={{ position: 'absolute', top: 2, left: 3, fontSize: '0.65rem', color: '#38bdf8' }}>↖</span>}
+                        {arrow === 'UP' && <span style={{ position: 'absolute', top: 2, left: 3, fontSize: '0.65rem', color: '#f472b6' }}>↑</span>}
+                        {arrow === 'LEFT' && <span style={{ position: 'absolute', top: 2, left: 3, fontSize: '0.65rem', color: '#fbbf24' }}>←</span>}
+                      </td>
+                    );
+                  })}
+                </tr>
+              ))}
+            </tbody>
+          </table>
+        </div>
+      </div>
+    );
+  };
+
   return (
     <div className="app-container" style={{ height: '100vh', display: 'flex', flexDirection: 'column', overflow: 'hidden', background: 'var(--bg-primary, #0f172a)' }}>
 
@@ -1613,12 +2175,15 @@ const DPGreedyVisualizer = ({ onBack, openSettings, initialTab = 'LCS', onCopyCo
         </div>
 
         {/* Algorithm Selection Tabs */}
-        <div style={{ display: 'flex', background: 'rgba(255,255,255,0.02)', border: '1px solid var(--glass-border)', borderRadius: '10px', padding: '3px', gap: '3px' }}>
+        <div style={{ display: 'flex', background: 'rgba(255,255,255,0.02)', border: '1px solid var(--glass-border)', borderRadius: '10px', padding: '3px', gap: '3px', flexWrap: 'wrap' }}>
           {[
             { id: 'LCS', name: '🧬 LCS' },
             { id: 'LIS', name: '📈 LIS' },
             { id: 'Knapsack', name: '🎒 Knapsack' },
-            { id: 'CoinChange', name: '🪙 Coin Change' }
+            { id: 'CoinChange', name: '🪙 Coin Change' },
+            { id: 'NQueens', name: '👑 N-Queens' },
+            { id: 'Huffman', name: '🌲 Huffman' },
+            { id: 'Needleman', name: '🧬 DNA Alignment' }
           ].map(tab => (
             <button
               key={tab.id}
@@ -1667,10 +2232,10 @@ const DPGreedyVisualizer = ({ onBack, openSettings, initialTab = 'LCS', onCopyCo
       </header>
 
       {/* INPUT PANEL AND RUN BUTTONS */}
-      <div style={{ display: 'flex', padding: '10px 20px', background: 'var(--glass-bg)', borderBottom: '1px solid var(--glass-border)', alignItems: 'center', justifyContent: 'space-between', gap: '15px', flexShrink: 0 }}>
+      <div style={{ display: 'flex', padding: '10px 20px', background: 'var(--glass-bg)', borderBottom: '1px solid var(--glass-border)', alignItems: 'center', justifyContent: 'space-between', gap: '15px', flexShrink: 0, flexWrap: 'wrap' }}>
 
         {/* Dynamic Inputs based on selected Tab */}
-        <div style={{ display: 'flex', gap: '12px', alignItems: 'center', flex: 1 }}>
+        <div style={{ display: 'flex', gap: '12px', alignItems: 'center', flex: 1, flexWrap: 'wrap' }}>
 
           {activeTab === 'LCS' && (
             <>
@@ -1741,6 +2306,46 @@ const DPGreedyVisualizer = ({ onBack, openSettings, initialTab = 'LCS', onCopyCo
             </>
           )}
 
+          {activeTab === 'NQueens' && (
+            <>
+              <div style={{ display: 'flex', alignItems: 'center', gap: '6px' }}>
+                <span style={{ fontSize: '0.82rem', color: 'var(--text-secondary)' }}>Board Size (N):</span>
+                <select className="styled-select" style={{ padding: '4px 10px', fontSize: '0.88rem' }} value={nQueensSize} onChange={e => { setNQueensSize(parseInt(e.target.value)); handleReset(); }}>
+                  <option value={4}>4 x 4 (2 Sol)</option>
+                  <option value={5}>5 x 5 (10 Sol)</option>
+                  <option value={6}>6 x 6 (4 Sol)</option>
+                  <option value={7}>7 x 7 (40 Sol)</option>
+                  <option value={8}>8 x 8 (92 Sol)</option>
+                </select>
+              </div>
+              <button className="btn btn-insert" onClick={solveNQueens} disabled={isPlaying}>Animate N-Queens</button>
+            </>
+          )}
+
+          {activeTab === 'Huffman' && (
+            <>
+              <div style={{ display: 'flex', alignItems: 'center', gap: '6px', flex: 1, maxWidth: '450px' }}>
+                <span style={{ fontSize: '0.82rem', color: 'var(--text-secondary)' }}>Frequencies:</span>
+                <input type="text" className="styled-input" style={{ width: '100%', padding: '5px 10px', fontSize: '0.88rem' }} value={huffmanInput} onChange={e => { setHuffmanInput(e.target.value); handleReset(); }} placeholder="e.g. A:5, B:9, C:12, D:13" />
+              </div>
+              <button className="btn btn-insert" onClick={solveHuffman} disabled={isPlaying}>Build Huffman Tree</button>
+            </>
+          )}
+
+          {activeTab === 'Needleman' && (
+            <>
+              <div style={{ display: 'flex', alignItems: 'center', gap: '6px' }}>
+                <span style={{ fontSize: '0.82rem', color: 'var(--text-secondary)' }}>Seq 1:</span>
+                <input type="text" className="styled-input" style={{ width: '110px', padding: '5px 8px', fontSize: '0.88rem' }} value={needleSeq1} onChange={e => { setNeedleSeq1(e.target.value); handleReset(); }} />
+              </div>
+              <div style={{ display: 'flex', alignItems: 'center', gap: '6px' }}>
+                <span style={{ fontSize: '0.82rem', color: 'var(--text-secondary)' }}>Seq 2:</span>
+                <input type="text" className="styled-input" style={{ width: '110px', padding: '5px 8px', fontSize: '0.88rem' }} value={needleSeq2} onChange={e => { setNeedleSeq2(e.target.value); handleReset(); }} />
+              </div>
+              <button className="btn btn-insert" onClick={solveNeedleman} disabled={isPlaying}>Align DNA</button>
+            </>
+          )}
+
         </div>
 
         {/* Speed / Media control summary */}
@@ -1767,6 +2372,9 @@ const DPGreedyVisualizer = ({ onBack, openSettings, initialTab = 'LCS', onCopyCo
             {activeTab === 'LIS' && renderLISGrid()}
             {activeTab === 'Knapsack' && renderKnapsackGrid()}
             {activeTab === 'CoinChange' && renderCoinChangeGrid()}
+            {activeTab === 'NQueens' && renderNQueensGrid()}
+            {activeTab === 'Huffman' && renderHuffmanGrid()}
+            {activeTab === 'Needleman' && renderNeedlemanGrid()}
 
             {/* FLOATING COMPLEXITY CARD OVERLAY */}
             {showComplexity && (

@@ -1,11 +1,17 @@
-import sql from '../_db.js';
-import { cors } from '../_cors.js';
+// Comprehensive Restricted & Profanity Word Filter Module
+// Detects English & Telugu profanities, slang, adult sites, and pornstars
 
-function checkRestrictedWords(text) {
+export function checkRestrictedWords(text) {
   if (!text) return null;
   
   // Normalize string to lowercase
   let raw = text.toLowerCase();
+
+  // Allow casual colloquial student inquiry idioms (e.g. "what is this shit", "what this shit", "explain this shit", "fix this shit")
+  const isColloquialInquiry = /^(what('?s|\s+is)?\s+(is\s+)?(this|the)\s+shit|what\s+this\s+shit|explain\s+(this|the)\s+shit|fix\s+(this|my)\s+shit|why\s+(is\s+)?this\s+shit)[\s?!.]*$/i.test(raw);
+  if (isColloquialInquiry) {
+    return null;
+  }
   
   // Map lookalike symbols and numbers to letters (leet-speak)
   const replacements = [
@@ -125,21 +131,26 @@ function checkRestrictedWords(text) {
   }
 
   // 1. Direct match check for badWords across all input variants
+  // 1. Direct match check for badWords across all input variants
   for (const w of badWords) {
     const wAlpha = w.replace(/[^a-z0-9]/g, '');
     const wCollapsed = collapse(wAlpha);
     const wHomoglyphCollapsed = collapse(homoglyph(wAlpha));
+    const isWordBounded = w.length <= 3 || w === 'dick' || w === 'dik';
 
     for (const v of inputVariants) {
-      if (w.length <= 3) {
-        const boundaryRegex = new RegExp(`\\b${w}\\b`, 'i');
-        if (boundaryRegex.test(v)) return w;
+      if (isWordBounded) {
+        // Only check spaced variants with word boundaries to avoid false positives in Latin roots (e.g. contradiction, predicate)
+        if (v === raw || v === leetMapped) {
+          const boundaryRegex = new RegExp(`\\b${w}\\b`, 'i');
+          if (boundaryRegex.test(v)) return w;
+        }
       } else {
         if (
           v.includes(w) ||
           v.includes(wAlpha) ||
-          v.includes(wCollapsed) ||
-          v.includes(wHomoglyphCollapsed)
+          (wCollapsed.length > 3 && v.includes(wCollapsed)) ||
+          (wHomoglyphCollapsed.length > 3 && v.includes(wHomoglyphCollapsed))
         ) {
           return w;
         }
@@ -150,111 +161,18 @@ function checkRestrictedWords(text) {
   // 2. Additional check for collapsedBadWords
   for (const w of collapsedBadWords) {
     const wCollapsed = collapse(w);
+    const isWordBounded = w.length <= 3 || w === 'dick' || w === 'dik';
     for (const v of inputVariants) {
-      if (w.length <= 3) {
-        const boundaryRegex = new RegExp(`\\b${w}\\b`, 'i');
-        if (boundaryRegex.test(v)) return w;
+      if (isWordBounded) {
+        if (v === raw || v === leetMapped) {
+          const boundaryRegex = new RegExp(`\\b${w}\\b`, 'i');
+          if (boundaryRegex.test(v)) return w;
+        }
       } else {
-        if (v.includes(w) || v.includes(wCollapsed)) return w;
+        if (v.includes(w) || (wCollapsed.length > 3 && v.includes(wCollapsed))) return w;
       }
     }
   }
 
   return null;
-}
-
-/**
- * Direct feedback submission — no auth, no OTP, no login required.
- * Saves normal feedbacks or restricted attempts straight to Neon feedbacks table.
- */
-export default async function handler(req, res) {
-  cors(res);
-  if (req.method === 'OPTIONS') return res.status(200).end();
-  if (req.method !== 'POST') return res.status(405).json({ error: 'Method not allowed' });
-
-  const { name, email, rating, category, text, restricted_word, restricted_field } = req.body;
-
-  const ratingInt = parseInt(rating);
-  if (isNaN(ratingInt) || ratingInt < 1 || ratingInt > 5) {
-    return res.status(400).json({ error: 'Please select a star rating (1-5).' });
-  }
-
-  const cleanName = (name || '').trim();
-  if (!cleanName) {
-    return res.status(400).json({ error: 'Please enter your name.' });
-  }
-
-  const cleanEmail = (email || '').toLowerCase().trim();
-  const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
-  if (!cleanEmail || !emailRegex.test(cleanEmail)) {
-    return res.status(400).json({ error: 'Please enter a valid email address.' });
-  }
-
-  const feedbackText = (text || '').trim();
-  if (!feedbackText) {
-    return res.status(400).json({ error: 'Please enter some feedback message.' });
-  }
-
-  const feedbackCategory = category || 'General';
-
-  // Ensure DB columns exist
-  try {
-    await sql`ALTER TABLE feedbacks ADD COLUMN IF NOT EXISTS restricted_word VARCHAR(255)`;
-    await sql`ALTER TABLE feedbacks ADD COLUMN IF NOT EXISTS restricted_field VARCHAR(100)`;
-  } catch (e) {
-    console.warn("Alter table check failed (might already have columns):", e.message);
-  }
-
-  // Server-side check for restricted words
-  const serverRestrictedName = checkRestrictedWords(cleanName);
-  const serverRestrictedEmail = checkRestrictedWords(cleanEmail);
-  const serverRestrictedText = checkRestrictedWords(feedbackText);
-
-  let finalRestrictedWord = restricted_word || null;
-  let finalRestrictedField = restricted_field || null;
-
-  if (serverRestrictedName) {
-    finalRestrictedWord = serverRestrictedName;
-    finalRestrictedField = 'name';
-  } else if (serverRestrictedEmail) {
-    finalRestrictedWord = serverRestrictedEmail;
-    finalRestrictedField = 'email';
-  } else if (serverRestrictedText) {
-    finalRestrictedWord = serverRestrictedText;
-    finalRestrictedField = 'message';
-  }
-
-  // If a restricted word is detected, we save it to the database with the tags, 
-  // but return a 400 error status to the user.
-  if (finalRestrictedWord) {
-    try {
-      const rows = await sql`
-        INSERT INTO feedbacks (name, email, rating, category, feedback_text, restricted_word, restricted_field)
-        VALUES (${cleanName}, ${cleanEmail}, ${ratingInt}, ${feedbackCategory}, ${feedbackText}, ${finalRestrictedWord}, ${finalRestrictedField})
-        RETURNING *
-      `;
-      console.log('💾 Restricted feedback attempt logged:', rows[0].id);
-      return res.status(400).json({ 
-        error: `Inappropriate language detected in your ${finalRestrictedField}. Please modify your input and submit again.`
-      });
-    } catch (err) {
-      console.error('❌ Neon insert for restricted feedback failed:', err.message);
-      return res.status(500).json({ error: 'Failed to save feedback.', details: err.message });
-    }
-  }
-
-  // Normal clean flow
-  try {
-    const rows = await sql`
-      INSERT INTO feedbacks (name, email, rating, category, feedback_text)
-      VALUES (${cleanName}, ${cleanEmail}, ${ratingInt}, ${feedbackCategory}, ${feedbackText})
-      RETURNING *
-    `;
-
-    console.log('💾 Feedback saved to Neon:', rows[0].id);
-    return res.json({ success: true, feedback: rows[0] });
-  } catch (err) {
-    console.error('❌ Neon insert failed:', err.message);
-    return res.status(500).json({ error: 'Failed to save feedback.', details: err.message });
-  }
 }

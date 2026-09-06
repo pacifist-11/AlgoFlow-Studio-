@@ -1,5 +1,28 @@
 /* eslint-disable */
 import React, { useState, useEffect, useRef } from 'react';
+import CodeRunnerModal from './CodeRunnerModal.jsx';
+import { isLineDebuggerSupported } from './languageUtils.js';
+
+const copyToClipboard = (text) => {
+  if (navigator.clipboard) {
+    return navigator.clipboard.writeText(text);
+  }
+  const textArea = document.createElement("textarea");
+  textArea.value = text;
+  textArea.style.position = "fixed";
+  textArea.style.left = "-999999px";
+  document.body.appendChild(textArea);
+  textArea.focus();
+  textArea.select();
+  try {
+    document.execCommand('copy');
+    document.body.removeChild(textArea);
+    return Promise.resolve();
+  } catch (err) {
+    document.body.removeChild(textArea);
+    return Promise.reject(err);
+  }
+};
 
 // Allman brace formatter
 const toAllman = code => {
@@ -45,6 +68,136 @@ export const getSafeCode = (codeObj, lang) => {
   }
   const firstKey = Object.keys(codeObj)[0];
   return (firstKey && typeof codeObj[firstKey] === 'string') ? codeObj[firstKey] : '';
+};
+
+// ─── Complete Full-Program Generator ──────────────────────────────────────────
+export const toFullExecutableProgram = (rawSnippet, lang, title = 'Algorithm') => {
+  if (!rawSnippet || typeof rawSnippet !== 'string') return '';
+  const trimmed = rawSnippet.trim();
+  if (!trimmed) return '';
+
+  const cleanTitle = String(title).replace(/^[0-9]+\.\s*/, '').trim();
+
+  // If already full program with main/class entrypoint
+  const hasMainCpp = /int\s+main\s*\([^)]*\)/i.test(trimmed);
+  const hasMainJava = /public\s+static\s+void\s+main\s*\(/i.test(trimmed);
+  const hasMainPy = /if\s+__name__\s*==\s*['"]__main__['"]/i.test(trimmed);
+  const hasDriverJS = /console\.log\s*\(/i.test(trimmed) && trimmed.length > 250;
+
+  if (lang === 'C++') {
+    if (hasMainCpp) return trimmed;
+    let includes = `#include <iostream>\n#include <vector>\n#include <string>\n#include <algorithm>\n#include <unordered_map>\n#include <unordered_set>\n#include <stack>\n#include <queue>\nusing namespace std;\n\n`;
+    let codeBody = trimmed;
+    let mainCall = `int main() {\n    cout << "=========================================" << endl;\n    cout << "  🚀 Executing: ${cleanTitle}" << endl;\n    cout << "=========================================" << endl;\n`;
+    
+    if (codeBody.includes('findMax')) {
+      mainCall += `    vector<int> arr = {12, 35, 1, 10, 34, 1};\n    cout << "Input Array: [12, 35, 1, 10, 34, 1]" << endl;\n    cout << "Maximum Value: " << findMax(arr) << endl;\n`;
+    } else if (codeBody.includes('countEvens')) {
+      mainCall += `    vector<int> arr = {3, 8, 12, 5, 9, 14};\n    cout << "Input Array: [3, 8, 12, 5, 9, 14]" << endl;\n    cout << "Count of Even Numbers: " << countEvens(arr) << endl;\n`;
+    } else if (codeBody.includes('factorial')) {
+      mainCall += `    int n = 5;\n    cout << "Input N: " << n << endl;\n    cout << "Factorial of " << n << " is: " << factorial(n) << endl;\n`;
+    } else if (codeBody.includes('twoSum')) {
+      mainCall += `    vector<int> nums = {2, 7, 11, 15};\n    int target = 9;\n    cout << "Array: [2, 7, 11, 15], Target: " << target << endl;\n    vector<int> res = twoSum(nums, target);\n    if (res.size() >= 2) {\n        cout << "Indices: [" << res[0] << ", " << res[1] << "]" << endl;\n    }\n`;
+    } else if (codeBody.includes('binarySearch')) {
+      mainCall += `    vector<int> arr = {1, 3, 5, 7, 9, 11, 13, 15};\n    int target = 7;\n    cout << "Sorted Array: [1, 3, 5, 7, 9, 11, 13, 15], Target: " << target << endl;\n    cout << "Target found at index: " << binarySearch(arr, target) << endl;\n`;
+    } else if (codeBody.includes('reverse')) {
+      mainCall += `    vector<int> arr = {1, 2, 3, 4, 5};\n    cout << "Original Array: [1, 2, 3, 4, 5]" << endl;\n    reverseArray(arr);\n    cout << "Reversed Array: ";\n    for (int x : arr) cout << x << " ";\n    cout << endl;\n`;
+    } else {
+      mainCall += `    cout << "Algorithm initialized and executed successfully!" << endl;\n`;
+    }
+    mainCall += `    return 0;\n}`;
+    return includes + codeBody + '\n\n' + mainCall;
+  }
+
+  if (lang === 'Java') {
+    if (hasMainJava) return trimmed;
+    let includes = `import java.util.*;\n\n`;
+    let classContent = trimmed;
+    let mainCall = `    public static void main(String[] args) {\n        System.out.println("=========================================");\n        System.out.println("  🚀 Executing: ${cleanTitle}");\n        System.out.println("=========================================");\n`;
+    
+    if (classContent.includes('findMax')) {
+      mainCall += `        int[] arr = {12, 35, 1, 10, 34, 1};\n        System.out.println("Input Array: " + Arrays.toString(arr));\n        System.out.println("Maximum Value: " + new Main().findMax(arr));\n`;
+    } else if (classContent.includes('countEvens')) {
+      mainCall += `        int[] arr = {3, 8, 12, 5, 9, 14};\n        System.out.println("Input Array: " + Arrays.toString(arr));\n        System.out.println("Count of Even Numbers: " + new Main().countEvens(arr));\n`;
+    } else if (classContent.includes('factorial')) {
+      mainCall += `        int n = 5;\n        System.out.println("Input N: " + n);\n        System.out.println("Factorial of " + n + " is: " + new Main().factorial(n));\n`;
+    } else if (classContent.includes('twoSum')) {
+      mainCall += `        int[] nums = {2, 7, 11, 15};\n        int target = 9;\n        System.out.println("Array: " + Arrays.toString(nums) + ", Target: " + target);\n        int[] res = new Main().twoSum(nums, target);\n        System.out.println("Indices: " + Arrays.toString(res));\n`;
+    } else if (classContent.includes('binarySearch')) {
+      mainCall += `        int[] arr = {1, 3, 5, 7, 9, 11, 13, 15};\n        int target = 7;\n        System.out.println("Sorted Array: " + Arrays.toString(arr) + ", Target: " + target);\n        System.out.println("Found at index: " + new Main().binarySearch(arr, target));\n`;
+    } else {
+      mainCall += `        System.out.println("Algorithm executed successfully!");\n`;
+    }
+    mainCall += `    }\n`;
+
+    return `${includes}public class Main {\n    ${classContent.replace(/\n/g, '\n    ')}\n\n${mainCall}}`;
+  }
+
+  if (lang === 'Python') {
+    if (hasMainPy) return trimmed;
+    let codeBody = trimmed;
+    let mainCall = `if __name__ == "__main__":\n    print("=========================================")\n    print("  🚀 Executing: ${cleanTitle}")\n    print("=========================================")\n`;
+    
+    if (codeBody.includes('find_max') || codeBody.includes('findMax')) {
+      mainCall += `    arr = [12, 35, 1, 10, 34, 1]\n    print("Input Array:", arr)\n    fn = find_max if 'find_max' in globals() else findMax\n    print("Maximum Value:", fn(arr))\n`;
+    } else if (codeBody.includes('count_evens') || codeBody.includes('countEvens')) {
+      mainCall += `    arr = [3, 8, 12, 5, 9, 14]\n    print("Input Array:", arr)\n    fn = count_evens if 'count_evens' in globals() else countEvens\n    print("Count of Even Numbers:", fn(arr))\n`;
+    } else if (codeBody.includes('factorial')) {
+      mainCall += `    n = 5\n    print(f"Input N: {n}")\n    print(f"Factorial of {n} is: {factorial(n)}")\n`;
+    } else if (codeBody.includes('two_sum') || codeBody.includes('twoSum')) {
+      mainCall += `    nums = [2, 7, 11, 15]\n    target = 9\n    print(f"Array: {nums}, Target: {target}")\n    fn = two_sum if 'two_sum' in globals() else twoSum\n    print("Indices:", fn(nums, target))\n`;
+    } else if (codeBody.includes('binary_search') || codeBody.includes('binarySearch')) {
+      mainCall += `    arr = [1, 3, 5, 7, 9, 11, 13, 15]\n    target = 7\n    print(f"Sorted Array: {arr}, Target: {target}")\n    fn = binary_search if 'binary_search' in globals() else binarySearch\n    print("Found at index:", fn(arr, target))\n`;
+    } else {
+      mainCall += `    print("Algorithm executed successfully!")\n`;
+    }
+    return `${codeBody}\n\n${mainCall}`;
+  }
+
+  if (lang === 'C') {
+    if (hasMainCpp) return trimmed;
+    let includes = `#include <stdio.h>\n#include <stdlib.h>\n#include <stdbool.h>\n#include <string.h>\n\n`;
+    let codeBody = trimmed
+      .replace(/vector<int>&/g, 'int*')
+      .replace(/vector<int>/g, 'int*')
+      .replace(/arr\.size\(\)/g, 'n')
+      .replace(/nums\.size\(\)/g, 'n')
+      .replace(/cout\s*<<\s*([^<]+)\s*<<\s*endl;/g, 'printf("%d\\n", $1);');
+
+    let mainCall = `int main() {\n    printf("=========================================\\n");\n    printf("  🚀 Executing: ${cleanTitle}\\n");\n    printf("=========================================\\n");\n`;
+    
+    if (codeBody.includes('findMax') || codeBody.includes('maxVal')) {
+      mainCall += `    int arr[] = {12, 35, 1, 10, 34, 1};\n    int n = sizeof(arr) / sizeof(arr[0]);\n    printf("Input Array: [12, 35, 1, 10, 34, 1]\\n");\n    printf("Maximum Value: %d\\n", findMax(arr, n));\n`;
+    } else if (codeBody.includes('countEvens')) {
+      mainCall += `    int arr[] = {3, 8, 12, 5, 9, 14};\n    int n = sizeof(arr) / sizeof(arr[0]);\n    printf("Input Array: [3, 8, 12, 5, 9, 14]\\n");\n    printf("Count of Even Numbers: %d\\n", countEvens(arr, n));\n`;
+    } else if (codeBody.includes('factorial')) {
+      mainCall += `    int n = 5;\n    printf("Input N: %d\\n", n);\n    printf("Factorial of %d is: %d\\n", n, factorial(n));\n`;
+    } else {
+      mainCall += `    printf("Algorithm executed successfully!\\n");\n`;
+    }
+    mainCall += `    return 0;\n}`;
+    return includes + codeBody + '\n\n' + mainCall;
+  }
+
+  // JavaScript
+  if (hasDriverJS) return trimmed;
+  let codeBody = trimmed;
+  let mainCall = `\n// --- Test Execution ---\nconsole.log("=========================================");\nconsole.log("  🚀 Executing: ${cleanTitle}");\nconsole.log("=========================================");\n`;
+  
+  if (codeBody.includes('findMax')) {
+    mainCall += `const testArr = [12, 35, 1, 10, 34, 1];\nconsole.log("Input Array:", testArr);\nconsole.log("Maximum Value:", findMax(testArr));\n`;
+  } else if (codeBody.includes('countEvens')) {
+    mainCall += `const testArr = [3, 8, 12, 5, 9, 14];\nconsole.log("Input Array:", testArr);\nconsole.log("Count of Even Numbers:", countEvens(testArr));\n`;
+  } else if (codeBody.includes('factorial')) {
+    mainCall += `const n = 5;\nconsole.log("Input N:", n);\nconsole.log(\`Factorial of \${n} is:\`, factorial(n));\n`;
+  } else if (codeBody.includes('twoSum')) {
+    mainCall += `const nums = [2, 7, 11, 15];\nconst target = 9;\nconsole.log("Array:", nums, "Target:", target);\nconsole.log("Indices:", twoSum(nums, target));\n`;
+  } else if (codeBody.includes('binarySearch')) {
+    mainCall += `const arr = [1, 3, 5, 7, 9, 11, 13, 15];\nconst target = 7;\nconsole.log("Sorted Array:", arr, "Target:", target);\nconsole.log("Found at index:", binarySearch(arr, target));\n`;
+  } else {
+    mainCall += `console.log("Algorithm executed successfully!");\n`;
+  }
+  return codeBody + '\n' + mainCall;
 };
 
 // ─── Semantic Log Highlighter ────────────────────────────────────────────────
@@ -3105,15 +3258,366 @@ void sortColors(int nums[], int n) {
       });
       return steps;
     }
+  },
+  NQUEENS_SOLVER: {
+    title: "15. N-Queens Backtracking Solver",
+    difficulty: "Hard",
+    category: "Backtracking",
+    notes: {
+      desc: "Place 4 queens on a 4x4 chessboard such that no two queens attack each other (same row, column, or diagonal).",
+      intuition: "Place a queen row by row. At row i, test each column j. If no existing queen shares column j or diagonal (|c - j| == |r - i|), place the queen and recurse. If blocked, backtrack by clearing the row.",
+      complexity: "Time Complexity: O(N!) | Space Complexity: O(N) Call Stack"
+    },
+    code: {
+      JS: `function solveNQueens(N = 4) {
+  const board = Array(N).fill(-1);
+  const solutions = [];
+  function isSafe(row, col) {
+    for (let r = 0; r < row; r++) {
+      if (board[r] === col || Math.abs(board[r] - col) === Math.abs(r - row)) return false;
+    }
+    return true;
+  }
+  function backtrack(row) {
+    if (row === N) { solutions.push([...board]); return; }
+    for (let col = 0; col < N; col++) {
+      if (isSafe(row, col)) {
+        board[row] = col;
+        backtrack(row + 1);
+        board[row] = -1;
+      }
+    }
+  }
+  backtrack(0);
+  return solutions;
+}`,
+      Python: `def solve_n_queens(N=4):
+    board = [-1] * N
+    solutions = []
+    def is_safe(row, col):
+        for r in range(row):
+            if board[r] == col or abs(board[r] - col) == abs(r - row):
+                return False
+        return True
+    def backtrack(row):
+        if row == N:
+            solutions.append(list(board))
+            return
+        for col in range(N):
+            if is_safe(row, col):
+                board[row] = col
+                backtrack(row + 1)
+                board[row] = -1
+    backtrack(0)
+    return solutions`,
+      "C++": `void solveNQueens(int row, int N, vector<int>& board, vector<vector<int>>& solutions) {
+    if (row == N) { solutions.push_back(board); return; }
+    for (int col = 0; col < N; col++) {
+        bool safe = true;
+        for (int r = 0; r < row; r++) {
+            if (board[r] == col || abs(board[r] - col) == abs(r - row)) { safe = false; break; }
+        }
+        if (safe) {
+            board[row] = col;
+            solveNQueens(row + 1, N, board, solutions);
+            board[row] = -1;
+        }
+    }
+}`,
+      C: `int isSafe(int board[], int row, int col) {
+    for (int r = 0; r < row; r++) {
+        if (board[r] == col || abs(board[r] - col) == abs(r - row)) return 0;
+    }
+    return 1;
+}`,
+      Java: `public static void solveNQueens(int row, int N, int[] board, List<int[]> res) {
+    if (row == N) { res.add(board.clone()); return; }
+    for (int col = 0; col < N; col++) {
+        boolean safe = true;
+        for (int r = 0; r < row; r++) {
+            if (board[r] == col || Math.abs(board[r] - col) == Math.abs(r - row)) { safe = false; break; }
+        }
+        if (safe) {
+            board[row] = col;
+            solveNQueens(row + 1, N, board, res);
+            board[row] = -1;
+        }
+    }
+}`
+    },
+    generator: () => {
+      const steps = [];
+      const N = 4;
+      const board = [-1, -1, -1, -1];
+      steps.push({ line: 1, msg: "Start 4x4 Chessboard Backtracking. Board is empty.", variables: { board: [...board], row: 0, col: -1 } });
+      
+      // Step 1: Row 0, Col 0
+      board[0] = 0;
+      steps.push({ line: 9, msg: "Row 0: Safe! Place Queen 👑 at (0, 0). Move to Row 1.", variables: { board: [...board], row: 1, col: 0 } });
+      
+      // Step 2: Row 1, Col 0 (conflict)
+      steps.push({ line: 5, msg: "Row 1, Col 0: Conflict! Same column as Queen at (0, 0).", variables: { board: [...board], row: 1, col: 0, conflict: true } });
+      
+      // Step 3: Row 1, Col 1 (conflict diagonal)
+      steps.push({ line: 5, msg: "Row 1, Col 1: Conflict! Main diagonal with Queen at (0, 0).", variables: { board: [...board], row: 1, col: 1, conflict: true } });
+      
+      // Step 4: Row 1, Col 2 (safe)
+      board[1] = 2;
+      steps.push({ line: 9, msg: "Row 1, Col 2: Safe! Place Queen 👑 at (1, 2). Move to Row 2.", variables: { board: [...board], row: 2, col: 2 } });
+      
+      // Step 5: Row 2, all blocked -> backtrack
+      steps.push({ line: 12, msg: "Row 2: All columns (0, 1, 2, 3) under attack! Backtrack to Row 1.", variables: { board: [...board], row: 2, col: -1, conflict: true } });
+      board[1] = -1;
+      
+      // Step 6: Row 1, Col 3 (safe)
+      board[1] = 3;
+      steps.push({ line: 9, msg: "Row 1, Col 3: Safe! Place Queen 👑 at (1, 3). Move to Row 2.", variables: { board: [...board], row: 2, col: 3 } });
+      
+      // Step 7: Row 2, Col 1 (safe)
+      board[2] = 1;
+      steps.push({ line: 9, msg: "Row 2, Col 1: Safe! Place Queen 👑 at (2, 1). Move to Row 3.", variables: { board: [...board], row: 3, col: 1 } });
+      
+      // Step 8: Row 3, Col 0, 1, 3 blocked; Col 2 safe!
+      board[3] = 2;
+      steps.push({ 
+        line: 3, 
+        msg: "Row 3, Col 2: Safe! Place Queen 👑 at (3, 2). All 4 Queens placed! Solution Found: [0, 3, 1, 2] 🎉", 
+        variables: { board: [...board], row: 4, col: 2 },
+        completed: true, 
+        result: "[0, 3, 1, 2]" 
+      });
+      return steps;
+    }
+  },
+  INFIX_TO_POSTFIX: {
+    title: "16. Infix to Postfix Converter (Stack ADT)",
+    difficulty: "Medium",
+    category: "Stack ADT",
+    notes: {
+      desc: "Convert an infix arithmetic expression '(A + B) * C - D / E' to postfix notation using an Operator Stack.",
+      intuition: "Operands go directly to output. '(' pushed to stack. ')' pops stack to output until '('. Operators pop higher/equal precedence operators from stack, then push themselves.",
+      complexity: "Time Complexity: O(N) | Space Complexity: O(N) Stack"
+    },
+    code: {
+      JS: `function infixToPostfix(exp) {
+  const prec = { '+': 1, '-': 1, '*': 2, '/': 2 };
+  let stack = [], out = '';
+  for (let ch of exp) {
+    if (/[A-Z]/.test(ch)) out += ch;
+    else if (ch === '(') stack.push(ch);
+    else if (ch === ')') {
+      while (stack.length && stack[stack.length - 1] !== '(') out += stack.pop();
+      stack.pop();
+    } else {
+      while (stack.length && prec[stack[stack.length - 1]] >= prec[ch]) out += stack.pop();
+      stack.push(ch);
+    }
+  }
+  while (stack.length) out += stack.pop();
+  return out;
+}`,
+      Python: `def infix_to_postfix(exp):
+    prec = {'+': 1, '-': 1, '*': 2, '/': 2}
+    stack, out = [], []
+    for ch in exp:
+        if ch.isalnum(): out.append(ch)
+        elif ch == '(': stack.append(ch)
+        elif ch == ')':
+            while stack and stack[-1] != '(': out.append(stack.pop())
+            stack.pop()
+        else:
+            while stack and stack[-1] != '(' and prec.get(stack[-1], 0) >= prec.get(ch, 0):
+                out.append(stack.pop())
+            stack.append(ch)
+    while stack: out.append(stack.pop())
+    return ''.join(out)`,
+      "C++": `string infixToPostfix(string s) {
+    stack<char> st; string out;
+    for (char c : s) {
+        if (isalpha(c)) out += c;
+        else if (c == '(') st.push(c);
+        else if (c == ')') {
+            while (!st.empty() && st.top() != '(') { out += st.top(); st.pop(); }
+            st.pop();
+        } else {
+            while (!st.empty() && prec(st.top()) >= prec(c)) { out += st.top(); st.pop(); }
+            st.push(c);
+        }
+    }
+    while (!st.empty()) { out += st.top(); st.pop(); }
+    return out;
+}`,
+      C: `// Infix to Postfix Stack Converter`,
+      Java: `// Infix to Postfix Java Stack Converter`
+    },
+    generator: () => {
+      const exp = "(A + B) * C - D / E".replace(/\s+/g, '').split('');
+      const steps = [];
+      const stack = [];
+      let output = "";
+      const prec = { '+': 1, '-': 1, '*': 2, '/': 2 };
+
+      steps.push({ line: 1, msg: "Start Infix to Postfix: Expression = '(A+B)*C-D/E'", variables: { exp, currentIdx: 0, stack: [...stack], output } });
+
+      for (let i = 0; i < exp.length; i++) {
+        const ch = exp[i];
+        if (/[A-Z]/.test(ch)) {
+          output += ch;
+          steps.push({ line: 3, msg: `Token '${ch}': Operand -> Append to output: "${output}"`, variables: { exp, currentIdx: i, stack: [...stack], output } });
+        } else if (ch === '(') {
+          stack.push(ch);
+          steps.push({ line: 4, msg: `Token '(': Left Paren -> Push to Stack.`, variables: { exp, currentIdx: i, stack: [...stack], output } });
+        } else if (ch === ')') {
+          while (stack.length && stack[stack.length - 1] !== '(') {
+            output += stack.pop();
+          }
+          stack.pop(); // pop '('
+          steps.push({ line: 6, msg: `Token ')': Right Paren -> Pop operators until '(': Output = "${output}"`, variables: { exp, currentIdx: i, stack: [...stack], output } });
+        } else {
+          while (stack.length && stack[stack.length - 1] !== '(' && prec[stack[stack.length - 1]] >= prec[ch]) {
+            output += stack.pop();
+          }
+          stack.push(ch);
+          steps.push({ line: 8, msg: `Operator '${ch}': Push to stack (after popping higher/equal precedence): Stack = [${stack.join(', ')}]`, variables: { exp, currentIdx: i, stack: [...stack], output } });
+        }
+      }
+
+      while (stack.length) {
+        output += stack.pop();
+      }
+      steps.push({ 
+        line: 10, 
+        msg: `End of expression -> Pop remaining operators to output: Final Postfix = "${output}" 🎉`, 
+        variables: { exp, currentIdx: exp.length, stack: [], output },
+        completed: true, 
+        result: output 
+      });
+
+      return steps;
+    }
+  },
+  SIEVE_GRID: {
+    title: "17. Sieve of Eratosthenes (Prime Grid)",
+    difficulty: "Easy",
+    category: "Math & Primes",
+    notes: {
+      desc: "Find all prime numbers up to N = 30 by crossing out multiples of primes starting from 2, 3, 5.",
+      intuition: "Start at p = 2 (first prime). Cross out 4, 6, 8, 10... Move to p = 3 (next uncrossed prime). Cross out 9, 15, 21... Repeat until p*p > N. All surviving numbers are strictly prime!",
+      complexity: "Time Complexity: O(N log log N) | Space Complexity: O(N)"
+    },
+    code: {
+      JS: `function sieve(n = 30) {
+  const isPrime = Array(n + 1).fill(true);
+  isPrime[0] = isPrime[1] = false;
+  for (let p = 2; p * p <= n; p++) {
+    if (isPrime[p]) {
+      for (let i = p * p; i <= n; i += p) isPrime[i] = false;
+    }
+  }
+  return isPrime;
+}`,
+      Python: `def sieve(n=30):
+    is_prime = [True] * (n + 1)
+    is_prime[0] = is_prime[1] = False
+    p = 2
+    while p * p <= n:
+        if is_prime[p]:
+            for i in range(p * p, n + 1, p):
+                is_prime[i] = False
+        p += 1
+    return is_prime`,
+      "C++": `vector<bool> sieve(int n = 30) {
+    vector<bool> isPrime(n + 1, true);
+    isPrime[0] = isPrime[1] = false;
+    for (int p = 2; p * p <= n; p++) {
+        if (isPrime[p]) {
+            for (int i = p * p; i <= n; i += p) isPrime[i] = false;
+        }
+    }
+    return isPrime;
+}`,
+      C: `// Sieve of Eratosthenes C implementation`,
+      Java: `// Sieve of Eratosthenes Java implementation`
+    },
+    generator: () => {
+      const N = 30;
+      const numbers = Array.from({ length: N - 1 }, (_, i) => i + 2); // 2 to 30
+      const crossed = {};
+      const primes = [];
+      const steps = [];
+
+      steps.push({ line: 1, msg: "Initialize Sieve Grid (2 to 30). All numbers assume prime.", variables: { numbers, crossed: { ...crossed }, currentP: null, primes: [] } });
+
+      // Prime 2
+      primes.push(2);
+      for (let m = 4; m <= N; m += 2) crossed[m] = 2;
+      steps.push({ line: 4, msg: "p = 2 is Prime! Cross out multiples: 4, 6, 8, 10, 12, 14, 16, 18, 20, 22, 24, 26, 28, 30.", variables: { numbers, crossed: { ...crossed }, currentP: 2, primes: [...primes] } });
+
+      // Prime 3
+      primes.push(3);
+      for (let m = 9; m <= N; m += 6) crossed[m] = 3;
+      steps.push({ line: 4, msg: "p = 3 is Prime! Cross out multiples: 9, 15, 21, 27.", variables: { numbers, crossed: { ...crossed }, currentP: 3, primes: [...primes] } });
+
+      // Prime 5
+      primes.push(5);
+      crossed[25] = 5;
+      steps.push({ line: 4, msg: "p = 5 is Prime! Cross out multiple: 25.", variables: { numbers, crossed: { ...crossed }, currentP: 5, primes: [...primes] } });
+
+      // Finished
+      const finalPrimes = numbers.filter(n => !crossed[n]);
+      steps.push({ 
+        line: 8, 
+        msg: `p*p > 30 reached! All surviving uncrossed numbers are Primes: [${finalPrimes.join(', ')}] 🎉`, 
+        variables: { numbers, crossed: { ...crossed }, currentP: null, primes: finalPrimes },
+        completed: true, 
+        result: finalPrimes.join(', ') 
+      });
+
+      return steps;
+    }
   }
 };
 
 // ─── VISUALIZER COMPONENTS ───────────────────────────────────────────────────
-const DSANotesVisualizer = ({ onBack, openSettings, fontSize = 14, wordWrap = 'off', onShowUpcomingFeatures }) => {
-  const [selectedProbKey, setSelectedProbKey] = useState('LESSON_VARIABLES');
-  const [activeLang, setActiveLang] = useState('C');
-  const [activeTab, setActiveTab] = useState('notes'); // 'notes' | 'solved'
-  const [localFontSize, setLocalFontSize] = useState(fontSize);
+const DSANotesVisualizer = ({ 
+  onBack, 
+  openSettings, 
+  fontSize = 14, 
+  wordWrap = 'off', 
+  onShowUpcomingFeatures,
+  initialTopicKey = 'LESSON_VARIABLES',
+  initialLang = 'C++',
+  onOpenDebugger,
+  onCodeChange
+}) => {
+  const [selectedProbKey, setSelectedProbKey] = useState(initialTopicKey || 'LESSON_VARIABLES');
+  const [activeLang, setActiveLang] = useState(initialLang || 'C++');
+  const [codeViewMode, setCodeViewMode] = useState('full'); // 'full' (complete runnable program) | 'snippet' (core function only)
+  const [activeTab, setActiveTab] = useState(
+    initialTopicKey && !initialTopicKey.startsWith('LESSON_') && !initialTopicKey.startsWith('MOD') 
+      ? 'solved' 
+      : 'notes'
+  );
+  const [localFontSize, setLocalFontSize] = useState(fontSize || 16);
+  const [isRunnerOpen, setIsRunnerOpen] = useState(false);
+  const [copied, setCopied] = useState(false);
+
+  useEffect(() => {
+    if (initialTopicKey) {
+      setSelectedProbKey(initialTopicKey);
+      if (initialTopicKey.startsWith('LESSON_') || initialTopicKey.startsWith('MOD')) {
+        setActiveTab('notes');
+      } else {
+        setActiveTab('solved');
+      }
+    }
+  }, [initialTopicKey]);
+
+  useEffect(() => {
+    if (initialLang) {
+      setActiveLang(initialLang);
+    }
+  }, [initialLang]);
 
   useEffect(() => {
     if (activeTab === 'solved' && selectedProbKey.startsWith('LESSON_')) {
@@ -3156,6 +3660,21 @@ const DSANotesVisualizer = ({ onBack, openSettings, fontSize = 14, wordWrap = 'o
 
   const rawActiveCode = getSafeCode(problem.code, activeLang);
   const codeLines = rawActiveCode ? rawActiveCode.split('\n') : [];
+
+  useEffect(() => {
+    if (onCodeChange && rawActiveCode) {
+      onCodeChange(rawActiveCode, activeLang);
+    }
+  }, [rawActiveCode, activeLang, onCodeChange]);
+
+  const handleCopy = (codeToCopy) => {
+    const text = codeToCopy || rawActiveCode;
+    if (!text) return;
+    copyToClipboard(text).then(() => {
+      setCopied(true);
+      setTimeout(() => setCopied(false), 2000);
+    });
+  };
 
   // Sync prop font size
   useEffect(() => {
@@ -3993,35 +4512,196 @@ const DSANotesVisualizer = ({ onBack, openSettings, fontSize = 14, wordWrap = 'o
         </svg>
       );
     }
+
+    if (selectedProbKey === 'NQUEENS_SOLVER') {
+      const board = activeFrame.variables.board || [-1, -1, -1, -1];
+      const { row, col, conflict } = activeFrame.variables;
+      const N = 4;
+      const tileSize = 42;
+
+      return (
+        <svg viewBox={`0 0 ${width} ${height}`} width="100%" height="100%" style={{ overflow: 'visible' }}>
+          <text x={20} y={25} fill="var(--text-secondary)" fontSize="12" fontWeight="bold">4x4 CHESSBOARD BACKTRACKING</text>
+          
+          {/* Chessboard */}
+          <g transform="translate(40, 40)">
+            {Array.from({ length: N }).map((_, r) =>
+              Array.from({ length: N }).map((_, c) => {
+                const isDark = (r + c) % 2 === 1;
+                const hasQueen = (board[r] === c);
+                const isTesting = (row === r && col === c);
+                return (
+                  <g key={`${r}-${c}`} transform={`translate(${c * tileSize}, ${r * tileSize})`}>
+                    <rect 
+                      width={tileSize} height={tileSize} 
+                      fill={isTesting && conflict ? 'rgba(239,68,68,0.35)' : isTesting ? 'rgba(251,191,36,0.35)' : isDark ? 'rgba(255,255,255,0.06)' : 'rgba(255,255,255,0.12)'} 
+                      stroke={isTesting && conflict ? '#ef4444' : isTesting ? '#fbbf24' : 'rgba(255,255,255,0.15)'}
+                      strokeWidth={isTesting ? "2" : "1"}
+                    />
+                    {hasQueen && (
+                      <text x={tileSize / 2} y={tileSize / 2 + 7} fill="#fbbf24" textAnchor="middle" fontSize="22">
+                        👑
+                      </text>
+                    )}
+                    {isTesting && conflict && (
+                      <text x={tileSize / 2} y={tileSize / 2 + 5} fill="#ef4444" textAnchor="middle" fontSize="16" fontWeight="bold">
+                        ✕
+                      </text>
+                    )}
+                  </g>
+                );
+              })
+            )}
+          </g>
+
+          {/* State Box */}
+          <g transform="translate(240, 40)">
+            <rect width={320} height={170} rx={10} fill="rgba(0,0,0,0.25)" stroke="rgba(255,255,255,0.08)" />
+            <text x={20} y={30} fill="var(--text-secondary)" fontSize="12" fontWeight="bold">BACKTRACKING STATE</text>
+            <text x={20} y={60} fill="var(--text-primary)" fontSize="13">Current Row: <tspan fill="#38bdf8" fontWeight="bold">{row < N ? row : 'Done (4/4)'}</tspan></text>
+            <text x={20} y={85} fill="var(--text-primary)" fontSize="13">Tested Col: <tspan fill="#fbbf24" fontWeight="bold">{col >= 0 ? col : '-'}</tspan></text>
+            <text x={20} y={110} fill="var(--text-primary)" fontSize="13">Status: <tspan fill={conflict ? '#ef4444' : '#34d399'} fontWeight="bold">{conflict ? '⚠️ Attack Conflict' : '✅ Placement Safe'}</tspan></text>
+            <text x={20} y={140} fill="var(--text-secondary)" fontSize="12">Queens: <tspan fill="#34d399" fontWeight="bold">[{board.map(c => c >= 0 ? c : '_').join(', ')}]</tspan></text>
+          </g>
+        </svg>
+      );
+    }
+
+    if (selectedProbKey === 'INFIX_TO_POSTFIX') {
+      const { exp, currentIdx, stack, output } = activeFrame.variables;
+
+      return (
+        <svg viewBox={`0 0 ${width} ${height}`} width="100%" height="100%" style={{ overflow: 'visible' }}>
+          <text x={20} y={25} fill="var(--text-secondary)" fontSize="12" fontWeight="bold">INFIX TOKEN STREAM</text>
+          
+          {/* Tokens */}
+          {exp && exp.map((tok, idx) => {
+            const isCurr = (idx === currentIdx);
+            return (
+              <g key={idx} transform={`translate(${30 + idx * 36}, 38)`}>
+                <rect width={30} height={30} rx={6} 
+                  fill={isCurr ? 'rgba(251,191,36,0.25)' : 'rgba(255,255,255,0.05)'} 
+                  stroke={isCurr ? '#fbbf24' : 'rgba(255,255,255,0.1)'} 
+                  strokeWidth={isCurr ? "2" : "1"}
+                />
+                <text x={15} y={20} fill="#fff" textAnchor="middle" fontSize="14" fontWeight="bold">{tok}</text>
+                {isCurr && <text x={15} y={-6} fill="#fbbf24" textAnchor="middle" fontSize="12">👇</text>}
+              </g>
+            );
+          })}
+
+          {/* Operator Stack */}
+          <text x={30} y={105} fill="var(--text-secondary)" fontSize="12" fontWeight="bold">OPERATOR STACK</text>
+          <g transform="translate(30, 115)">
+            <rect width={160} height={100} rx={8} fill="rgba(0,0,0,0.25)" stroke="rgba(255,255,255,0.08)" />
+            {stack && stack.map((op, idx) => (
+              <g key={idx} transform={`translate(15, ${65 - idx * 25})`}>
+                <rect width={130} height={20} rx={4} fill="rgba(56,189,248,0.2)" stroke="#38bdf8" />
+                <text x={65} y={14} fill="#fff" textAnchor="middle" fontSize="12" fontWeight="bold">{op}</text>
+              </g>
+            ))}
+            {(!stack || stack.length === 0) && (
+              <text x={80} y={55} fill="var(--text-secondary)" textAnchor="middle" fontSize="12" fontStyle="italic">[Empty Stack]</text>
+            )}
+          </g>
+
+          {/* Postfix Output Queue */}
+          <text x={220} y={105} fill="var(--text-secondary)" fontSize="12" fontWeight="bold">POSTFIX OUTPUT ACCUMULATOR</text>
+          <g transform="translate(220, 115)">
+            <rect width={340} height={100} rx={8} fill="rgba(0,0,0,0.25)" stroke="rgba(52,211,153,0.2)" />
+            <text x={20} y={40} fill="var(--text-secondary)" fontSize="12">Generated Postfix String:</text>
+            <text x={20} y={75} fill="#34d399" fontSize="22" fontWeight="bold" fontFamily="monospace">
+              {output || '<empty>'}
+            </text>
+          </g>
+        </svg>
+      );
+    }
+
+    if (selectedProbKey === 'SIEVE_GRID') {
+      const { numbers, crossed, currentP, primes } = activeFrame.variables;
+
+      return (
+        <svg viewBox={`0 0 ${width} ${height}`} width="100%" height="100%" style={{ overflow: 'visible' }}>
+          <text x={20} y={22} fill="var(--text-secondary)" fontSize="12" fontWeight="bold">SIEVE OF ERATOSTHENES (Numbers 2 to 30)</text>
+          
+          {/* Number Grid */}
+          <g transform="translate(20, 32)">
+            {numbers && numbers.map((num, idx) => {
+              const col = idx % 8;
+              const row = Math.floor(idx / 8);
+              const isPrime = primes && primes.includes(num);
+              const isCrossed = crossed && crossed[num];
+              const isCurrent = (currentP === num);
+
+              return (
+                <g key={num} transform={`translate(${col * 42}, ${row * 38})`}>
+                  <rect width={36} height={32} rx={6}
+                    fill={isCurrent ? 'rgba(251,191,36,0.3)' : isPrime ? 'rgba(52,211,153,0.25)' : isCrossed ? 'rgba(239,68,68,0.15)' : 'rgba(255,255,255,0.05)'}
+                    stroke={isCurrent ? '#fbbf24' : isPrime ? '#34d399' : isCrossed ? '#ef4444' : 'rgba(255,255,255,0.1)'}
+                    strokeWidth={isCurrent || isPrime ? "2" : "1"}
+                  />
+                  <text x={18} y={21} fill={isCrossed ? '#94a3b8' : '#fff'} textAnchor="middle" fontSize="13" fontWeight="bold" textDecoration={isCrossed ? 'line-through' : 'none'}>
+                    {num}
+                  </text>
+                </g>
+              );
+            })}
+          </g>
+
+          {/* Sieve Legend */}
+          <g transform="translate(370, 32)">
+            <rect width={210} height={150} rx={8} fill="rgba(0,0,0,0.25)" stroke="rgba(255,255,255,0.08)" />
+            <text x={15} y={25} fill="var(--text-secondary)" fontSize="11" fontWeight="bold">PRIME NUMBERS IDENTIFIED</text>
+            <text x={15} y={55} fill="#34d399" fontSize="13" fontWeight="bold">Primes:</text>
+            <text x={70} y={55} fill="#34d399" fontSize="13" fontWeight="bold">{primes ? primes.join(', ') : '-'}</text>
+            
+            <text x={15} y={90} fill="var(--text-secondary)" fontSize="12">Current Prime p:</text>
+            <text x={130} y={90} fill="#fbbf24" fontSize="15" fontWeight="bold">{currentP || 'Complete'}</text>
+
+            <text x={15} y={125} fill="var(--text-secondary)" fontSize="11">Time Complexity: O(N log log N)</text>
+          </g>
+        </svg>
+      );
+    }
   };
 
   const renderHighlightedCode = () => {
-    const allmanLines = toAllman(codeLines.join('\n')).split('\n');
+    const rawSnippet = codeLines.join('\n');
+    const selectedProblem = PROBLEMS[selectedProbKey] || PROBLEMS['FIND_MAX'];
+    const activeText = codeViewMode === 'full' 
+      ? toFullExecutableProgram(rawSnippet, activeLang, selectedProblem.title)
+      : rawSnippet;
+
+    const allmanLines = toAllman(activeText).split('\n');
     return (
-      <div className="code-box" style={{ flex: 1, overflow: 'auto', padding: '1rem', borderRadius: '8px' }}>
+      <div className="code-box" style={{ flex: 1, overflow: 'auto', padding: '1.2rem', borderRadius: '8px', background: 'var(--bg-primary, rgba(0,0,0,0.25))' }}>
         <pre style={{ 
           margin: 0, 
-          color: 'var(--text-primary)', 
-          fontFamily: "'Fira Code', monospace", 
-          lineHeight: '1.6',
-          fontSize: `${localFontSize}px`
+          color: '#f8fafc', 
+          fontFamily: "'Fira Code', 'Cascadia Code', monospace", 
+          lineHeight: '1.75',
+          fontSize: `${localFontSize}px`,
+          fontWeight: 500
         }}>
           {allmanLines.map((lineText, idx) => {
-            const isHighlighted = (activeFrame.line === idx + 1);
+            const isHighlighted = (codeViewMode === 'snippet' && activeFrame.line === idx + 1);
             return (
               <div 
                 key={idx} 
                 style={{ 
-                  background: isHighlighted ? 'rgba(59,130,246,0.16)' : 'transparent',
-                  borderLeft: isHighlighted ? '3px solid var(--accent-primary)' : '3px solid transparent',
-                  padding: '1px 12px',
+                  background: isHighlighted ? 'rgba(59,130,246,0.24)' : 'transparent',
+                  borderLeft: isHighlighted ? '4px solid var(--accent-primary)' : '4px solid transparent',
+                  padding: '2px 14px',
+                  borderRadius: isHighlighted ? '4px' : '0',
                   transition: 'all 0.15s ease'
                 }}
               >
                 <span style={{ 
-                  whiteSpace: 'pre',
-                  color: isHighlighted ? '#ffffff' : 'var(--text-primary)',
-                  fontFamily: "'Fira Code', monospace"
+                  whiteSpace: 'pre', 
+                  color: isHighlighted ? '#ffffff' : '#e2e8f0',
+                  fontFamily: "'Fira Code', 'Cascadia Code', monospace",
+                  fontWeight: isHighlighted ? 700 : 500
                 }}>
                   {lineText || ' '}
                 </span>
@@ -4046,7 +4726,25 @@ const DSANotesVisualizer = ({ onBack, openSettings, fontSize = 14, wordWrap = 'o
             DSA Study & Solved Problems Studio
           </h2>
         </div>
-        <div style={{ display: 'flex', gap: '8px' }}>
+        <div style={{ display: 'flex', gap: '8px', alignItems: 'center' }}>
+          <button 
+            className="btn btn-insert"
+            style={{ display: 'flex', alignItems: 'center', gap: '6px', background: 'linear-gradient(135deg, #10b981, #059669)', border: 'none', padding: '0.4rem 0.9rem', fontSize: '0.82rem' }}
+            onClick={() => setIsRunnerOpen(true)}
+            title="Execute current code in live sandbox"
+          >
+            ▶ Run Code Live
+          </button>
+          {onOpenDebugger && isLineDebuggerSupported(activeLang) && (
+            <button 
+              className="btn btn-clear"
+              style={{ display: 'flex', alignItems: 'center', gap: '6px', border: '1px solid #38bdf8', color: '#38bdf8', padding: '0.4rem 0.9rem', fontSize: '0.82rem' }}
+              onClick={() => onOpenDebugger(rawActiveCode, activeLang)}
+              title="Step through variables in line debugger"
+            >
+              🐞 Line Debugger
+            </button>
+          )}
           <button className={`btn ${activeTab === 'notes' ? 'btn-insert' : 'btn-clear'}`} onClick={() => setActiveTab('notes')}>
             📚 Topic Notes
           </button>
@@ -4132,8 +4830,11 @@ const DSANotesVisualizer = ({ onBack, openSettings, fontSize = 14, wordWrap = 'o
         if (isLesson) {
           const lesson = LESSONS[selectedProbKey] || LESSONS['LESSON_VARIABLES'];
           const rawCode = lesson && lesson.code ? (lesson.code[activeLang] || '') : '';
+          const fullCode = toFullExecutableProgram(rawCode, activeLang, lesson.title);
+          const activeCodeToDisplay = codeViewMode === 'full' ? fullCode : rawCode;
+
           return (
-            <div style={{ flex: 1, padding: '2rem', overflowY: 'auto', display: 'flex', flexDirection: 'column', gap: '1.5rem', maxWidth: '880px', margin: '0 auto', width: '100%' }}>
+            <div style={{ flex: 1, padding: '2rem', overflowY: 'auto', display: 'flex', flexDirection: 'column', gap: '1.5rem', maxWidth: '960px', margin: '0 auto', width: '100%' }}>
               <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', flexWrap: 'wrap', gap: '10px' }}>
                 <h1 className="title-gradient" style={{ margin: 0 }}>{lesson.title}</h1>
                 <select className="styled-select" style={{ minWidth: '240px' }} value={selectedProbKey} onChange={e => setSelectedProbKey(e.target.value)}>
@@ -4153,37 +4854,98 @@ const DSANotesVisualizer = ({ onBack, openSettings, fontSize = 14, wordWrap = 'o
 
               <div style={{ background: 'var(--bg-secondary)', borderRadius: '16px', border: '1px solid var(--glass-border)', overflow: 'hidden' }}>
                 {/* Language selector row */}
-                <div style={{ padding: '8px 12px', display: 'flex', alignItems: 'center', gap: '5px', borderBottom: '1px solid var(--glass-border)', flexWrap: 'wrap', background: 'var(--bg-secondary)' }}>
-                  <span style={{ fontSize: '0.78rem', fontWeight: 700, color: 'var(--text-secondary)', whiteSpace: 'nowrap' }}>💻 Lang:</span>
-                  {['JS', 'Python', 'C', 'Java'].map(lang => (
-                    <button key={lang} onClick={() => setActiveLang(lang)}
-                      style={{
-                        padding: '2px 9px',
-                        fontSize: '0.74rem',
-                        borderRadius: '5px',
-                        border: activeLang === lang ? '1.5px solid var(--accent-primary)' : '1px solid var(--glass-border)',
-                        background: activeLang === lang ? 'var(--accent-primary)' : 'transparent',
-                        color: activeLang === lang ? '#fff' : 'var(--text-secondary)',
-                        cursor: 'pointer',
-                        fontWeight: activeLang === lang ? 700 : 400,
-                        transition: 'all 0.15s'
-                      }}
-                    >{lang === 'JS' ? 'JavaScript' : lang}</button>
-                  ))}
+                <div style={{ padding: '10px 16px', display: 'flex', justifyContent: 'space-between', alignItems: 'center', borderBottom: '1px solid var(--glass-border)', flexWrap: 'wrap', gap: '8px', background: 'var(--bg-secondary)' }}>
+                  <div style={{ display: 'flex', alignItems: 'center', gap: '6px', flexWrap: 'wrap' }}>
+                    <span style={{ fontSize: '0.84rem', fontWeight: 700, color: 'var(--text-secondary)', whiteSpace: 'nowrap' }}>💻 Lang:</span>
+                    {['C++', 'Java', 'Python', 'JS', 'C'].map(lang => (
+                      <button key={lang} onClick={() => setActiveLang(lang)}
+                        style={{
+                          padding: '4px 11px',
+                          fontSize: '0.8rem',
+                          borderRadius: '6px',
+                          border: activeLang === lang ? '1.5px solid var(--accent-primary)' : '1px solid var(--glass-border)',
+                          background: activeLang === lang ? 'var(--accent-primary)' : 'transparent',
+                          color: activeLang === lang ? '#fff' : 'var(--text-secondary)',
+                          cursor: 'pointer',
+                          fontWeight: activeLang === lang ? 700 : 400,
+                          transition: 'all 0.15s'
+                        }}
+                      >{lang === 'JS' ? 'JavaScript' : lang}</button>
+                    ))}
+                    
+                    {/* Full Program vs Snippet Toggle */}
+                    <div style={{ display: 'flex', background: 'rgba(0,0,0,0.3)', borderRadius: '6px', padding: '2px', border: '1px solid var(--glass-border)', marginLeft: '6px' }}>
+                      <button 
+                        onClick={() => setCodeViewMode('full')}
+                        style={{
+                          padding: '2px 8px',
+                          fontSize: '0.74rem',
+                          borderRadius: '4px',
+                          border: 'none',
+                          background: codeViewMode === 'full' ? 'var(--accent-primary)' : 'transparent',
+                          color: codeViewMode === 'full' ? '#fff' : 'var(--text-secondary)',
+                          cursor: 'pointer',
+                          fontWeight: codeViewMode === 'full' ? 700 : 500
+                        }}
+                        title="Display full complete runnable program with imports and main()"
+                      >
+                        📑 Complete Code
+                      </button>
+                      <button 
+                        onClick={() => setCodeViewMode('snippet')}
+                        style={{
+                          padding: '2px 8px',
+                          fontSize: '0.74rem',
+                          borderRadius: '4px',
+                          border: 'none',
+                          background: codeViewMode === 'snippet' ? 'var(--accent-primary)' : 'transparent',
+                          color: codeViewMode === 'snippet' ? '#fff' : 'var(--text-secondary)',
+                          cursor: 'pointer',
+                          fontWeight: codeViewMode === 'snippet' ? 700 : 500
+                        }}
+                        title="Display function snippet only"
+                      >
+                        ⚡ Snippet
+                      </button>
+                    </div>
+
+                    <div style={{ display: 'flex', alignItems: 'center', gap: '4px', marginLeft: '6px' }}>
+                      <button onClick={() => setLocalFontSize(prev => Math.max(12, prev - 2))} style={{ background: 'rgba(255,255,255,0.06)', border: '1px solid var(--glass-border)', borderRadius: '4px', color: 'var(--text-primary)', fontSize: '0.78rem', padding: '2px 8px', cursor: 'pointer' }} title="Decrease font size">A−</button>
+                      <span style={{ fontSize: '0.78rem', color: '#38bdf8', minWidth: '32px', textAlign: 'center', fontWeight: 600 }}>{localFontSize}px</span>
+                      <button onClick={() => setLocalFontSize(prev => Math.min(36, prev + 2))} style={{ background: 'rgba(255,255,255,0.06)', border: '1px solid var(--glass-border)', borderRadius: '4px', color: 'var(--text-primary)', fontSize: '0.78rem', padding: '2px 8px', cursor: 'pointer' }} title="Increase font size">A+</button>
+                    </div>
+                  </div>
+                  <div style={{ display: 'flex', gap: '8px' }}>
+                    <button 
+                      className="btn btn-clear"
+                      style={{ padding: '4px 12px', fontSize: '0.8rem', display: 'flex', alignItems: 'center', gap: '4px' }}
+                      onClick={() => handleCopy(activeCodeToDisplay)}
+                    >
+                      {copied ? '✅ Copied!' : '📋 Copy'}
+                    </button>
+                    <button 
+                      className="btn btn-insert"
+                      style={{ padding: '4px 14px', fontSize: '0.8rem' }}
+                      onClick={() => setIsRunnerOpen(true)}
+                    >
+                      ▶ Run Live
+                    </button>
+                  </div>
                 </div>
-                {/* Code block - Allman style, no line numbers */}
+                {/* Code block - Allman style, high visibility */}
                 <pre style={{
                   margin: 0,
-                  padding: '12px 16px',
-                  background: 'var(--bg-primary, rgba(0,0,0,0.18))',
-                  color: 'var(--text-primary)',
-                  fontFamily: "'Fira Code', monospace",
-                  fontSize: '0.86rem',
-                  lineHeight: '1.6',
+                  padding: '16px 20px',
+                  background: 'var(--bg-primary, rgba(0,0,0,0.3))',
+                  color: '#f8fafc',
+                  fontFamily: "'Fira Code', 'Cascadia Code', monospace",
+                  fontSize: `${localFontSize}px`,
+                  lineHeight: '1.75',
+                  fontWeight: 500,
                   overflowX: 'auto'
                 }}>
-                  {toAllman(rawCode).split('\n').map((lineText, idx) => (
-                    <div key={idx} style={{ padding: '1px 0', whiteSpace: 'pre', fontFamily: "'Fira Code', monospace", color: 'var(--text-primary)' }}>
+                  {toAllman(activeCodeToDisplay).split('\n').map((lineText, idx) => (
+                    <div key={idx} style={{ padding: '1px 0', whiteSpace: 'pre', fontFamily: "'Fira Code', 'Cascadia Code', monospace", color: '#f8fafc' }}>
                       {lineText || ' '}
                     </div>
                   ))}
@@ -4195,8 +4957,12 @@ const DSANotesVisualizer = ({ onBack, openSettings, fontSize = 14, wordWrap = 'o
 
         // Else, it's a solved problem
         const problem = PROBLEMS[selectedProbKey] || PROBLEMS['FIND_MAX'];
+        const rawCode = getSafeCode(problem.code, activeLang);
+        const fullCode = toFullExecutableProgram(rawCode, activeLang, problem.title);
+        const activeCodeToDisplay = codeViewMode === 'full' ? fullCode : rawCode;
+
         return (
-          <div style={{ flex: 1, padding: '2rem', overflowY: 'auto', display: 'flex', flexDirection: 'column', gap: '1.5rem', maxWidth: '880px', margin: '0 auto', width: '100%' }}>
+          <div style={{ flex: 1, padding: '2rem', overflowY: 'auto', display: 'flex', flexDirection: 'column', gap: '1.5rem', maxWidth: '960px', margin: '0 auto', width: '100%' }}>
             <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', flexWrap: 'wrap', gap: '10px' }}>
               <h1 className="title-gradient" style={{ margin: 0 }}>{problem.title} Notes</h1>
               <select className="styled-select" style={{ minWidth: '240px' }} value={selectedProbKey} onChange={e => setSelectedProbKey(e.target.value)}>
@@ -4206,12 +4972,12 @@ const DSANotesVisualizer = ({ onBack, openSettings, fontSize = 14, wordWrap = 'o
             
             <div style={{ background: 'var(--glass-bg)', padding: '1.5rem', borderRadius: '16px', border: '1px solid var(--glass-border)' }}>
               <h3 style={{ color: 'var(--accent-primary)', marginTop: 0 }}>📌 Problem Description</h3>
-              <p style={{ lineHeight: '1.6', color: 'var(--text-primary)' }}>{problem.notes.desc}</p>
+              <p style={{ lineHeight: '1.6', color: 'var(--text-primary)', fontSize: '0.96rem' }}>{problem.notes.desc}</p>
             </div>
 
             <div style={{ background: 'var(--glass-bg)', padding: '1.5rem', borderRadius: '16px', border: '1px solid var(--glass-border)' }}>
               <h3 style={{ color: 'var(--accent-secondary)', marginTop: 0 }}>💡 Algorithmic Intuition</h3>
-              <p style={{ lineHeight: '1.6', color: 'var(--text-secondary)' }}>{problem.notes.intuition}</p>
+              <p style={{ lineHeight: '1.6', color: 'var(--text-secondary)', fontSize: '0.96rem' }}>{problem.notes.intuition}</p>
             </div>
 
             <div style={{ background: 'rgba(16,185,129,0.1)', padding: '1rem 1.5rem', borderRadius: '12px', border: '1px solid rgba(16,185,129,0.25)', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
@@ -4221,36 +4987,97 @@ const DSANotesVisualizer = ({ onBack, openSettings, fontSize = 14, wordWrap = 'o
 
             {/* Complete Solution Code Block with Language Selector */}
             <div style={{ background: 'var(--bg-secondary)', borderRadius: '16px', border: '1px solid var(--glass-border)', overflow: 'hidden' }}>
-              <div style={{ padding: '8px 12px', display: 'flex', alignItems: 'center', gap: '5px', borderBottom: '1px solid var(--glass-border)', flexWrap: 'wrap', background: 'var(--bg-secondary)' }}>
-                <span style={{ fontSize: '0.78rem', fontWeight: 700, color: 'var(--text-secondary)', whiteSpace: 'nowrap' }}>💻 Code Solution:</span>
-                {['JS', 'Python', 'C', 'Java'].map(lang => (
-                  <button key={lang} onClick={() => setActiveLang(lang)}
-                    style={{
-                      padding: '2px 9px',
-                      fontSize: '0.74rem',
-                      borderRadius: '5px',
-                      border: activeLang === lang ? '1.5px solid var(--accent-primary)' : '1px solid var(--glass-border)',
-                      background: activeLang === lang ? 'var(--accent-primary)' : 'transparent',
-                      color: activeLang === lang ? '#fff' : 'var(--text-secondary)',
-                      cursor: 'pointer',
-                      fontWeight: activeLang === lang ? 700 : 400,
-                      transition: 'all 0.15s'
-                    }}
-                  >{lang === 'JS' ? 'JavaScript' : lang}</button>
-                ))}
+              <div style={{ padding: '10px 16px', display: 'flex', justifyContent: 'space-between', alignItems: 'center', borderBottom: '1px solid var(--glass-border)', flexWrap: 'wrap', gap: '8px', background: 'var(--bg-secondary)' }}>
+                <div style={{ display: 'flex', alignItems: 'center', gap: '6px', flexWrap: 'wrap' }}>
+                  <span style={{ fontSize: '0.84rem', fontWeight: 700, color: 'var(--text-secondary)', whiteSpace: 'nowrap' }}>💻 Code:</span>
+                  {['C++', 'Java', 'Python', 'JS', 'C'].map(lang => (
+                    <button key={lang} onClick={() => setActiveLang(lang)}
+                      style={{
+                        padding: '4px 11px',
+                        fontSize: '0.8rem',
+                        borderRadius: '6px',
+                        border: activeLang === lang ? '1.5px solid var(--accent-primary)' : '1px solid var(--glass-border)',
+                        background: activeLang === lang ? 'var(--accent-primary)' : 'transparent',
+                        color: activeLang === lang ? '#fff' : 'var(--text-secondary)',
+                        cursor: 'pointer',
+                        fontWeight: activeLang === lang ? 700 : 400,
+                        transition: 'all 0.15s'
+                      }}
+                    >{lang === 'JS' ? 'JavaScript' : lang}</button>
+                  ))}
+
+                  {/* Full Program vs Snippet Toggle */}
+                  <div style={{ display: 'flex', background: 'rgba(0,0,0,0.3)', borderRadius: '6px', padding: '2px', border: '1px solid var(--glass-border)', marginLeft: '6px' }}>
+                    <button 
+                      onClick={() => setCodeViewMode('full')}
+                      style={{
+                        padding: '2px 8px',
+                        fontSize: '0.74rem',
+                        borderRadius: '4px',
+                        border: 'none',
+                        background: codeViewMode === 'full' ? 'var(--accent-primary)' : 'transparent',
+                        color: codeViewMode === 'full' ? '#fff' : 'var(--text-secondary)',
+                        cursor: 'pointer',
+                        fontWeight: codeViewMode === 'full' ? 700 : 500
+                      }}
+                      title="Display full complete runnable program with imports, class, test driver and main()"
+                    >
+                      📑 Complete Code
+                    </button>
+                    <button 
+                      onClick={() => setCodeViewMode('snippet')}
+                      style={{
+                        padding: '2px 8px',
+                        fontSize: '0.74rem',
+                        borderRadius: '4px',
+                        border: 'none',
+                        background: codeViewMode === 'snippet' ? 'var(--accent-primary)' : 'transparent',
+                        color: codeViewMode === 'snippet' ? '#fff' : 'var(--text-secondary)',
+                        cursor: 'pointer',
+                        fontWeight: codeViewMode === 'snippet' ? 700 : 500
+                      }}
+                      title="Display function snippet only"
+                    >
+                      ⚡ Snippet
+                    </button>
+                  </div>
+
+                  <div style={{ display: 'flex', alignItems: 'center', gap: '4px', marginLeft: '6px' }}>
+                    <button onClick={() => setLocalFontSize(prev => Math.max(12, prev - 2))} style={{ background: 'rgba(255,255,255,0.06)', border: '1px solid var(--glass-border)', borderRadius: '4px', color: 'var(--text-primary)', fontSize: '0.78rem', padding: '2px 8px', cursor: 'pointer' }} title="Decrease font size">A−</button>
+                    <span style={{ fontSize: '0.78rem', color: '#38bdf8', minWidth: '32px', textAlign: 'center', fontWeight: 600 }}>{localFontSize}px</span>
+                    <button onClick={() => setLocalFontSize(prev => Math.min(36, prev + 2))} style={{ background: 'rgba(255,255,255,0.06)', border: '1px solid var(--glass-border)', borderRadius: '4px', color: 'var(--text-primary)', fontSize: '0.78rem', padding: '2px 8px', cursor: 'pointer' }} title="Increase font size">A+</button>
+                  </div>
+                </div>
+                <div style={{ display: 'flex', gap: '8px' }}>
+                  <button 
+                    className="btn btn-clear"
+                    style={{ padding: '4px 12px', fontSize: '0.8rem', display: 'flex', alignItems: 'center', gap: '4px' }}
+                    onClick={() => handleCopy(activeCodeToDisplay)}
+                  >
+                    {copied ? '✅ Copied!' : '📋 Copy'}
+                  </button>
+                  <button 
+                    className="btn btn-insert"
+                    style={{ padding: '4px 14px', fontSize: '0.8rem' }}
+                    onClick={() => setIsRunnerOpen(true)}
+                  >
+                    ▶ Run Live
+                  </button>
+                </div>
               </div>
               <pre style={{
                 margin: 0,
-                padding: '12px 16px',
-                background: 'var(--bg-primary, rgba(0,0,0,0.18))',
-                color: 'var(--text-primary)',
-                fontFamily: "'Fira Code', monospace",
-                fontSize: '0.86rem',
-                lineHeight: '1.6',
+                padding: '16px 20px',
+                background: 'var(--bg-primary, rgba(0,0,0,0.3))',
+                color: '#f8fafc',
+                fontFamily: "'Fira Code', 'Cascadia Code', monospace",
+                fontSize: `${localFontSize}px`,
+                lineHeight: '1.75',
+                fontWeight: 500,
                 overflowX: 'auto'
               }}>
-                {toAllman(getSafeCode(problem.code, activeLang)).split('\n').map((lineText, idx) => (
-                  <div key={idx} style={{ padding: '1px 0', whiteSpace: 'pre', fontFamily: "'Fira Code', monospace", color: 'var(--text-primary)' }}>
+                {toAllman(activeCodeToDisplay).split('\n').map((lineText, idx) => (
+                  <div key={idx} style={{ padding: '1px 0', whiteSpace: 'pre', fontFamily: "'Fira Code', 'Cascadia Code', monospace", color: '#f8fafc' }}>
                     {lineText || ' '}
                   </div>
                 ))}
@@ -4315,33 +5142,97 @@ const DSANotesVisualizer = ({ onBack, openSettings, fontSize = 14, wordWrap = 'o
           </div>
 
           {/* Right Column: Code & Line Highlighter */}
-          <div style={{ width: '420px', background: 'var(--glass-bg)', borderLeft: '1px solid var(--glass-border)', display: 'flex', flexDirection: 'column', overflow: 'hidden' }}>
+          <div style={{ width: '490px', background: 'var(--glass-bg)', borderLeft: '1px solid var(--glass-border)', display: 'flex', flexDirection: 'column', overflow: 'hidden' }}>
             {/* Sticky 2-row header */}
             <div style={{ flexShrink: 0, borderBottom: '1px solid var(--glass-border)', background: 'var(--bg-secondary)' }}>
               {/* Row 1: Language pills */}
-              <div style={{ padding: '8px 12px', display: 'flex', alignItems: 'center', gap: '5px', borderBottom: '1px solid rgba(255,255,255,0.05)', flexWrap: 'wrap' }}>
-                <span style={{ fontSize: '0.78rem', fontWeight: 700, color: 'var(--text-secondary)', whiteSpace: 'nowrap' }}>🌐 Lang:</span>
-                {['JS', 'Python', 'C', 'Java'].map(lang => (
-                  <button key={lang} onClick={() => setActiveLang(lang)}
-                    style={{
-                      padding: '2px 9px',
-                      fontSize: '0.74rem',
-                      borderRadius: '5px',
-                      border: activeLang === lang ? '1.5px solid var(--accent-primary)' : '1px solid var(--glass-border)',
-                      background: activeLang === lang ? 'var(--accent-primary)' : 'transparent',
-                      color: activeLang === lang ? '#fff' : 'var(--text-secondary)',
-                      cursor: 'pointer',
-                      fontWeight: activeLang === lang ? 700 : 400,
-                      transition: 'all 0.15s'
+              <div style={{ padding: '8px 12px', display: 'flex', justifyContent: 'space-between', alignItems: 'center', gap: '5px', borderBottom: '1px solid rgba(255,255,255,0.05)', flexWrap: 'wrap' }}>
+                <div style={{ display: 'flex', alignItems: 'center', gap: '5px', flexWrap: 'wrap' }}>
+                  <span style={{ fontSize: '0.78rem', fontWeight: 700, color: 'var(--text-secondary)', whiteSpace: 'nowrap' }}>🌐 Lang:</span>
+                  {['C++', 'Java', 'Python', 'JS', 'C'].map(lang => (
+                    <button key={lang} onClick={() => setActiveLang(lang)}
+                      style={{
+                        padding: '2px 9px',
+                        fontSize: '0.74rem',
+                        borderRadius: '5px',
+                        border: activeLang === lang ? '1.5px solid var(--accent-primary)' : '1px solid var(--glass-border)',
+                        background: activeLang === lang ? 'var(--accent-primary)' : 'transparent',
+                        color: activeLang === lang ? '#fff' : 'var(--text-secondary)',
+                        cursor: 'pointer',
+                        fontWeight: activeLang === lang ? 700 : 400,
+                        transition: 'all 0.15s'
+                      }}
+                    >{lang === 'JS' ? 'JavaScript' : lang}</button>
+                  ))}
+                </div>
+                <div style={{ display: 'flex', gap: '4px' }}>
+                  <button 
+                    className="btn btn-clear"
+                    style={{ padding: '2px 8px', fontSize: '0.72rem', display: 'flex', alignItems: 'center', gap: '3px' }}
+                    onClick={() => {
+                      const selectedProb = PROBLEMS[selectedProbKey] || PROBLEMS['FIND_MAX'];
+                      const activeFullCode = codeViewMode === 'full' 
+                        ? toFullExecutableProgram(rawActiveCode, activeLang, selectedProb.title) 
+                        : rawActiveCode;
+                      handleCopy(activeFullCode);
                     }}
-                  >{lang === 'JS' ? 'JavaScript' : lang}</button>
-                ))}
+                  >
+                    {copied ? '✅ Copied' : '📋 Copy'}
+                  </button>
+                  <button 
+                    className="btn btn-insert"
+                    style={{ padding: '2px 8px', fontSize: '0.72rem' }}
+                    onClick={() => setIsRunnerOpen(true)}
+                  >
+                    ▶ Run Live
+                  </button>
+                </div>
               </div>
               {/* Row 2: Utility actions */}
               <div style={{ padding: '6px 12px', display: 'flex', alignItems: 'center', gap: '6px', flexWrap: 'wrap' }}>
-                <h3 style={{ color: 'var(--text-secondary)', fontSize: '0.85rem', fontWeight: 600, margin: 0 }}>Solved Solution</h3>
-                <button onClick={() => setLocalFontSize(prev => Math.max(10, prev - 2))} style={{ background: 'transparent', border: '1px solid var(--glass-border)', borderRadius: '4px', color: 'var(--text-secondary)', fontSize: '0.73rem', padding: '1px 6px', cursor: 'pointer' }}>A−</button>
-                <button onClick={() => setLocalFontSize(prev => Math.min(40, prev + 2))} style={{ background: 'transparent', border: '1px solid var(--glass-border)', borderRadius: '4px', color: 'var(--text-secondary)', fontSize: '0.73rem', padding: '1px 6px', cursor: 'pointer' }}>A+</button>
+                <h3 style={{ color: 'var(--text-secondary)', fontSize: '0.82rem', fontWeight: 600, margin: 0 }}>Solution</h3>
+                
+                {/* Full Program vs Stepper Snippet Toggle */}
+                <div style={{ display: 'flex', background: 'rgba(0,0,0,0.3)', borderRadius: '6px', padding: '2px', border: '1px solid var(--glass-border)' }}>
+                  <button 
+                    onClick={() => setCodeViewMode('full')}
+                    style={{
+                      padding: '2px 7px',
+                      fontSize: '0.72rem',
+                      borderRadius: '4px',
+                      border: 'none',
+                      background: codeViewMode === 'full' ? 'var(--accent-primary)' : 'transparent',
+                      color: codeViewMode === 'full' ? '#fff' : 'var(--text-secondary)',
+                      cursor: 'pointer',
+                      fontWeight: codeViewMode === 'full' ? 700 : 500
+                    }}
+                    title="View full complete program with main() and drivers"
+                  >
+                    📑 Complete Code
+                  </button>
+                  <button 
+                    onClick={() => setCodeViewMode('snippet')}
+                    style={{
+                      padding: '2px 7px',
+                      fontSize: '0.72rem',
+                      borderRadius: '4px',
+                      border: 'none',
+                      background: codeViewMode === 'snippet' ? 'var(--accent-primary)' : 'transparent',
+                      color: codeViewMode === 'snippet' ? '#fff' : 'var(--text-secondary)',
+                      cursor: 'pointer',
+                      fontWeight: codeViewMode === 'snippet' ? 700 : 500
+                    }}
+                    title="View step-highlighted function"
+                  >
+                    ⚡ Stepper Sync
+                  </button>
+                </div>
+
+                <div style={{ display: 'flex', alignItems: 'center', gap: '4px', marginLeft: 'auto' }}>
+                  <button onClick={() => setLocalFontSize(prev => Math.max(12, prev - 2))} style={{ background: 'rgba(255,255,255,0.06)', border: '1px solid var(--glass-border)', borderRadius: '4px', color: 'var(--text-primary)', fontSize: '0.75rem', padding: '2px 7px', cursor: 'pointer' }}>A−</button>
+                  <span style={{ fontSize: '0.75rem', color: '#38bdf8', minWidth: '32px', textAlign: 'center', fontWeight: 600 }}>{localFontSize}px</span>
+                  <button onClick={() => setLocalFontSize(prev => Math.min(36, prev + 2))} style={{ background: 'rgba(255,255,255,0.06)', border: '1px solid var(--glass-border)', borderRadius: '4px', color: 'var(--text-primary)', fontSize: '0.75rem', padding: '2px 7px', cursor: 'pointer' }}>A+</button>
+                </div>
               </div>
             </div>
             {renderHighlightedCode()}
@@ -4455,6 +5346,13 @@ const DSANotesVisualizer = ({ onBack, openSettings, fontSize = 14, wordWrap = 'o
         </div>
       )}
 
+      {/* CODE RUNNER MODAL */}
+      <CodeRunnerModal
+        isOpen={isRunnerOpen}
+        onClose={() => setIsRunnerOpen(false)}
+        code={rawActiveCode}
+        language={activeLang}
+      />
     </div>
   );
 };

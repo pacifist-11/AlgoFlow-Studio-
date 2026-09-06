@@ -53,7 +53,7 @@ export default defineConfig({
     'process.env': {}
   },
   server: {
-    port: 9988,
+    port: 1912,
     open: true
   }
 })

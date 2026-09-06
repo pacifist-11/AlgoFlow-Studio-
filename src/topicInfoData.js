@@ -1637,5 +1637,49 @@ export const TOPIC_INFO = {
     pros: ['Work-efficient O(N) total additions', 'Massively parallel execution on GPUs'],
     cons: ['Requires power-of-two array padding'],
     keyPoints: 'Down-sweep pass replaces left child with current value and right child with sum of current and old left.'
+  },
+  'CSS_GENERAL': {
+    title: 'CSS (Cascading Style Sheets)',
+    summary: 'The styling language of the web that controls colors, typography, layout geometry, responsive viewports, and interactive animations.',
+    formula: 'Specificity = (Inline Styles, IDs, Classes/Pseudo-classes, Elements/Pseudo-elements)',
+    example: '/* Style a modern card */\n.card {\n  background: #1e293b;\n  color: #f8fafc;\n  padding: 1.5rem;\n  border-radius: 12px;\n  box-shadow: 0 4px 16px rgba(0,0,0,0.2);\n}',
+    realLife: ['Responsive web applications', 'Mobile-first fluid UI layouts', 'Design systems and dark/light theme switching'],
+    howToUse: ['Link an external stylesheet with <link rel="stylesheet" href="style.css"> or write scoped classes in React.'],
+    pros: ['Separates presentation from semantic HTML structure', 'Browser hardware-accelerated animations', 'High reusability with CSS custom properties (variables)'],
+    cons: ['Specificity conflicts in large non-modular stylesheets', 'Cross-browser rendering inconsistencies without resets'],
+    keyPoints: 'CSS cascades down from top to bottom; the highest specificity selector wins.'
+  },
+  'CSS_BOX_MODEL': {
+    title: 'CSS Box Model',
+    summary: 'The geometric box enclosing every HTML element, composed of Content, Padding, Border, and Margin.',
+    formula: 'Total Rendered Width = Width + Left/Right Padding + Left/Right Border + Left/Right Margin (when content-box)',
+    example: '/* Safe universal box-sizing reset */\n* {\n  box-sizing: border-box; /* Width includes padding and border */\n  margin: 0;\n  padding: 0;\n}',
+    realLife: ['Consistent UI sizing across devices', 'Preventing layout overflow and unwanted horizontal scrollbars'],
+    howToUse: ['Always apply box-sizing: border-box to avoid unexpected padding expansion on fixed-width components.'],
+    pros: ['Predictable element dimensions with border-box', 'Clear visual separation between spacing types'],
+    cons: ['Margin collapsing can cause vertical gaps between sibling blocks', 'content-box default can break responsive layouts'],
+    keyPoints: 'Padding is inside the border (colored background); Margin is outside the border (transparent spacing).'
+  },
+  'CSS_FLEXBOX': {
+    title: 'CSS Flexbox (Flexible Box Layout)',
+    summary: 'A 1-dimensional layout model designed to distribute space and align items along a Main Axis and a Cross Axis.',
+    formula: 'display: flex ➔ justify-content (Main Axis) + align-items (Cross Axis)',
+    example: '/* Center any element horizontally & vertically */\n.parent {\n  display: flex;\n  justify-content: center; /* Main axis (X by default) */\n  align-items: center;     /* Cross axis (Y by default) */\n  gap: 16px;\n}',
+    realLife: ['Navigation bars with spaced links', 'Modal dialog centering', 'Dynamic button clusters and tag lists'],
+    howToUse: ['Set display: flex on the container. Use justify-content, align-items, and gap to control child layout.'],
+    pros: ['Zero float or clear hacks needed', 'Easily accommodates varying item sizes', 'gap property simplifies spacing'],
+    cons: ['Primarily 1-dimensional (row or column at a time)', 'Can become complex with nested flex items'],
+    keyPoints: 'flex-direction controls whether the main axis is horizontal (row) or vertical (column).'
+  },
+  'CSS_GRID': {
+    title: 'CSS Grid Layout',
+    summary: 'A 2-dimensional grid-based layout system that handles both rows and columns simultaneously for sophisticated layouts.',
+    formula: 'grid-template-columns: repeat(auto-fit, minmax(min, 1fr))',
+    example: '/* Responsive multi-column auto-wrapping grid */\n.grid-container {\n  display: grid;\n  grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));\n  gap: 20px;\n}',
+    realLife: ['Dashboard card grids', 'Full page application wireframes', 'Photo galleries with dynamic column wrapping'],
+    howToUse: ['Set display: grid on container, define grid-template-columns and grid-template-rows, and specify gap.'],
+    pros: ['Full 2D control (rows and columns simultaneously)', 'fr unit enables proportional space allocation without percentage math', 'Reduces need for extra wrapper div elements'],
+    cons: ['Steeper learning curve than Flexbox', 'Overkill for simple 1-line item alignments'],
+    keyPoints: 'Use Grid for overall page layout structure and 2D cards; use Flexbox for 1D navigation and components.'
   }
 };

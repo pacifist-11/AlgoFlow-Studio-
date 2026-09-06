@@ -17,7 +17,7 @@ export default function BTechBranchLanguageGuide() {
   const categories = [
     { id: 'all', label: 'All Branches' },
     { id: 'cs_it', label: '💻 CS, IT & Software' },
-    { id: 'ai_cyber', label: '🤖 AI, Data & Security' },
+    { id: 'ai_cyber', label: '🧠 AI, Data & Security' },
     { id: 'circuits', label: '⚡ Electronics & Electrical' },
     { id: 'core_eng', label: '⚙️ Mechanical, Auto & Robotics' },
     { id: 'specialized', label: '🚀 Aero, Bio, Chem & Materials' }
@@ -175,7 +175,7 @@ app.listen(8080, () => console.log('Cloud Service listening on port 8080'));`
       shortName: 'AI & ML',
       name: 'Artificial Intelligence & Machine Learning (AI/ML)',
       category: 'ai_cyber',
-      icon: '🤖',
+      icon: '🧠',
       color: '#10b981',
       accentBg: 'rgba(16, 185, 129, 0.12)',
       welcomeTitle: '🧠 Welcome to Neural Networks, Deep Learning & LLMs!',
@@ -586,7 +586,7 @@ process_sensor_packet('{"sensor_id": "P-101", "pressure": 134.5}')`
       icon: '🦾',
       color: '#8b5cf6',
       accentBg: 'rgba(139, 92, 246, 0.12)',
-      welcomeTitle: '🤖 Welcome to Autonomous Robots, Drone Avionics & Cobots!',
+      welcomeTitle: '🦾 Welcome to Autonomous Robots, Drone Avionics & Cobots!',
       welcomeMessage: 'Mechatronics & Robotics engineers combine mechanical kinematics, electronics actuators, computer vision, and ROS 2 software to build autonomous mobile robots (AMRs), robotic arms, and drones.',
       difficulty: 'High in Multidisciplinary Code & Kinematics',
       placementDemand: '⭐⭐⭐⭐⭐ (Warehouse Robotics, Defence & Automotive: ₹7 - 32 LPA)',
@@ -1328,6 +1328,22 @@ print(f"Theoretical Density of Copper (FCC): {cu_density:.2f} g/cm^3")`
             <p style={{ margin: '4px 0 0 0', color: '#94a3b8', fontSize: '13.5px', lineHeight: '1.5' }}>
               Explore comprehensive 4-year coding roadmaps, primary & secondary programming languages, and core vs. IT placement transition guides for all engineering branches!
             </p>
+            {/* General College / Curriculum Advisory Note */}
+            <div style={{
+              marginTop: '10px',
+              padding: '8px 12px',
+              background: 'rgba(56, 189, 248, 0.08)',
+              borderLeft: '3px solid #38bdf8',
+              borderRadius: '6px',
+              display: 'flex',
+              alignItems: 'center',
+              gap: '8px'
+            }}>
+              <span style={{ fontSize: '15px' }}>💡</span>
+              <span style={{ fontSize: '12.5px', color: '#cbd5e1', lineHeight: '1.4' }}>
+                <strong style={{ color: '#38bdf8' }}>Curriculum Note:</strong> Primary programming languages (such as C, C++, Java, or Python) taught in 1st & 2nd year may vary depending on your college or university syllabus and department specializations.
+              </span>
+            </div>
           </div>
         </div>
       </div>
@@ -1507,7 +1523,7 @@ print(f"Theoretical Density of Copper (FCC): {cu_density:.2f} g/cm^3")`
             { id: 'dualtrack', label: '⚖️ Core vs Software SDE Route', icon: '⚖️' },
             { id: 'moocs_challenges', label: '🏆 MOOCs & Certifications', icon: '🏆' },
             { id: 'codepreview', label: '💻 Branch Code Preview', icon: '💻' },
-            { id: 'advisor_quiz', label: '🤖 Smart Branch Advisor Quiz', icon: '🤖' },
+            { id: 'advisor_quiz', label: '✨ Smart Branch Advisor Quiz', icon: '✨' },
             { id: 'matrix', label: '📊 All-Branch Comparison Table', icon: '📊' }
           ].map(tab => {
             const isActive = activeSubTab === tab.id;
@@ -1737,7 +1753,7 @@ print(f"Theoretical Density of Copper (FCC): {cu_density:.2f} g/cm^3")`
         }}>
           <div>
             <h4 style={{ margin: 0, fontSize: '18px', color: '#38bdf8', fontWeight: '800' }}>
-              🤖 Interactive Smart Advisor: Generate Your Year-Specific Roadmap
+              ✨ Interactive Smart Advisor: Generate Your Year-Specific Roadmap
             </h4>
             <p style={{ margin: '6px 0 0 0', color: '#94a3b8', fontSize: '13.5px' }}>
               Select your B.Tech branch, target career dream role, and current college year to generate a customized 30-60-90 day milestone plan!
@@ -1792,7 +1808,7 @@ print(f"Theoretical Density of Copper (FCC): {cu_density:.2f} g/cm^3")`
                 }}
               >
                 <option value="sde">💻 Software SDE / FAANG / Tier-1 Product Company</option>
-                <option value="ai_ds">🤖 AI, Machine Learning & Data Science</option>
+                <option value="ai_ds">🧠 AI, Machine Learning & Data Science</option>
                 <option value="core">🛠️ Core Engineering R&D (Semiconductor / EV / CAD)</option>
                 <option value="cyber">🔒 Cyber Security & Ethical Hacking</option>
                 <option value="higher_studies">🎓 GATE / GRE / M.Tech / MS Research</option>

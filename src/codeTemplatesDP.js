@@ -609,5 +609,210 @@ console.log("Greedy Min Coins required:", greedyRes.count, "Selected:", greedyRe
     }
   }
 
+  if (algo === 'NQueens') {
+    if (lang === 'C++') {
+      return `#include <iostream>
+#include <vector>
+using namespace std;
+
+bool isSafe(const vector<int>& board, int row, int col, int N) {
+    for (int i = 0; i < row; i++) {
+        int prevCol = board[i];
+        if (prevCol == col || abs(prevCol - col) == abs(i - row))
+            return false;
+    }
+    return true;
+}
+
+void solveNQueens(int row, int N, vector<int>& board, vector<vector<int>>& solutions) {
+    if (row == N) {
+        solutions.push_back(board);
+        return;
+    }
+    for (int col = 0; col < N; col++) {
+        if (isSafe(board, row, col, N)) {
+            board[row] = col;
+            solveNQueens(row + 1, N, board, solutions);
+            board[row] = -1; // Backtrack
+        }
+    }
+}
+
+int main() {
+    int N = 4;
+    vector<int> board(N, -1);
+    vector<vector<int>> solutions;
+    solveNQueens(0, N, board, solutions);
+    cout << "Total N-Queens solutions for N=" << N << ": " << solutions.size() << endl;
+    return 0;
+}`;
+    } else if (lang === 'Java') {
+      return `import java.util.*;
+
+public class NQueens {
+    static boolean isSafe(int[] board, int row, int col) {
+        for (int i = 0; i < row; i++) {
+            int prevCol = board[i];
+            if (prevCol == col || Math.abs(prevCol - col) == Math.abs(i - row))
+                return false;
+        }
+        return true;
+    }
+
+    static void solve(int row, int N, int[] board, List<int[]> solutions) {
+        if (row == N) {
+            solutions.add(board.clone());
+            return;
+        }
+        for (int col = 0; col < N; col++) {
+            if (isSafe(board, row, col)) {
+                board[row] = col;
+                solve(row + 1, N, board, solutions);
+                board[row] = -1; // Backtrack
+            }
+        }
+    }
+
+    public static void main(String[] args) {
+        int N = 4;
+        int[] board = new int[N];
+        Arrays.fill(board, -1);
+        List<int[]> solutions = new ArrayList<>();
+        solve(0, N, board, solutions);
+        System.out.println("Total solutions for N=" + N + ": " + solutions.size());
+    }
+}`;
+    } else if (lang === 'Python') {
+      return `def is_safe(board, row, col):
+    for i in range(row):
+        prev_col = board[i]
+        if prev_col == col or abs(prev_col - col) == abs(i - row):
+            return False
+    return True
+
+def solve_n_queens(row, N, board, solutions):
+    if row == N:
+        solutions.append(list(board))
+        return
+    for col in range(N):
+        if is_safe(board, row, col):
+            board[row] = col
+            solve_n_queens(row + 1, N, board, solutions)
+            board[row] = -1 # Backtrack
+
+if __name__ == "__main__":
+    N = 4
+    board = [-1] * N
+    solutions = []
+    solve_n_queens(0, N, board, solutions)
+    print(f"Total N-Queens solutions for N={N}: {len(solutions)}")`;
+    } else { // JS
+      return `function isSafe(board, row, col) {
+    for (let i = 0; i < row; i++) {
+        const prevCol = board[i];
+        if (prevCol === col || Math.abs(prevCol - col) === Math.abs(i - row)) {
+            return false;
+        }
+    }
+    return true;
+}
+
+function solveNQueens(row, N, board, solutions) {
+    if (row === N) {
+        solutions.push([...board]);
+        return;
+    }
+    for (let col = 0; col < N; col++) {
+        if (isSafe(board, row, col)) {
+            board[row] = col;
+            solveNQueens(row + 1, N, board, solutions);
+            board[row] = -1; // Backtrack
+        }
+    }
+}
+
+const N = 4;
+const board = Array(N).fill(-1);
+const solutions = [];
+solveNQueens(0, N, board, solutions);
+console.log(\`Total N-Queens solutions for N=\${N}: \${solutions.length}\`);`;
+    }
+  }
+
+  if (algo === 'Huffman') {
+    if (lang === 'C++') {
+      return `#include <iostream>
+#include <queue>
+#include <vector>
+#include <string>
+using namespace std;
+
+struct Node {
+    char ch;
+    int freq;
+    Node *left, *right;
+    Node(char c, int f) : ch(c), freq(f), left(nullptr), right(nullptr) {}
+};
+
+struct Compare {
+    bool operator()(Node* l, Node* r) { return l->freq > r->freq; }
+};
+
+void printCodes(Node* root, string str) {
+    if (!root) return;
+    if (root->ch != '$')
+        cout << root->ch << ": " << str << "\\n";
+    printCodes(root->left, str + "0");
+    printCodes(root->right, str + "1");
+}
+
+int main() {
+    vector<char> chars = {'a', 'b', 'c', 'd', 'e', 'f'};
+    vector<int> freqs = {5, 9, 12, 13, 16, 45};
+    priority_queue<Node*, vector<Node*>, Compare> pq;
+
+    for (size_t i = 0; i < chars.size(); i++)
+        pq.push(new Node(chars[i], freqs[i]));
+
+    while (pq.size() > 1) {
+        Node* left = pq.top(); pq.pop();
+        Node* right = pq.top(); pq.pop();
+        Node* top = new Node('$', left->freq + right->freq);
+        top->left = left;
+        top->right = right;
+        pq.push(top);
+    }
+    printCodes(pq.top(), "");
+    return 0;
+}`;
+    } else { // Python & others
+      return `import heapq
+
+class HuffmanNode:
+    def __init__(self, char, freq):
+        self.char = char
+        self.freq = freq
+        self.left = None
+        self.right = None
+
+    def __lt__(self, other):
+        return self.freq < other.freq
+
+def build_huffman_tree(chars, freqs):
+    pq = [HuffmanNode(c, f) for c, f in zip(chars, freqs)]
+    heapq.heapify(pq)
+
+    while len(pq) > 1:
+        left = heapq.heappop(pq)
+        right = heapq.heappop(pq)
+        merged = HuffmanNode('$', left.freq + right.freq)
+        merged.left = left
+        merged.right = right
+        heapq.heappush(pq, merged)
+
+    return pq[0]`;
+    }
+  }
+
   return '';
 };

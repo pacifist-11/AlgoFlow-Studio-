@@ -10,9 +10,13 @@ import CodeRunnerModal from './CodeRunnerModal.jsx';
 import DPGreedyVisualizer from './DPGreedyVisualizer.jsx';
 import PatternsVisualizer from './PatternsVisualizer.jsx';
 import DSANotesVisualizer from './DSANotesVisualizer.jsx';
-import Beginner101Visualizer from './Beginner101Visualizer.jsx';
-import FloatingAiBot from './FloatingAiBot.jsx';
-import AiRagMentorStudio from './AiRagMentorStudio.jsx';
+import DSAStudyVisualizer from './DSAStudyVisualizer.jsx';
+import DSASumsVisualizer from './DSASumsVisualizer.jsx';
+import Beginner101Visualizer from './beginners/Beginner101Visualizer.jsx';
+import FloatingAiBot from './airag/FloatingAiBot.jsx';
+import AiRagMentorStudio from './airag/AiRagMentorStudio.jsx';
+import { checkRestrictedWords } from './airag/restrictedWords.js';
+import { isLineDebuggerSupported } from './languageUtils.js';
 
 // Allman brace formatter for code display
 const toAllman = code => {
@@ -1102,8 +1106,15 @@ function App() {
   const [treeLogSize, setTreeLogSize] = useState({ width: 580, height: 300 });
   const [globalDsType,  setGlobalDsType]  = useState('HASH_TABLE');
   const [globalDsVariety, setGlobalDsVariety] = useState('HASH_LINEAR');
+  const [globalDsaNotesKey, setGlobalDsaNotesKey] = useState('LESSON_VARIABLES');
   const [pendingModule, setPendingModule] = useState(null);
   const [fenwickBitMode, setFenwickBitMode] = useState(false);
+  const [fenwickOpTab, setFenwickOpTab] = useState('INSERT'); // 'INSERT' | 'PREFIX_SUM' | 'RANGE_SUM' | 'UPDATE'
+  const [fenwickQueryIdx, setFenwickQueryIdx] = useState('1');
+  const [fenwickRangeL, setFenwickRangeL] = useState('1');
+  const [fenwickRangeR, setFenwickRangeR] = useState('1');
+  const [fenwickUpdateIdx, setFenwickUpdateIdx] = useState('1');
+  const [fenwickUpdateVal, setFenwickUpdateVal] = useState('5');
   const [bTreeOrder,    setBTreeOrder]    = useState(4);
   const [deleteStrategy, setDeleteStrategy] = useState('RIGHT');
   const [splitStrategy,  setSplitStrategy]  = useState('MEDIAN');
@@ -1126,9 +1137,9 @@ function App() {
   const [globalApiKey,  setGlobalApiKey]  = useState(() => safeLocalStorage.getItem('gemini_api_key') || import.meta.env.VITE_GEMINI_API_KEY || '');
   const [globalModel,   setGlobalModel]   = useState(() => {
     const saved = safeLocalStorage.getItem('gemini_model');
-    if (!saved || saved.includes('1.5')) {
-      safeLocalStorage.setItem('gemini_model', 'gemini-2.0-flash');
-      return import.meta.env.VITE_GEMINI_MODEL || 'gemini-2.0-flash';
+    if (!saved || saved.includes('1.5') || saved.includes('2.0')) {
+      safeLocalStorage.setItem('gemini_model', 'gemini-3.6-flash');
+      return import.meta.env.VITE_GEMINI_MODEL || 'gemini-3.6-flash';
     }
     return saved;
   });
@@ -1686,167 +1697,6 @@ function App() {
     setFallbackOtp('');
   };
 
-  const checkRestrictedWords = (text) => {
-    if (!text) return null;
-    
-    // Normalize string to lowercase
-    let raw = text.toLowerCase();
-    
-    // Map lookalike symbols and numbers to letters (leet-speak)
-    const replacements = [
-      { from: /@/g, to: 'a' },
-      { from: /€/g, to: 'e' },
-      { from: /3/g, to: 'e' },
-      { from: /1/g, to: 'i' },
-      { from: /!/g, to: 'i' },
-      { from: /\|/g, to: 'i' },
-      { from: /0/g, to: 'o' },
-      { from: /°/g, to: 'o' },
-      { from: /\$/g, to: 's' },
-      { from: /5/g, to: 's' },
-      { from: /7/g, to: 't' },
-      { from: /\+/g, to: 't' },
-      { from: /8/g, to: 'b' }
-    ];
-    
-    let leetMapped = raw;
-    replacements.forEach(r => {
-      leetMapped = leetMapped.replace(r.from, r.to);
-    });
-    
-    // Helper to collapse consecutive repeating characters (e.g. "erri-ppuukkaa" -> "eripuka")
-    const collapse = (s) => s.replace(/(.)\1+/g, '$1');
-    
-    // Helper for homoglyphs / sound-alikes (e.g. c -> k, q -> k, v -> w)
-    const homoglyph = (s) => s.replace(/[cq]/g, 'k').replace(/v/g, 'w');
-
-    // Create variants of input text to match against:
-    const alphaOnly = leetMapped.replace(/[^a-z0-9]/g, '');
-    const rawAlphaOnly = raw.replace(/[^a-z0-9]/g, '');
-    const collapsedAlpha = collapse(alphaOnly);
-    const collapsedRawAlpha = collapse(rawAlphaOnly);
-    const homoglyphAlpha = homoglyph(alphaOnly);
-    const homoglyphCollapsed = collapse(homoglyphAlpha);
-
-    const inputVariants = Array.from(new Set([
-      raw,
-      leetMapped,
-      alphaOnly,
-      rawAlphaOnly,
-      collapsedAlpha,
-      collapsedRawAlpha,
-      homoglyphAlpha,
-      homoglyphCollapsed
-    ]));
-
-    // Base forbidden root substrings & variants (Telugu & English profanity, pornstars, adult sites, genres)
-    const badWords = [
-      'aathu', 'aathoo', 'aathuu', 'athu', 'aatu', 'athuu',
-      'gudu', 'gudha', 'guda', 'gudda', 'guddha', 'goodu', 'gudhu', 'gudh',
-      'vattakayalu', 'vattakaayalu', 'vattalu', 'vattakaya', 'vatta', 'vattakay', 'vattakayal', 'vatakayalu', 'vatakaya',
-      'puka', 'puku', 'pooku', 'pukaa', 'pooka', 'pukka', 'pulka', 'pukla', 'pukya', 'puk', 'pook', 'pucka',
-      'erripuka', 'erri puka', 'erripooka', 'erri pooka', 'erripukka', 'erri pukka', 'erripulka', 'erri pulka', 'erripukla', 'erri pukla',
-      'moddagudu', 'modda gudu', 'modagudu', 'moda gudu', 'modagudda',
-      'lanja', 'lanjaa', 'lanza', 'lanjodaka', 'lanjodka', 'lanjakodaka', 'lanje', 'lanjakoda', 'lanjakora',
-      'modda', 'madda', 'moddae', 'maddodda', 'moda', 'mada',
-      'mogga', 'moga', 'moggah', 'mogaa',
-      'bokka', 'boka', 'bokkah', 'bokaa',
-      'sulli', 'suli',
-      'dengai', 'dengey', 'denga', 'dengu', 'dengutha', 'denge', 'dengodka',
-      'naaku',
-      'fuck', 'fuk', 'fck', 'bitch', 'bich', 'ass', 'bastard', 'dick', 'dik', 'cunt', 'whore', 'whor', 'shit', 'sht',
-      'penis', 'peneis', 'penus', 'pnis', 'peniss', 'peniz',
-      'ovary', 'ovaries', 'ovaryy',
-      'vagina', 'vaginaa', 'vagna', 'vgina',
-      'boobs', 'boob', 'bobs', 'boobies',
-      
-      // Comprehensive Pornstars list
-      'mia khalifa', 'miakhalifa', 'sunny leone', 'sunnyleone', 'lana rhoades', 'lanarhoades',
-      'riley reid', 'rileyreid', 'angela white', 'angelawhite', 'abella danger', 'abelladanger',
-      'dani daniels', 'danidaniels', 'brandi love', 'brandilove', 'eva elfie', 'evaelfie',
-      'lisa ann', 'lisaann', 'mia melano', 'miamelano', 'johnny sins', 'johnnysins',
-      'jordi el nino', 'jordielnino', 'sasha grey', 'sashagrey', 'lexi lore', 'lexilore',
-      'sweetie fox', 'sweetiefox', 'kenzie reeves', 'kenziereeves', 'tori black', 'toriblack',
-      'piper perri', 'piperperri', 'esperanza gomez', 'esperanzagomez', 'hentai', 'pornstar', 'porn',
-      'august ames', 'asa akira', 'tasha reign', 'phoenix marie', 'charity crawford', 'alexis texas', 
-      'briana banks', 'jenna jameson', 'jesse jane', 'belladonna', 'stormy daniels', 'katrina jade', 
-      'gina valentina', 'lana lutz', 'emily willis', 'adriana chechik', 'kira noir', 'lena paul', 
-      'nicole aniston', 'sophie dee', 'christy mack', 'janice griffith', 'megan rain', 'anjelica ebbi',
-      
-      // Comprehensive Porn sites and channels list
-      'pornhub', 'xvideos', 'xnxx', 'xhamster', 'spankbang', 'redtube', 'youporn', 'onlyfans', 'chaturbate', 
-      'fansly', 'brazzers', 'naughtyamerica', 'realitykings', 'bangbros', 'evilangel', 'digitalplayground', 
-      'twistys', 'rkprime', 'faphouse', 'tube8', 'txxx', 'hentaihaven', 'porntrex', 'thumbzilla', 'eporner', 
-      'hqporner', 'tubegalore', 'drrtube', 'heavy-r', 'motherless', 'xhamsterlive', 'commatozzee', 'cummatozzee', 'commatozze', 'cummatozze',
-      
-      // Comprehensive Adult styles, genres, and category keywords
-      'milf', 'anal', 'blowjob', 'creampie', 'cumshot', 'deepthroat', 'gangbang', 'hardcore', 'softcore', 
-      'threesome', 'orgy', 'bondage', 'bdsm', 'cuckold', 'squirt', 'facials', 'voyeur', 'lesbian', 'gay', 
-      'ebony', 'interracial', 'babe', 'shemale', 'masturbation', 'masturbate', 'groupsex', 'transsexual',
-      'bukkake', 'anilingus', 'cunnilingus', 'fellatio', 'fisting', 'ladyboy'
-    ];
-
-    // Collapsed forbidden root substrings
-    const collapsedBadWords = [
-      'athu', 'gudu', 'guda', 'gudh', 'vatakayalu', 'vatalu', 'vatakaya', 'vata',
-      'puka', 'puku', 'poku', 'erripuka', 'moddagudu', 'cumatoze', 'comatoze',
-      'lanja', 'lanza', 'lanjodaka', 'lanjodka', 'lanjakodaka', 'lanje',
-      'moda', 'mada', 'moga', 'boka',
-      'suli',
-      'dengai', 'dengey', 'denga', 'dengu', 'dengutha',
-      'fuk', 'bich', 'cunt', 'whor', 'shit',
-      'penis', 'pnis', 'ovary', 'ovari', 'vagina', 'vagna', 'bob', 'boob',
-      'pornhub', 'xvideo', 'xnxx', 'xhamster', 'spankbang', 'redtube', 'youporn', 'onlyfan', 'chaturbate', 'fansly', 'brazzer', 'naughtyamerica', 'realityking', 'bangbro', 'evilangel', 'digitalplayground', 'twisty', 'rkprime', 'faphouse', 'tube8', 'txxx', 'hentaihaven', 'porntrex', 'thumbzilla', 'eporner', 'hqporner', 'tubegalore', 'drrtube', 'heavy-r', 'motherless', 'xhamsterlive',
-      'milf', 'anal', 'blowjob', 'creampie', 'cumshot', 'deepthroat', 'gangbang', 'hardcore', 'softcore', 'threesome', 'orgy', 'bondage', 'bdsm', 'cuckold', 'squirt', 'facial', 'voyeur', 'lesbian', 'gay', 'eboni', 'interracial', 'babe', 'shemale', 'masturbation', 'masturbate', 'groupsex', 'transsexual', 'bukkake', 'anilingus', 'cunnilingus', 'fellatio', 'fisting', 'ladyboy'
-    ];
-
-    // 0. Standalone check for "mg" (shortcut for moddagudu)
-    for (const v of inputVariants) {
-      if (/\bmg\b/i.test(v) || v === 'mg') {
-        return 'mg';
-      }
-    }
-
-    // 1. Direct match check for badWords across all input variants
-    for (const w of badWords) {
-      const wAlpha = w.replace(/[^a-z0-9]/g, '');
-      const wCollapsed = collapse(wAlpha);
-      const wHomoglyphCollapsed = collapse(homoglyph(wAlpha));
-
-      for (const v of inputVariants) {
-        if (w.length <= 3) {
-          const boundaryRegex = new RegExp(`\\b${w}\\b`, 'i');
-          if (boundaryRegex.test(v)) return w;
-        } else {
-          if (
-            v.includes(w) ||
-            v.includes(wAlpha) ||
-            v.includes(wCollapsed) ||
-            v.includes(wHomoglyphCollapsed)
-          ) {
-            return w;
-          }
-        }
-      }
-    }
-
-    // 2. Additional check for collapsedBadWords
-    for (const w of collapsedBadWords) {
-      const wCollapsed = collapse(w);
-      for (const v of inputVariants) {
-        if (w.length <= 3) {
-          const boundaryRegex = new RegExp(`\\b${w}\\b`, 'i');
-          if (boundaryRegex.test(v)) return w;
-        } else {
-          if (v.includes(w) || v.includes(wCollapsed)) return w;
-        }
-      }
-    }
-
-    return null;
-  };
-
-
   // Submit feedback directly
   const submitDirectFeedback = async () => {
     const nameTrimmed = feedbackName.trim();
@@ -2321,8 +2171,12 @@ function App() {
   const enterMode = mode => {
     window.location.hash = mode;
     setAppMode(mode);
-    const isStandalone = ['BEGINNER_101_VIS', 'GENERAL_DSA_VIS', 'SORT_SEARCH_VIS', 'GRAPH_VIS', 'DP_GREEDY_VIS', 'JAVA_OOP_VIS', 'DSA_NOTES_VIS'].includes(mode);
-    setSetupComplete(isStandalone);
+    if (mode === 'LINE_BY_LINE_VIS') {
+      setSetupComplete(isLineDebuggerSupported(codeLang));
+    } else {
+      const isStandalone = ['BEGINNER_101_VIS', 'GENERAL_DSA_VIS', 'SORT_SEARCH_VIS', 'GRAPH_VIS', 'DP_GREEDY_VIS', 'JAVA_OOP_VIS', 'DSA_NOTES_VIS', 'DSA_STUDY_VIS', 'DSA_SUMS_VIS'].includes(mode);
+      setSetupComplete(isStandalone);
+    }
   };
   const goBack    = () => {
     window.location.hash = '';
@@ -2333,11 +2187,15 @@ function App() {
   useEffect(() => {
     const handleHashChange = () => {
       const hash = window.location.hash.replace('#', '').replace(/^\//, '').trim();
-      const validModes = ['BEGINNER_101_VIS', 'GENERAL_DSA_VIS', 'SORT_SEARCH_VIS', 'MAIN_VIS', 'GRAPH_VIS', 'DP_GREEDY_VIS', 'JAVA_OOP_VIS', 'DSA_NOTES_VIS', 'LINE_BY_LINE_VIS', 'CODE_VAL_VIS'];
+      const validModes = ['BEGINNER_101_VIS', 'GENERAL_DSA_VIS', 'SORT_SEARCH_VIS', 'MAIN_VIS', 'GRAPH_VIS', 'DP_GREEDY_VIS', 'JAVA_OOP_VIS', 'DSA_NOTES_VIS', 'DSA_STUDY_VIS', 'DSA_SUMS_VIS', 'LINE_BY_LINE_VIS', 'CODE_VAL_VIS'];
       if (validModes.includes(hash)) {
         setAppMode(hash);
-        const isStandalone = ['BEGINNER_101_VIS', 'GENERAL_DSA_VIS', 'SORT_SEARCH_VIS', 'GRAPH_VIS', 'DP_GREEDY_VIS', 'JAVA_OOP_VIS', 'DSA_NOTES_VIS'].includes(hash);
-        if (isStandalone) setSetupComplete(true);
+        if (hash === 'LINE_BY_LINE_VIS') {
+          setSetupComplete(isLineDebuggerSupported(codeLang));
+        } else {
+          const isStandalone = ['BEGINNER_101_VIS', 'GENERAL_DSA_VIS', 'SORT_SEARCH_VIS', 'GRAPH_VIS', 'DP_GREEDY_VIS', 'JAVA_OOP_VIS', 'DSA_NOTES_VIS', 'DSA_STUDY_VIS', 'DSA_SUMS_VIS'].includes(hash);
+          if (isStandalone) setSetupComplete(true);
+        }
       } else {
         setAppMode(null);
       }
@@ -2345,7 +2203,7 @@ function App() {
     window.addEventListener('hashchange', handleHashChange);
     handleHashChange();
     return () => window.removeEventListener('hashchange', handleHashChange);
-  }, []);
+  }, [codeLang]);
 
   useEffect(() => {
     const handleBeforeUnload = (e) => {
@@ -2590,10 +2448,29 @@ function App() {
     }
     for (let i = 0; i <= n; i++) {
       nodes[i] = new TreeNode(i === 0 ? "BIT" : arr[i - 1]);
-      if (i > 0) nodes[i].sum = bit[i];
+      nodes[i].sum = i === 0 ? "BIT Root" : bit[i];
       nodes[i].range = i > 0 ? `[${i - (i & -i) + 1}-${i}]` : '0';
       if (i > 0) nodes[i].bitRep = i.toString(2);
       nodes[i].index = i;
+      nodes[i].arrVal = i > 0 ? arr[i - 1] : null;
+    }
+    for (let i = 1; i <= n; i++) {
+      let p = i - (i & -i);
+      nodes[p].children.push(nodes[i]);
+    }
+    return nodes[0];
+  };
+
+  const getFenwickTreeState = (arr, bitArray) => {
+    const n = arr.length;
+    const nodes = new Array(n + 1).fill(null);
+    for (let i = 0; i <= n; i++) {
+      nodes[i] = new TreeNode(i === 0 ? "BIT" : arr[i - 1]);
+      nodes[i].sum = i === 0 ? "BIT Root" : bitArray[i];
+      nodes[i].range = i > 0 ? `[${i - (i & -i) + 1}-${i}]` : '0';
+      if (i > 0) nodes[i].bitRep = i.toString(2);
+      nodes[i].index = i;
+      nodes[i].arrVal = i > 0 ? arr[i - 1] : null;
     }
     for (let i = 1; i <= n; i++) {
       let p = i - (i & -i);
@@ -2608,7 +2485,7 @@ function App() {
     const n = arr.length;
     const frames = [];
     
-    logs.push({ text: `─── Fenwick Tree Insert(${val}) at index ${n} ───`, type: 'normal' });
+    logs.push({ text: `─── Fenwick Tree Insert(${val}) at A[${n}] ───`, type: 'normal' });
     
     const finalBit = new Array(n + 1).fill(0);
     for (let i = 1; i <= n; i++) {
@@ -2627,36 +2504,175 @@ function App() {
     const currentBit = [...finalBit];
     updatedIndices.forEach(idx => { currentBit[idx] -= val; });
     
-    const getTreeState = (bitArray) => {
-      const nodes = new Array(n + 1).fill(null);
-      for (let i = 0; i <= n; i++) {
-        nodes[i] = new TreeNode(i === 0 ? "BIT" : arr[i - 1]);
-        if (i > 0) nodes[i].sum = bitArray[i];
-        nodes[i].range = i > 0 ? `[${i - (i & -i) + 1}-${i}]` : '0';
-        if (i > 0) nodes[i].bitRep = i.toString(2);
-        nodes[i].index = i;
-      }
-      for (let i = 1; i <= n; i++) {
-        let p = i - (i & -i);
-        nodes[p].children.push(nodes[i]);
-      }
-      return nodes[0];
-    };
-    
-    logs.push({ text: `✦ Attach BIT node ${n} (Range [${n - (n & -n) + 1}-${n}])`, type: 'normal' });
-    frames.push(new Frame(getTreeState(currentBit), logs, n, `New BIT node ${n}`));
+    logs.push({ text: `✦ Attach BIT node ${n} (Covers range [${n - (n & -n) + 1}-${n}])`, type: 'normal' });
+    frames.push(new Frame(getFenwickTreeState(arr, currentBit), logs, n, `New BIT node ${n}`));
     
     let curr = n;
     while (curr <= n) {
       currentBit[curr] += val;
-      logs.push({ text: `↳ Update BIT[${curr}] += ${val} via LSB jump (+${curr & -curr})`, type: 'normal' });
-      frames.push(new Frame(getTreeState(currentBit), logs, curr, `BIT[${curr}] += ${val}`));
-      curr += curr & -curr;
+      const lsb = curr & -curr;
+      logs.push({ text: `↳ Update BIT[${curr}] += ${val} (New sum=${currentBit[curr]}) via LSB jump (+${lsb})`, type: 'normal' });
+      frames.push(new Frame(getFenwickTreeState(arr, currentBit), logs, curr, `BIT[${curr}] += ${val}`));
+      curr += lsb;
     }
     
-    logs.push({ text: `✓ Fenwick tree update complete.`, type: 'normal' });
-    frames.push(new Frame(getTreeState(currentBit), logs, null, null));
+    logs.push({ text: `✓ Fenwick tree insert complete for value ${val} at index ${n}.`, type: 'normal' });
+    frames.push(new Frame(getFenwickTreeState(arr, currentBit), logs, null, null));
     return frames;
+  };
+
+  const simulateFenwickQuery = (k, arr, prevLogs) => {
+    const logs = [...prevLogs];
+    const n = arr.length;
+    const frames = [];
+    
+    if (k < 1 || k > n) {
+      logs.push({ text: `⚠️ Index ${k} out of bounds (1..${n}).`, type: 'normal' });
+      const currentTree = buildFenwickTree(arr);
+      frames.push(new Frame(currentTree, logs, null, 'Out of bounds'));
+      return frames;
+    }
+
+    const bit = new Array(n + 1).fill(0);
+    for (let i = 1; i <= n; i++) {
+      bit[i] += arr[i - 1];
+      let p = i + (i & -i);
+      if (p <= n) bit[p] += bit[i];
+    }
+    const currentTree = buildFenwickTree(arr);
+
+    logs.push({ text: `─── Prefix Sum Query: query(${k}) for A[1..${k}] ───`, type: 'normal' });
+    let sum = 0;
+    let curr = k;
+
+    while (curr > 0) {
+      const lsb = curr & -curr;
+      const rangeStr = `[${curr - lsb + 1}-${curr}]`;
+      sum += bit[curr];
+      logs.push({ text: `✦ Read BIT[${curr}] = ${bit[curr]} (covers ${rangeStr}, LSB = ${lsb}) ➔ Running sum = ${sum}`, type: 'normal' });
+      frames.push(new Frame(currentTree, logs, curr, `BIT[${curr}] = +${bit[curr]} (Sum = ${sum})`));
+      curr -= lsb;
+      if (curr > 0) {
+        logs.push({ text: `↳ Jump to BIT[${curr}] by subtracting LSB (-${lsb})`, type: 'normal' });
+      }
+    }
+
+    logs.push({ text: `✓ Prefix Sum A[1..${k}] = ${sum}`, type: 'normal' });
+    frames.push(new Frame(currentTree, logs, null, `Prefix Sum(1..${k}) = ${sum}`));
+    return frames;
+  };
+
+  const simulateFenwickRangeQuery = (l, r, arr, prevLogs) => {
+    const logs = [...prevLogs];
+    const n = arr.length;
+    const frames = [];
+
+    if (l < 1 || r > n || l > r) {
+      logs.push({ text: `⚠️ Invalid range [${l}, ${r}]. Must satisfy 1 <= L <= R <= ${n}.`, type: 'normal' });
+      const currentTree = buildFenwickTree(arr);
+      frames.push(new Frame(currentTree, logs, null, 'Invalid range'));
+      return frames;
+    }
+
+    const bit = new Array(n + 1).fill(0);
+    for (let i = 1; i <= n; i++) {
+      bit[i] += arr[i - 1];
+      let p = i + (i & -i);
+      if (p <= n) bit[p] += bit[i];
+    }
+    const currentTree = buildFenwickTree(arr);
+
+    logs.push({ text: `─── Range Sum Query: rangeSum(${l}, ${r}) = query(${r}) - query(${l - 1}) ───`, type: 'normal' });
+    
+    // Phase 1: query(r)
+    let sumR = 0;
+    let curr = r;
+    logs.push({ text: `▶ Step 1: Compute query(${r}) [Prefix sum up to index ${r}]`, type: 'normal' });
+    while (curr > 0) {
+      const lsb = curr & -curr;
+      sumR += bit[curr];
+      logs.push({ text: `✦ Read BIT[${curr}] = ${bit[curr]} ➔ Running sum(${r}) = ${sumR}`, type: 'normal' });
+      frames.push(new Frame(currentTree, logs, curr, `query(${r}): BIT[${curr}] (+${bit[curr]})`));
+      curr -= lsb;
+    }
+    logs.push({ text: `↳ query(${r}) = ${sumR}`, type: 'normal' });
+
+    // Phase 2: query(l - 1)
+    let sumL = 0;
+    if (l > 1) {
+      curr = l - 1;
+      logs.push({ text: `▶ Step 2: Compute query(${l - 1}) [Prefix sum up to index ${l - 1}]`, type: 'normal' });
+      while (curr > 0) {
+        const lsb = curr & -curr;
+        sumL += bit[curr];
+        logs.push({ text: `✦ Read BIT[${curr}] = ${bit[curr]} ➔ Running sum(${l - 1}) = ${sumL}`, type: 'normal' });
+        frames.push(new Frame(currentTree, logs, curr, `query(${l - 1}): BIT[${curr}] (+${bit[curr]})`));
+        curr -= lsb;
+      }
+      logs.push({ text: `↳ query(${l - 1}) = ${sumL}`, type: 'normal' });
+    } else {
+      logs.push({ text: `▶ Step 2: L=1, so query(0) = 0`, type: 'normal' });
+    }
+
+    const rangeSum = sumR - sumL;
+    logs.push({ text: `✓ Range Sum A[${l}..${r}] = query(${r}) (${sumR}) - query(${l - 1}) (${sumL}) = ${rangeSum}`, type: 'normal' });
+    frames.push(new Frame(currentTree, logs, null, `Range Sum[${l}..${r}] = ${rangeSum}`));
+    return frames;
+  };
+
+  const simulateFenwickUpdate = (idx, delta, prevArr, prevLogs) => {
+    const logs = [...prevLogs];
+    const n = prevArr.length;
+    const frames = [];
+
+    if (idx < 1 || idx > n) {
+      logs.push({ text: `⚠️ Index ${idx} out of bounds (1..${n}).`, type: 'normal' });
+      const currentTree = buildFenwickTree(prevArr);
+      frames.push(new Frame(currentTree, logs, null, 'Out of bounds'));
+      return { frames, newArr: prevArr };
+    }
+
+    const newArr = [...prevArr];
+    newArr[idx - 1] += delta;
+
+    const bit = new Array(n + 1).fill(0);
+    for (let i = 1; i <= n; i++) {
+      bit[i] += prevArr[i - 1];
+      let p = i + (i & -i);
+      if (p <= n) bit[p] += bit[i];
+    }
+
+    logs.push({ text: `─── Point Update: A[${idx}] += ${delta} (New A[${idx}] = ${newArr[idx - 1]}) ───`, type: 'normal' });
+
+    let curr = idx;
+    while (curr <= n) {
+      bit[curr] += delta;
+      const lsb = curr & -curr;
+      logs.push({ text: `↳ Update BIT[${curr}] += ${delta} (New sum=${bit[curr]}) via LSB jump (+${lsb})`, type: 'normal' });
+      frames.push(new Frame(getFenwickTreeState(newArr, bit), logs, curr, `BIT[${curr}] += ${delta}`));
+      curr += lsb;
+    }
+
+    logs.push({ text: `✓ Updated index ${idx} with delta ${delta}. Fenwick Tree synced.`, type: 'normal' });
+    frames.push(new Frame(getFenwickTreeState(newArr, bit), logs, null, null));
+    return { frames, newArr };
+  };
+
+  const simulateFenwickDelete = (prevArr, prevLogs) => {
+    const logs = [...prevLogs];
+    const frames = [];
+    if (!prevArr || !prevArr.length) {
+      return { frames: [], newArr: [] };
+    }
+    const poppedVal = prevArr[prevArr.length - 1];
+    const newArr = prevArr.slice(0, -1);
+    const n = newArr.length;
+
+    logs.push({ text: `─── Remove last element A[${prevArr.length}] = ${poppedVal} ───`, type: 'normal' });
+    const currentTree = buildFenwickTree(newArr);
+    logs.push({ text: `✓ Fenwick tree updated for ${n} element(s).`, type: 'normal' });
+    frames.push(new Frame(currentTree, logs, null, `Removed A[${prevArr.length}]`));
+    return { frames, newArr };
   };
 
   const buildHeapTree = (arr) => {
@@ -2976,6 +2992,18 @@ function App() {
       return;
     }
 
+    if (treeType === 'FENWICK_TREE') {
+      const prev = timeline.length > 0 ? timeline[timeline.length - 1] : new Frame(null, [], null, null);
+      const res = simulateFenwickDelete(insertedValues, prev.logs);
+      if (!res.frames.length) return;
+      setInsertedValues(res.newArr);
+      setOperationsLog(p => [...p, { op: 'delete', val: 'last' }]);
+      setTimeline(p => [...p, ...res.frames]);
+      setInputValue('');
+      setIsPlaying(true);
+      return;
+    }
+
     const val = parseInt(inputValue);
     if (isNaN(val)) return;
     const prev = timeline.length > 0 ? timeline[timeline.length - 1] : new Frame(null, [], null, null);
@@ -2984,7 +3012,7 @@ function App() {
     if (treeType === 'BST' || treeType === 'AVL') {
       frames = simulateBSTDelete(prev.root, val, prev.logs);
     } else {
-      alert('Deletion is currently supported for BST, AVL, and Heap trees.');
+      alert('Deletion is currently supported for BST, AVL, Heap, and Fenwick trees.');
       return;
     }
 
@@ -2992,6 +3020,46 @@ function App() {
     setOperationsLog(p => [...p, { op: 'delete', val }]);
     setTimeline(p => [...p, ...frames]);
     setInputValue('');
+    setIsPlaying(true);
+  };
+
+  const handleFenwickQuery = (targetK) => {
+    const k = targetK !== undefined ? parseInt(targetK) : parseInt(fenwickQueryIdx || inputValue);
+    if (isNaN(k) || k < 1 || k > insertedValues.length) {
+      alert(`Please enter a valid index between 1 and ${insertedValues.length}.`);
+      return;
+    }
+    const prev = timeline.length > 0 ? timeline[timeline.length - 1] : new Frame(null, [], null, null);
+    const frames = simulateFenwickQuery(k, insertedValues, prev.logs);
+    setTimeline(p => [...p, ...frames]);
+    setIsPlaying(true);
+  };
+
+  const handleFenwickRangeQuery = (customL, customR) => {
+    const l = customL !== undefined ? parseInt(customL) : parseInt(fenwickRangeL);
+    const r = customR !== undefined ? parseInt(customR) : parseInt(fenwickRangeR);
+    if (isNaN(l) || isNaN(r) || l < 1 || r > insertedValues.length || l > r) {
+      alert(`Please enter valid indices with 1 <= L <= R <= ${insertedValues.length}.`);
+      return;
+    }
+    const prev = timeline.length > 0 ? timeline[timeline.length - 1] : new Frame(null, [], null, null);
+    const frames = simulateFenwickRangeQuery(l, r, insertedValues, prev.logs);
+    setTimeline(p => [...p, ...frames]);
+    setIsPlaying(true);
+  };
+
+  const handleFenwickUpdate = (customIdx, customDelta) => {
+    const idx = customIdx !== undefined ? parseInt(customIdx) : parseInt(fenwickUpdateIdx);
+    const delta = customDelta !== undefined ? parseInt(customDelta) : parseInt(fenwickUpdateVal);
+    if (isNaN(idx) || isNaN(delta) || idx < 1 || idx > insertedValues.length) {
+      alert(`Please enter a valid index (1..${insertedValues.length}) and delta value.`);
+      return;
+    }
+    const prev = timeline.length > 0 ? timeline[timeline.length - 1] : new Frame(null, [], null, null);
+    const { frames, newArr } = simulateFenwickUpdate(idx, delta, insertedValues, prev.logs);
+    setInsertedValues(newArr);
+    setOperationsLog(p => [...p, { op: 'update', idx, val: delta }]);
+    setTimeline(p => [...p, ...frames]);
     setIsPlaying(true);
   };
 
@@ -3036,16 +3104,20 @@ function App() {
       const kw = Math.max(70, node.keys.length * 42 + 20);
       return { w: kw, h: 38 };
     }
+    if (treeType === 'FENWICK_TREE') {
+      if (node.index === 0) return { w: 100, h: 48 };
+      const showBits = fenwickBitMode && node.bitRep;
+      return { w: 92, h: showBits ? 72 : 60 };
+    }
     if (isSeg) {
-      const showBits = treeType === 'FENWICK_TREE' && fenwickBitMode && node.bitRep;
-      return { w: 80, h: showBits ? 66 : 54 };
+      return { w: 80, h: 54 };
     }
     return { w: 56, h: 56 };
   };
 
   const getChildNodes = (node) => {
     if (!node) return [];
-    if (treeType === 'BFS_TREE' || treeType === 'DFS_TREE' || treeType === 'B_TREE' || treeType === 'B_PLUS_TREE') {
+    if (treeType === 'BFS_TREE' || treeType === 'DFS_TREE' || treeType === 'B_TREE' || treeType === 'B_PLUS_TREE' || treeType === 'FENWICK_TREE') {
       return (node.children || []).filter(Boolean);
     }
     if (node.children && node.children.length > 0) {
@@ -3126,7 +3198,52 @@ function App() {
       return;
     }
 
-    // 3. BINARY SEARCH, AVL, RED-BLACK, SEGMENT, FENWICK TREES (Dynamic In-order based spacious layout)
+    // 3. FENWICK TREE (Hierarchical N-ary layout with subtree width-based spacing)
+    if (treeType === 'FENWICK_TREE') {
+      const getSubtreeWidth = (node) => {
+        if (!node) return 0;
+        const kids = getChildNodes(node);
+        if (kids.length === 0) {
+          node._width = 1;
+          return 1;
+        }
+        let total = 0;
+        kids.forEach(c => {
+          total += getSubtreeWidth(c);
+        });
+        node._width = Math.max(1, total);
+        return node._width;
+      };
+      
+      getSubtreeWidth(rootNode);
+      
+      const nodeSpacing = fenwickBitMode ? 104 : 92;
+      const totalUnits = rootNode._width || 1;
+      const reqW = Math.max(containerW, totalUnits * nodeSpacing + 120);
+      const startX = Math.max(50, (reqW - totalUnits * nodeSpacing) / 2);
+      
+      const positionNodes = (node, depth, leftBoundary) => {
+        if (!node) return;
+        const kids = getChildNodes(node);
+        node.y = depth * 92 + 60;
+        
+        if (kids.length === 0) {
+          node.x = leftBoundary + (nodeSpacing / 2);
+        } else {
+          let currentLeft = leftBoundary;
+          kids.forEach(child => {
+            positionNodes(child, depth + 1, currentLeft);
+            currentLeft += child._width * nodeSpacing;
+          });
+          node.x = (kids[0].x + kids[kids.length - 1].x) / 2;
+        }
+      };
+      
+      positionNodes(rootNode, 0, startX);
+      return;
+    }
+
+    // 4. BINARY SEARCH, AVL, RED-BLACK, SEGMENT TREES (Dynamic In-order based spacious layout)
     let ctr = 0;
     const idx = n => {
       if (!n) return;
@@ -3248,7 +3365,18 @@ function App() {
         allEdges.push({ id: edgeKey, x1: node.x, y1: node.y, x2: child.x, y2: child.y, parentNode: node, childNode: child }); 
         collect(child); 
       });
-      const isHL = highlightedNode === node.value || (node.keys?.includes(highlightedNode)) || (highlightedNode && highlightedNode === node.range) || (highlightedNode && highlightedNode === node.index);
+      let isHL = false;
+      if (treeType === 'FENWICK_TREE') {
+        isHL = (
+          highlightedNode === node.index ||
+          highlightedNode === node.range ||
+          highlightedNode === `BIT[${node.index}]` ||
+          highlightedNode === `idx-${node.index}` ||
+          (Array.isArray(highlightedNode) && highlightedNode.includes(node.index))
+        );
+      } else {
+        isHL = highlightedNode === node.value || (node.keys?.includes(highlightedNode)) || (highlightedNode && highlightedNode === node.range) || (highlightedNode && highlightedNode === node.index);
+      }
       allNodes.push({ node, key: currentKey, isHL });
     };
     collect(rootNode);
@@ -3297,7 +3425,7 @@ function App() {
             const dy = e.y2 - e.y1;
             const dist = Math.sqrt(dx * dx + dy * dy) || 1;
             
-            if (parentNode.keys?.length > 0 || parentNode.range) {
+            if (parentNode.keys?.length > 0 || parentNode.range || treeType === 'FENWICK_TREE') {
               y1_val = e.y1 + pDim.h / 2;
               x1_val = e.x1;
             } else {
@@ -3305,7 +3433,7 @@ function App() {
               y1_val = e.y1 + (dy / dist) * NODE_R;
             }
             
-            if (childNode.keys?.length > 0 || childNode.range) {
+            if (childNode.keys?.length > 0 || childNode.range || treeType === 'FENWICK_TREE') {
               y2_val = e.y2 - cDim.h / 2;
               x2_val = e.x2;
             } else {
@@ -3357,8 +3485,8 @@ function App() {
         <g>
           {allNodes.map(({ node, key, isHL }) => {
             const isBT  = node.keys?.length > 0 && !node.range && node.value === undefined;
-            const isSeg = !!node.range;
-            const fill  = isHL ? 'url(#nhl)' : node._color === 'RED' ? 'url(#rbr)' : node._color === 'BLACK' ? 'url(#rbb)' : isSeg ? 'url(#sg)' : 'url(#ng)';
+            const isSeg = !!node.range && treeType !== 'FENWICK_TREE';
+            const fill  = isHL ? 'url(#nhl)' : node._color === 'RED' ? 'url(#rbr)' : node._color === 'BLACK' ? 'url(#rbb)' : (isSeg || treeType === 'FENWICK_TREE') ? 'url(#sg)' : 'url(#ng)';
             const glow  = isHL ? 'rgba(245,158,11,0.55)' : 'rgba(99,102,241,0.4)';
 
             if (isBT) {
@@ -3369,20 +3497,75 @@ function App() {
                 <text x={0} y={1} textAnchor="middle" dominantBaseline="central" fontSize="15" fontWeight="900" fill="#ffffff" fontFamily="sans-serif" style={{ filter: 'drop-shadow(0 2px 4px rgba(0,0,0,0.9))' }}>{node.keys.join(' | ')}</text>
               </g>;
             }
+            if (treeType === 'FENWICK_TREE') {
+              const isRoot = node.index === 0;
+              const showBits = fenwickBitMode && node.bitRep;
+              const rw = isRoot ? 100 : 92;
+              const rh = isRoot ? 48 : (showBits ? 72 : 60);
+              const ry = -rh / 2;
+              const rx = -rw / 2;
+
+              if (isRoot) {
+                return (
+                  <g key={key} transform={`translate(${node.x}, ${node.y})`}>
+                    <rect 
+                      x={rx} 
+                      y={ry} 
+                      width={rw} 
+                      height={rh} 
+                      rx={14} 
+                      fill={isHL ? 'url(#nhl)' : 'url(#ng)'} 
+                      stroke={isHL ? 'rgba(245,158,11,0.95)' : 'rgba(255,255,255,0.25)'} 
+                      strokeWidth="2" 
+                      style={{ filter: `drop-shadow(0 4px 14px ${glow})` }} 
+                    />
+                    <text x={0} y={-6} textAnchor="middle" dominantBaseline="central" fontSize="13" fontWeight="900" fill="#ffffff" fontFamily="sans-serif" style={{ filter: 'drop-shadow(0 2px 4px rgba(0,0,0,0.9))' }}>
+                      BIT Root
+                    </text>
+                    <text x={0} y={10} textAnchor="middle" dominantBaseline="central" fontSize="10" fill="rgba(255,255,255,0.8)" fontFamily="monospace" fontWeight="700">
+                      Index 0
+                    </text>
+                  </g>
+                );
+              }
+
+              return (
+                <g key={key} transform={`translate(${node.x}, ${node.y})`}>
+                  <rect 
+                    x={rx} 
+                    y={ry} 
+                    width={rw} 
+                    height={rh} 
+                    rx={12} 
+                    fill={fill} 
+                    stroke={isHL ? 'rgba(245,158,11,0.95)' : 'rgba(255,255,255,0.2)'} 
+                    strokeWidth={isHL ? '2.5' : '1.5'} 
+                    style={{ filter: `drop-shadow(0 4px 14px ${glow})` }} 
+                  />
+                  <text x={0} y={showBits ? -22 : -16} textAnchor="middle" dominantBaseline="central" fontSize="10" fontWeight="800" fill="var(--accent-primary, #38bdf8)" fontFamily="monospace">
+                    BIT[{node.index}]
+                  </text>
+                  <text x={0} y={showBits ? -7 : -1} textAnchor="middle" dominantBaseline="central" fontSize="16" fontWeight="900" fill="#ffffff" fontFamily="sans-serif" style={{ filter: 'drop-shadow(0 2px 4px rgba(0,0,0,0.95))' }}>
+                    {node.sum}
+                  </text>
+                  <text x={0} y={showBits ? 8 : 14} textAnchor="middle" dominantBaseline="central" fontSize="9.5" fill="rgba(255,255,255,0.85)" fontFamily="monospace" fontWeight="700">
+                    Range: {node.range}
+                  </text>
+                  {showBits && (
+                    <text x={0} y={23} textAnchor="middle" dominantBaseline="central" fontSize="10" fontWeight="bold" fill="#fde047" fontFamily="monospace">
+                      ({node.bitRep})₂ · LSB:{node.index & -node.index}
+                    </text>
+                  )}
+                </g>
+              );
+            }
             if (isSeg) {
-              const isFenwick = treeType === 'FENWICK_TREE';
-              const showBits = isFenwick && fenwickBitMode && node.bitRep;
-              const rh = showBits ? 66 : 54;
-              const ry = showBits ? -33 : -27;
+              const rh = 54;
+              const ry = -27;
               return <g key={key} transform={`translate(${node.x}, ${node.y})`}>
                 <rect x={-40} y={ry} width={80} height={rh} rx={12} fill={fill} stroke={isHL?'rgba(245,158,11,0.9)':'rgba(255,255,255,0.2)'} strokeWidth="2" style={{filter:`drop-shadow(0 3px 12px ${glow})`}}/>
-                <text x={0} y={showBits ? -16 : -8} textAnchor="middle" dominantBaseline="central" fontSize="16" fontWeight="900" fill="#ffffff" fontFamily="sans-serif" style={{ filter: 'drop-shadow(0 2px 4px rgba(0,0,0,0.9))' }}>{node.sum}</text>
-                <text x={0} y={showBits ? 2 : 12} textAnchor="middle" dominantBaseline="central" fontSize="9" fill="rgba(255,255,255,0.85)" fontFamily="monospace" fontWeight="700">{node.range}</text>
-                {showBits && (
-                  <text x={0} y={20} textAnchor="middle" dominantBaseline="central" fontSize="11" fontWeight="bold" fill="var(--accent-primary)" fontFamily="monospace">
-                    ({node.bitRep})₂
-                  </text>
-                )}
+                <text x={0} y={-8} textAnchor="middle" dominantBaseline="central" fontSize="16" fontWeight="900" fill="#ffffff" fontFamily="sans-serif" style={{ filter: 'drop-shadow(0 2px 4px rgba(0,0,0,0.9))' }}>{node.sum}</text>
+                <text x={0} y={12} textAnchor="middle" dominantBaseline="central" fontSize="9" fill="rgba(255,255,255,0.85)" fontFamily="monospace" fontWeight="700">{node.range}</text>
               </g>;
             }
 
@@ -3722,6 +3905,8 @@ function App() {
                       lastActiveMode === 'GRAPH_VIS' ? 'Graph Visualizer' :
                       lastActiveMode === 'DP_GREEDY_VIS' ? 'DP & Greedy' :
                       lastActiveMode === 'JAVA_OOP_VIS' ? 'Patterns' :
+                      lastActiveMode === 'DSA_STUDY_VIS' ? 'DSA Study & Theory' :
+                      lastActiveMode === 'DSA_SUMS_VIS' ? 'DSA Practice Sums Arena' :
                       lastActiveMode === 'DSA_NOTES_VIS' ? 'DSA Study & Solved Sums' :
                       lastActiveMode === 'LINE_BY_LINE_VIS' ? 'Line Debugger' :
                       'Code Validator'
@@ -3815,7 +4000,7 @@ function App() {
                 { id: 'GRAPH_VIS', icon: '🕸️', title: 'Graph Visualizer Studio', desc: 'Construct customized weighted graphs. Animate BFS, DFS, Dijkstra, and Greedy best-first traversals.' },
                 { id: 'DP_GREEDY_VIS', icon: '🧠', title: 'DP & Greedy Visualizer', desc: 'Visualize LCS, LIS, Knapsack, and Coin Change DP vs. Greedy side-by-side.' },
                 { id: 'JAVA_OOP_VIS', icon: '✨', title: 'Patterns Visualizer Studio', desc: 'Animate and compile 10 different loop patterns (Pyramids, Diamond, Pascal, Floyd, Butterfly) in 5 languages.' },
-                { id: 'DSA_NOTES_VIS', icon: '📚', title: 'DSA Study & Solved Sums', desc: 'Interactive step-by-step code trace, variables inspector and visualizations for 10 classic DSA problems.' },
+                { id: 'DSA_NOTES_VIS', icon: '📚', title: 'DSA Study & Solved Sums Studio', desc: 'Comprehensive foundational theory, 6 advanced algorithm modules, and interactive LeetCode/CodeChef solved sums with step-by-step trace & SVG visualizers.' },
                 { id: 'LINE_BY_LINE_VIS', icon: '🐞', title: 'Line-by-Line Debugger', desc: 'PythonTutor-style execution tracing. Step through code, track variables, frames, and output.' },
                 { id: 'CODE_VAL_VIS', icon: '💻', title: 'Code Validator & Runner', desc: 'Write or paste code in 5 languages. Enhanced syntax validation, error detection, and native cloud execution.' }
               ].map(card => (
@@ -3891,11 +4076,10 @@ function App() {
                 { id: 'MOD4_DINIC', mode: 'DSA_NOTES_VIS', title: 'Dinic Max-Flow Algorithm (Level Graphs)', icon: '🌊', desc: 'Network Flow Algorithms' },
                 { id: 'MOD5_APPROXIMATION', mode: 'DSA_NOTES_VIS', title: 'Approximation Algorithms & Vertex-Cover 2-Approx', icon: '🎯', desc: 'NP-Completeness & Approximation' },
                 { id: 'MOD6_MILLER_RABIN', mode: 'DSA_NOTES_VIS', title: 'Miller-Rabin Primality Test', icon: '🎲', desc: 'Randomised & Parallel Algorithms' },
-                { id: 'MOD6_PARALLEL_BLELLOCH', mode: 'DSA_NOTES_VIS', title: 'Blelloch Parallel Prefix Scan', icon: '🚀', desc: 'Randomised & Parallel Algorithms' },
-                { id: 'DSA_NOTES_VIS', mode: 'DSA_NOTES_VIS', title: 'DSA Study & Solved Sums (Two Sum, List Reverse, Valid Parentheses, DP)', icon: '📚', desc: 'DSA Notes & Solved Problems Studio' },
+                { id: 'DSA_NOTES_VIS', mode: 'DSA_NOTES_VIS', title: 'DSA Study & Solved Sums Studio (Comprehensive Theory, 6 Advanced Modules & Interactive Sums)', icon: '📚', desc: 'Complete DSA Theory, SVG Stepper & Live Code Demos' },
                 { id: 'BTECH_ROADMAP', mode: 'BEGINNER_101_VIS', title: 'B.Tech Branch Roadmaps & Language Picker', icon: '🎓', desc: 'Which language to pick for CSE, ECE, EEE, Mech, Civil, AI/ML, Cyber Security & more' },
                 { id: 'LANG_CAREER', mode: 'BEGINNER_101_VIS', title: 'Language Career Guide', icon: '🎯', desc: 'Jobs, fields, and applications per programming language' },
-                { id: 'AI_RAG_MENTOR', mode: 'AI_RAG_MENTOR_VIS', title: '🤖 AlgoFlow AI RAG Mentor Studio', icon: '🤖', desc: 'Ask career roadmaps, branch advice, languages & DSA questions to AI' }
+                { id: 'AI_RAG_MENTOR', mode: 'AI_RAG_MENTOR_VIS', title: '✨ AlgoFlow AI RAG Mentor Studio', icon: '✨', desc: 'Ask career roadmaps, branch advice, languages & DSA questions to AI' }
               ].filter(c => c.title.toLowerCase().includes(homeSearchQuery.toLowerCase()) || c.desc.toLowerCase().includes(homeSearchQuery.toLowerCase())).map(card => (
                 <div key={card.id} className="option-card" onClick={() => setPendingModule(card)} onMouseEnter={e => gsap.to(e.currentTarget, { scale: 1.05, duration: 0.2 })} onMouseLeave={e => gsap.to(e.currentTarget, { scale: 1, duration: 0.2 })}>
                   <div className="option-icon">{card.icon}</div>
@@ -3914,10 +4098,10 @@ function App() {
           <button className="btn btn-clear" onClick={goBack} style={{ display: 'flex', alignItems: 'center', gap: '6px' }}>
             ← 🏠 Home
           </button>
-          <span style={{ fontWeight: 'bold', color: '#38bdf8' }}>🤖 AI RAG Mentor Studio</span>
+          <span style={{ fontWeight: 'bold', color: '#38bdf8' }}>✨ AI RAG Mentor Studio</span>
         </div>
         <div style={{ padding: '20px', maxWidth: '1200px', margin: '0 auto' }}>
-          <AiRagMentorStudio codeLang={codeLang} customCode={customCode} />
+          <AiRagMentorStudio codeLang={codeLang} customCode={customCode} apiKey={globalApiKey} model={globalModel} />
         </div>
       </div>
 
@@ -3929,7 +4113,18 @@ function App() {
           </button>
           <span style={{ fontWeight: 'bold', color: '#38bdf8' }}>🌱 Beginner 101</span>
         </div>
-        <Beginner101Visualizer codeLang={codeLang} setCodeLang={setCodeLang} fontSize={editorFontSize} />
+        <Beginner101Visualizer 
+          codeLang={codeLang} 
+          setCodeLang={setCodeLang} 
+          fontSize={editorFontSize} 
+          onOpenDebugger={(code, lang) => {
+            if (code) setCustomCode(code);
+            if (lang) setCodeLang(lang);
+            setAppMode('LINE_BY_LINE_VIS');
+            window.location.hash = 'LINE_BY_LINE_VIS';
+            setSetupComplete(true);
+          }}
+        />
       </div>
 
       {/* Sort Search Visualizer */}
@@ -4027,10 +4222,49 @@ function App() {
           fontSize={editorFontSize}
           wordWrap={editorWordWrap}
           onShowUpcomingFeatures={() => setIsUpcomingOpen(true)}
+          initialTopicKey={globalDsaNotesKey}
+          initialLang={codeLang}
+          onOpenDebugger={(code, lang) => {
+            setCustomCode(code);
+            if (lang) setCodeLang(lang);
+            setAppMode('LINE_BY_LINE_VIS');
+            window.location.hash = 'LINE_BY_LINE_VIS';
+            setSetupComplete(true);
+          }}
+          onCodeChange={(code, lang) => {
+            setActiveCodeForChat(code);
+            setActiveLangForChat(lang);
+          }}
         />
       </div>
 
+      {/* DSA Theory & Study Studio (Fallback) */}
+      <div style={{ display: appMode === 'DSA_STUDY_VIS' ? 'block' : 'none' }}>
+        <DSAStudyVisualizer 
+          onBack={goBack} 
+          onOpenDebugger={(code, lang) => {
+            setCustomCode(code);
+            if (lang) setCodeLang(lang);
+            setAppMode('LINE_BY_LINE_VIS');
+            window.location.hash = 'LINE_BY_LINE_VIS';
+            setSetupComplete(true);
+          }}
+        />
+      </div>
 
+      {/* DSA Practice Sums Arena (Fallback) */}
+      <div style={{ display: appMode === 'DSA_SUMS_VIS' ? 'block' : 'none' }}>
+        <DSASumsVisualizer 
+          onBack={goBack} 
+          onOpenDebugger={(code, lang) => {
+            setCustomCode(code);
+            if (lang) setCodeLang(lang);
+            setAppMode('LINE_BY_LINE_VIS');
+            window.location.hash = 'LINE_BY_LINE_VIS';
+            setSetupComplete(true);
+          }}
+        />
+      </div>
 
       {/* Pending Module (Language Setup via Search) */}
       {pendingModule && (
@@ -4070,6 +4304,9 @@ function App() {
                 }
                 if (pendingModule.mode === 'DP_GREEDY_VIS') {
                   setGlobalDpTab(pendingModule.tab);
+                }
+                if (pendingModule.mode === 'DSA_NOTES_VIS') {
+                  setGlobalDsaNotesKey(pendingModule.id);
                 }
                 setAppMode(pendingModule.mode);
                 setSetupComplete(true);
@@ -4111,25 +4348,31 @@ function App() {
             <h2 className="title-gradient">Setup Debugger</h2>
             <div className="select-group">
               <label style={{ fontWeight: 600 }}>Select Programming Language</label>
-              <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '0.8rem', marginTop: '12px' }}>
-                {['JS', 'Python', 'C++', 'Java'].map((lang) => (
-                  <button key={lang} onClick={() => setCodeLang(lang)}
+              <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(130px, 1fr))', gap: '0.8rem', marginTop: '12px' }}>
+                {[
+                  { id: 'C', icon: '⚙️', name: 'C' },
+                  { id: 'C++', icon: '⚡', name: 'C++' },
+                  { id: 'Java', icon: '☕', name: 'Java' },
+                  { id: 'Python', icon: '🐍', name: 'Python' },
+                  { id: 'JS', icon: '🟨', name: 'JavaScript' }
+                ].map((item) => (
+                  <button key={item.id} onClick={() => setCodeLang(item.id)}
                     onMouseEnter={e => gsap.to(e.currentTarget, { scale: 1.05, duration: 0.2 })}
                     onMouseLeave={e => gsap.to(e.currentTarget, { scale: 1, duration: 0.2 })}
                     style={{ 
-                      padding: '1.2rem', borderRadius: '14px', 
-                      border: `2px solid ${codeLang === lang ? 'var(--accent-primary)' : 'var(--glass-border)'}`, 
-                      background: codeLang === lang ? 'linear-gradient(135deg, rgba(59,130,246,0.3), rgba(139,92,246,0.2))' : 'rgba(255,255,255,0.02)', 
-                      color: codeLang === lang ? 'var(--accent-primary)' : 'var(--text-primary)', 
-                      cursor: 'pointer', fontWeight: codeLang === lang ? 800 : 500, fontSize: '1.1rem', 
+                      padding: '1rem 0.8rem', borderRadius: '14px', 
+                      border: `2px solid ${codeLang === item.id ? 'var(--accent-primary)' : 'var(--glass-border)'}`, 
+                      background: codeLang === item.id ? 'linear-gradient(135deg, rgba(59,130,246,0.3), rgba(139,92,246,0.2))' : 'rgba(255,255,255,0.02)', 
+                      color: codeLang === item.id ? 'var(--accent-primary)' : 'var(--text-primary)', 
+                      cursor: 'pointer', fontWeight: codeLang === item.id ? 800 : 500, fontSize: '1rem', 
                       transition: 'all 0.2s', textAlign: 'center',
-                      boxShadow: codeLang === lang ? '0 0 15px rgba(59,130,246,0.2)' : 'none',
-                      display: 'flex', flexDirection: 'column', alignItems: 'center', gap: '8px'
+                      boxShadow: codeLang === item.id ? '0 0 15px rgba(59,130,246,0.2)' : 'none',
+                      display: 'flex', flexDirection: 'column', alignItems: 'center', gap: '6px'
                     }}>
-                    <span style={{ fontSize: '2rem' }}>
-                      {lang === 'JS' ? '🟨' : lang === 'Python' ? '🐍' : lang === 'C++' ? '⚙️' : '☕'}
+                    <span style={{ fontSize: '1.8rem' }}>
+                      {item.icon}
                     </span>
-                    {lang === 'JS' ? 'JavaScript' : lang}
+                    {item.name}
                   </button>
                 ))}
               </div>
@@ -4219,7 +4462,18 @@ function App() {
                 >
                   ▶ Run Code
                 </button>
-                <button className="btn btn-clear" style={{ background: 'rgba(236,72,153,0.2)', color: '#fbcfe8' }} onClick={() => enterMode('LINE_BY_LINE_VIS')}>🐛 Debug (Line-by-Line)</button>
+                {isLineDebuggerSupported(codeLang) && (
+                  <button 
+                    className="btn btn-clear" 
+                    style={{ background: 'rgba(236,72,153,0.2)', color: '#fbcfe8' }} 
+                    onClick={() => {
+                      enterMode('LINE_BY_LINE_VIS');
+                      setSetupComplete(true);
+                    }}
+                  >
+                    🐛 Debug (Line-by-Line)
+                  </button>
+                )}
                 <button className="btn btn-clear" onClick={() => setIsSettingsOpen(true)}>⚙ Settings</button>
                 <button className="btn btn-clear" onClick={() => setAppMode(null)}>🏠 Home</button>
               </div>
@@ -4285,29 +4539,186 @@ function App() {
               </div>
 
               <div className="controls-glass" style={{ display: 'flex', gap: '0.5rem', flexWrap: 'wrap', alignItems: 'center' }}>
-                {/* Always show main operation inputs */}
-                {treeType !== 'MIN_HEAP' && treeType !== 'MAX_HEAP' && (
-                  <input type={treeType === 'BFS_TREE' || treeType === 'DFS_TREE' ? "text" : "number"} className="styled-input" style={{ width: isMobile ? '80px' : (treeType === 'BFS_TREE' || treeType === 'DFS_TREE' ? '150px' : '115px'), opacity: isPlaying ? 0.7 : 1 }} placeholder={isPlaying ? "Wait..." : "Val…"} value={inputValue} onChange={e => setInputValue(e.target.value)} onKeyDown={e => e.key === 'Enter' && !isPlaying && inputValue.trim() && handleInsert()} />
-                )}
-                {treeType !== 'MIN_HEAP' && treeType !== 'MAX_HEAP' ? (
-                  <button className="btn btn-insert" onClick={handleInsert} disabled={isPlaying || !inputValue.trim()}>
-                    {isPlaying ? '⏳' : 'Insert'}
-                  </button>
+                {treeType === 'FENWICK_TREE' ? (
+                  <>
+                    <div style={{ display: 'flex', background: 'rgba(0,0,0,0.35)', borderRadius: '8px', padding: '2px', gap: '2px' }}>
+                      <button 
+                        type="button"
+                        className="btn btn-clear" 
+                        style={{ padding: '3px 8px', fontSize: '0.78rem', border: 'none', background: fenwickOpTab === 'INSERT' ? 'var(--accent-primary)' : 'transparent', color: fenwickOpTab === 'INSERT' ? '#fff' : 'var(--text-secondary)', fontWeight: 'bold' }} 
+                        onClick={() => setFenwickOpTab('INSERT')}
+                      >
+                        ➕ Insert
+                      </button>
+                      <button 
+                        type="button"
+                        className="btn btn-clear" 
+                        style={{ padding: '3px 8px', fontSize: '0.78rem', border: 'none', background: fenwickOpTab === 'PREFIX_SUM' ? 'var(--accent-primary)' : 'transparent', color: fenwickOpTab === 'PREFIX_SUM' ? '#fff' : 'var(--text-secondary)', fontWeight: 'bold' }} 
+                        onClick={() => setFenwickOpTab('PREFIX_SUM')}
+                      >
+                        🔍 Prefix Sum
+                      </button>
+                      <button 
+                        type="button"
+                        className="btn btn-clear" 
+                        style={{ padding: '3px 8px', fontSize: '0.78rem', border: 'none', background: fenwickOpTab === 'RANGE_SUM' ? 'var(--accent-primary)' : 'transparent', color: fenwickOpTab === 'RANGE_SUM' ? '#fff' : 'var(--text-secondary)', fontWeight: 'bold' }} 
+                        onClick={() => setFenwickOpTab('RANGE_SUM')}
+                      >
+                        📏 Range Sum
+                      </button>
+                      <button 
+                        type="button"
+                        className="btn btn-clear" 
+                        style={{ padding: '3px 8px', fontSize: '0.78rem', border: 'none', background: fenwickOpTab === 'UPDATE' ? 'var(--accent-primary)' : 'transparent', color: fenwickOpTab === 'UPDATE' ? '#fff' : 'var(--text-secondary)', fontWeight: 'bold' }} 
+                        onClick={() => setFenwickOpTab('UPDATE')}
+                      >
+                        ✏️ Update
+                      </button>
+                    </div>
+
+                    {fenwickOpTab === 'INSERT' && (
+                      <div style={{ display: 'flex', gap: '5px', alignItems: 'center' }}>
+                        <input 
+                          type="number" 
+                          className="styled-input" 
+                          style={{ width: isMobile ? '80px' : '100px', opacity: isPlaying ? 0.7 : 1 }} 
+                          placeholder="Val…" 
+                          value={inputValue} 
+                          onChange={e => setInputValue(e.target.value)} 
+                          onKeyDown={e => e.key === 'Enter' && !isPlaying && inputValue.trim() && handleInsert()} 
+                        />
+                        <button className="btn btn-insert" onClick={handleInsert} disabled={isPlaying || !inputValue.trim()}>
+                          {isPlaying ? '⏳' : 'Insert'}
+                        </button>
+                        <button 
+                          className="btn btn-clear" 
+                          style={{ background: 'var(--accent-secondary)', color: 'white', border: 'none', opacity: insertedValues.length > 0 && !isPlaying ? 1 : 0.5 }} 
+                          onClick={handleDelete} 
+                          disabled={!insertedValues.length || isPlaying} 
+                          title="Remove last element"
+                        >
+                          Pop Last
+                        </button>
+                      </div>
+                    )}
+
+                    {fenwickOpTab === 'PREFIX_SUM' && (
+                      <div style={{ display: 'flex', gap: '5px', alignItems: 'center' }}>
+                        <input 
+                          type="number" 
+                          min="1" 
+                          max={insertedValues.length || 1} 
+                          className="styled-input" 
+                          style={{ width: '85px', opacity: isPlaying ? 0.7 : 1 }} 
+                          placeholder={`k (1..${insertedValues.length || 1})`} 
+                          value={fenwickQueryIdx} 
+                          onChange={e => setFenwickQueryIdx(e.target.value)} 
+                          onKeyDown={e => e.key === 'Enter' && !isPlaying && handleFenwickQuery()} 
+                        />
+                        <button 
+                          className="btn btn-insert" 
+                          style={{ background: 'linear-gradient(135deg, #0ea5e9, #6366f1)' }} 
+                          onClick={() => handleFenwickQuery()} 
+                          disabled={isPlaying || !insertedValues.length}
+                        >
+                          {isPlaying ? '⏳' : 'Prefix Sum (1..k)'}
+                        </button>
+                      </div>
+                    )}
+
+                    {fenwickOpTab === 'RANGE_SUM' && (
+                      <div style={{ display: 'flex', gap: '5px', alignItems: 'center' }}>
+                        <input 
+                          type="number" 
+                          min="1" 
+                          max={insertedValues.length || 1} 
+                          className="styled-input" 
+                          style={{ width: '65px', opacity: isPlaying ? 0.7 : 1 }} 
+                          placeholder="L (1..N)" 
+                          value={fenwickRangeL} 
+                          onChange={e => setFenwickRangeL(e.target.value)} 
+                        />
+                        <input 
+                          type="number" 
+                          min="1" 
+                          max={insertedValues.length || 1} 
+                          className="styled-input" 
+                          style={{ width: '65px', opacity: isPlaying ? 0.7 : 1 }} 
+                          placeholder="R (1..N)" 
+                          value={fenwickRangeR} 
+                          onChange={e => setFenwickRangeR(e.target.value)} 
+                          onKeyDown={e => e.key === 'Enter' && !isPlaying && handleFenwickRangeQuery()} 
+                        />
+                        <button 
+                          className="btn btn-insert" 
+                          style={{ background: 'linear-gradient(135deg, #a855f7, #6366f1)' }} 
+                          onClick={() => handleFenwickRangeQuery()} 
+                          disabled={isPlaying || !insertedValues.length}
+                        >
+                          {isPlaying ? '⏳' : 'Range Sum (L..R)'}
+                        </button>
+                      </div>
+                    )}
+
+                    {fenwickOpTab === 'UPDATE' && (
+                      <div style={{ display: 'flex', gap: '5px', alignItems: 'center' }}>
+                        <input 
+                          type="number" 
+                          min="1" 
+                          max={insertedValues.length || 1} 
+                          className="styled-input" 
+                          style={{ width: '65px', opacity: isPlaying ? 0.7 : 1 }} 
+                          placeholder="Idx (1..N)" 
+                          value={fenwickUpdateIdx} 
+                          onChange={e => setFenwickUpdateIdx(e.target.value)} 
+                        />
+                        <input 
+                          type="number" 
+                          className="styled-input" 
+                          style={{ width: '75px', opacity: isPlaying ? 0.7 : 1 }} 
+                          placeholder="±Delta" 
+                          value={fenwickUpdateVal} 
+                          onChange={e => setFenwickUpdateVal(e.target.value)} 
+                          onKeyDown={e => e.key === 'Enter' && !isPlaying && handleFenwickUpdate()} 
+                        />
+                        <button 
+                          className="btn btn-insert" 
+                          style={{ background: 'linear-gradient(135deg, #10b981, #0ea5e9)' }} 
+                          onClick={() => handleFenwickUpdate()} 
+                          disabled={isPlaying || !insertedValues.length}
+                        >
+                          {isPlaying ? '⏳' : 'Apply Delta'}
+                        </button>
+                      </div>
+                    )}
+                  </>
                 ) : (
-                  <div style={{ display: 'flex', gap: '5px', alignItems: 'center' }}>
-                    <input type="number" className="styled-input" style={{ width: '80px', opacity: isPlaying ? 0.7 : 1 }} placeholder="Val…" value={inputValue} onChange={e => setInputValue(e.target.value)} onKeyDown={e => e.key === 'Enter' && !isPlaying && inputValue.trim() && handleInsert()} />
-                    <button className="btn btn-insert" onClick={handleInsert} disabled={isPlaying || !inputValue.trim()}>Insert</button>
-                  </div>
+                  <>
+                    {/* Always show main operation inputs */}
+                    {treeType !== 'MIN_HEAP' && treeType !== 'MAX_HEAP' && (
+                      <input type={treeType === 'BFS_TREE' || treeType === 'DFS_TREE' ? "text" : "number"} className="styled-input" style={{ width: isMobile ? '80px' : (treeType === 'BFS_TREE' || treeType === 'DFS_TREE' ? '150px' : '115px'), opacity: isPlaying ? 0.7 : 1 }} placeholder={isPlaying ? "Wait..." : "Val…"} value={inputValue} onChange={e => setInputValue(e.target.value)} onKeyDown={e => e.key === 'Enter' && !isPlaying && inputValue.trim() && handleInsert()} />
+                    )}
+                    {treeType !== 'MIN_HEAP' && treeType !== 'MAX_HEAP' ? (
+                      <button className="btn btn-insert" onClick={handleInsert} disabled={isPlaying || !inputValue.trim()}>
+                        {isPlaying ? '⏳' : 'Insert'}
+                      </button>
+                    ) : (
+                      <div style={{ display: 'flex', gap: '5px', alignItems: 'center' }}>
+                        <input type="number" className="styled-input" style={{ width: '80px', opacity: isPlaying ? 0.7 : 1 }} placeholder="Val…" value={inputValue} onChange={e => setInputValue(e.target.value)} onKeyDown={e => e.key === 'Enter' && !isPlaying && inputValue.trim() && handleInsert()} />
+                        <button className="btn btn-insert" onClick={handleInsert} disabled={isPlaying || !inputValue.trim()}>Insert</button>
+                      </div>
+                    )}
+                    {(() => {
+                      const isHeap = treeType === 'MIN_HEAP' || treeType === 'MAX_HEAP';
+                      const canDel = !isPlaying && (isHeap ? insertedValues.length > 0 : ((treeType === 'BST' || treeType === 'AVL') && inputValue.trim()));
+                      return (
+                        <button className="btn btn-clear" style={{background: 'var(--accent-secondary)', color: 'white', border: 'none', opacity: canDel ? 1 : 0.5}} onClick={handleDelete} disabled={!canDel}>
+                          {isHeap ? 'Extract' : 'Delete'}
+                        </button>
+                      );
+                    })()}
+                  </>
                 )}
-                {(() => {
-                  const isHeap = treeType === 'MIN_HEAP' || treeType === 'MAX_HEAP';
-                  const canDel = !isPlaying && (isHeap ? insertedValues.length > 0 : ((treeType === 'BST' || treeType === 'AVL') && inputValue.trim()));
-                  return (
-                    <button className="btn btn-clear" style={{background: 'var(--accent-secondary)', color: 'white', border: 'none', opacity: canDel ? 1 : 0.5}} onClick={handleDelete} disabled={!canDel}>
-                      {isHeap ? 'Extract' : 'Delete'}
-                    </button>
-                  );
-                })()}
 
                 {isMobile && (
                   <button 
@@ -4428,6 +4839,81 @@ function App() {
                 </div>
               </div>
             )}
+            {frame.root && treeType === 'FENWICK_TREE' && (() => {
+              const n = insertedValues.length;
+              const bitArr = new Array(n + 1).fill(0);
+              for (let i = 1; i <= n; i++) {
+                bitArr[i] += insertedValues[i - 1];
+                let p = i + (i & -i);
+                if (p <= n) bitArr[p] += bitArr[i];
+              }
+
+              return (
+                <div style={{ background: 'rgba(15,23,42,0.88)', backdropFilter: 'blur(12px)', borderBottom: '1px solid var(--glass-border)', padding: '8px 16px', display: 'flex', flexDirection: isMobile ? 'column' : 'row', alignItems: isMobile ? 'flex-start' : 'center', gap: '16px', fontSize: '0.85rem', flexShrink: 0, overflowX: 'auto', zIndex: 20 }}>
+                  {/* Original Array A */}
+                  <div style={{ display: 'flex', alignItems: 'center', gap: '8px', flexShrink: 0 }}>
+                    <span style={{ color: 'var(--accent-primary)', fontWeight: 'bold', whiteSpace: 'nowrap' }}>Array A[1..{n}]:</span>
+                    <div style={{ display: 'flex', gap: '4px' }}>
+                      {insertedValues.map((v, idx) => {
+                        const i = idx + 1;
+                        const isMatch = frame.highlight === i;
+                        return (
+                          <div 
+                            key={idx} 
+                            onClick={() => handleFenwickQuery(i)}
+                            title={`Click to run Prefix Sum query(1..${i})`}
+                            style={{ 
+                              background: isMatch ? 'rgba(245,158,11,0.25)' : 'rgba(255,255,255,0.06)', 
+                              border: `1px solid ${isMatch ? '#f59e0b' : 'rgba(255,255,255,0.15)'}`, 
+                              borderRadius: '6px', 
+                              padding: '2px 7px', 
+                              textAlign: 'center', 
+                              cursor: 'pointer',
+                              transition: 'all 0.2s'
+                            }}
+                          >
+                            <div style={{ fontSize: '0.68rem', color: 'var(--text-secondary)', fontFamily: 'monospace' }}>A[{i}]</div>
+                            <div style={{ fontWeight: 'bold', color: isMatch ? '#f59e0b' : '#ffffff' }}>{v}</div>
+                          </div>
+                        );
+                      })}
+                    </div>
+                  </div>
+
+                  {/* BIT Array */}
+                  <div style={{ display: 'flex', alignItems: 'center', gap: '8px', flexShrink: 0 }}>
+                    <span style={{ color: '#a78bfa', fontWeight: 'bold', whiteSpace: 'nowrap' }}>Fenwick BIT[1..{n}]:</span>
+                    <div style={{ display: 'flex', gap: '4px' }}>
+                      {insertedValues.map((_, idx) => {
+                        const i = idx + 1;
+                        const isMatch = frame.highlight === i;
+                        const lsb = i & -i;
+                        const rangeStr = `[${i - lsb + 1}-${i}]`;
+                        return (
+                          <div 
+                            key={idx} 
+                            onClick={() => handleFenwickQuery(i)}
+                            title={`BIT[${i}] covers ${rangeStr}. Click to Query.`}
+                            style={{ 
+                              background: isMatch ? 'rgba(245,158,11,0.25)' : 'rgba(167,139,250,0.1)', 
+                              border: `1px solid ${isMatch ? '#f59e0b' : 'rgba(167,139,250,0.3)'}`, 
+                              borderRadius: '6px', 
+                              padding: '2px 7px', 
+                              textAlign: 'center', 
+                              cursor: 'pointer',
+                              transition: 'all 0.2s'
+                            }}
+                          >
+                            <div style={{ fontSize: '0.68rem', color: '#c4b5fd', fontFamily: 'monospace' }}>BIT[{i}]</div>
+                            <div style={{ fontWeight: 'bold', color: isMatch ? '#f59e0b' : '#e2e8f0' }}>{bitArr[i]}</div>
+                          </div>
+                        );
+                      })}
+                    </div>
+                  </div>
+                </div>
+              );
+            })()}
 
             {isMobile && (
               <div className="mobile-tabs-container">
@@ -4858,19 +5344,21 @@ function App() {
             </p>
             
             <div style={{ display: 'flex', flexDirection: 'column', gap: '0.8rem' }}>
-              <button 
-                className="btn btn-insert"
-                style={{ width: '100%', padding: '0.8rem', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '8px', fontSize: '0.95rem' }}
-                onClick={() => {
-                  setCustomCode(copyModalData.code);
-                  setCodeLang(copyModalData.language);
-                  setAppMode('LINE_BY_LINE_VIS');
-                  setSetupComplete(true);
-                  setCopyModalData(prev => ({ ...prev, isOpen: false }));
-                }}
-              >
-                🐛 Go to Line-by-Line Debugger
-              </button>
+              {isLineDebuggerSupported(copyModalData.language) && (
+                <button 
+                  className="btn btn-insert"
+                  style={{ width: '100%', padding: '0.8rem', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '8px', fontSize: '0.95rem' }}
+                  onClick={() => {
+                    setCustomCode(copyModalData.code);
+                    setCodeLang(copyModalData.language);
+                    setAppMode('LINE_BY_LINE_VIS');
+                    setSetupComplete(true);
+                    setCopyModalData(prev => ({ ...prev, isOpen: false }));
+                  }}
+                >
+                  🐛 Go to Line-by-Line Debugger
+                </button>
+              )}
 
               <button 
                 className="btn btn-clear"
@@ -5014,7 +5502,7 @@ function App() {
                     <label style={{ fontSize: '0.95rem', color: 'var(--text-primary)', fontWeight: 600, display: 'block', marginBottom: '8px' }}>Feedback Type</label>
                     <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '10px' }}>
                       {[
-                        { id: 'AI Assistant / Bot', label: 'AI Bot & Mentor', emoji: '🤖' },
+                        { id: 'AI Assistant / Bot', label: 'AI Bot & Mentor', emoji: '✨' },
                         { id: 'Bug Report', label: 'Bug Report', emoji: '🐛' },
                         { id: 'DSA & Visualizer', label: 'DSA & Visualizer', emoji: '⚡' },
                         { id: 'Feature Request', label: 'Feature Request', emoji: '✨' },
@@ -5110,7 +5598,7 @@ function App() {
                     <span style={{ fontSize: '0.8rem', color: 'var(--text-secondary)', display: 'block', marginBottom: '6px' }}>💡 Quick topics to add:</span>
                     <div style={{ display: 'flex', gap: '6px', flexWrap: 'wrap' }}>
                       {[
-                        { text: '🤖 AI Accuracy & Explanations', cat: 'AI Assistant / Bot' },
+                        { text: '✨ AI Accuracy & Explanations', cat: 'AI Assistant / Bot' },
                         { text: '💧 AI Transparency & Motion', cat: 'AI Assistant / Bot' },
                         { text: '⚡ Add More DSA Patterns', cat: 'DSA & Visualizer' },
                         { text: '🎨 UI & Theme Polish', cat: 'Suggestion' },
@@ -5450,12 +5938,18 @@ function App() {
         setIsChatOpen={setIsChatOpen}
         chatMessages={chatMessages}
         setChatMessages={setChatMessages}
+        apiKey={globalApiKey}
+        model={globalModel}
+        setApiKey={setGlobalApiKey}
+        setModel={setGlobalModel}
         currentContext={{
           appMode,
-          treeType,
-          globalSort,
-          globalSearch,
-          globalSortSearchTab,
+          treeType: appMode === 'MAIN_VIS' ? treeType : null,
+          globalDsType: appMode === 'GENERAL_DSA_VIS' ? globalDsType : null,
+          globalDsVariety: appMode === 'GENERAL_DSA_VIS' ? globalDsVariety : null,
+          globalSort: appMode === 'SORT_SEARCH_VIS' ? globalSort : null,
+          globalSearch: appMode === 'SORT_SEARCH_VIS' ? globalSearch : null,
+          globalSortSearchTab: appMode === 'SORT_SEARCH_VIS' ? globalSortSearchTab : null,
           codeLang: activeLangForChat || codeLang
         }}
       />
