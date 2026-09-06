@@ -59,7 +59,9 @@ export async function askAlgoFlowAiMentor({
   codeLang = 'C++',
   currentContext = {},
   apiKey = '',
-  model = ''
+  model = '',
+  userProfile = null,
+  chatHistory = []
 }) {
   if (!query || typeof query !== 'string' || !query.trim()) {
     return {
@@ -115,6 +117,11 @@ STUDIO CONTEXT:
 - Active Visualizer/Engine: ${currentContext?.appMode || 'AlgoFlow Studio General'}
 - Active Tree/DS/Algorithm: ${currentContext?.treeType || currentContext?.globalDsType || currentContext?.globalSort || currentContext?.globalSearch || 'None'}
 - Active Code Language: ${codeLang || 'C++'}
+${userProfile?.name ? `\nSTUDENT PROFILE & HABITUATION:
+- Student Name: ${userProfile.name} (${userProfile.name.split(' ')[0]})
+- Verified Email: ${userProfile.email || 'N/A'}
+${userProfile.habits && userProfile.habits.length > 0 ? `- Frequented / Habituated Topics: ${userProfile.habits.join(', ')}` : ''}
+Address the student warmly and directly, keeping their habituated learning pace in mind.\n` : ''}
 ${customCode ? `\nUSER'S ACTIVE CODE IN RUNNER:\n\`\`\`${codeLang}\n${customCode}\n\`\`\`\n` : ''}
 
 REAL-TIME CLOCK CONTEXT:
@@ -140,8 +147,23 @@ CONVERSATIONAL RULES & PROPORTIONALITY (CRITICAL):
 - [Option to explore real-world use cases, background, or insights]
 - [Option for comparisons, edge cases, or next steps]`;
 
+        // Format recent conversation history turns (excluding current question)
+        const formattedHistory = [];
+        if (Array.isArray(chatHistory) && chatHistory.length > 0) {
+          const recentTurns = chatHistory.slice(-6);
+          for (const turn of recentTurns) {
+            if (!turn?.text || typeof turn.text !== 'string') continue;
+            const isModel = turn.role === 'assistant' || turn.sender === 'bot';
+            formattedHistory.push({
+              role: isModel ? 'model' : 'user',
+              parts: [{ text: turn.text }]
+            });
+          }
+        }
+
         const requestPayload = {
           contents: [
+            ...formattedHistory,
             {
               role: 'user',
               parts: [

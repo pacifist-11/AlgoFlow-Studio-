@@ -17,6 +17,15 @@ import FloatingAiBot from './airag/FloatingAiBot.jsx';
 import AiRagMentorStudio from './airag/AiRagMentorStudio.jsx';
 import { checkRestrictedWords } from './airag/restrictedWords.js';
 import { isLineDebuggerSupported } from './languageUtils.js';
+import GoogleConnectModal from './auth/GoogleConnectModal.jsx';
+import UserProfileBadge from './auth/UserProfileBadge.jsx';
+import { 
+  getActiveUser, 
+  hasSeenOnboarding, 
+  logoutUser, 
+  loadUserChatMessages, 
+  saveUserChatMessages 
+} from './auth/userAuthService.js';
 
 // Allman brace formatter for code display
 const toAllman = code => {
@@ -1184,9 +1193,15 @@ function App() {
   const treeLogDragStart = useRef({ x: 0, y: 0 });
   const treeLogPanelStart = useRef({ x: 0, y: 0 });
   const [isChatOpen, setIsChatOpen] = useState(false);
-  const [chatMessages, setChatMessages] = useState([
-    { sender: 'bot', text: '👋 Hi! I\'m your AI coding assistant powered by Gemini.\n\nAsk me anything:\n• "Explain binary search"\n• "Fix my code"\n• "Write a bubble sort in Python"\n• "What is AVL tree rotation?"\n\nI\'m here to help!' }
-  ]);
+  const [activeUser, setActiveUser] = useState(() => getActiveUser());
+  const [isConnectModalOpen, setIsConnectModalOpen] = useState(() => !hasSeenOnboarding() && !getActiveUser());
+  const [chatMessages, setChatMessages] = useState(() => {
+    const loaded = loadUserChatMessages(getActiveUser()?.email);
+    if (loaded && loaded.length > 0) return loaded;
+    return [
+      { sender: 'bot', role: 'assistant', text: '👋 Hi! I\'m your AI coding assistant powered by Gemini.\n\nAsk me anything:\n• "Explain binary search"\n• "Fix my code"\n• "Write a bubble sort in Python"\n• "What is AVL tree rotation?"\n\nI\'m here to help!' }
+    ];
+  });
 
   const [isSettingsOpen, setIsSettingsOpen] = useState(false);
   const [isUpcomingOpen, setIsUpcomingOpen] = useState(false);
@@ -1210,13 +1225,54 @@ function App() {
 
   const [isFeedbackOpen, setIsFeedbackOpen] = useState(false);
   const [rating, setRating] = useState(0);
-  const [feedbackName, setFeedbackName] = useState('');
+  const [feedbackName, setFeedbackName] = useState(() => getActiveUser()?.name || '');
   const [feedbackText, setFeedbackText] = useState('');
-  const [feedbackEmail, setFeedbackEmail] = useState('');
+  const [feedbackEmail, setFeedbackEmail] = useState(() => getActiveUser()?.email || '');
   const [feedbackCategory, setFeedbackCategory] = useState('UI/UX');
   const [isFeedbackSubmitted, setIsFeedbackSubmitted] = useState(false);
   const [isAdminFeedbackOpen, setIsAdminFeedbackOpen] = useState(false);
   const [feedbackSearchQuery, setFeedbackSearchQuery] = useState('');
+
+  // Sync active user changes with feedback form and chat messages
+  useEffect(() => {
+    const handleAuth = (e) => {
+      const user = e.detail;
+      setActiveUser(user);
+      if (user && user.email) {
+        setFeedbackName(user.name || '');
+        setFeedbackEmail(user.email || '');
+      }
+    };
+    window.addEventListener('algoflow_auth_changed', handleAuth);
+    return () => window.removeEventListener('algoflow_auth_changed', handleAuth);
+  }, []);
+
+  // Save chat messages per user
+  useEffect(() => {
+    if (chatMessages && chatMessages.length > 0) {
+      saveUserChatMessages(activeUser?.email, chatMessages);
+    }
+  }, [chatMessages, activeUser?.email]);
+
+  // Load chat messages when user changes (login/logout/switch)
+  useEffect(() => {
+    const loaded = loadUserChatMessages(activeUser?.email);
+    if (loaded && loaded.length > 0) {
+      setChatMessages(loaded);
+    } else {
+      setChatMessages([
+        { 
+          role: 'assistant', 
+          sender: 'bot', 
+          text: `👋 Hi ${activeUser?.name ? activeUser.name.split(' ')[0] : ''}! I'm your AI coding assistant powered by Gemini.\n\nAsk me anything:\n• "Explain binary search"\n• "Fix my code"\n• "Write a bubble sort in Python"\n• "What is AVL tree rotation?"\n\nI'm here to help!` 
+        }
+      ]);
+    }
+    if (activeUser?.email) {
+      setFeedbackName(activeUser.name || '');
+      setFeedbackEmail(activeUser.email || '');
+    }
+  }, [activeUser?.email]);
 
   // ── Authentication, Session and Db State variables ──
   const [isLoggedIn, setIsLoggedIn] = useState(true);
@@ -3607,7 +3663,101 @@ function App() {
     return (
       <div className="modal-overlay" onClick={() => setIsSettingsOpen(false)}>
         <div className="modal-content" style={{ maxWidth: '480px', maxHeight: '85vh', overflowY: 'auto', padding: '2rem' }} onClick={e => e.stopPropagation()}>
-          <h2 className="title-gradient" style={{ fontSize: '1.8rem', marginBottom: '0.5rem' }}>⚙ Settings</h2>
+          <h2 className="title-gradient" style={{ fontSize: '1.8rem', marginBottom: '0.8rem' }}>⚙ Settings</h2>
+
+          {/* ── Connected Account Section (with Logout) ── */}
+          <div style={{
+            marginBottom: '1.2rem',
+            padding: '12px 14px',
+            borderRadius: '12px',
+            background: 'rgba(255, 255, 255, 0.03)',
+            border: '1px solid var(--glass-border)'
+          }}>
+            <label style={{ fontWeight: 700, fontSize: '0.85rem', color: 'var(--text-secondary)', display: 'block', marginBottom: '8px' }}>
+              👤 Connected Account
+            </label>
+            {activeUser && !activeUser.isGuest ? (
+              <div>
+                <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: '10px' }}>
+                  <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
+                    {activeUser.picture ? (
+                      <img 
+                        src={activeUser.picture} 
+                        alt={activeUser.name} 
+                        style={{ width: '36px', height: '36px', borderRadius: '50%', objectFit: 'cover' }}
+                        onError={e => e.target.style.display = 'none'}
+                      />
+                    ) : (
+                      <div style={{ width: '36px', height: '36px', borderRadius: '50%', background: '#0284c7', color: '#fff', display: 'flex', alignItems: 'center', justifyContent: 'center', fontWeight: 'bold' }}>
+                        {activeUser.initial || 'U'}
+                      </div>
+                    )}
+                    <div>
+                      <div style={{ fontWeight: '700', fontSize: '0.95rem', color: '#f8fafc' }}>{activeUser.name}</div>
+                      <div style={{ fontSize: '0.78rem', color: '#38bdf8' }}>✉ {activeUser.email}</div>
+                    </div>
+                  </div>
+                  <span style={{ fontSize: '0.72rem', background: 'rgba(34, 197, 94, 0.15)', color: '#4ade80', border: '1px solid rgba(34, 197, 94, 0.3)', padding: '2px 8px', borderRadius: '8px', fontWeight: 'bold' }}>
+                    ✓ Google Verified
+                  </span>
+                </div>
+                <button
+                  type="button"
+                  onClick={() => {
+                    logoutUser();
+                    setFeedbackName('');
+                    setFeedbackEmail('');
+                  }}
+                  style={{
+                    width: '100%',
+                    padding: '8px',
+                    borderRadius: '8px',
+                    background: 'rgba(239, 68, 68, 0.12)',
+                    border: '1px solid rgba(239, 68, 68, 0.3)',
+                    color: '#f87171',
+                    fontSize: '0.85rem',
+                    fontWeight: '700',
+                    cursor: 'pointer',
+                    transition: 'all 0.2s',
+                    display: 'flex',
+                    alignItems: 'center',
+                    justifyContent: 'center',
+                    gap: '6px'
+                  }}
+                  onMouseEnter={e => e.currentTarget.style.background = 'rgba(239, 68, 68, 0.22)'}
+                  onMouseLeave={e => e.currentTarget.style.background = 'rgba(239, 68, 68, 0.12)'}
+                >
+                  <span>🚪</span>
+                  <span>Log out from this email</span>
+                </button>
+              </div>
+            ) : (
+              <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: '10px' }}>
+                <div style={{ fontSize: '0.85rem', color: 'var(--text-secondary)' }}>
+                  Not connected with Google (Guest Mode)
+                </div>
+                <button
+                  type="button"
+                  onClick={() => {
+                    setIsSettingsOpen(false);
+                    setIsConnectModalOpen(true);
+                  }}
+                  style={{
+                    padding: '6px 12px',
+                    borderRadius: '8px',
+                    background: 'linear-gradient(135deg, #0284c7, #38bdf8)',
+                    border: 'none',
+                    color: '#fff',
+                    fontSize: '0.82rem',
+                    fontWeight: '700',
+                    cursor: 'pointer'
+                  }}
+                >
+                  🔗 Connect Google
+                </button>
+              </div>
+            )}
+          </div>
 
           <div className="select-group" style={{ marginBottom: '0.6rem' }}>
             <label style={{ fontWeight: 700, fontSize: '0.95rem', color: 'var(--text-primary)' }}>🌓 Theme Mode</label>
@@ -3858,6 +4008,10 @@ function App() {
               📥 Install App
             </button>
           )}
+          <UserProfileBadge 
+            onOpenConnectModal={() => setIsConnectModalOpen(true)} 
+            onOpenSettings={() => setIsSettingsOpen(true)} 
+          />
           <button 
             className="btn btn-clear" 
             onClick={() => setIsUpcomingOpen(true)}
@@ -5562,36 +5716,75 @@ function App() {
                     </div>
                   </div>
 
-                  {/* Name input */}
-                  <div className="select-group" style={{ marginBottom: '1.2rem' }}>
-                    <label style={{ fontSize: '0.95rem', color: 'var(--text-primary)', fontWeight: 600, display: 'block', marginBottom: '4px' }}>Your Name</label>
-                    <input 
-                      type="text"
-                      className="styled-input" 
-                      style={{ width: '100%', padding: '0.65rem 0.85rem', fontSize: '0.95rem', borderRadius: '8px', border: '1px solid var(--glass-border)', background: 'rgba(0,0,0,0.2)', color: '#fff' }} 
-                      placeholder="Enter your name" 
-                      value={feedbackName} 
-                      onChange={e => setFeedbackName(e.target.value)}
-                      required
-                    />
-                  </div>
+                  {/* Name & Email (Auto-filled if Google Connected) */}
+                  {activeUser && activeUser.email ? (
+                    <div style={{
+                      padding: '10px 14px',
+                      background: 'rgba(56, 189, 248, 0.08)',
+                      border: '1.5px solid rgba(56, 189, 248, 0.35)',
+                      borderRadius: '12px',
+                      display: 'flex',
+                      alignItems: 'center',
+                      justifyContent: 'space-between',
+                      marginBottom: '1.2rem'
+                    }}>
+                      <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
+                        {activeUser.picture ? (
+                          <img src={activeUser.picture} alt="" style={{ width: '32px', height: '32px', borderRadius: '50%' }} onError={e => e.target.style.display = 'none'} />
+                        ) : (
+                          <div style={{ width: '32px', height: '32px', borderRadius: '50%', background: '#0284c7', color: '#fff', display: 'flex', alignItems: 'center', justifyContent: 'center', fontWeight: 'bold' }}>
+                            {activeUser.initial || 'U'}
+                          </div>
+                        )}
+                        <div>
+                          <div style={{ fontSize: '0.9rem', fontWeight: '700', color: '#f8fafc' }}>{activeUser.name}</div>
+                          <div style={{ fontSize: '0.78rem', color: '#38bdf8', display: 'flex', alignItems: 'center', gap: '4px' }}>
+                            <span>✓ Google Verified:</span> <strong>{activeUser.email}</strong>
+                          </div>
+                        </div>
+                      </div>
+                      <button
+                        type="button"
+                        onClick={() => setIsConnectModalOpen(true)}
+                        style={{ background: 'transparent', border: 'none', color: '#94a3b8', fontSize: '0.75rem', cursor: 'pointer', textDecoration: 'underline' }}
+                      >
+                        Change
+                      </button>
+                    </div>
+                  ) : (
+                    <>
+                      {/* Name input */}
+                      <div className="select-group" style={{ marginBottom: '1.2rem' }}>
+                        <label style={{ fontSize: '0.95rem', color: 'var(--text-primary)', fontWeight: 600, display: 'block', marginBottom: '4px' }}>Your Name</label>
+                        <input 
+                          type="text"
+                          className="styled-input" 
+                          style={{ width: '100%', padding: '0.65rem 0.85rem', fontSize: '0.95rem', borderRadius: '8px', border: '1px solid var(--glass-border)', background: 'rgba(0,0,0,0.2)', color: '#fff' }} 
+                          placeholder="Enter your name" 
+                          value={feedbackName} 
+                          onChange={e => setFeedbackName(e.target.value)}
+                          required
+                        />
+                      </div>
 
-                  {/* Email verification input */}
-                  <div className="select-group" style={{ marginBottom: '1.2rem' }}>
-                    <label style={{ fontSize: '0.95rem', color: 'var(--text-primary)', fontWeight: 600, display: 'block', marginBottom: '4px' }}>Your Email Address</label>
-                    <p style={{ fontSize: '0.78rem', color: '#60a5fa', margin: '0 0 8px 0', lineHeight: '1.4' }}>
-                      💡 Please give your correct email so we can contact you and notify you once the problem you reported is fixed or the feature is developed!
-                    </p>
-                    <input 
-                      type="email"
-                      className="styled-input" 
-                      style={{ width: '100%', padding: '0.65rem 0.85rem', fontSize: '0.95rem', borderRadius: '8px', border: '1px solid var(--glass-border)', background: 'rgba(0,0,0,0.2)', color: '#fff' }} 
-                      placeholder="name@example.com" 
-                      value={feedbackEmail} 
-                      onChange={e => setFeedbackEmail(e.target.value)}
-                      required
-                    />
-                  </div>
+                      {/* Email verification input */}
+                      <div className="select-group" style={{ marginBottom: '1.2rem' }}>
+                        <label style={{ fontSize: '0.95rem', color: 'var(--text-primary)', fontWeight: 600, display: 'block', marginBottom: '4px' }}>Your Email Address</label>
+                        <p style={{ fontSize: '0.78rem', color: '#60a5fa', margin: '0 0 8px 0', lineHeight: '1.4' }}>
+                          💡 Please give your correct email so we can contact you and notify you once the problem you reported is fixed or the feature is developed!
+                        </p>
+                        <input 
+                          type="email"
+                          className="styled-input" 
+                          style={{ width: '100%', padding: '0.65rem 0.85rem', fontSize: '0.95rem', borderRadius: '8px', border: '1px solid var(--glass-border)', background: 'rgba(0,0,0,0.2)', color: '#fff' }} 
+                          placeholder="name@example.com" 
+                          value={feedbackEmail} 
+                          onChange={e => setFeedbackEmail(e.target.value)}
+                          required
+                        />
+                      </div>
+                    </>
+                  )}
 
                   {/* Quick Topics & Suggestions */}
                   <div style={{ marginBottom: '0.6rem' }}>
@@ -5899,7 +6092,14 @@ function App() {
             <button 
               className="btn btn-clear" 
               style={{ padding: '0.55rem 1.3rem', fontSize: '0.85rem', display: 'flex', alignItems: 'center', gap: '8px', background: 'rgba(255,255,255,0.03)', border: '1px solid var(--glass-border)', borderRadius: '30px', cursor: 'pointer', transition: 'all 0.25s' }}
-              onClick={() => { setIsFeedbackOpen(true); setIsFeedbackSubmitted(false); setRating(0); setFeedbackText(''); setFeedbackEmail(''); }}
+              onClick={() => { 
+                setIsFeedbackOpen(true); 
+                setIsFeedbackSubmitted(false); 
+                setRating(0); 
+                setFeedbackText(''); 
+                setFeedbackEmail(activeUser?.email || ''); 
+                setFeedbackName(activeUser?.name || ''); 
+              }}
               onMouseEnter={e => e.currentTarget.style.transform = 'scale(1.03) translateY(-1px)'}
               onMouseLeave={e => e.currentTarget.style.transform = 'scale(1) translateY(0)'}
             >
@@ -5942,6 +6142,7 @@ function App() {
         model={globalModel}
         setApiKey={setGlobalApiKey}
         setModel={setGlobalModel}
+        activeUser={activeUser}
         currentContext={{
           appMode,
           treeType: appMode === 'MAIN_VIS' ? treeType : null,
@@ -5952,6 +6153,11 @@ function App() {
           globalSortSearchTab: appMode === 'SORT_SEARCH_VIS' ? globalSortSearchTab : null,
           codeLang: activeLangForChat || codeLang
         }}
+      />
+      <GoogleConnectModal
+        isOpen={isConnectModalOpen}
+        onClose={() => setIsConnectModalOpen(false)}
+        onUserConnected={(user) => setActiveUser(user)}
       />
     </>
   );

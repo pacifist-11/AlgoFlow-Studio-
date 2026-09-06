@@ -2,6 +2,7 @@ import React, { useState, useEffect, useRef } from 'react';
 import { generateLocalRagResponse } from './aiRagEngine.js';
 import { ChatMessageRenderer } from './ChatMessageRenderer.jsx';
 import { askAlgoFlowAiMentor, getActiveGeminiApiKey, getActiveGeminiModel } from './geminiService.js';
+import { clearUserChatMessages, trackUserHabit, getTopUserHabits } from '../auth/userAuthService.js';
 
 // ─── Super Calm, Gentle & Aesthetic Zen AI Avatar ───────────────────────────
 export const CalmAiAvatar = ({ size = 32 }) => (
@@ -85,7 +86,8 @@ export default function FloatingAiBot({
   apiKey = '',
   model = 'gemini-3.6-flash',
   setApiKey,
-  setModel
+  setModel,
+  activeUser = null
 }) {
   const [inputMessage, setInputMessage] = useState('');
   const [isInputFocused, setIsInputFocused] = useState(false);
@@ -648,14 +650,23 @@ How are you doing today? Ask me any question or pick a prompt below!`,
     try {
       const activeKey = apiKeyInput || apiKey;
       const activeModel = model || 'gemini-3.6-flash';
+      const userHabits = activeUser?.email ? getTopUserHabits(activeUser.email, 4) : [];
+      
       const result = await askAlgoFlowAiMentor({
         query: textToSend,
         customCode,
         codeLang,
         currentContext,
         apiKey: activeKey,
-        model: activeModel
+        model: activeModel,
+        userProfile: activeUser ? { ...activeUser, habits: userHabits } : null,
+        chatHistory: newMessages.slice(-6)
       });
+
+      if (activeUser?.email) {
+        const topic = currentContext?.treeType || currentContext?.globalSort || currentContext?.globalDsType || currentContext?.appMode || 'General';
+        trackUserHabit(activeUser.email, topic);
+      }
 
       const botMsg = {
         role: 'assistant',
@@ -884,6 +895,37 @@ How are you doing today? Ask me any question or pick a prompt below!`,
                 }}
               >
                 M
+              </button>
+
+              {/* Clear / New Chat Button */}
+              <button
+                onClick={() => {
+                  const initialMsg = [
+                    {
+                      role: 'assistant',
+                      sender: 'bot',
+                      text: `👋 Hi ${activeUser?.name ? activeUser.name.split(' ')[0] : ''}! I'm your AI coding assistant powered by Gemini.\n\nAsk me anything:\n• "Explain binary search"\n• "Fix my code"\n• "Write a bubble sort in Python"\n• "What is AVL tree rotation?"\n\nI'm here to help!`
+                    }
+                  ];
+                  if (setChatMessages) setChatMessages(initialMsg);
+                  clearUserChatMessages(activeUser?.email);
+                }}
+                title="Start New Chat & Clear History"
+                style={{
+                  background: 'rgba(255, 255, 255, 0.15)',
+                  border: '1px solid rgba(255, 255, 255, 0.25)',
+                  color: '#fff',
+                  cursor: 'pointer',
+                  padding: '3px 7px',
+                  borderRadius: '6px',
+                  fontSize: '11px',
+                  display: 'flex',
+                  alignItems: 'center',
+                  gap: '2px',
+                  fontWeight: 'bold'
+                }}
+              >
+                🧹 New
               </button>
 
               {/* Opacity Button */}
