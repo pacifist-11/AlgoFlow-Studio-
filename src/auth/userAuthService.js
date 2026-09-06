@@ -1,82 +1,33 @@
 // ─── AlgoFlow User Authentication & Personalization Service ─────────────────
-// Handles Google Identity Services (GIS), Smart Quick Connect, and Habituation
+// Real Google Identity Services (GIS) & OAuth 2.0 Integration
 
 const ACTIVE_USER_KEY = 'algoflow_active_user';
 const ONBOARDING_SEEN_KEY = 'algoflow_onboarding_seen';
-const SAVED_ACCOUNTS_KEY = 'algoflow_saved_accounts_list';
+const GOOGLE_CLIENT_ID_KEY = 'algoflow_google_client_id';
 
-export const DEFAULT_SAVED_ACCOUNTS = [
-  {
-    name: 'Yeswanth Pothala',
-    email: 'pothalayeswanth11@gmail.com',
-    initial: 'Y',
-    color: '#8b5cf6'
-  },
-  {
-    name: 'Yeswanth Pothala',
-    email: 'pothalayeswanth29@gmail.com',
-    initial: 'Y',
-    color: '#8b5cf6'
-  },
-  {
-    name: 'kannamnaidu kolli',
-    email: 'kannamnaidukolli54@gmail.com',
-    initial: 'k',
-    color: '#3b82f6'
-  },
-  {
-    name: 'Pothala Yegnashe',
-    email: 'piggu3275@gmail.com',
-    initial: 'P',
-    color: '#16a34a'
-  }
-];
-
-export function getSavedAccounts() {
+/**
+ * Resolve the Google OAuth Client ID (from localStorage or Vite env)
+ */
+export function getGoogleClientId() {
   try {
-    const raw = localStorage.getItem(SAVED_ACCOUNTS_KEY);
-    if (raw) {
-      const parsed = JSON.parse(raw);
-      if (Array.isArray(parsed) && parsed.length > 0) {
-        return parsed;
-      }
-    }
-  } catch (err) {
-    console.warn('Error reading saved accounts list:', err);
-  }
-  return DEFAULT_SAVED_ACCOUNTS;
-}
-
-export function saveAccountToList(account) {
-  if (!account || !account.email) return;
+    const saved = localStorage.getItem(GOOGLE_CLIENT_ID_KEY);
+    if (saved && saved.trim()) return saved.trim();
+  } catch {}
   try {
-    const existing = getSavedAccounts();
-    const filtered = existing.filter(a => a.email.toLowerCase() !== account.email.toLowerCase());
-    const updated = [account, ...filtered];
-    localStorage.setItem(SAVED_ACCOUNTS_KEY, JSON.stringify(updated));
-  } catch (err) {
-    console.warn('Error saving account to list:', err);
-  }
+    const envId = import.meta.env?.VITE_GOOGLE_CLIENT_ID;
+    if (envId && envId.trim()) return envId.trim();
+  } catch {}
+  return '';
 }
 
 /**
- * Decode JWT token returned by Google Identity Services
+ * Save Google OAuth Client ID
  */
-export function decodeGoogleJwt(token) {
+export function saveGoogleClientId(clientId) {
+  if (!clientId) return;
   try {
-    const base64Url = token.split('.')[1];
-    const base64 = base64Url.replace(/-/g, '+').replace(/_/g, '/');
-    const jsonPayload = decodeURIComponent(
-      atob(base64)
-        .split('')
-        .map(c => '%' + ('00' + c.charCodeAt(0).toString(16)).slice(-2))
-        .join('')
-    );
-    return JSON.parse(jsonPayload);
-  } catch (err) {
-    console.error('Failed to decode Google JWT:', err);
-    return null;
-  }
+    localStorage.setItem(GOOGLE_CLIENT_ID_KEY, clientId.trim());
+  } catch {}
 }
 
 /**
@@ -118,7 +69,7 @@ export function setActiveUser(userProfile) {
 }
 
 /**
- * Log out current user (preserves their stored chat and habits in localStorage)
+ * Log out current user
  */
 export function logoutUser() {
   try {
@@ -150,39 +101,6 @@ export function setOnboardingSeen() {
 }
 
 /**
- * Quick-connect an existing email address
- */
-export function quickConnectUser(email, name = '') {
-  if (!email || !email.includes('@')) return null;
-  const cleanEmail = email.trim().toLowerCase();
-  
-  // Format default name from email if not provided (e.g. yeswanth.pothala -> Yeswanth Pothala)
-  const inferredName = name.trim() || cleanEmail
-    .split('@')[0]
-    .replace(/[._-]+/g, ' ')
-    .replace(/\b\w/g, l => l.toUpperCase());
-
-  // Generate deterministic avatar initials or dicebear image
-  const initial = (inferredName[0] || 'A').toUpperCase();
-  const avatarUrl = `https://ui-avatars.com/api/?name=${encodeURIComponent(inferredName)}&background=0284c7&color=fff&bold=true&rounded=true`;
-
-  const profile = {
-    email: cleanEmail,
-    name: inferredName,
-    picture: avatarUrl,
-    initial,
-    sub: `user_${cleanEmail.replace(/[^a-z0-9]/g, '_')}`,
-    isGuest: false,
-    connectedAt: new Date().toISOString(),
-    authProvider: 'google'
-  };
-
-  setActiveUser(profile);
-  setOnboardingSeen();
-  return profile;
-}
-
-/**
  * Continue as Guest
  */
 export function continueAsGuest() {
@@ -201,6 +119,98 @@ export function continueAsGuest() {
   return guestProfile;
 }
 
+/**
+ * REAL GOOGLE OAUTH 2.0 AUTHENTICATION
+ * Launches Google's official popup with prompt="select_account"
+ * Google's own servers at accounts.google.com display the "Choose an account" screen.
+ */
+export function launchRealGoogleOAuth({ clientId, onUserSuccess, onError }) {
+  const resolvedClientId = clientId || getGoogleClientId();
+
+  if (!resolvedClientId) {
+    if (onError) onError('Google Client ID is missing. Please provide your Google OAuth Client ID.');
+    return;
+  }
+
+  // Ensure Google Identity Services SDK is loaded
+  function executeOAuth() {
+    if (!window.google?.accounts?.oauth2) {
+      if (onError) onError('Google Identity Services SDK is still loading. Please try again in 1 second.');
+      return;
+    }
+
+    try {
+      const client = window.google.accounts.oauth2.initTokenClient({
+        client_id: resolvedClientId,
+        scope: 'https://www.googleapis.com/auth/userinfo.profile https://www.googleapis.com/auth/userinfo.email openid',
+        prompt: 'select_account',
+        callback: async (tokenResponse) => {
+          if (tokenResponse?.error) {
+            if (onError) onError(tokenResponse.error_description || tokenResponse.error);
+            return;
+          }
+
+          if (tokenResponse?.access_token) {
+            try {
+              // Real Google API call directly to Google's UserInfo endpoint
+              const res = await fetch('https://www.googleapis.com/oauth2/v3/userinfo', {
+                headers: { Authorization: `Bearer ${tokenResponse.access_token}` }
+              });
+
+              if (!res.ok) {
+                throw new Error('Google UserInfo API returned error ' + res.status);
+              }
+
+              const userInfo = await res.json();
+              if (!userInfo || !userInfo.email) {
+                throw new Error('No email returned by Google account.');
+              }
+
+              const profile = {
+                email: userInfo.email.toLowerCase().trim(),
+                name: userInfo.name || userInfo.given_name || 'Google User',
+                picture: userInfo.picture || '',
+                initial: (userInfo.name?.[0] || userInfo.email?.[0] || 'U').toUpperCase(),
+                sub: userInfo.sub,
+                isGuest: false,
+                connectedAt: new Date().toISOString(),
+                authProvider: 'google'
+              };
+
+              setActiveUser(profile);
+              setOnboardingSeen();
+              if (onUserSuccess) onUserSuccess(profile);
+            } catch (err) {
+              console.error('Failed to fetch verified Google user profile:', err);
+              if (onError) onError('Google verified token error: ' + err.message);
+            }
+          }
+        }
+      });
+
+      // Triggers Google's real "Choose an account" popup
+      client.requestAccessToken({ prompt: 'select_account' });
+    } catch (err) {
+      console.error('Failed to trigger Google OAuth:', err);
+      if (onError) onError('Google OAuth error: ' + err.message);
+    }
+  }
+
+  if (!window.google?.accounts?.oauth2) {
+    const script = document.createElement('script');
+    script.src = 'https://accounts.google.com/gsi/client';
+    script.async = true;
+    script.defer = true;
+    script.onload = executeOAuth;
+    script.onerror = () => {
+      if (onError) onError('Failed to load Google GIS SDK from accounts.google.com');
+    };
+    document.body.appendChild(script);
+  } else {
+    executeOAuth();
+  }
+}
+
 // ─── User-Keyed Chat History Storage ─────────────────────────────────────────
 
 export function getUserChatStorageKey(email) {
@@ -210,9 +220,6 @@ export function getUserChatStorageKey(email) {
   return 'algoflow_chat_guest';
 }
 
-/**
- * Load chat messages for the given user email
- */
 export function loadUserChatMessages(email) {
   try {
     const key = getUserChatStorageKey(email);
@@ -229,9 +236,6 @@ export function loadUserChatMessages(email) {
   return null;
 }
 
-/**
- * Save chat messages for the given user email (max 60 messages)
- */
 export function saveUserChatMessages(email, messages) {
   try {
     if (!Array.isArray(messages)) return;
@@ -243,9 +247,6 @@ export function saveUserChatMessages(email, messages) {
   }
 }
 
-/**
- * Clear chat messages for the given user email
- */
 export function clearUserChatMessages(email) {
   try {
     const key = getUserChatStorageKey(email);
@@ -264,9 +265,6 @@ export function getUserHabitsStorageKey(email) {
   return 'algoflow_habits_guest';
 }
 
-/**
- * Track when a user interacts with a specific topic or visualizer
- */
 export function trackUserHabit(email, topic) {
   if (!topic || typeof topic !== 'string') return;
   try {
@@ -283,9 +281,6 @@ export function trackUserHabit(email, topic) {
   }
 }
 
-/**
- * Get top habituated topics for the user
- */
 export function getTopUserHabits(email, limit = 5) {
   try {
     const key = getUserHabitsStorageKey(email);
