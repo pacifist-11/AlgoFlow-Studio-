@@ -75,7 +75,10 @@ export function checkRestrictedWords(text) {
     'bokka', 'boka', 'bokkah', 'bokaa',
     'sulli', 'suli',
     'dengai', 'dengey', 'denga', 'dengu', 'dengutha', 'denge', 'dengodka',
-    'naaku',
+    'naaku','naku','nake','naked',
+    'hijra', 'hijraa', 'hijda', 'hijdaa',
+    'koja', 'kojaa', 'kojja', 'kojjaa',
+    'transvestite', 'tranny',
     'fuck', 'fuk', 'fck', 'bitch', 'bich', 'ass', 'bastard', 'dick', 'dik', 'cunt', 'whore', 'whor', 'shit', 'sht',
     'penis', 'peneis', 'penus', 'pnis', 'peniss', 'peniz',
     'ovary', 'ovaries', 'ovaryy',
@@ -117,16 +120,21 @@ export function checkRestrictedWords(text) {
     'moda', 'mada', 'moga', 'boka',
     'suli',
     'dengai', 'dengey', 'denga', 'dengu', 'dengutha',
+    'hijra', 'hijda', 'koja', 'tranny',
     'fuk', 'bich', 'cunt', 'whor', 'shit',
     'penis', 'pnis', 'ovary', 'ovari', 'vagina', 'vagna', 'bob', 'boob',
     'pornhub', 'xvideo', 'xnxx', 'xhamster', 'spankbang', 'redtube', 'youporn', 'onlyfan', 'chaturbate', 'fansly', 'brazzer', 'naughtyamerica', 'realityking', 'bangbro', 'evilangel', 'digitalplayground', 'twisty', 'rkprime', 'faphouse', 'tube8', 'txxx', 'hentaihaven', 'porntrex', 'thumbzilla', 'eporner', 'hqporner', 'tubegalore', 'drrtube', 'heavy-r', 'motherless', 'xhamsterlive',
     'milf', 'anal', 'blowjob', 'creampie', 'cumshot', 'deepthroat', 'gangbang', 'hardcore', 'softcore', 'threesome', 'orgy', 'bondage', 'bdsm', 'cuckold', 'squirt', 'facial', 'voyeur', 'lesbian', 'gay', 'eboni', 'interracial', 'babe', 'shemale', 'masturbation', 'masturbate', 'groupsex', 'transsexual', 'bukkake', 'anilingus', 'cunnilingus', 'fellatio', 'fisting', 'ladyboy'
   ];
 
-  // 0. Standalone check for "mg" (shortcut for moddagudu)
+  // 0. Standalone check for "mg" (shortcut for moddagudu) & standalone "trans" slur context
   for (const v of inputVariants) {
     if (/\bmg\b/i.test(v) || v === 'mg') {
       return 'mg';
+    }
+    // Match standalone "trans" only as an isolated word/slur, never as a prefix in technical words like transaction, transform, transitive
+    if (/\btrans\b/i.test(v) && !/(transaction|transform|transfer|transmission|transitive|translation|transparent)/i.test(v)) {
+      return 'trans';
     }
   }
 
