@@ -1119,8 +1119,49 @@ print(f"Theoretical Density of Copper (FCC): {cu_density:.2f} g/cm^3")`
     }
   ];
 
-  // Filtered list based on selected category
-  const filteredBranches = branchData.filter(b => activeCategory === 'all' || b.category === activeCategory);
+  // Sort and Filter States
+  const [sortBy, setSortBy] = useState('default'); // 'default', 'demand_desc', 'difficulty_desc', 'difficulty_asc'
+
+  // Helper weights for ordering placement demand & difficulty
+  const getDemandWeight = (demandStr) => {
+    return (demandStr.match(/⭐/g) || []).length;
+  };
+
+  const getDifficultyMeta = (diffStr) => {
+    if (diffStr.startsWith('High')) {
+      return { weight: 4, label: 'High', color: '#ef4444', bg: 'rgba(239, 68, 68, 0.15)', border: 'rgba(239, 68, 68, 0.35)' };
+    }
+    if (diffStr.startsWith('Moderate-High')) {
+      return { weight: 3, label: 'Mod-High', color: '#f97316', bg: 'rgba(249, 115, 22, 0.15)', border: 'rgba(249, 115, 22, 0.35)' };
+    }
+    if (diffStr.startsWith('Moderate')) {
+      return { weight: 2, label: 'Moderate', color: '#eab308', bg: 'rgba(234, 179, 8, 0.15)', border: 'rgba(234, 179, 8, 0.35)' };
+    }
+    return { weight: 1, label: 'Low-Mod', color: '#10b981', bg: 'rgba(16, 185, 129, 0.15)', border: 'rgba(16, 185, 129, 0.35)' };
+  };
+
+  // Filtered and sorted list based on selected category and sorting order
+  const filteredBranches = [...branchData]
+    .filter(b => activeCategory === 'all' || b.category === activeCategory)
+    .sort((a, b) => {
+      if (sortBy === 'demand_desc') {
+        const diff = getDemandWeight(b.placementDemand) - getDemandWeight(a.placementDemand);
+        if (diff !== 0) return diff;
+        return getDifficultyMeta(b.difficulty).weight - getDifficultyMeta(a.difficulty).weight;
+      }
+      if (sortBy === 'difficulty_desc') {
+        const diff = getDifficultyMeta(b.difficulty).weight - getDifficultyMeta(a.difficulty).weight;
+        if (diff !== 0) return diff;
+        return getDemandWeight(b.placementDemand) - getDemandWeight(a.placementDemand);
+      }
+      if (sortBy === 'difficulty_asc') {
+        const diff = getDifficultyMeta(a.difficulty).weight - getDifficultyMeta(b.difficulty).weight;
+        if (diff !== 0) return diff;
+        return getDemandWeight(b.placementDemand) - getDemandWeight(a.placementDemand);
+      }
+      return 0; // default original branch ordering
+    });
+
   const currentBranch = branchData.find(b => b.id === selectedBranch) || branchData[0];
 
   // Supercharged Year-Specific Smart Advisor Quiz Calculation
@@ -1348,42 +1389,146 @@ print(f"Theoretical Density of Copper (FCC): {cu_density:.2f} g/cm^3")`
         </div>
       </div>
 
-      {/* ── Category Filter Bar ── */}
-      <div style={{ display: 'flex', gap: '8px', flexWrap: 'wrap', alignItems: 'center' }}>
-        <span style={{ fontSize: '12px', fontWeight: 'bold', color: '#94a3b8', marginRight: '4px' }}>FILTER:</span>
-        {categories.map(c => {
-          const isActive = activeCategory === c.id;
-          return (
+      {/* ── Filter & Sort Toolbar ── */}
+      <div style={{
+        display: 'flex',
+        flexDirection: 'column',
+        gap: '12px',
+        background: 'rgba(15, 23, 42, 0.5)',
+        padding: '14px 16px',
+        borderRadius: '14px',
+        border: '1px solid rgba(255, 255, 255, 0.06)'
+      }}>
+        {/* Category Filter Bar */}
+        <div style={{ display: 'flex', gap: '8px', flexWrap: 'wrap', alignItems: 'center' }}>
+          <span style={{ fontSize: '11px', fontWeight: '800', color: '#94a3b8', letterSpacing: '0.05em', marginRight: '4px' }}>
+            BRANCH FILTER:
+          </span>
+          {categories.map(c => {
+            const isActive = activeCategory === c.id;
+            return (
+              <button
+                key={c.id}
+                onClick={() => setActiveCategory(c.id)}
+                style={{
+                  padding: '5px 12px',
+                  borderRadius: '20px',
+                  border: isActive ? '1.5px solid #38bdf8' : '1px solid #334155',
+                  background: isActive ? 'rgba(56, 189, 248, 0.18)' : 'rgba(15, 23, 42, 0.6)',
+                  color: isActive ? '#38bdf8' : '#94a3b8',
+                  fontSize: '11.5px',
+                  fontWeight: '600',
+                  cursor: 'pointer',
+                  transition: 'all 0.2s ease'
+                }}
+              >
+                {c.label}
+              </button>
+            );
+          })}
+        </div>
+
+        {/* Ordering / Sorting Bar */}
+        <div style={{ display: 'flex', gap: '8px', flexWrap: 'wrap', alignItems: 'center', paddingTop: '4px', borderTop: '1px dashed rgba(255,255,255,0.07)' }}>
+          <span style={{ fontSize: '11px', fontWeight: '800', color: '#38bdf8', letterSpacing: '0.05em', marginRight: '4px', display: 'flex', alignItems: 'center', gap: '4px' }}>
+            <span>⚡</span> ORDER BY:
+          </span>
+
+          <button
+            onClick={() => setSortBy('demand_desc')}
+            title="Sort branches with 5-star placement demand first"
+            style={{
+              padding: '5px 12px',
+              borderRadius: '20px',
+              border: sortBy === 'demand_desc' ? '1.5px solid #facc15' : '1px solid #334155',
+              background: sortBy === 'demand_desc' ? 'rgba(250, 204, 21, 0.18)' : 'rgba(15, 23, 42, 0.6)',
+              color: sortBy === 'demand_desc' ? '#facc15' : '#cbd5e1',
+              fontSize: '11.5px',
+              fontWeight: '700',
+              cursor: 'pointer',
+              display: 'flex',
+              alignItems: 'center',
+              gap: '6px',
+              transition: 'all 0.2s ease'
+            }}
+          >
+            <span>💼</span> Placement Demand (High → Low)
+          </button>
+
+          <button
+            onClick={() => setSortBy('difficulty_desc')}
+            title="Sort branches requiring highest logic & math difficulty first"
+            style={{
+              padding: '5px 12px',
+              borderRadius: '20px',
+              border: sortBy === 'difficulty_desc' ? '1.5px solid #ef4444' : '1px solid #334155',
+              background: sortBy === 'difficulty_desc' ? 'rgba(239, 68, 68, 0.18)' : 'rgba(15, 23, 42, 0.6)',
+              color: sortBy === 'difficulty_desc' ? '#f87171' : '#cbd5e1',
+              fontSize: '11.5px',
+              fontWeight: '700',
+              cursor: 'pointer',
+              display: 'flex',
+              alignItems: 'center',
+              gap: '6px',
+              transition: 'all 0.2s ease'
+            }}
+          >
+            <span>🔥</span> Difficulty (High → Low)
+          </button>
+
+          <button
+            onClick={() => setSortBy('difficulty_asc')}
+            title="Sort branches with beginner-friendly coding entry first"
+            style={{
+              padding: '5px 12px',
+              borderRadius: '20px',
+              border: sortBy === 'difficulty_asc' ? '1.5px solid #10b981' : '1px solid #334155',
+              background: sortBy === 'difficulty_asc' ? 'rgba(16, 185, 129, 0.18)' : 'rgba(15, 23, 42, 0.6)',
+              color: sortBy === 'difficulty_asc' ? '#34d399' : '#cbd5e1',
+              fontSize: '11.5px',
+              fontWeight: '700',
+              cursor: 'pointer',
+              display: 'flex',
+              alignItems: 'center',
+              gap: '6px',
+              transition: 'all 0.2s ease'
+            }}
+          >
+            <span>🌱</span> Difficulty (Beginner Friendly / Low → High)
+          </button>
+
+          {sortBy !== 'default' && (
             <button
-              key={c.id}
-              onClick={() => setActiveCategory(c.id)}
+              onClick={() => setSortBy('default')}
+              title="Reset to default curriculum branch order"
               style={{
-                padding: '6px 14px',
-                borderRadius: '20px',
-                border: isActive ? '1.5px solid #38bdf8' : '1px solid #334155',
-                background: isActive ? 'rgba(56, 189, 248, 0.18)' : 'rgba(15, 23, 42, 0.6)',
-                color: isActive ? '#38bdf8' : '#94a3b8',
-                fontSize: '12px',
-                fontWeight: '600',
-                cursor: 'pointer',
-                transition: 'all 0.2s ease'
+                padding: '4px 10px',
+                borderRadius: '16px',
+                border: '1px solid #475569',
+                background: 'transparent',
+                color: '#94a3b8',
+                fontSize: '11px',
+                cursor: 'pointer'
               }}
             >
-              {c.label}
+              ✕ Reset Order
             </button>
-          );
-        })}
+          )}
+        </div>
       </div>
 
       {/* ── Horizontal Branch Selector Buttons Grid (16 Branches) ── */}
       <div style={{
         display: 'grid',
-        gridTemplateColumns: 'repeat(auto-fill, minmax(180px, 1fr))',
+        gridTemplateColumns: 'repeat(auto-fill, minmax(200px, 1fr))',
         gap: '10px'
       }}>
         {filteredBranches.map(b => {
           const isSelected = selectedBranch === b.id;
           const isHovered = hoveredBranchId === b.id;
+          const diffMeta = getDifficultyMeta(b.difficulty);
+          const starsOnly = (b.placementDemand.match(/⭐/g) || []).join('');
+
           return (
             <div
               key={b.id}
@@ -1393,12 +1538,12 @@ print(f"Theoretical Density of Copper (FCC): {cu_density:.2f} g/cm^3")`
             >
               <button
                 onClick={() => setSelectedBranch(b.id)}
-                title={`${b.name} - Click to explore full 4-year roadmap`}
+                title={`${b.name}\nDemand: ${b.placementDemand}\nDifficulty: ${b.difficulty}`}
                 style={{
                   width: '100%',
                   position: 'relative',
                   display: 'flex',
-                  alignItems: 'center',
+                  alignItems: 'flex-start',
                   gap: '10px',
                   padding: isHovered ? '12px 14px' : '11px 13px',
                   borderRadius: '12px',
@@ -1418,7 +1563,7 @@ print(f"Theoretical Density of Copper (FCC): {cu_density:.2f} g/cm^3")`
                   cursor: 'pointer',
                   textAlign: 'left',
                   transition: 'all 0.22s cubic-bezier(0.16, 1, 0.3, 1)',
-                  transform: isHovered ? 'translateY(-3px) scale(1.03)' : isSelected ? 'scale(1.01)' : 'translateY(0) scale(1)',
+                  transform: isHovered ? 'translateY(-3px) scale(1.02)' : isSelected ? 'scale(1.01)' : 'translateY(0) scale(1)',
                   boxShadow: isHovered
                     ? `0 0 30px ${b.color}95, 0 8px 24px rgba(0,0,0,0.6), inset 0 0 16px ${b.color}35`
                     : isSelected
@@ -1428,15 +1573,16 @@ print(f"Theoretical Density of Copper (FCC): {cu_density:.2f} g/cm^3")`
                 }}
               >
                 <span style={{
-                  fontSize: '20px',
+                  fontSize: '22px',
+                  marginTop: '1px',
                   filter: isHovered || isSelected ? `drop-shadow(0 0 8px ${b.color})` : 'none',
                   transition: 'transform 0.2s ease',
-                  transform: isHovered ? 'scale(1.15)' : 'scale(1)',
+                  transform: isHovered ? 'scale(1.12)' : 'scale(1)',
                   flexShrink: 0
                 }}>
                   {b.icon}
                 </span>
-                <div style={{ display: 'flex', flexDirection: 'column', gap: '2px', minWidth: 0, flex: 1, overflow: 'hidden' }}>
+                <div style={{ display: 'flex', flexDirection: 'column', gap: '4px', minWidth: 0, flex: 1 }}>
                   <span style={{
                     fontSize: isHovered ? '12px' : '12.5px',
                     fontWeight: '700',
@@ -1450,6 +1596,36 @@ print(f"Theoretical Density of Copper (FCC): {cu_density:.2f} g/cm^3")`
                   }}>
                     {b.name}
                   </span>
+
+                  {/* Demand Stars and Difficulty Order Badges */}
+                  <div style={{ display: 'flex', alignItems: 'center', gap: '6px', flexWrap: 'wrap', marginTop: '2px' }}>
+                    <span
+                      title={`Placement Demand: ${b.placementDemand}`}
+                      style={{
+                        fontSize: '10px',
+                        letterSpacing: '-1px',
+                        color: '#facc15'
+                      }}
+                    >
+                      {starsOnly}
+                    </span>
+                    <span
+                      title={`Difficulty: ${b.difficulty}`}
+                      style={{
+                        fontSize: '9.5px',
+                        padding: '1px 6px',
+                        borderRadius: '4px',
+                        background: diffMeta.bg,
+                        color: diffMeta.color,
+                        border: `1px solid ${diffMeta.border}`,
+                        fontWeight: '700',
+                        letterSpacing: '0.02em'
+                      }}
+                    >
+                      {diffMeta.label}
+                    </span>
+                  </div>
+
                   {isHovered && (
                     <span style={{
                       fontSize: '10.5px',
@@ -1500,13 +1676,66 @@ print(f"Theoretical Density of Copper (FCC): {cu_density:.2f} g/cm^3")`
             </p>
           </div>
 
-          <div style={{ display: 'flex', flexDirection: 'column', gap: '6px', alignItems: 'flex-end' }}>
-            <span style={{ background: 'rgba(15, 23, 42, 0.8)', padding: '4px 10px', borderRadius: '8px', fontSize: '12px', color: '#38bdf8', border: '1px solid rgba(56, 189, 248, 0.3)' }}>
-              💼 <strong>Placement Demand:</strong> {currentBranch.placementDemand}
-            </span>
-            <span style={{ background: 'rgba(15, 23, 42, 0.8)', padding: '4px 10px', borderRadius: '8px', fontSize: '12px', color: '#cbd5e1', border: '1px solid rgba(255,255,255,0.1)' }}>
-              📊 <strong>Difficulty:</strong> {currentBranch.difficulty}
-            </span>
+          {/* Clean Ordered Badges: Placement Demand & Difficulty */}
+          <div style={{
+            display: 'flex',
+            alignItems: 'center',
+            gap: '10px',
+            flexWrap: 'wrap'
+          }}>
+            {/* 1. Placement Demand Badge */}
+            <div style={{
+              background: 'rgba(15, 23, 42, 0.85)',
+              padding: '6px 14px',
+              borderRadius: '10px',
+              fontSize: '12.5px',
+              border: '1px solid rgba(250, 204, 21, 0.35)',
+              display: 'flex',
+              alignItems: 'center',
+              gap: '8px',
+              boxShadow: '0 4px 12px rgba(0,0,0,0.2)'
+            }}>
+              <span style={{ fontSize: '15px' }}>💼</span>
+              <strong style={{ color: '#facc15' }}>Placement Demand:</strong>
+              <span style={{ color: '#fef08a', fontWeight: '600' }}>
+                {currentBranch.placementDemand}
+              </span>
+            </div>
+
+            {/* 2. Difficulty Badge in Clear Order */}
+            {(() => {
+              const dMeta = getDifficultyMeta(currentBranch.difficulty);
+              return (
+                <div style={{
+                  background: 'rgba(15, 23, 42, 0.85)',
+                  padding: '6px 14px',
+                  borderRadius: '10px',
+                  fontSize: '12.5px',
+                  border: '1px solid rgba(255, 255, 255, 0.12)',
+                  display: 'flex',
+                  alignItems: 'center',
+                  gap: '8px',
+                  boxShadow: '0 4px 12px rgba(0,0,0,0.2)'
+                }}>
+                  <span style={{ fontSize: '15px' }}>📊</span>
+                  <strong style={{ color: '#cbd5e1' }}>Difficulty:</strong>
+                  <span style={{
+                    padding: '2px 8px',
+                    borderRadius: '6px',
+                    background: dMeta.bg,
+                    color: dMeta.color,
+                    border: `1px solid ${dMeta.border}`,
+                    fontWeight: '800',
+                    fontSize: '11.5px'
+                  }}>
+                    {dMeta.label}
+                  </span>
+                  <span style={{ color: '#94a3b8', fontSize: '12px' }}>
+                    — {currentBranch.difficulty}
+                  </span>
+                </div>
+              );
+            })()}
           </div>
         </div>
 
@@ -1718,27 +1947,195 @@ print(f"Theoretical Density of Copper (FCC): {cu_density:.2f} g/cm^3")`
       )}
 
       {/* ── SUB TAB 4: Branch Code Preview ── */}
-      {activeSubTab === 'codepreview' && (
-        <div style={{ display: 'flex', flexDirection: 'column', gap: '14px' }}>
-          <h4 style={{ margin: 0, fontSize: '16px', color: currentBranch.color }}>
-            💻 Real-World Code Sample: {currentBranch.codeSample.title}
-          </h4>
-          <pre style={{
-            background: '#090d16',
-            padding: '18px',
-            borderRadius: '12px',
-            border: '1.5px solid #334155',
-            color: '#38bdf8',
-            fontFamily: 'Consolas, Monaco, "Courier New", monospace',
-            fontSize: '13px',
-            lineHeight: '1.6',
-            overflowX: 'auto',
-            margin: 0
-          }}>
-            <code>{currentBranch.codeSample.code}</code>
-          </pre>
-        </div>
-      )}
+      {activeSubTab === 'codepreview' && (() => {
+        const branchOutputs = {
+          cse: `Target 47 found at index: 3\n\n[Execution Summary]\n• Algorithm: Binary Search\n• Time Complexity: O(log N)\n• Auxiliary Space: O(1)\n• Array Size: 7 elements\n• Target: 47 -> Found at Index 3`,
+          it: `[Server Started] Cloud Microservice listening on port 8080\n[Request Received] GET /api/health HTTP/1.1\nHTTP/1.1 200 OK\nContent-Type: application/json\n\n{\n  "status": "HEALTHY",\n  "timestamp": "2026-09-17T16:45:00.000Z",\n  "service": "it-cloud-microservice",\n  "uptimeSec": 1420\n}`,
+          aiml: `Training Epochs Complete: 25/25\nBinary Cross-Entropy Loss: 0.0842\nTest Accuracy: 98.4%\n\nPrediction on dummy input tensor: 0.7412\nClassification Result: Positive Class (Threshold >= 0.50 -> TRUE)`,
+          ds: `=== REGIONAL REVENUE SUMMARY ===\n        count     sum    mean\nRegion                       \nEast        1   890.0   890.0\nNorth       1   450.0   450.0\nSouth       2   370.0   185.0\n\n[Insights]: East region generated highest average ticket size ($890.00).`,
+          cyber: `[+] Scanning Target IP: 127.0.0.1\n[+] Checking standard service ports...\nPort 22  is OPEN on 127.0.0.1  [SSH - OpenSSH 9.2]\nPort 80  is OPEN on 127.0.0.1  [HTTP - Nginx 1.24]\nPort 443 is OPEN on 127.0.0.1  [HTTPS - TLS 1.3]\n[!] Port 3306 is CLOSED / FILTERED (MySQL)\n\nScan completed in 0.84s. 3 open ports discovered.`,
+          ece: `[Serial Monitor @ 9600 baud - Hardware COM4 Connected]\nAnalog Pin A0 Raw Reading: 684 -> Calculated Temp: 28.4°C [Status: NORMAL, LED OFF]\nAnalog Pin A0 Raw Reading: 792 -> Calculated Temp: 33.7°C [Status: NORMAL, LED OFF]\nAnalog Pin A0 Raw Reading: 928 -> Calculated Temp: 40.4°C [Status: 🚨 ALERT TRIGGERED, LED PIN 13 HIGH]`,
+          eee: `Applied Voltage : 36.00 V\nArmature Current: 24.00 A\nMotor Back-EMF  : 24.00 V\nMotor Output    : 864 Watts (1.16 HP)\nOperating Speed : 1750 RPM\nStatus: PWM Inverter Stable (Duty Cycle: 75.0%)`,
+          eie: `[MQTT Client Connected: broker.hivemq.com:1883]\n[Subscribed Topic]: factory/boiler/telemetry\nIncoming packet payload: {"sensor_id": "P-101", "pressure": 134.5}\n\nCRITICAL WARNING: Boiler pressure exceeds limit (134.5 PSI)!\n[Emergency Action]: Pressure relief solenoid activated. Alert dispatched to SCADA console.`,
+          robotics: `[ROS 2 Node /teleop_chassis] Initialized successfully.\nPublishing Twist command to topic /cmd_vel...\nRobot Moving Forward at: 1.5 m/s | Turning: 0.2 rad/s\n[Odometry Feedback]: x: 0.45m, y: 0.06m, theta: 0.06 rad\n[Safety LIDAR]: No obstacle in 2.0m cone. Movement APPROVED.`,
+          mech: `=== TENSILE TEST & YOUNG'S MODULUS CALCULATION ===\nApplied Force: 5000.0 N\nCross-Sectional Area: 50.0 mm²\nAxial Elongation: 0.05 mm (Original Length: 100.0 mm)\nEngineering Stress: 100.0 MPa\nEngineering Strain: 0.0005\nCalculated Young's Modulus: 200.00 GPa\n\nMaterial Identification: Structural Steel (ASTM A36 Standard Match ✅)`,
+          auto: `[CAN Bus sniffer active on can0 @ 500 kbps]\nIncoming CAN Frame ID: 0x18F0E500 | Payload: 0E1000C8\nDecoding EV Battery Management System (BMS) Pack Telemetry:\n{\n  "PackVoltage": 360.0,\n  "PackCurrent": 20.0,\n  "PowerKW": 7.2\n}\n[BMS Health]: State of Charge (SoC): 88% | Inverter Ingress: Normal`,
+          aero: `=== ORBITAL MECHANICS SIMULATION (LEO ISS) ===\nGravitational Constant (G) : 6.6743e-11 m³/(kg·s²)\nEarth Mass (M_earth)       : 5.972e24 kg\nEarth Mean Radius          : 6371.0 km\nOrbit Altitude             : 400.0 km\nTotal Orbital Radius (r)   : 6771.0 km\n\nISS Orbital Velocity: 7.67 km/s (~27,612 km/h)\nOrbital Period: 92.68 minutes per complete Earth orbit\nCentripetal Acceleration: 8.69 m/s²`,
+          civil: `=== SMART CITY FLOOD DRAINAGE ELEVATION ANALYSIS ===\nDatum Reference: Mean Sea Level (MSL)\nFlood Warning Threshold: 5.0 meters\n\nPlot_A (12.5m): ✅ SAFE (Elevation surplus: +7.5m)\nPlot_B (4.2m): ⚠️ FLOOD RISK (Sub-threshold by -0.8m)\nPlot_C (8.1m): ✅ SAFE (Elevation surplus: +3.1m)\n\nRecommendation: Deploy stormwater pumping station at Plot_B catchment zone.`,
+          biotech: `=== GENOMIC SEQUENCE ANALYSIS ===\nInput DNA Sequence: ATGCGATCGATCGATATAGCGATAGCTAG\nTotal Nucleotides: 28 bp\nBase Counts: A: 8, T: 7, G: 7, C: 6\n\nGC-Content: 46.4% | Transcribed RNA: AUGCGAUCGAUCGAUAUAGCGAUAGCUAG\nStart Codon (AUG): Detected at position 0\nSequence Quality: Valid ORF segment for peptide translation.`,
+          chemical: `=== REACTION CONCENTRATION OVER TIME ===\nRate Constant (k): 0.050 min⁻¹ (First-Order)\nInitial Concentration (C0): 10.00 mol/L\n\nTime:  0 min -> Concentration: 10.00 mol/L (Conversion: 0.0%)\nTime: 10 min -> Concentration:  6.07 mol/L (Conversion: 39.3%)\nTime: 20 min -> Concentration:  3.68 mol/L (Conversion: 63.2%)\nTime: 30 min -> Concentration:  2.23 mol/L (Conversion: 77.7%)\nTime: 60 min -> Concentration:  0.50 mol/L (Conversion: 95.0%)\n\nBatch Reactor Target: >= 90% conversion achieved before 50 mins.`,
+          metallurgy: `=== METALLURGICAL CRYSTALLOGRAPHY CALCULATOR ===\nCrystal Lattice Structure: Face-Centered Cubic (FCC)\nElement: Copper (Cu)\nAtomic Weight: 63.55 g/mol\nLattice Parameter (a): 3.615 Å (3.615e-8 cm)\nUnit Cell Volume: 4.724e-23 cm³\nAtoms per Unit Cell: 4\n\nTheoretical Density of Copper (FCC): 8.93 g/cm³\nStandard Reference Density: 8.96 g/cm³ (Error: 0.33% - Highly Accurate ✅)`
+        };
+
+        const currentOutput = branchOutputs[currentBranch.id] || branchOutputs['cse'];
+
+        return (
+          <div style={{ display: 'flex', flexDirection: 'column', gap: '16px' }}>
+            {/* Header bar with Language tag and action buttons */}
+            <div style={{
+              display: 'flex',
+              justifyContent: 'space-between',
+              alignItems: 'center',
+              flexWrap: 'wrap',
+              gap: '10px',
+              background: '#0f172a',
+              padding: '12px 16px',
+              borderRadius: '10px',
+              border: '1px solid #334155'
+            }}>
+              <div>
+                <span style={{
+                  fontSize: '11px',
+                  fontWeight: 'bold',
+                  background: `${currentBranch.color}25`,
+                  color: currentBranch.color,
+                  padding: '3px 10px',
+                  borderRadius: '6px',
+                  marginRight: '8px',
+                  textTransform: 'uppercase'
+                }}>
+                  {currentBranch.codeSample.language}
+                </span>
+                <span style={{ fontSize: '14.5px', fontWeight: '700', color: '#f8fafc' }}>
+                  {currentBranch.codeSample.title}
+                </span>
+              </div>
+
+              <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+                <button
+                  onClick={() => {
+                    navigator.clipboard?.writeText(currentBranch.codeSample.code);
+                    alert('Code copied to clipboard!');
+                  }}
+                  style={{
+                    display: 'flex',
+                    alignItems: 'center',
+                    gap: '6px',
+                    padding: '6px 12px',
+                    borderRadius: '6px',
+                    background: 'rgba(30, 41, 59, 0.8)',
+                    border: '1px solid #475569',
+                    color: '#cbd5e1',
+                    fontSize: '12px',
+                    fontWeight: '600',
+                    cursor: 'pointer'
+                  }}
+                >
+                  📋 Copy Code
+                </button>
+
+                <div style={{
+                  display: 'flex',
+                  alignItems: 'center',
+                  gap: '6px',
+                  padding: '6px 12px',
+                  borderRadius: '6px',
+                  background: 'rgba(16, 185, 129, 0.15)',
+                  border: '1px solid #10b981',
+                  color: '#34d399',
+                  fontSize: '12px',
+                  fontWeight: '700'
+                }}>
+                  <span>⚡</span> Live Output Active
+                </div>
+              </div>
+            </div>
+
+            {/* Code Box */}
+            <div style={{ position: 'relative' }}>
+              <div style={{
+                position: 'absolute',
+                top: '10px',
+                right: '12px',
+                fontSize: '11px',
+                color: '#64748b',
+                fontFamily: 'monospace',
+                background: 'rgba(15, 23, 42, 0.8)',
+                padding: '2px 8px',
+                borderRadius: '4px',
+                zIndex: 2
+              }}>
+                Source Code ({currentBranch.codeSample.language})
+              </div>
+              <pre style={{
+                background: '#090d16',
+                padding: '20px',
+                borderRadius: '12px',
+                border: '1.5px solid #334155',
+                color: '#38bdf8',
+                fontFamily: 'Consolas, Monaco, "Courier New", monospace',
+                fontSize: '13px',
+                lineHeight: '1.6',
+                overflowX: 'auto',
+                margin: 0
+              }}>
+                <code>{currentBranch.codeSample.code}</code>
+              </pre>
+            </div>
+
+            {/* Output Terminal Preview */}
+            <div style={{
+              background: '#0a0f1d',
+              borderRadius: '12px',
+              border: '1.5px solid #10b98150',
+              overflow: 'hidden',
+              boxShadow: '0 4px 20px rgba(0, 0, 0, 0.35)'
+            }}>
+              {/* Terminal top status bar */}
+              <div style={{
+                background: '#0f172a',
+                padding: '10px 16px',
+                borderBottom: '1px solid #1e293b',
+                display: 'flex',
+                justifyContent: 'space-between',
+                alignItems: 'center'
+              }}>
+                <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+                  <div style={{ display: 'flex', gap: '6px' }}>
+                    <span style={{ width: '10px', height: '10px', borderRadius: '50%', background: '#ef4444', display: 'inline-block' }} />
+                    <span style={{ width: '10px', height: '10px', borderRadius: '50%', background: '#f59e0b', display: 'inline-block' }} />
+                    <span style={{ width: '10px', height: '10px', borderRadius: '50%', background: '#10b981', display: 'inline-block' }} />
+                  </div>
+                  <span style={{ fontSize: '12px', fontWeight: 'bold', color: '#94a3b8', marginLeft: '6px' }}>
+                    💻 Terminal Execution Output Preview
+                  </span>
+                </div>
+                <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+                  <span style={{
+                    fontSize: '11px',
+                    color: '#34d399',
+                    background: 'rgba(16, 185, 129, 0.12)',
+                    padding: '2px 8px',
+                    borderRadius: '4px',
+                    fontWeight: 'bold',
+                    display: 'flex',
+                    alignItems: 'center',
+                    gap: '4px'
+                  }}>
+                    <span style={{ width: '6px', height: '6px', borderRadius: '50%', background: '#34d399', display: 'inline-block' }} />
+                    Status: 0 (Success)
+                  </span>
+                </div>
+              </div>
+
+              {/* Terminal Output Body */}
+              <pre style={{
+                margin: 0,
+                padding: '16px 20px',
+                color: '#4ade80',
+                fontFamily: 'Consolas, Monaco, "Courier New", monospace',
+                fontSize: '13px',
+                lineHeight: '1.65',
+                whiteSpace: 'pre-wrap',
+                wordBreak: 'break-word',
+                background: 'rgba(10, 15, 29, 0.95)'
+              }}>
+                {currentOutput}
+              </pre>
+            </div>
+          </div>
+        );
+      })()}
 
       {/* ── SUB TAB 5: Supercharged Smart Advisor Quiz ── */}
       {activeSubTab === 'advisor_quiz' && (
@@ -1992,9 +2389,62 @@ print(f"Theoretical Density of Copper (FCC): {cu_density:.2f} g/cm^3")`
 
       {/* ── SUB TAB 6: All-Branch Comparison Table & FAQ ── */}
       {activeSubTab === 'matrix' && (
-        <div style={{ display: 'flex', flexDirection: 'column', gap: '20px' }}>
+        <div style={{ display: 'flex', flexDirection: 'column', gap: '16px' }}>
+          <div style={{
+            display: 'flex',
+            justifyContent: 'space-between',
+            alignItems: 'center',
+            flexWrap: 'wrap',
+            gap: '10px',
+            padding: '10px 14px',
+            background: 'rgba(15, 23, 42, 0.6)',
+            borderRadius: '10px',
+            border: '1px solid rgba(255, 255, 255, 0.06)'
+          }}>
+            <span style={{ fontSize: '13px', color: '#cbd5e1' }}>
+              Showing <strong>{filteredBranches.length}</strong> branches (ordered by: <strong style={{ color: '#38bdf8' }}>{
+                sortBy === 'demand_desc' ? '💼 Placement Demand (High → Low)' :
+                sortBy === 'difficulty_desc' ? '🔥 Difficulty (High → Low)' :
+                sortBy === 'difficulty_asc' ? '🌱 Difficulty (Beginner Friendly)' :
+                'Default Curriculum Order'
+              }</strong>). Click any row or header to navigate or sort!
+            </span>
+            <div style={{ display: 'flex', gap: '8px' }}>
+              <button
+                onClick={() => setSortBy('demand_desc')}
+                style={{
+                  padding: '4px 10px',
+                  borderRadius: '12px',
+                  border: sortBy === 'demand_desc' ? '1px solid #facc15' : '1px solid #334155',
+                  background: sortBy === 'demand_desc' ? 'rgba(250, 204, 21, 0.2)' : 'transparent',
+                  color: sortBy === 'demand_desc' ? '#facc15' : '#94a3b8',
+                  fontSize: '11px',
+                  fontWeight: '600',
+                  cursor: 'pointer'
+                }}
+              >
+                Sort by Demand ⭐
+              </button>
+              <button
+                onClick={() => setSortBy(sortBy === 'difficulty_desc' ? 'difficulty_asc' : 'difficulty_desc')}
+                style={{
+                  padding: '4px 10px',
+                  borderRadius: '12px',
+                  border: sortBy.startsWith('difficulty') ? '1px solid #ef4444' : '1px solid #334155',
+                  background: sortBy.startsWith('difficulty') ? 'rgba(239, 68, 68, 0.2)' : 'transparent',
+                  color: sortBy.startsWith('difficulty') ? '#f87171' : '#94a3b8',
+                  fontSize: '11px',
+                  fontWeight: '600',
+                  cursor: 'pointer'
+                }}
+              >
+                Sort by Difficulty {sortBy === 'difficulty_desc' ? '↓' : '↑'}
+              </button>
+            </div>
+          </div>
+
           {/* Comparison Matrix Table */}
-          <div style={{ overflowX: 'auto' }}>
+          <div style={{ overflowX: 'auto', borderRadius: '12px', border: '1px solid #334155' }}>
             <table style={{
               width: '100%',
               borderCollapse: 'collapse',
@@ -2007,32 +2457,92 @@ print(f"Theoretical Density of Copper (FCC): {cu_density:.2f} g/cm^3")`
                   <th style={{ padding: '12px 14px' }}>Primary Language</th>
                   <th style={{ padding: '12px 14px' }}>Secondary Stack</th>
                   <th style={{ padding: '12px 14px' }}>Key Industry Domain</th>
-                  <th style={{ padding: '12px 14px' }}>Placement Demand</th>
+                  <th
+                    onClick={() => setSortBy(sortBy === 'demand_desc' ? 'default' : 'demand_desc')}
+                    style={{
+                      padding: '12px 14px',
+                      cursor: 'pointer',
+                      color: sortBy === 'demand_desc' ? '#facc15' : '#38bdf8',
+                      userSelect: 'none'
+                    }}
+                    title="Click to sort by Placement Demand"
+                  >
+                    Placement Demand {sortBy === 'demand_desc' ? '▼ (High→Low)' : '⇅'}
+                  </th>
+                  <th
+                    onClick={() => setSortBy(sortBy === 'difficulty_desc' ? 'difficulty_asc' : 'difficulty_desc')}
+                    style={{
+                      padding: '12px 14px',
+                      cursor: 'pointer',
+                      color: sortBy.startsWith('difficulty') ? '#f87171' : '#38bdf8',
+                      userSelect: 'none'
+                    }}
+                    title="Click to sort by Difficulty"
+                  >
+                    Difficulty {sortBy === 'difficulty_desc' ? '▼ (High→Low)' : sortBy === 'difficulty_asc' ? '▲ (Low→High)' : '⇅'}
+                  </th>
                 </tr>
               </thead>
               <tbody>
-                {branchData.map((b, idx) => (
-                  <tr key={b.id} style={{
-                    background: idx % 2 === 0 ? 'rgba(15, 23, 42, 0.6)' : 'rgba(30, 41, 59, 0.4)',
-                    borderBottom: '1px solid #334155'
-                  }}>
-                    <td style={{ padding: '12px 14px', fontWeight: 'bold', color: b.color }}>
-                      <span style={{ marginRight: '6px' }}>{b.icon}</span> {b.name.split('(')[0]}
-                    </td>
-                    <td style={{ padding: '12px 14px', color: '#f1f5f9', fontWeight: '600' }}>
-                      {b.primaryLang.name}
-                    </td>
-                    <td style={{ padding: '12px 14px', color: '#cbd5e1' }}>
-                      {b.secondaryLang.name}
-                    </td>
-                    <td style={{ padding: '12px 14px', color: '#94a3b8', fontSize: '12.5px' }}>
-                      {b.coreFocus.split(',').slice(0, 3).join(', ')}...
-                    </td>
-                    <td style={{ padding: '12px 14px', color: '#facc15', fontWeight: 'bold', fontSize: '12px' }}>
-                      {b.placementDemand.split('(')[0]}
-                    </td>
-                  </tr>
-                ))}
+                {filteredBranches.map((b, idx) => {
+                  const dMeta = getDifficultyMeta(b.difficulty);
+                  const isSelected = selectedBranch === b.id;
+                  return (
+                    <tr
+                      key={b.id}
+                      onClick={() => setSelectedBranch(b.id)}
+                      style={{
+                        background: isSelected
+                          ? 'rgba(56, 189, 248, 0.12)'
+                          : idx % 2 === 0
+                          ? 'rgba(15, 23, 42, 0.6)'
+                          : 'rgba(30, 41, 59, 0.4)',
+                        borderBottom: '1px solid #334155',
+                        borderLeft: isSelected ? `3px solid ${b.color}` : '3px solid transparent',
+                        cursor: 'pointer',
+                        transition: 'background 0.15s ease'
+                      }}
+                      title="Click row to open 4-year roadmap"
+                    >
+                      <td style={{ padding: '12px 14px', fontWeight: 'bold', color: b.color }}>
+                        <span style={{ marginRight: '6px' }}>{b.icon}</span> {b.name.split('(')[0]}
+                      </td>
+                      <td style={{ padding: '12px 14px', color: '#f1f5f9', fontWeight: '600' }}>
+                        {b.primaryLang.name}
+                      </td>
+                      <td style={{ padding: '12px 14px', color: '#cbd5e1' }}>
+                        {b.secondaryLang.name}
+                      </td>
+                      <td style={{ padding: '12px 14px', color: '#94a3b8', fontSize: '12.5px' }}>
+                        {b.coreFocus.split(',').slice(0, 3).join(', ')}...
+                      </td>
+                      <td style={{ padding: '12px 14px', color: '#facc15', fontWeight: 'bold', fontSize: '12px', whiteSpace: 'nowrap' }}>
+                        <div>{(b.placementDemand.match(/⭐/g) || []).join('')}</div>
+                        <span style={{ fontSize: '11px', color: '#cbd5e1', fontWeight: 'normal' }}>
+                          {b.placementDemand.split('(')[1]?.replace(')', '') || ''}
+                        </span>
+                      </td>
+                      <td style={{ padding: '12px 14px', fontSize: '12px' }}>
+                        <span style={{
+                          padding: '2px 8px',
+                          borderRadius: '4px',
+                          background: dMeta.bg,
+                          color: dMeta.color,
+                          border: `1px solid ${dMeta.border}`,
+                          fontWeight: '700',
+                          fontSize: '11px',
+                          display: 'inline-block',
+                          marginBottom: '3px'
+                        }}>
+                          {dMeta.label}
+                        </span>
+                        <div style={{ fontSize: '11px', color: '#94a3b8' }}>
+                          {b.difficulty}
+                        </div>
+                      </td>
+                    </tr>
+                  );
+                })}
               </tbody>
             </table>
           </div>

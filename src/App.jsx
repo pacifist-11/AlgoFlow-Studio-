@@ -3704,9 +3704,11 @@ function App() {
                 <button
                   type="button"
                   onClick={() => {
-                    logoutUser();
-                    setFeedbackName('');
-                    setFeedbackEmail('');
+                    if (window.confirm('Are you sure you want to log out from this email?')) {
+                      logoutUser();
+                      setFeedbackName('');
+                      setFeedbackEmail('');
+                    }
                   }}
                   style={{
                     width: '100%',
@@ -4012,24 +4014,6 @@ function App() {
             onOpenConnectModal={() => setIsConnectModalOpen(true)} 
             onOpenSettings={() => setIsSettingsOpen(true)} 
           />
-          <button 
-            className="btn btn-clear" 
-            onClick={() => setIsUpcomingOpen(true)}
-            style={{ display: 'flex', alignItems: 'center', gap: '8px', padding: '0.6rem 1.2rem', borderRadius: '12px', background: 'rgba(139, 92, 246, 0.08)', border: '1px solid rgba(139, 92, 246, 0.3)', color: 'var(--accent-primary)', cursor: 'pointer', transition: 'all 0.25s', fontWeight: 'bold' }}
-            onMouseEnter={e => e.currentTarget.style.transform = 'scale(1.05)'}
-            onMouseLeave={e => e.currentTarget.style.transform = 'scale(1)'}
-          >
-            🚀 Upcoming Features
-          </button>
-          <button 
-            className="btn btn-clear" 
-            onClick={() => setIsSettingsOpen(true)}
-            style={{ display: 'flex', alignItems: 'center', gap: '8px', padding: '0.6rem 1.2rem', borderRadius: '12px', background: 'rgba(255,255,255,0.03)', border: '1px solid var(--glass-border)', cursor: 'pointer', transition: 'all 0.25s' }}
-            onMouseEnter={e => e.currentTarget.style.transform = 'scale(1.05)'}
-            onMouseLeave={e => e.currentTarget.style.transform = 'scale(1)'}
-          >
-            ⚙️ Settings
-          </button>
         </div>
         <div className="home-container">
           {!appMode && lastActiveMode && (
@@ -6158,6 +6142,8 @@ function App() {
         isOpen={isConnectModalOpen}
         onClose={() => setIsConnectModalOpen(false)}
         onUserConnected={(user) => setActiveUser(user)}
+        currentTheme={currentTheme}
+        onSelectTheme={(th) => setCurrentTheme(th)}
       />
     </>
   );

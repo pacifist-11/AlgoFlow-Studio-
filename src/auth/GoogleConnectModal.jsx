@@ -1,53 +1,307 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import { 
   getGoogleClientId,
-  saveGoogleClientId,
-  launchRealGoogleOAuth,
   continueAsGuest, 
-  setOnboardingSeen
+  setOnboardingSeen,
+  getActiveUser,
+  getSavedAccounts
 } from './userAuthService.js';
+import { lookupAccount, sendOtpPin, verifyOtpPin } from './otpAuthService.js';
 
-export default function GoogleConnectModal({ isOpen, onClose, onUserConnected }) {
-  const [errorMsg, setErrorMsg] = useState('');
-  const [isLoading, setIsLoading] = useState(false);
-  const [showSetup, setShowSetup] = useState(false);
-  const [inputClientId, setInputClientId] = useState('');
+// Deterministic pastel/vibrant colors for account avatars
+function getAvatarBgColor(str = '') {
+  const colors = [
+    '#7e57c2', '#3949ab', '#00897b', '#1e293b', 
+    '#d97706', '#0284c7', '#e11d48'
+  ];
+  let hash = 0;
+  for (let i = 0; i < str.length; i++) {
+    hash = str.charCodeAt(i) + ((hash << 5) - hash);
+  }
+  return colors[Math.abs(hash) % colors.length];
+}
 
-  const handleLaunchGoogleSignIn = (explicitClientId) => {
-    setErrorMsg('');
-    const clientId = (explicitClientId && typeof explicitClientId === 'string' ? explicitClientId : getGoogleClientId())?.trim();
+// Auto-extract and clean human-readable name from email address
+export function formatNameFromEmail(email = '') {
+  if (!email || typeof email !== 'string' || !email.includes('@')) return '';
+  const prefix = email.split('@')[0].trim();
+  if (!prefix) return '';
 
-    if (!clientId) {
-      setShowSetup(true);
-      setErrorMsg('To show your real Google accounts popup, a Google OAuth Client ID is required.');
-      return;
-    }
+  // 1. If it is purely numbered (e.g. 2500032027@kluniversity.in), keep the number directly as name
+  if (/^\d+$/.test(prefix)) {
+    return prefix;
+  }
 
-    setIsLoading(true);
+  // 2. If it is a college roll code (e.g. 21b91a05h2), keep the student roll code
+  if (/\d+[a-zA-Z]+\d+/.test(prefix)) {
+    return prefix.toUpperCase();
+  }
 
-    launchRealGoogleOAuth({
-      clientId,
-      onUserSuccess: (profile) => {
-        setIsLoading(false);
-        if (onUserConnected) onUserConnected(profile);
-        if (onClose) onClose();
-      },
-      onError: (err) => {
-        setIsLoading(false);
-        setErrorMsg(typeof err === 'string' ? err : 'Google Sign-In was cancelled or encountered an error.');
+  // 3. Strip trailing numbers and noise suffixes (e.g. "piggu3275" -> "piggu", "88ff", "123", "99x")
+  let clean = prefix.replace(/[._\-+]?\d+[a-zA-Z0-9]*$/, '');
+  if (!clean) clean = prefix.replace(/\d+/g, '');
+  if (!clean) return prefix;
+
+  // 4. Split on common delimiters
+  let parts = clean
+    .replace(/[._\-+]+/g, ' ')
+    .trim()
+    .split(/\s+/)
+    .filter(Boolean);
+
+  // 3. If there is only one part, check for common compound name suffixes
+  if (parts.length === 1 && parts[0].length >= 7) {
+    const word = parts[0].toLowerCase();
+    const commonSuffixes = [
+      'harsha', 'kumar', 'reddy', 'sharma', 'singh', 'patel', 'verma', 'gupta',
+      'raju', 'rao', 'prasad', 'teja', 'krishna', 'chandra', 'varma', 'babu',
+      'murthy', 'swamy', 'shekhar', 'deep', 'jeet', 'preet', 'nath', 'das'
+    ];
+    for (const suffix of commonSuffixes) {
+      if (word.endsWith(suffix) && word.length > suffix.length + 2) {
+        const first = word.slice(0, word.length - suffix.length);
+        parts = [first, suffix];
+        break;
       }
-    });
+    }
+  }
+
+  // 4. Also check for common compound name prefixes
+  if (parts.length === 1 && parts[0].length >= 7) {
+    const word = parts[0].toLowerCase();
+    const commonPrefixes = ['sai', 'siva', 'ram', 'devi', 'vijay', 'venkat', 'satya'];
+    for (const pfx of commonPrefixes) {
+      if (word.startsWith(pfx) && word.length > pfx.length + 2) {
+        const rest = word.slice(pfx.length);
+        parts = [pfx, rest];
+        break;
+      }
+    }
+  }
+
+  if (parts.length === 0) {
+    return clean.charAt(0).toUpperCase() + clean.slice(1);
+  }
+
+  // 5. Capitalize words cleanly
+  return parts
+    .map(p => p.charAt(0).toUpperCase() + p.slice(1).toLowerCase())
+    .join(' ');
+}
+
+export default function GoogleConnectModal({ isOpen, onClose, onUserConnected, currentTheme, onSelectTheme }) {
+  const [activeTab, setActiveTab] = useState('otp'); // 'otp' | 'google'
+  const [activeUser, setActiveUserState] = useState(() => getActiveUser());
+  const [savedAccounts, setSavedAccounts] = useState(() => getSavedAccounts());
+
+  // OTP Form States
+  const [targetInput, setTargetInput] = useState('');
+  const [recognizedName, setRecognizedName] = useState('');
+  const [isExistingUser, setIsExistingUser] = useState(false);
+  const [isLookingUp, setIsLookingUp] = useState(false);
+  const [otpStep, setOtpStep] = useState('input'); // 'input' | 'verify' | 'theme_select'
+  const [pendingUser, setPendingUser] = useState(null);
+  const [pinDigits, setPinDigits] = useState(['', '', '', '']);
+  const [otpError, setOtpError] = useState('');
+  const [otpSuccess, setOtpSuccess] = useState('');
+  const [isSending, setIsSending] = useState(false);
+  const [isVerifying, setIsVerifying] = useState(false);
+  const [resendCooldown, setResendCooldown] = useState(0);
+  const [customNameInput, setCustomNameInput] = useState('');
+  const [googleNotice, setGoogleNotice] = useState(false);
+  const [selectedTheme, setSelectedTheme] = useState(() => {
+    return currentTheme || (typeof window !== 'undefined' ? localStorage.getItem('algoflow_theme') : null) || 'Neon Cyberpunk';
+  });
+
+  const digitInputRefs = [useRef(null), useRef(null), useRef(null), useRef(null)];
+  const lookupTimeoutRef = useRef(null);
+  const prevIsOpenRef = useRef(false);
+
+  // Sync state ONLY when modal transitions from closed to open
+  useEffect(() => {
+    if (isOpen && !prevIsOpenRef.current) {
+      const user = getActiveUser();
+      setActiveUserState(user);
+      setOtpError('');
+      setOtpSuccess('');
+      setGoogleNotice(false);
+      setOtpStep('input');
+      setTargetInput('');
+      setRecognizedName('');
+      setCustomNameInput('');
+      setPinDigits(['', '', '', '']);
+      setPendingUser(null);
+      setActiveTab('otp');
+      if (currentTheme) {
+        setSelectedTheme(currentTheme);
+      }
+    }
+    prevIsOpenRef.current = isOpen;
+  }, [isOpen]);
+
+  // Sync selectedTheme when currentTheme prop changes, without resetting modal steps
+  useEffect(() => {
+    if (currentTheme) {
+      setSelectedTheme(currentTheme);
+    }
+  }, [currentTheme]);
+
+  // Resend countdown timer
+  useEffect(() => {
+    if (resendCooldown <= 0) return;
+    const t = setInterval(() => {
+      setResendCooldown(prev => prev - 1);
+    }, 1000);
+    return () => clearInterval(t);
+  }, [resendCooldown]);
+
+  // Live real name lookup as user types email
+  const handleTargetChange = (e) => {
+    const val = e.target.value;
+    setTargetInput(val);
+    setOtpError('');
+
+    if (lookupTimeoutRef.current) clearTimeout(lookupTimeoutRef.current);
+
+    if (val.includes('@') && val.length > 3) {
+      const derived = formatNameFromEmail(val);
+      setRecognizedName(derived);
+      setCustomNameInput(derived);
+
+      setIsLookingUp(true);
+      lookupTimeoutRef.current = setTimeout(async () => {
+        const info = await lookupAccount(val);
+        setIsLookingUp(false);
+        if (info.exists && info.name) {
+          setRecognizedName(info.name);
+          setCustomNameInput(info.name);
+          setIsExistingUser(true);
+        } else {
+          setIsExistingUser(false);
+        }
+      }, 350);
+    } else {
+      setRecognizedName('');
+      setCustomNameInput('');
+      setIsExistingUser(false);
+    }
   };
 
-  const handleSaveAndConnect = () => {
-    if (!inputClientId.trim()) {
-      setErrorMsg('Please paste your Google Client ID first.');
+  // 1. Send 4-Digit PIN
+  const handleSendPin = async (e) => {
+    if (e) e.preventDefault();
+    if (!targetInput.trim()) {
+      setOtpError('Please enter your email address.');
       return;
     }
-    const cleanId = inputClientId.trim();
-    saveGoogleClientId(cleanId);
-    setShowSetup(false);
-    handleLaunchGoogleSignIn(cleanId);
+
+    setOtpError('');
+    setIsSending(true);
+    try {
+      const data = await sendOtpPin(targetInput.trim());
+      setIsSending(false);
+      setOtpStep('verify');
+      setResendCooldown(60);
+      if (data.recipientName) {
+        setRecognizedName(data.recipientName);
+        setCustomNameInput(data.recipientName);
+      } else {
+        const derived = formatNameFromEmail(targetInput.trim());
+        setRecognizedName(derived);
+        setCustomNameInput(derived);
+      }
+
+      setOtpSuccess(data.message || '4-digit verification PIN sent to your email!');
+      setPinDigits(['', '', '', '']);
+
+      // Focus first digit box
+      setTimeout(() => {
+        if (digitInputRefs[0]?.current) {
+          digitInputRefs[0].current.focus();
+        }
+      }, 100);
+    } catch (err) {
+      setIsSending(false);
+      setOtpError(err.message || 'Failed to send PIN.');
+    }
+  };
+
+  // 2. Handle 4-Digit Box Input & Auto-Advance
+  const handleDigitChange = (index, value) => {
+    const clean = value.replace(/\D/g, '');
+    
+    // Handle paste of 4 digits
+    if (clean.length > 1) {
+      const pasted = clean.slice(0, 4).split('');
+      const updated = [...pinDigits];
+      pasted.forEach((d, i) => { updated[i] = d; });
+      setPinDigits(updated);
+      if (pasted.length === 4) {
+        handleTriggerVerify(updated.join(''));
+      }
+      return;
+    }
+
+    const updated = [...pinDigits];
+    updated[index] = clean;
+    setPinDigits(updated);
+    setOtpError('');
+
+    // Advance to next box
+    if (clean && index < 3) {
+      digitInputRefs[index + 1]?.current?.focus();
+    }
+
+    // Auto-verify if all 4 digits entered
+    if (clean && index === 3) {
+      const fullPin = updated.join('');
+      if (fullPin.length === 4) {
+        handleTriggerVerify(fullPin);
+      }
+    }
+  };
+
+  const handleDigitKeyDown = (index, e) => {
+    if (e.key === 'Backspace' && !pinDigits[index] && index > 0) {
+      digitInputRefs[index - 1]?.current?.focus();
+    }
+  };
+
+  // 3. Verify PIN
+  const handleTriggerVerify = async (pinString) => {
+    const code = pinString || pinDigits.join('');
+    if (code.length !== 4) {
+      setOtpError('Please enter all 4 digits.');
+      return;
+    }
+
+    setIsVerifying(true);
+    setOtpError('');
+
+    try {
+      const nameToSend = recognizedName || customNameInput || formatNameFromEmail(targetInput.trim());
+      const result = await verifyOtpPin({
+        target: targetInput.trim(),
+        pin: code,
+        name: nameToSend
+      });
+
+      setIsVerifying(false);
+      setActiveUserState(result);
+
+      // Fresh user check: show theme picker with 2 dark & 2 white themes!
+      if (result.isNewUser || !isExistingUser) {
+        setPendingUser(result);
+        setOtpStep('theme_select');
+      } else {
+        setOnboardingSeen();
+        if (onUserConnected) onUserConnected(result);
+        if (onClose) onClose();
+      }
+    } catch (err) {
+      setIsVerifying(false);
+      setOtpError(err.message || 'Incorrect PIN.');
+    }
   };
 
   const handleGuest = () => {
@@ -62,13 +316,18 @@ export default function GoogleConnectModal({ isOpen, onClose, onUserConnected })
     <div 
       className="modal-overlay" 
       style={{ 
-        zIndex: 9999,
-        background: 'rgba(5, 11, 24, 0.88)',
+        position: 'fixed',
+        top: 0,
+        left: 0,
+        right: 0,
+        bottom: 0,
+        zIndex: 99999,
+        background: 'rgba(0, 0, 0, 0.82)',
         backdropFilter: 'blur(16px)',
         display: 'flex',
         alignItems: 'center',
         justifyContent: 'center',
-        padding: '20px'
+        padding: '16px'
       }}
       onClick={() => {
         setOnboardingSeen();
@@ -76,290 +335,776 @@ export default function GoogleConnectModal({ isOpen, onClose, onUserConnected })
       }}
     >
       <div 
-        className="modal-content"
+        className="modal-content algoflow-auth-modal"
         style={{
-          maxWidth: '440px',
+          maxWidth: '680px',
           width: '100%',
-          background: 'linear-gradient(145deg, #18181b, #0f172a)',
+          background: '#111827',
           border: '1.5px solid rgba(56, 189, 248, 0.35)',
-          boxShadow: '0 25px 60px rgba(0, 0, 0, 0.9), 0 0 35px rgba(56, 189, 248, 0.15)',
+          boxShadow: '0 24px 64px rgba(0, 0, 0, 0.9), 0 0 32px rgba(56, 189, 248, 0.15)',
           borderRadius: '24px',
-          padding: '2.4rem 2rem 2rem 2rem',
+          padding: '32px',
           position: 'relative',
           overflow: 'hidden',
           color: '#f8fafc',
-          fontFamily: '-apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif',
-          textAlign: 'center'
+          fontFamily: '-apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif'
         }}
         onClick={e => e.stopPropagation()}
       >
-        {/* Close Button */}
-        <button
-          onClick={() => {
-            setOnboardingSeen();
-            onClose();
-          }}
-          style={{
-            position: 'absolute',
-            top: '18px',
-            right: '18px',
-            background: 'rgba(255, 255, 255, 0.05)',
-            border: 'none',
-            color: '#71717a',
-            width: '32px',
-            height: '32px',
-            borderRadius: '50%',
-            cursor: 'pointer',
-            fontSize: '16px',
+        {/* Header Branding */}
+        <div style={{ display: 'flex', alignItems: 'center', gap: '12px', marginBottom: '20px' }}>
+          <div style={{
+            width: '42px',
+            height: '42px',
+            borderRadius: '12px',
+            background: 'linear-gradient(135deg, #0284c7, #6366f1)',
             display: 'flex',
             alignItems: 'center',
             justifyContent: 'center',
-            transition: 'color 0.2s'
-          }}
-          onMouseEnter={e => e.currentTarget.style.color = '#ffffff'}
-          onMouseLeave={e => e.currentTarget.style.color = '#71717a'}
-        >
-          ✕
-        </button>
-
-        {/* Google G Logo */}
-        <div style={{
-          width: '68px',
-          height: '68px',
-          margin: '0 auto 16px auto',
-          borderRadius: '20px',
-          background: 'rgba(255, 255, 255, 0.06)',
-          border: '1.5px solid rgba(255, 255, 255, 0.12)',
-          display: 'flex',
-          alignItems: 'center',
-          justifyContent: 'center',
-          boxShadow: '0 8px 24px rgba(0, 0, 0, 0.4)'
-        }}>
-          <svg width="36" height="36" viewBox="0 0 24 24">
-            <path d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92c-.26 1.37-1.04 2.53-2.21 3.31v2.77h3.57c2.08-1.92 3.28-4.74 3.28-8.09z" fill="#4285F4"/>
-            <path d="M12 23c2.97 0 5.46-.98 7.28-2.66l-3.57-2.77c-.98.66-2.23 1.06-3.71 1.06-2.86 0-5.29-1.93-6.16-4.53H2.18v2.84C3.99 20.53 7.7 23 12 23z" fill="#34A853"/>
-            <path d="M5.84 14.09c-.22-.66-.35-1.36-.35-2.09s.13-1.43.35-2.09V7.06H2.18C1.43 8.55 1 10.22 1 12s.43 3.45 1.18 4.94l2.85-2.22.81-.63z" fill="#FBBC05"/>
-            <path d="M12 5.38c1.62 0 3.06.56 4.21 1.64l3.15-3.15C17.45 2.09 14.97 1 12 1 7.7 1 3.99 3.47 2.18 7.06l3.66 2.84c.87-2.6 3.3-4.52 6.16-4.52z" fill="#EA4335"/>
-          </svg>
-        </div>
-
-        <h2 style={{
-          fontSize: '1.75rem',
-          fontWeight: '800',
-          margin: '0 0 6px 0',
-          color: '#ffffff',
-          letterSpacing: '-0.4px'
-        }}>
-          Sign in with Google
-        </h2>
-        <p style={{
-          fontSize: '0.92rem',
-          color: '#94a3b8',
-          margin: '0 0 1.8rem 0',
-          lineHeight: '1.4'
-        }}>
-          Connect your Google account to auto-fill feedback and save your AI learning chat history.
-        </p>
-
-        {/* Benefits Cards */}
-        <div style={{
-          display: 'flex',
-          flexDirection: 'column',
-          gap: '8px',
-          marginBottom: '1.8rem',
-          textAlign: 'left'
-        }}>
-          <div style={{
-            padding: '10px 14px',
-            borderRadius: '12px',
-            background: 'rgba(255, 255, 255, 0.04)',
-            border: '1px solid rgba(255, 255, 255, 0.08)',
-            display: 'flex',
-            alignItems: 'center',
-            gap: '12px'
+            fontSize: '20px',
+            boxShadow: '0 4px 14px rgba(56, 189, 248, 0.35)'
           }}>
-            <span style={{ fontSize: '1.2rem' }}>⚡</span>
-            <div style={{ fontSize: '0.84rem', color: '#e2e8f0' }}>
-              <strong>Zero-Typing Feedback:</strong> Auto-fills your verified name &amp; email.
-            </div>
+            ⚡
           </div>
-
-          <div style={{
-            padding: '10px 14px',
-            borderRadius: '12px',
-            background: 'rgba(255, 255, 255, 0.04)',
-            border: '1px solid rgba(255, 255, 255, 0.08)',
-            display: 'flex',
-            alignItems: 'center',
-            gap: '12px'
-          }}>
-            <span style={{ fontSize: '1.2rem' }}>💾</span>
-            <div style={{ fontSize: '0.84rem', color: '#e2e8f0' }}>
-              <strong>Saved AI Chats:</strong> Persists your conversation across reloads.
-            </div>
-          </div>
-        </div>
-
-        {/* ── 1-Click Google Sign-In Button ── */}
-        <button
-          onClick={handleLaunchGoogleSignIn}
-          disabled={isLoading}
-          style={{
-            width: '100%',
-            padding: '14px 20px',
-            borderRadius: '14px',
-            background: '#ffffff',
-            color: '#1f2937',
-            border: 'none',
-            fontWeight: '700',
-            fontSize: '1rem',
-            cursor: isLoading ? 'not-allowed' : 'pointer',
-            display: 'flex',
-            alignItems: 'center',
-            justifyContent: 'center',
-            gap: '12px',
-            boxShadow: '0 4px 20px rgba(255, 255, 255, 0.15)',
-            transition: 'transform 0.15s, box-shadow 0.15s'
-          }}
-          onMouseEnter={e => e.currentTarget.style.transform = 'translateY(-1px)'}
-          onMouseLeave={e => e.currentTarget.style.transform = 'translateY(0)'}
-        >
-          <svg width="22" height="22" viewBox="0 0 24 24">
-            <path d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92c-.26 1.37-1.04 2.53-2.21 3.31v2.77h3.57c2.08-1.92 3.28-4.74 3.28-8.09z" fill="#4285F4"/>
-            <path d="M12 23c2.97 0 5.46-.98 7.28-2.66l-3.57-2.77c-.98.66-2.23 1.06-3.71 1.06-2.86 0-5.29-1.93-6.16-4.53H2.18v2.84C3.99 20.53 7.7 23 12 23z" fill="#34A853"/>
-            <path d="M5.84 14.09c-.22-.66-.35-1.36-.35-2.09s.13-1.43.35-2.09V7.06H2.18C1.43 8.55 1 10.22 1 12s.43 3.45 1.18 4.94l2.85-2.22.81-.63z" fill="#FBBC05"/>
-            <path d="M12 5.38c1.62 0 3.06.56 4.21 1.64l3.15-3.15C17.45 2.09 14.97 1 12 1 7.7 1 3.99 3.47 2.18 7.06l3.66 2.84c.87-2.6 3.3-4.52 6.16-4.52z" fill="#EA4335"/>
-          </svg>
-          <span>{isLoading ? 'Connecting to Google...' : 'Continue with Google'}</span>
-        </button>
-
-        {errorMsg && (
-          <div style={{
-            background: 'rgba(239, 68, 68, 0.1)',
-            border: '1px solid rgba(239, 68, 68, 0.3)',
-            color: '#f87171',
-            borderRadius: '10px',
-            padding: '10px 12px',
-            fontSize: '0.82rem',
-            marginTop: '12px',
-            lineHeight: '1.4'
-          }}>
-            ⚠️ {errorMsg}
-          </div>
-        )}
-
-        {/* ── 1-Time Google OAuth Configuration Helper ── */}
-        {showSetup && (
-          <div style={{
-            background: 'rgba(15, 23, 42, 0.95)',
-            border: '1px solid rgba(56, 189, 248, 0.35)',
-            borderRadius: '14px',
-            padding: '14px 16px',
-            marginTop: '14px',
-            textAlign: 'left',
-            boxShadow: '0 8px 24px rgba(0, 0, 0, 0.4)'
-          }}>
-            <div style={{
-              display: 'flex',
-              alignItems: 'center',
-              justifyContent: 'space-between',
-              marginBottom: '8px'
-            }}>
-              <span style={{ fontSize: '0.85rem', fontWeight: '700', color: '#38bdf8' }}>
-                🔑 One-Time Google Setup
-              </span>
-              <a
-                href="https://console.cloud.google.com/apis/credentials/oauthclient?project=gen-lang-client-0109695940"
-                target="_blank"
-                rel="noreferrer"
-                style={{
-                  fontSize: '0.78rem',
-                  color: '#60a5fa',
-                  textDecoration: 'underline',
-                  fontWeight: '600'
-                }}
-              >
-                Get Client ID from Google Cloud ↗
-              </a>
-            </div>
-
-            <p style={{
-              fontSize: '0.78rem',
-              color: '#94a3b8',
-              margin: '0 0 10px 0',
-              lineHeight: '1.4'
-            }}>
-              Google requires a <strong>Web Client ID</strong> to show your accounts popup. In Google Console: select <em>Web application</em>, add <code>http://localhost:5173</code> under <em>Authorized JavaScript origins</em>, and paste the Client ID below:
+          <div>
+            <h2 style={{ margin: 0, fontSize: '1.4rem', fontWeight: '800', color: '#f8fafc', letterSpacing: '-0.3px' }}>
+              AlgoFlow Studio Authentication
+            </h2>
+            <p style={{ margin: '2px 0 0 0', fontSize: '0.84rem', color: '#94a3b8' }}>
+              Sign in once — your account is remembered automatically on this device
             </p>
-
-            <div style={{ display: 'flex', gap: '8px', alignItems: 'center' }}>
-              <input
-                type="text"
-                placeholder="Paste Client ID (...apps.googleusercontent.com)"
-                value={inputClientId}
-                onChange={(e) => setInputClientId(e.target.value)}
-                onKeyDown={(e) => {
-                  if (e.key === 'Enter') handleSaveAndConnect();
-                }}
-                style={{
-                  flex: 1,
-                  background: 'rgba(30, 41, 59, 0.9)',
-                  border: '1px solid #334155',
-                  borderRadius: '8px',
-                  padding: '9px 12px',
-                  color: '#f8fafc',
-                  fontSize: '0.8rem',
-                  outline: 'none'
-                }}
-              />
-              <button
-                type="button"
-                onClick={handleSaveAndConnect}
-                style={{
-                  background: '#0284c7',
-                  color: '#ffffff',
-                  border: 'none',
-                  borderRadius: '8px',
-                  padding: '9px 14px',
-                  fontWeight: '700',
-                  fontSize: '0.8rem',
-                  cursor: 'pointer',
-                  whiteSpace: 'nowrap',
-                  transition: 'background 0.2s'
-                }}
-                onMouseEnter={e => e.currentTarget.style.background = '#0369a1'}
-                onMouseLeave={e => e.currentTarget.style.background = '#0284c7'}
-              >
-                Save &amp; Open
-              </button>
-            </div>
           </div>
-        )}
+        </div>
 
-        {/* Skip / Continue as Guest */}
+        {/* Tab Switcher */}
         <div style={{
-          marginTop: '1.6rem',
-          paddingTop: '1rem',
-          borderTop: '1px solid #27272a'
+          display: 'flex',
+          gap: '8px',
+          background: 'rgba(15, 23, 42, 0.7)',
+          padding: '5px',
+          borderRadius: '14px',
+          marginBottom: '24px',
+          border: '1px solid rgba(255, 255, 255, 0.08)'
         }}>
           <button
-            type="button"
-            onClick={handleGuest}
+            onClick={() => setActiveTab('otp')}
             style={{
-              background: 'transparent',
+              flex: 1,
+              padding: '9px 12px',
+              borderRadius: '10px',
               border: 'none',
-              color: '#94a3b8',
+              background: activeTab === 'otp' ? 'linear-gradient(135deg, #0284c7, #2563eb)' : 'transparent',
+              color: activeTab === 'otp' ? '#ffffff' : '#94a3b8',
+              fontWeight: activeTab === 'otp' ? '700' : '500',
+              fontSize: '0.86rem',
               cursor: 'pointer',
-              textDecoration: 'underline',
-              fontSize: '0.82rem',
-              transition: 'color 0.2s'
+              display: 'flex',
+              alignItems: 'center',
+              justifyContent: 'center',
+              gap: '6px',
+              transition: 'all 0.2s ease',
+              boxShadow: activeTab === 'otp' ? '0 2px 10px rgba(2, 132, 199, 0.4)' : 'none'
             }}
-            onMouseEnter={e => e.currentTarget.style.color = '#ffffff'}
-            onMouseLeave={e => e.currentTarget.style.color = '#94a3b8'}
           >
-            Skip for now and continue as Guest →
+            <span>🔑</span>
+            <span>4-Digit PIN OTP</span>
+          </button>
+
+          <button
+            onClick={() => {
+              setActiveTab('google');
+              setGoogleNotice(true);
+            }}
+            style={{
+              padding: '9px 14px',
+              borderRadius: '10px',
+              border: 'none',
+              background: activeTab === 'google' ? 'rgba(255, 255, 255, 0.1)' : 'transparent',
+              color: activeTab === 'google' ? '#f59e0b' : '#64748b',
+              fontWeight: '600',
+              fontSize: '0.84rem',
+              cursor: 'pointer',
+              display: 'flex',
+              alignItems: 'center',
+              gap: '6px'
+            }}
+          >
+            <span>⚠️</span>
+            <span>Google Auth <small style={{ opacity: 0.8, fontSize: '0.75rem' }}>(Under Progress)</small></span>
           </button>
         </div>
+
+        {/* ── TAB 1: 4-DIGIT PIN OTP FLOW ── */}
+        {activeTab === 'otp' && (
+          <div>
+            {otpStep === 'input' && (
+              <form onSubmit={handleSendPin} style={{ display: 'flex', flexDirection: 'column', gap: '16px' }}>
+                <div>
+                  <label style={{ display: 'block', fontSize: '0.86rem', fontWeight: '600', color: '#e2e8f0', marginBottom: '8px' }}>
+                    Enter your Email Address:
+                  </label>
+                  <div style={{ position: 'relative' }}>
+                    <input
+                      type="email"
+                      placeholder="name@example.com"
+                      value={targetInput}
+                      onChange={handleTargetChange}
+                      autoFocus
+                      style={{
+                        width: '100%',
+                        padding: '13px 16px',
+                        borderRadius: '12px',
+                        background: 'rgba(15, 23, 42, 0.85)',
+                        border: recognizedName ? '1.5px solid #10b981' : '1px solid rgba(56, 189, 248, 0.3)',
+                        color: '#ffffff',
+                        fontSize: '0.96rem',
+                        outline: 'none',
+                        boxSizing: 'border-box',
+                        transition: 'border 0.2s'
+                      }}
+                    />
+                    {isLookingUp && (
+                      <span style={{ position: 'absolute', right: '14px', top: '14px', fontSize: '12px', color: '#38bdf8' }}>
+                        Checking DB...
+                      </span>
+                    )}
+                  </div>
+                </div>
+
+                {/* Instant Name Recognition Display (Clean, No Edit Button) */}
+                {recognizedName && (
+                  <div style={{
+                    padding: '10px 14px',
+                    borderRadius: '10px',
+                    background: 'rgba(16, 185, 129, 0.12)',
+                    border: '1px solid rgba(16, 185, 129, 0.35)',
+                    color: '#6ee7b7',
+                    fontSize: '0.86rem',
+                    display: 'flex',
+                    alignItems: 'center',
+                    gap: '8px'
+                  }}>
+                    <span style={{ fontSize: '15px' }}>{isExistingUser ? '👋' : '👤'}</span>
+                    <span>
+                      {isExistingUser ? (
+                        <>Recognized account: <strong>{recognizedName}</strong> (welcome back!)</>
+                      ) : (
+                        <>Name: <strong>{recognizedName}</strong></>
+                      )}
+                    </span>
+                  </div>
+                )}
+
+                {otpError && (
+                  <div style={{
+                    padding: '10px 14px',
+                    borderRadius: '10px',
+                    background: 'rgba(239, 68, 68, 0.12)',
+                    border: '1px solid rgba(239, 68, 68, 0.35)',
+                    color: '#fca5a5',
+                    fontSize: '0.84rem'
+                  }}>
+                    ⚠️ {otpError}
+                  </div>
+                )}
+
+                <button
+                  type="submit"
+                  disabled={isSending}
+                  style={{
+                    padding: '13px 20px',
+                    borderRadius: '12px',
+                    background: 'linear-gradient(135deg, #0284c7, #2563eb)',
+                    color: '#ffffff',
+                    border: 'none',
+                    fontWeight: '700',
+                    fontSize: '0.98rem',
+                    cursor: isSending ? 'not-allowed' : 'pointer',
+                    boxShadow: '0 4px 16px rgba(2, 132, 199, 0.35)',
+                    display: 'flex',
+                    alignItems: 'center',
+                    justifyContent: 'center',
+                    gap: '8px',
+                    transition: 'all 0.18s'
+                  }}
+                >
+                  {isSending ? (
+                    <>
+                      <span style={{ animation: 'spin 1s infinite linear' }}>⚡</span>
+                      <span>Generating & Sending 4-Digit PIN...</span>
+                    </>
+                  ) : (
+                    <>
+                      <span>Send 4-Digit PIN →</span>
+                    </>
+                  )}
+                </button>
+              </form>
+            )}
+
+            {/* Step 2: 4-Digit PIN Entry */}
+            {otpStep === 'verify' && (
+              <div style={{ display: 'flex', flexDirection: 'column', gap: '18px', textAlign: 'center' }}>
+                <div>
+                  <h3 style={{ margin: '0 0 6px 0', fontSize: '1.2rem', color: '#f8fafc' }}>
+                    Enter 4-Digit PIN
+                  </h3>
+                  <p style={{ margin: 0, fontSize: '0.86rem', color: '#94a3b8' }}>
+                    Sent to <strong style={{ color: '#38bdf8' }}>{targetInput}</strong>
+                    {recognizedName && <span> for <strong>{recognizedName}</strong></span>}
+                  </p>
+                </div>
+
+                {/* 4 Pin Boxes */}
+                <div style={{ display: 'flex', justifyContent: 'center', gap: '14px', margin: '8px 0' }}>
+                  {pinDigits.map((digit, idx) => (
+                    <input
+                      key={idx}
+                      ref={digitInputRefs[idx]}
+                      type="text"
+                      inputMode="numeric"
+                      maxLength={4}
+                      value={digit}
+                      onChange={e => handleDigitChange(idx, e.target.value)}
+                      onKeyDown={e => handleDigitKeyDown(idx, e)}
+                      style={{
+                        width: '58px',
+                        height: '64px',
+                        borderRadius: '14px',
+                        background: 'rgba(15, 23, 42, 0.95)',
+                        border: digit ? '2px solid #38bdf8' : '1.5px solid rgba(255, 255, 255, 0.15)',
+                        color: '#ffffff',
+                        fontSize: '1.8rem',
+                        fontWeight: '800',
+                        textAlign: 'center',
+                        outline: 'none',
+                        boxShadow: digit ? '0 0 16px rgba(56, 189, 248, 0.4)' : 'none',
+                        transition: 'all 0.15s'
+                      }}
+                    />
+                  ))}
+                </div>
+
+                {/* Email Delivery Notice */}
+                <div style={{
+                  display: 'flex',
+                  alignItems: 'center',
+                  justifyContent: 'center',
+                  gap: '8px',
+                  margin: '0 auto',
+                  padding: '8px 16px',
+                  borderRadius: '12px',
+                  background: 'rgba(56, 189, 248, 0.08)',
+                  border: '1px solid rgba(56, 189, 248, 0.25)',
+                  fontSize: '0.82rem',
+                  color: '#94a3b8',
+                  maxWidth: '380px',
+                  lineHeight: '1.4'
+                }}>
+                  <span>📬 We sent a 4-digit code to <strong style={{ color: '#38bdf8' }}>{targetInput}</strong>. Please check your inbox.</span>
+                </div>
+
+                {/* Signing In As Auto-Derived Name Display (Clean, No Edit Button) */}
+                {recognizedName && (
+                  <div style={{
+                    fontSize: '0.84rem',
+                    color: '#94a3b8',
+                    marginTop: '2px',
+                    textAlign: 'center'
+                  }}>
+                    Signing in as: <strong style={{ color: '#38bdf8' }}>{recognizedName}</strong>
+                  </div>
+                )}
+
+                {otpError && (
+                  <div style={{
+                    padding: '10px 14px',
+                    borderRadius: '10px',
+                    background: 'rgba(239, 68, 68, 0.12)',
+                    border: '1px solid rgba(239, 68, 68, 0.35)',
+                    color: '#fca5a5',
+                    fontSize: '0.84rem'
+                  }}>
+                    ⚠️ {otpError}
+                  </div>
+                )}
+
+                <div style={{ display: 'flex', gap: '10px', marginTop: '6px' }}>
+                  <button
+                    type="button"
+                    onClick={() => {
+                      setOtpStep('input');
+                      setOtpError('');
+                    }}
+                    style={{
+                      flex: 1,
+                      padding: '12px',
+                      borderRadius: '12px',
+                      background: 'rgba(255, 255, 255, 0.06)',
+                      border: '1px solid rgba(255, 255, 255, 0.15)',
+                      color: '#cbd5e1',
+                      fontWeight: '600',
+                      cursor: 'pointer'
+                    }}
+                  >
+                    ← Change Email Address
+                  </button>
+
+                  <button
+                    type="button"
+                    onClick={() => handleTriggerVerify()}
+                    disabled={isVerifying || pinDigits.some(d => !d)}
+                    style={{
+                      flex: 2,
+                      padding: '12px',
+                      borderRadius: '12px',
+                      background: isVerifying || pinDigits.some(d => !d) 
+                        ? 'rgba(2, 132, 199, 0.3)' 
+                        : 'linear-gradient(135deg, #10b981, #059669)',
+                      border: 'none',
+                      color: '#ffffff',
+                      fontWeight: '700',
+                      cursor: isVerifying || pinDigits.some(d => !d) ? 'not-allowed' : 'pointer',
+                      boxShadow: '0 4px 16px rgba(16, 185, 129, 0.3)'
+                    }}
+                  >
+                    {isVerifying ? 'Verifying PIN...' : 'Verify & Sign In ✓'}
+                  </button>
+                </div>
+
+                {/* Resend button */}
+                <div style={{ marginTop: '6px' }}>
+                  {resendCooldown > 0 ? (
+                    <span style={{ fontSize: '0.82rem', color: '#64748b' }}>
+                      Resend PIN available in {resendCooldown}s
+                    </span>
+                  ) : (
+                    <button
+                      type="button"
+                      onClick={handleSendPin}
+                      style={{
+                        background: 'transparent',
+                        border: 'none',
+                        color: '#38bdf8',
+                        fontSize: '0.84rem',
+                        fontWeight: '600',
+                        cursor: 'pointer',
+                        textDecoration: 'underline'
+                      }}
+                    >
+                      Didn't get it? Resend 4-Digit PIN
+                    </button>
+                  )}
+                </div>
+              </div>
+            )}
+
+            {/* ── STEP 3: FRESH USER THEME PICKER (2 Dark & 2 White Themes) ── */}
+            {otpStep === 'theme_select' && (
+              <div style={{ display: 'flex', flexDirection: 'column', gap: '18px' }}>
+                <div style={{ textAlign: 'center' }}>
+                  <span style={{ fontSize: '30px' }}>✨</span>
+                  <h3 style={{ margin: '4px 0 2px 0', fontSize: '1.25rem', fontWeight: '800', color: '#f8fafc' }}>
+                    Welcome to AlgoFlow, {pendingUser?.name || 'Friend'}!
+                  </h3>
+                  <p style={{ margin: 0, fontSize: '0.84rem', color: '#94a3b8' }}>
+                    Choose your workspace appearance to get started:
+                  </p>
+                </div>
+
+                {/* 2 Dark & 2 White Themes Grid */}
+                {(() => {
+                  const effectiveTheme = selectedTheme || currentTheme || 'Neon Cyberpunk';
+                  const handleThemePick = (themeName) => {
+                    setSelectedTheme(themeName);
+                    if (onSelectTheme) onSelectTheme(themeName);
+                    try {
+                      localStorage.setItem('algoflow_theme', themeName);
+                    } catch (e) {}
+                  };
+
+                  return (
+                    <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '14px' }}>
+                      {/* Dark Theme 1: Neon Cyberpunk */}
+                      <div
+                        onClick={() => handleThemePick('Neon Cyberpunk')}
+                        style={{
+                          padding: '14px',
+                          borderRadius: '16px',
+                          background: effectiveTheme === 'Neon Cyberpunk' ? 'rgba(0, 229, 255, 0.16)' : 'rgba(15, 23, 42, 0.75)',
+                          border: effectiveTheme === 'Neon Cyberpunk' ? '2px solid #00e5ff' : '1.5px solid rgba(255, 255, 255, 0.12)',
+                          cursor: 'pointer',
+                          transition: 'all 0.25s cubic-bezier(0.4, 0, 0.2, 1)',
+                          boxShadow: effectiveTheme === 'Neon Cyberpunk' 
+                            ? '0 0 24px rgba(0, 229, 255, 0.5), inset 0 0 14px rgba(0, 229, 255, 0.2)' 
+                            : '0 4px 12px rgba(0, 0, 0, 0.2)',
+                          transform: effectiveTheme === 'Neon Cyberpunk' ? 'scale(1.02)' : 'scale(1)',
+                          position: 'relative',
+                          overflow: 'hidden'
+                        }}
+                      >
+                        {effectiveTheme === 'Neon Cyberpunk' && (
+                          <div style={{
+                            position: 'absolute',
+                            top: 0,
+                            left: '-100%',
+                            width: '200%',
+                            height: '100%',
+                            background: 'linear-gradient(90deg, transparent, rgba(0, 229, 255, 0.2), transparent)',
+                            pointerEvents: 'none',
+                            animation: 'shimmerSweep 2.5s infinite linear'
+                          }} />
+                        )}
+                        <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: '8px' }}>
+                          <span style={{ fontSize: '0.72rem', fontWeight: '700', padding: '2px 8px', borderRadius: '6px', background: 'rgba(255, 255, 255, 0.1)', color: '#00e5ff' }}>
+                            🌙 Dark
+                          </span>
+                          {effectiveTheme === 'Neon Cyberpunk' ? (
+                            <span style={{ 
+                              color: '#00e5ff', 
+                              fontSize: '0.78rem', 
+                              fontWeight: '800',
+                              background: 'rgba(0, 229, 255, 0.2)',
+                              padding: '2px 8px',
+                              borderRadius: '12px',
+                              border: '1px solid #00e5ff',
+                              boxShadow: '0 0 8px rgba(0, 229, 255, 0.4)'
+                            }}>
+                              ✓ Selected
+                            </span>
+                          ) : (
+                            <span style={{ color: '#64748b', fontSize: '0.75rem', fontWeight: '600' }}>Tap to select</span>
+                          )}
+                        </div>
+                        <div style={{ fontWeight: '800', fontSize: '0.96rem', color: effectiveTheme === 'Neon Cyberpunk' ? '#ffffff' : '#e2e8f0' }}>
+                          Neon Cyberpunk
+                        </div>
+                        <div style={{ fontSize: '0.76rem', color: '#94a3b8', margin: '4px 0 10px 0' }}>
+                          High-contrast neon glow on dark
+                        </div>
+                        <div style={{ display: 'flex', gap: '6px', alignItems: 'center' }}>
+                          <span style={{ width: '14px', height: '14px', borderRadius: '50%', background: '#00e5ff', boxShadow: '0 0 10px #00e5ff' }} />
+                          <span style={{ width: '14px', height: '14px', borderRadius: '50%', background: '#d946ef', boxShadow: '0 0 10px #d946ef' }} />
+                          <span style={{ fontSize: '0.72rem', color: '#94a3b8', marginLeft: '4px' }}>Cyan &amp; Magenta</span>
+                        </div>
+                      </div>
+
+                      {/* Dark Theme 2: Cosmic Dark */}
+                      <div
+                        onClick={() => handleThemePick('Cosmic Dark')}
+                        style={{
+                          padding: '14px',
+                          borderRadius: '16px',
+                          background: effectiveTheme === 'Cosmic Dark' ? 'rgba(59, 130, 246, 0.16)' : 'rgba(15, 23, 42, 0.75)',
+                          border: effectiveTheme === 'Cosmic Dark' ? '2px solid #3b82f6' : '1.5px solid rgba(255, 255, 255, 0.12)',
+                          cursor: 'pointer',
+                          transition: 'all 0.25s cubic-bezier(0.4, 0, 0.2, 1)',
+                          boxShadow: effectiveTheme === 'Cosmic Dark' 
+                            ? '0 0 24px rgba(59, 130, 246, 0.5), inset 0 0 14px rgba(59, 130, 246, 0.2)' 
+                            : '0 4px 12px rgba(0, 0, 0, 0.2)',
+                          transform: effectiveTheme === 'Cosmic Dark' ? 'scale(1.02)' : 'scale(1)',
+                          position: 'relative',
+                          overflow: 'hidden'
+                        }}
+                      >
+                        {effectiveTheme === 'Cosmic Dark' && (
+                          <div style={{
+                            position: 'absolute',
+                            top: 0,
+                            left: '-100%',
+                            width: '200%',
+                            height: '100%',
+                            background: 'linear-gradient(90deg, transparent, rgba(59, 130, 246, 0.2), transparent)',
+                            pointerEvents: 'none',
+                            animation: 'shimmerSweep 2.5s infinite linear'
+                          }} />
+                        )}
+                        <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: '8px' }}>
+                          <span style={{ fontSize: '0.72rem', fontWeight: '700', padding: '2px 8px', borderRadius: '6px', background: 'rgba(255, 255, 255, 0.1)', color: '#60a5fa' }}>
+                            🌙 Dark
+                          </span>
+                          {effectiveTheme === 'Cosmic Dark' ? (
+                            <span style={{ 
+                              color: '#60a5fa', 
+                              fontSize: '0.78rem', 
+                              fontWeight: '800',
+                              background: 'rgba(59, 130, 246, 0.2)',
+                              padding: '2px 8px',
+                              borderRadius: '12px',
+                              border: '1px solid #3b82f6',
+                              boxShadow: '0 0 8px rgba(59, 130, 246, 0.4)'
+                            }}>
+                              ✓ Selected
+                            </span>
+                          ) : (
+                            <span style={{ color: '#64748b', fontSize: '0.75rem', fontWeight: '600' }}>Tap to select</span>
+                          )}
+                        </div>
+                        <div style={{ fontWeight: '800', fontSize: '0.96rem', color: effectiveTheme === 'Cosmic Dark' ? '#ffffff' : '#e2e8f0' }}>
+                          Cosmic Dark
+                        </div>
+                        <div style={{ fontSize: '0.76rem', color: '#94a3b8', margin: '4px 0 10px 0' }}>
+                          Deep space navy &amp; rose accents
+                        </div>
+                        <div style={{ display: 'flex', gap: '6px', alignItems: 'center' }}>
+                          <span style={{ width: '14px', height: '14px', borderRadius: '50%', background: '#3b82f6', boxShadow: '0 0 10px #3b82f6' }} />
+                          <span style={{ width: '14px', height: '14px', borderRadius: '50%', background: '#f43f5e', boxShadow: '0 0 10px #f43f5e' }} />
+                          <span style={{ fontSize: '0.72rem', color: '#94a3b8', marginLeft: '4px' }}>Blue &amp; Rose</span>
+                        </div>
+                      </div>
+
+                      {/* White Theme 1: Arctic Frost */}
+                      <div
+                        onClick={() => handleThemePick('Arctic Frost')}
+                        style={{
+                          padding: '14px',
+                          borderRadius: '16px',
+                          background: effectiveTheme === 'Arctic Frost' ? 'rgba(2, 132, 199, 0.2)' : 'rgba(248, 250, 252, 0.08)',
+                          border: effectiveTheme === 'Arctic Frost' ? '2px solid #38bdf8' : '1.5px solid rgba(255, 255, 255, 0.12)',
+                          cursor: 'pointer',
+                          transition: 'all 0.25s cubic-bezier(0.4, 0, 0.2, 1)',
+                          boxShadow: effectiveTheme === 'Arctic Frost' 
+                            ? '0 0 24px rgba(56, 189, 248, 0.5), inset 0 0 14px rgba(56, 189, 248, 0.2)' 
+                            : '0 4px 12px rgba(0, 0, 0, 0.2)',
+                          transform: effectiveTheme === 'Arctic Frost' ? 'scale(1.02)' : 'scale(1)',
+                          position: 'relative',
+                          overflow: 'hidden'
+                        }}
+                      >
+                        {effectiveTheme === 'Arctic Frost' && (
+                          <div style={{
+                            position: 'absolute',
+                            top: 0,
+                            left: '-100%',
+                            width: '200%',
+                            height: '100%',
+                            background: 'linear-gradient(90deg, transparent, rgba(56, 189, 248, 0.2), transparent)',
+                            pointerEvents: 'none',
+                            animation: 'shimmerSweep 2.5s infinite linear'
+                          }} />
+                        )}
+                        <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: '8px' }}>
+                          <span style={{ fontSize: '0.72rem', fontWeight: '700', padding: '2px 8px', borderRadius: '6px', background: 'rgba(255, 255, 255, 0.1)', color: '#38bdf8' }}>
+                            ☀️ White
+                          </span>
+                          {effectiveTheme === 'Arctic Frost' ? (
+                            <span style={{ 
+                              color: '#38bdf8', 
+                              fontSize: '0.78rem', 
+                              fontWeight: '800',
+                              background: 'rgba(56, 189, 248, 0.2)',
+                              padding: '2px 8px',
+                              borderRadius: '12px',
+                              border: '1px solid #38bdf8',
+                              boxShadow: '0 0 8px rgba(56, 189, 248, 0.4)'
+                            }}>
+                              ✓ Selected
+                            </span>
+                          ) : (
+                            <span style={{ color: '#64748b', fontSize: '0.75rem', fontWeight: '600' }}>Tap to select</span>
+                          )}
+                        </div>
+                        <div style={{ fontWeight: '800', fontSize: '0.96rem', color: effectiveTheme === 'Arctic Frost' ? '#ffffff' : '#e2e8f0' }}>
+                          Arctic Frost
+                        </div>
+                        <div style={{ fontSize: '0.76rem', color: '#94a3b8', margin: '4px 0 10px 0' }}>
+                          Frosted ice-white with sky blue
+                        </div>
+                        <div style={{ display: 'flex', gap: '6px', alignItems: 'center' }}>
+                          <span style={{ width: '14px', height: '14px', borderRadius: '50%', background: '#0284c7', boxShadow: '0 0 10px #0284c7' }} />
+                          <span style={{ width: '14px', height: '14px', borderRadius: '50%', background: '#2563eb', boxShadow: '0 0 10px #2563eb' }} />
+                          <span style={{ fontSize: '0.72rem', color: '#94a3b8', marginLeft: '4px' }}>Sky &amp; Royal</span>
+                        </div>
+                      </div>
+
+                      {/* White Theme 2: Pure White Canvas */}
+                      <div
+                        onClick={() => handleThemePick('Pure White Canvas')}
+                        style={{
+                          padding: '14px',
+                          borderRadius: '16px',
+                          background: effectiveTheme === 'Pure White Canvas' ? 'rgba(129, 140, 248, 0.2)' : 'rgba(255, 255, 255, 0.08)',
+                          border: effectiveTheme === 'Pure White Canvas' ? '2px solid #818cf8' : '1.5px solid rgba(255, 255, 255, 0.12)',
+                          cursor: 'pointer',
+                          transition: 'all 0.25s cubic-bezier(0.4, 0, 0.2, 1)',
+                          boxShadow: effectiveTheme === 'Pure White Canvas' 
+                            ? '0 0 24px rgba(129, 140, 248, 0.5), inset 0 0 14px rgba(129, 140, 248, 0.2)' 
+                            : '0 4px 12px rgba(0, 0, 0, 0.2)',
+                          transform: effectiveTheme === 'Pure White Canvas' ? 'scale(1.02)' : 'scale(1)',
+                          position: 'relative',
+                          overflow: 'hidden'
+                        }}
+                      >
+                        {effectiveTheme === 'Pure White Canvas' && (
+                          <div style={{
+                            position: 'absolute',
+                            top: 0,
+                            left: '-100%',
+                            width: '200%',
+                            height: '100%',
+                            background: 'linear-gradient(90deg, transparent, rgba(129, 140, 248, 0.2), transparent)',
+                            pointerEvents: 'none',
+                            animation: 'shimmerSweep 2.5s infinite linear'
+                          }} />
+                        )}
+                        <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: '8px' }}>
+                          <span style={{ fontSize: '0.72rem', fontWeight: '700', padding: '2px 8px', borderRadius: '6px', background: 'rgba(255, 255, 255, 0.1)', color: '#a5b4fc' }}>
+                            ☀️ White
+                          </span>
+                          {effectiveTheme === 'Pure White Canvas' ? (
+                            <span style={{ 
+                              color: '#a5b4fc', 
+                              fontSize: '0.78rem', 
+                              fontWeight: '800',
+                              background: 'rgba(129, 140, 248, 0.2)',
+                              padding: '2px 8px',
+                              borderRadius: '12px',
+                              border: '1px solid #818cf8',
+                              boxShadow: '0 0 8px rgba(129, 140, 248, 0.4)'
+                            }}>
+                              ✓ Selected
+                            </span>
+                          ) : (
+                            <span style={{ color: '#64748b', fontSize: '0.75rem', fontWeight: '600' }}>Tap to select</span>
+                          )}
+                        </div>
+                        <div style={{ fontWeight: '800', fontSize: '0.96rem', color: effectiveTheme === 'Pure White Canvas' ? '#ffffff' : '#e2e8f0' }}>
+                          Pure White Canvas
+                        </div>
+                        <div style={{ fontSize: '0.76rem', color: '#94a3b8', margin: '4px 0 10px 0' }}>
+                          Crisp paper white &amp; vivid indigo
+                        </div>
+                        <div style={{ display: 'flex', gap: '6px', alignItems: 'center' }}>
+                          <span style={{ width: '14px', height: '14px', borderRadius: '50%', background: '#4f46e5', boxShadow: '0 0 10px #4f46e5' }} />
+                          <span style={{ width: '14px', height: '14px', borderRadius: '50%', background: '#7c3aed', boxShadow: '0 0 10px #7c3aed' }} />
+                          <span style={{ fontSize: '0.72rem', color: '#94a3b8', marginLeft: '4px' }}>Indigo &amp; Purple</span>
+                        </div>
+                      </div>
+                    </div>
+                  );
+                })()}
+
+                {/* Reminder Text requested by user */}
+                <div style={{
+                  padding: '10px 14px',
+                  borderRadius: '10px',
+                  background: 'rgba(56, 189, 248, 0.08)',
+                  border: '1px solid rgba(56, 189, 248, 0.22)',
+                  fontSize: '0.84rem',
+                  color: '#bae6fd',
+                  textAlign: 'center'
+                }}>
+                  💡 You can change themes anytime in Settings ⚙️
+                </div>
+
+                {/* Finish Button */}
+                <button
+                  type="button"
+                  onClick={() => {
+                    setOnboardingSeen();
+                    if (onUserConnected) onUserConnected(pendingUser || activeUser);
+                    if (onClose) onClose();
+                  }}
+                  style={{
+                    width: '100%',
+                    padding: '13px',
+                    borderRadius: '12px',
+                    background: 'linear-gradient(135deg, #0284c7, #2563eb)',
+                    border: 'none',
+                    color: '#ffffff',
+                    fontWeight: '700',
+                    fontSize: '0.96rem',
+                    cursor: 'pointer',
+                    boxShadow: '0 4px 16px rgba(2, 132, 199, 0.4)',
+                    transition: 'all 0.2s'
+                  }}
+                >
+                  Get Started →
+                </button>
+              </div>
+            )}
+          </div>
+        )}
+
+        {/* ── TAB 2: GOOGLE AUTH UNDER PROGRESS NOTICE ── */}
+        {activeTab === 'google' && (
+          <div style={{
+            padding: '24px',
+            borderRadius: '16px',
+            background: 'rgba(245, 158, 11, 0.08)',
+            border: '1.5px solid rgba(245, 158, 11, 0.35)',
+            textAlign: 'center'
+          }}>
+            <div style={{ fontSize: '32px', marginBottom: '10px' }}>⚠️</div>
+            <h3 style={{ margin: '0 0 8px 0', color: '#fbbf24', fontSize: '1.15rem' }}>
+              Google OAuth 2.0 is Under Progress
+            </h3>
+            <p style={{ margin: '0 0 16px 0', color: '#e2e8f0', fontSize: '0.88rem', lineHeight: '1.5' }}>
+              Google Identity OAuth verification is currently in development and undergoing verification in Google Cloud Console.
+            </p>
+            <div style={{
+              background: 'rgba(0, 0, 0, 0.3)',
+              padding: '12px',
+              borderRadius: '10px',
+              fontSize: '0.82rem',
+              color: '#94a3b8',
+              marginBottom: '16px'
+            }}>
+              💡 Please use our <strong>⚡ 4-Digit PIN OTP</strong> method. It gives you instant access to all features, AI mentoring, and automatically saves your session forever!
+            </div>
+            <button
+              onClick={() => setActiveTab('otp')}
+              style={{
+                padding: '10px 20px',
+                borderRadius: '12px',
+                background: 'linear-gradient(135deg, #0284c7, #2563eb)',
+                border: 'none',
+                color: '#ffffff',
+                fontWeight: '700',
+                cursor: 'pointer'
+              }}
+            >
+              Switch to 4-Digit PIN OTP (Recommended) →
+            </button>
+          </div>
+        )}
+
+        {/* Footer: Skip as Guest only shown if NOT already logged in and on initial email input */}
+        {(!activeUser || activeUser.isGuest) && otpStep === 'input' && (
+          <div style={{
+            marginTop: '24px',
+            paddingTop: '16px',
+            borderTop: '1px solid rgba(255, 255, 255, 0.08)',
+            display: 'flex',
+            justifyContent: 'space-between',
+            alignItems: 'center',
+            fontSize: '0.82rem',
+            flexWrap: 'wrap',
+            gap: '10px'
+          }}>
+            <button
+              type="button"
+              onClick={handleGuest}
+              style={{
+                background: 'transparent',
+                border: 'none',
+                color: '#94a3b8',
+                cursor: 'pointer',
+                textDecoration: 'underline'
+              }}
+              onMouseEnter={e => e.currentTarget.style.color = '#ffffff'}
+              onMouseLeave={e => e.currentTarget.style.color = '#94a3b8'}
+            >
+              Skip for now and continue as Guest →
+            </button>
+
+            <div style={{ display: 'flex', alignItems: 'center', gap: '14px', marginLeft: 'auto' }}>
+              <span style={{ color: '#64748b' }}>
+                🔒 Secure Authentication
+              </span>
+            </div>
+          </div>
+        )}
       </div>
     </div>
   );

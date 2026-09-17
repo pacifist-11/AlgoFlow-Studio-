@@ -1,0 +1,3289 @@
+/* eslint-disable */
+import React, { useState, useEffect, useRef } from 'react';
+import gsap from 'gsap';
+import CodeRunnerModal from './CodeRunnerModal.jsx';
+import TopicInfoModal from './TopicInfoModal.jsx';
+
+// Allman brace formatter
+const toAllman = code => {
+  if (!code) return '';
+  const lines = code.split('\n');
+  const out = [];
+  for (const line of lines) {
+    const t = line.trimEnd();
+    if (t.endsWith('{') && t.trim() !== '{' && !t.trim().startsWith('//') && !t.trim().startsWith('*')) {
+      const indent = line.match(/^(\s*)/)[1];
+      const body = t.slice(0, -1).trimEnd();
+      if (body.trim().length > 0) { out.push(body); out.push(indent + '{'); continue; }
+    }
+    out.push(line);
+  }
+  return out.join('\n');
+};
+
+// Multilingual Code Templates for Graph Algorithms
+const toCCode = (cppCode) => {
+  if (!cppCode) return cppCode;
+  return cppCode
+    .replace('#include <iostream>\n#include <vector>\n#include <queue>\nusing namespace std;', '#include <stdio.h>\n#include <stdbool.h>\n#include <stdlib.h>')
+    .replace('#include <iostream>\nusing namespace std;', '#include <stdio.h>\n#include <stdbool.h>\n#include <stdlib.h>')
+    .replace('#include <iostream>', '#include <stdio.h>\n#include <stdbool.h>\n#include <stdlib.h>')
+    .replace(/using namespace std;/g, '')
+    .replace(/cout\s*<<\s*([^<]+)\s*<<\s*endl;/g, 'printf("%d\\n", $1);')
+    .replace(/cout\s*<<\s*([^;]+);/g, 'printf("%s\\n", $1);');
+};
+
+const getGraphCodeTemplate = (lang, algo, startNode = '0', endNode = '4') => {
+  // Normalize language
+  let l = lang ? lang.toLowerCase() : 'c';
+  if (l === 'c') lang = 'C';
+  else if (l === 'java') lang = 'Java';
+  else if (l === 'cpp' || l === 'c++') lang = 'C++';
+  else if (l === 'python') lang = 'Python';
+  else if (l === 'js' || l === 'javascript') lang = 'JS';
+
+  if (lang === 'C') {
+    const cppRes = getGraphCodeTemplate('C++', algo, startNode, endNode);
+    return toCCode(cppRes);
+  }
+
+  if (lang === 'C++') {
+    if (algo === 'BFS') return `#include <iostream>
+#include <vector>
+#include <queue>
+using namespace std;
+
+class Graph {
+    int V;
+    vector<vector<int>> adj;
+public:
+    Graph(int V) : V(V), adj(V) {}
+    void addEdge(int u, int v) {
+        adj[u].push_back(v);
+        adj[v].push_back(u); // Undirected
+    }
+    void BFS(int start) {
+        vector<bool> visited(V, false);
+        queue<int> q;
+        visited[start] = true;
+        q.push(start);
+        while (!q.empty()) {
+            int u = q.front(); q.pop();
+            cout << u << " ";
+            for (int v : adj[u]) {
+                if (!visited[v]) {
+                    visited[v] = true;
+                    q.push(v);
+                }
+            }
+        }
+    }
+};
+
+int main() {
+    Graph g(5);
+    g.addEdge(0, 1); g.addEdge(0, 2); g.addEdge(1, 3); g.addEdge(2, 4);
+    cout << "BFS Traversal: ";
+    g.BFS(${startNode});
+    return 0;
+}`;
+    if (algo === 'DFS') return `#include <iostream>
+#include <vector>
+using namespace std;
+
+class Graph {
+    int V;
+    vector<vector<int>> adj;
+    void DFSUtil(int u, vector<bool>& visited) {
+        visited[u] = true;
+        cout << u << " ";
+        for (int v : adj[u]) {
+            if (!visited[v]) DFSUtil(v, visited);
+        }
+    }
+public:
+    Graph(int V) : V(V), adj(V) {}
+    void addEdge(int u, int v) { adj[u].push_back(v); adj[v].push_back(u); }
+    void DFS(int start) {
+        vector<bool> visited(V, false);
+        DFSUtil(start, visited);
+    }
+};
+
+int main() {
+    Graph g(5);
+    g.addEdge(0, 1); g.addEdge(0, 2); g.addEdge(1, 3); g.addEdge(2, 4);
+    cout << "DFS Traversal: ";
+    g.DFS(${startNode});
+    return 0;
+}`;
+    if (algo === 'Dijkstra') return `#include <iostream>
+#include <vector>
+#include <queue>
+using namespace std;
+#define INF 1e9
+
+class Graph {
+    int V;
+    vector<vector<pair<int, int>>> adj;
+public:
+    Graph(int V) : V(V), adj(V) {}
+    void addEdge(int u, int v, int w) {
+        adj[u].push_back({v, w});
+        adj[v].push_back({u, w});
+    }
+    void dijkstra(int start, int target) {
+        vector<int> dist(V, INF);
+        priority_queue<pair<int,int>, vector<pair<int,int>>, greater<pair<int,int>>> pq;
+        dist[start] = 0;
+        pq.push({0, start});
+        while (!pq.empty()) {
+            int u = pq.top().second; pq.pop();
+            if (u == target) break;
+            for (auto& edge : adj[u]) {
+                int v = edge.first, w = edge.second;
+                if (dist[u] + w < dist[v]) {
+                    dist[v] = dist[u] + w;
+                    pq.push({dist[v], v});
+                }
+            }
+        }
+        cout << "Shortest Path to target: " << dist[target] << endl;
+    }
+};
+
+int main() {
+    Graph g(5);
+    g.addEdge(0, 1, 4); g.addEdge(0, 2, 2); g.addEdge(1, 3, 5); g.addEdge(2, 4, 3);
+    g.dijkstra(${startNode}, ${endNode});
+    return 0;
+}`;
+    if (algo === 'Prim') return `#include <iostream>
+#include <vector>
+#include <queue>
+using namespace std;
+#define INF 1e9
+
+class Graph {
+    int V;
+    vector<vector<pair<int, int>>> adj;
+public:
+    Graph(int V) : V(V), adj(V) {}
+    void addEdge(int u, int v, int w) {
+        adj[u].push_back({v, w});
+        adj[v].push_back({u, w});
+    }
+    void primMST(int start) {
+        priority_queue<pair<int, int>, vector<pair<int, int>>, greater<pair<int, int>>> pq;
+        vector<int> key(V, INF);
+        vector<int> parent(V, -1);
+        vector<bool> inMST(V, false);
+        pq.push({0, start});
+        key[start] = 0;
+        while (!pq.empty()) {
+            int u = pq.top().second; pq.pop();
+            if (inMST[u]) continue;
+            inMST[u] = true;
+            for (auto& edge : adj[u]) {
+                int v = edge.first, weight = edge.second;
+                if (!inMST[v] && key[v] > weight) {
+                    key[v] = weight;
+                    pq.push({key[v], v});
+                    parent[v] = u;
+                }
+            }
+        }
+        for (int i = 0; i < V; i++)
+            if (parent[i] != -1) cout << parent[i] << " - " << i << endl;
+    }
+};
+
+int main() {
+    Graph g(5);
+    g.addEdge(0, 1, 2); g.addEdge(0, 3, 6); g.addEdge(1, 2, 3); g.addEdge(1, 3, 8); g.addEdge(1, 4, 5);
+    g.primMST(${startNode});
+    return 0;
+}`;
+    if (algo === 'Kruskal') return `#include <iostream>
+#include <vector>
+#include <algorithm>
+using namespace std;
+
+struct Edge {
+    int src, dest, weight;
+    bool operator<(const Edge& other) const {
+        return weight < other.weight;
+    }
+};
+
+class DisjointSet {
+    vector<int> parent, rank;
+public:
+    DisjointSet(int n) {
+        parent.resize(n);
+        rank.resize(n, 0);
+        for (int i = 0; i < n; i++) parent[i] = i;
+    }
+    int find(int i) {
+        if (parent[i] == i) return i;
+        return parent[i] = find(parent[i]);
+    }
+    bool unite(int i, int j) {
+        int rootI = find(i);
+        int rootJ = find(j);
+        if (rootI != rootJ) {
+            if (rank[rootI] < rank[rootJ]) parent[rootI] = rootJ;
+            else if (rank[rootI] > rank[rootJ]) parent[rootJ] = rootI;
+            else {
+                parent[rootJ] = rootI;
+                rank[rootI]++;
+            }
+            return true;
+        }
+        return false;
+    }
+};
+
+class Graph {
+    int V;
+    vector<Edge> edges;
+public:
+    Graph(int V) : V(V) {}
+    void addEdge(int u, int v, int w) {
+        edges.push_back({u, v, w});
+    }
+    void kruskalMST() {
+        vector<Edge> result;
+        DisjointSet ds(V);
+        sort(edges.begin(), edges.end());
+        for (auto& edge : edges) {
+            if (ds.unite(edge.src, edge.dest)) {
+                result.push_back(edge);
+            }
+        }
+        for (auto& edge : result) {
+            cout << edge.src << " - " << edge.dest << " (" << edge.weight << ")" << endl;
+        }
+    }
+};
+
+int main() {
+    Graph g(5);
+    g.addEdge(0, 1, 2); g.addEdge(0, 3, 6); g.addEdge(1, 2, 3); g.addEdge(1, 3, 8); g.addEdge(1, 4, 5);
+    g.kruskalMST();
+    return 0;
+}`;
+    if (algo === 'Bellman-Ford') return `#include <iostream>
+#include <vector>
+using namespace std;
+#define INF 1e9
+
+struct Edge {
+    int src, dest, weight;
+};
+
+class Graph {
+    int V;
+    vector<Edge> edges;
+public:
+    Graph(int V) : V(V) {}
+    void addEdge(int u, int v, int w) { edges.push_back({u, v, w}); }
+    void bellmanFord(int start) {
+        vector<int> dist(V, INF);
+        dist[start] = 0;
+        for (int i = 1; i <= V - 1; i++) {
+            for (auto& edge : edges) {
+                int u = edge.src, v = edge.dest, w = edge.weight;
+                if (dist[u] != INF && dist[u] + w < dist[v]) dist[v] = dist[u] + w;
+            }
+        }
+        for (auto& edge : edges) {
+            int u = edge.src, v = edge.dest, w = edge.weight;
+            if (dist[u] != INF && dist[u] + w < dist[v]) {
+                cout << "Graph contains negative weight cycle!" << endl;
+                return;
+            }
+        }
+        for (int i = 0; i < V; i++) cout << i << " : " << (dist[i] == INF ? -1 : dist[i]) << endl;
+    }
+};
+
+int main() {
+    Graph g(5);
+    g.addEdge(0, 1, -1); g.addEdge(0, 2, 4); g.addEdge(1, 2, 3); g.addEdge(1, 3, 2); g.addEdge(1, 4, 2);
+    g.bellmanFord(${startNode});
+    return 0;
+}`;
+    if (algo === 'Floyd-Warshall') return `#include <iostream>
+#include <vector>
+using namespace std;
+#define INF 1e9
+
+void floydWarshall(vector<vector<int>>& graph, int V) {
+    vector<vector<int>> dist = graph;
+    for (int k = 0; k < V; k++) {
+        for (int i = 0; i < V; i++) {
+            for (int j = 0; j < V; j++) {
+                if (dist[i][k] != INF && dist[k][j] != INF && dist[i][k] + dist[k][j] < dist[i][j])
+                    dist[i][j] = dist[i][k] + dist[k][j];
+            }
+        }
+    }
+    for (int i = 0; i < V; i++) {
+        for (int j = 0; j < V; j++) {
+            if (dist[i][j] == INF) cout << "INF ";
+            else cout << dist[i][j] << " ";
+        }
+        cout << endl;
+    }
+}
+
+int main() {
+    int V = 4;
+    vector<vector<int>> graph = {
+        {0, 5, INF, 10},
+        {INF, 0, 3, INF},
+        {INF, INF, 0, 1},
+        {INF, INF, INF, 0}
+    };
+    floydWarshall(graph, V);
+    return 0;
+}`;
+    if (algo === 'Kahn') return `#include <iostream>
+#include <vector>
+#include <queue>
+using namespace std;
+
+class Graph {
+    int V;
+    vector<vector<int>> adj;
+public:
+    Graph(int V) : V(V), adj(V) {}
+    void addEdge(int u, int v) { adj[u].push_back(v); }
+    void topologicalSort() {
+        vector<int> in_degree(V, 0);
+        for (int u = 0; u < V; u++) {
+            for (int v : adj[u]) in_degree[v]++;
+        }
+        queue<int> q;
+        for (int i = 0; i < V; i++) {
+            if (in_degree[i] == 0) q.push(i);
+        }
+        int count = 0;
+        vector<int> top_order;
+        while (!q.empty()) {
+            int u = q.front(); q.pop();
+            top_order.push_back(u);
+            for (int v : adj[u]) {
+                if (--in_degree[v] == 0) q.push(v);
+            }
+            count++;
+        }
+        if (count != V) {
+            cout << "Graph contains a cycle!" << endl;
+            return;
+        }
+        for (int i : top_order) cout << i << " ";
+        cout << endl;
+    }
+};
+
+int main() {
+    Graph g(6);
+    g.addEdge(5, 2); g.addEdge(5, 0); g.addEdge(4, 0); g.addEdge(4, 1); g.addEdge(2, 3); g.addEdge(3, 1);
+    g.topologicalSort();
+    return 0;
+}`;
+    // Greedy
+    return `#include <iostream>
+#include <vector>
+#include <queue>
+#include <cmath>
+using namespace std;
+
+struct Node {
+    int id, h;
+    bool operator>(const Node& other) const { return h > other.h; }
+};
+
+class Graph {
+    int V;
+    vector<vector<pair<int, int>>> adj;
+public:
+    Graph(int V) : V(V), adj(V) {}
+    void addEdge(int u, int v, int w) { adj[u].push_back({v, w}); adj[v].push_back({u, w}); }
+    void greedyBestFirst(int start, int target, const vector<int>& h) {
+        vector<bool> visited(V, false);
+        priority_queue<Node, vector<Node>, greater<Node>> pq;
+        pq.push({start, h[start]});
+        while (!pq.empty()) {
+            int u = pq.top().id; pq.pop();
+            if (visited[u]) continue;
+            visited[u] = true;
+            cout << u << " ";
+            if (u == target) break;
+            for (auto& edge : adj[u]) {
+                int v = edge.first;
+                if (!visited[v]) pq.push({v, h[v]});
+            }
+        }
+    }
+};`;
+  }
+
+  if (lang === 'Java') {
+    if (algo === 'BFS') return `import java.util.*;
+
+class Graph {
+    private int V;
+    private LinkedList<Integer>[] adj;
+
+    Graph(int V) {
+        this.V = V;
+        adj = new LinkedList[V];
+        for (int i = 0; i < V; ++i) adj[i] = new LinkedList<>();
+    }
+    void addEdge(int u, int v) { adj[u].add(v); adj[v].add(u); }
+    void BFS(int s) {
+        boolean[] visited = new boolean[V];
+        Queue<Integer> queue = new LinkedList<>();
+        visited[s] = true; queue.add(s);
+        while (!queue.isEmpty()) {
+            s = queue.poll(); System.out.print(s + " ");
+            for (int n : adj[s]) {
+                if (!visited[n]) {
+                    visited[n] = true; queue.add(n);
+                }
+            }
+        }
+    }
+}
+
+public class Main {
+    public static void main(String[] args) {
+        Graph g = new Graph(5);
+        g.addEdge(0, 1); g.addEdge(0, 2); g.addEdge(1, 3); g.addEdge(2, 4);
+        g.BFS(${startNode});
+    }
+}`;
+    if (algo === 'DFS') return `import java.util.*;
+
+class Graph {
+    private int V;
+    private LinkedList<Integer>[] adj;
+
+    Graph(int V) {
+        this.V = V;
+        adj = new LinkedList[V];
+        for (int i = 0; i < V; ++i) adj[i] = new LinkedList<>();
+    }
+    void addEdge(int u, int v) { adj[u].add(v); adj[v].add(u); }
+    void DFSUtil(int v, boolean[] visited) {
+        visited[v] = true; System.out.print(v + " ");
+        for (int n : adj[v]) {
+            if (!visited[n]) DFSUtil(n, visited);
+        }
+    }
+    void DFS(int s) {
+        boolean[] visited = new boolean[V];
+        DFSUtil(s, visited);
+    }
+}
+
+public class Main {
+    public static void main(String[] args) {
+        Graph g = new Graph(5);
+        g.addEdge(0, 1); g.addEdge(0, 2); g.addEdge(1, 3); g.addEdge(2, 4);
+        g.DFS(${startNode});
+    }
+}`;
+    if (algo === 'Dijkstra') return `import java.util.*;
+
+class Graph {
+    int V; LinkedList<int[]>[] adj;
+    Graph(int V) {
+        this.V = V; adj = new LinkedList[V];
+        for(int i=0; i<V; i++) adj[i] = new LinkedList<>();
+    }
+    void addEdge(int u, int v, int w) { adj[u].add(new int[]{v, w}); adj[v].add(new int[]{u, w}); }
+    void dijkstra(int src, int target) {
+        int[] dist = new int[V]; Arrays.fill(dist, Integer.MAX_VALUE);
+        PriorityQueue<int[]> pq = new PriorityQueue<>(Comparator.comparingInt(a -> a[0]));
+        dist[src] = 0; pq.add(new int[]{0, src});
+        while(!pq.isEmpty()) {
+            int u = pq.poll()[1];
+            if(u == target) break;
+            for(int[] edge : adj[u]) {
+                int v = edge[0], w = edge[1];
+                if(dist[u] + w < dist[v]) {
+                    dist[v] = dist[u] + w;
+                    pq.add(new int[]{dist[v], v});
+                }
+            }
+        }
+        System.out.println("Shortest path cost: " + dist[target]);
+    }
+}`;
+    if (algo === 'Prim') return `import java.util.*;
+
+class Graph {
+    int V; LinkedList<int[]>[] adj;
+    Graph(int V) {
+        this.V = V; adj = new LinkedList[V];
+        for(int i=0; i<V; i++) adj[i] = new LinkedList<>();
+    }
+    void addEdge(int u, int v, int w) { adj[u].add(new int[]{v, w}); adj[v].add(new int[]{u, w}); }
+    void primMST(int start) {
+        boolean[] inMST = new boolean[V];
+        int[] key = new int[V];
+        int[] parent = new int[V];
+        Arrays.fill(key, Integer.MAX_VALUE);
+        Arrays.fill(parent, -1);
+        PriorityQueue<int[]> pq = new PriorityQueue<>(Comparator.comparingInt(a -> a[0]));
+        key[start] = 0;
+        pq.add(new int[]{0, start});
+        while(!pq.isEmpty()) {
+            int u = pq.poll()[1];
+            if (inMST[u]) continue;
+            inMST[u] = true;
+            for(int[] edge : adj[u]) {
+                int v = edge[0], weight = edge[1];
+                if (!inMST[v] && key[v] > weight) {
+                    key[v] = weight;
+                    pq.add(new int[]{key[v], v});
+                    parent[v] = u;
+                }
+            }
+        }
+        for(int i = 0; i < V; i++)
+            if (parent[i] != -1) System.out.println(parent[i] + " - " + i);
+    }
+}`;
+    if (algo === 'Kruskal') return `import java.util.*;
+
+class Edge implements Comparable<Edge> {
+    int src, dest, weight;
+    public Edge(int src, int dest, int weight) {
+        this.src = src; this.dest = dest; this.weight = weight;
+    }
+    public int compareTo(Edge other) {
+        return this.weight - other.weight;
+    }
+}
+
+class DisjointSet {
+    int[] parent, rank;
+    public DisjointSet(int n) {
+        parent = new int[n];
+        rank = new int[n];
+        for (int i = 0; i < n; i++) parent[i] = i;
+    }
+    public int find(int i) {
+        if (parent[i] == i) return i;
+        return parent[i] = find(parent[i]);
+    }
+    public boolean union(int i, int j) {
+        int rootI = find(i);
+        int rootJ = find(j);
+        if (rootI != rootJ) {
+            if (rank[rootI] < rank[rootJ]) parent[rootI] = rootJ;
+            else if (rank[rootI] > rank[rootJ]) parent[rootJ] = rootI;
+            else {
+                parent[rootJ] = rootI;
+                rank[rootI]++;
+            }
+            return true;
+        }
+        return false;
+    }
+}
+
+class Graph {
+    int V;
+    List<Edge> edges = new ArrayList<>();
+    public Graph(int V) { this.V = V; }
+    public void addEdge(int u, int v, int w) { edges.add(new Edge(u, v, w)); }
+    public void kruskalMST() {
+        List<Edge> result = new ArrayList<>();
+        DisjointSet ds = new DisjointSet(V);
+        Collections.sort(edges);
+        for (Edge edge : edges) {
+            if (ds.union(edge.src, edge.dest)) {
+                result.add(edge);
+            }
+        }
+        for (Edge edge : result) {
+            System.out.println(edge.src + " - " + edge.dest + " (" + edge.weight + ")");
+        }
+    }
+}
+
+public class Main {
+    public static void main(String[] args) {
+        Graph g = new Graph(5);
+        g.addEdge(0, 1, 2); g.addEdge(0, 3, 6); g.addEdge(1, 2, 3); g.addEdge(1, 3, 8); g.addEdge(1, 4, 5);
+        g.kruskalMST();
+    }
+}`;
+    if (algo === 'Bellman-Ford') return `import java.util.*;
+
+class Edge {
+    int src, dest, weight;
+    Edge(int s, int d, int w) { src = s; dest = d; weight = w; }
+}
+
+class Graph {
+    int V; List<Edge> edges;
+    Graph(int V) { this.V = V; edges = new ArrayList<>(); }
+    void addEdge(int u, int v, int w) { edges.add(new Edge(u, v, w)); }
+    void bellmanFord(int start) {
+        int[] dist = new int[V];
+        Arrays.fill(dist, Integer.MAX_VALUE);
+        dist[start] = 0;
+        for (int i = 1; i <= V - 1; i++) {
+            for (Edge edge : edges) {
+                if (dist[edge.src] != Integer.MAX_VALUE && dist[edge.src] + edge.weight < dist[edge.dest])
+                    dist[edge.dest] = dist[edge.src] + edge.weight;
+            }
+        }
+        for (Edge edge : edges) {
+            if (dist[edge.src] != Integer.MAX_VALUE && dist[edge.src] + edge.weight < dist[edge.dest]) {
+                System.out.println("Graph contains negative weight cycle!");
+                return;
+            }
+        }
+        for (int i = 0; i < V; i++) System.out.println(i + " : " + (dist[i] == Integer.MAX_VALUE ? -1 : dist[i]));
+    }
+}`;
+    if (algo === 'Floyd-Warshall') return `import java.util.*;
+
+class FloydWarshall {
+    final static int INF = 99999;
+    void floydWarshall(int[][] graph, int V) {
+        int[][] dist = new int[V][V];
+        for (int i = 0; i < V; i++)
+            for (int j = 0; j < V; j++) dist[i][j] = graph[i][j];
+        for (int k = 0; k < V; k++) {
+            for (int i = 0; i < V; i++) {
+                for (int j = 0; j < V; j++) {
+                    if (dist[i][k] + dist[k][j] < dist[i][j])
+                        dist[i][j] = dist[i][k] + dist[k][j];
+                }
+            }
+        }
+        for (int i = 0; i < V; i++) {
+            for (int j = 0; j < V; j++) {
+                if (dist[i][j] == INF) System.out.print("INF ");
+                else System.out.print(dist[i][j] + " ");
+            }
+            System.out.println();
+        }
+    }
+}`;
+    if (algo === 'Kahn') return `import java.util.*;
+
+class Graph {
+    int V; LinkedList<Integer>[] adj;
+    Graph(int V) {
+        this.V = V; adj = new LinkedList[V];
+        for (int i = 0; i < V; ++i) adj[i] = new LinkedList<>();
+    }
+    void addEdge(int u, int v) { adj[u].add(v); }
+    void topologicalSort() {
+        int[] in_degree = new int[V];
+        for (int i = 0; i < V; i++) {
+            for (int temp : adj[i]) in_degree[temp]++;
+        }
+        Queue<Integer> q = new LinkedList<>();
+        for (int i = 0; i < V; i++) {
+            if (in_degree[i] == 0) q.add(i);
+        }
+        int count = 0;
+        Vector<Integer> top_order = new Vector<>();
+        while (!q.isEmpty()) {
+            int u = q.poll();
+            top_order.add(u);
+            for (int node : adj[u]) {
+                if (--in_degree[node] == 0) q.add(node);
+            }
+            count++;
+        }
+        if (count != V) {
+            System.out.println("There exists a cycle in the graph!");
+            return;
+        }
+        for (int i : top_order) System.out.print(i + " ");
+    }
+}`;
+    // Greedy
+    return `import java.util.*;
+
+class Graph {
+    int V; LinkedList<int[]>[] adj;
+    Graph(int V) {
+        this.V = V; adj = new LinkedList[V];
+        for(int i=0; i<V; i++) adj[i] = new LinkedList<>();
+    }
+    void addEdge(int u, int v, int w) { adj[u].add(new int[]{v, w}); adj[v].add(new int[]{u, w}); }
+    void greedyBestFirst(int src, int target, int[] h) {
+        boolean[] visited = new boolean[V];
+        PriorityQueue<int[]> pq = new PriorityQueue<>(Comparator.comparingInt(a -> a[0]));
+        pq.add(new int[]{h[src], src});
+        while(!pq.isEmpty()) {
+            int u = pq.poll()[1];
+            if(visited[u]) continue;
+            visited[u] = true;
+            System.out.print(u + " ");
+            if(u == target) break;
+            for(int[] edge : adj[u]) {
+                int v = edge[0];
+                if(!visited[v]) pq.add(new int[]{h[v], v});
+            }
+        }
+    }
+}`;
+  }
+
+  if (lang === 'Python') {
+    if (algo === 'BFS') return `from collections import deque
+
+class Graph:
+    def __init__(self, V):
+        self.V = V
+        self.adj = [[] for _ in range(V)]
+    def add_edge(self, u, v):
+        self.adj[u].append(v)
+        self.adj[v].append(u)
+    def bfs(self, start):
+        visited = [False] * self.V
+        q = deque([start])
+        visited[start] = True
+        while q:
+            u = q.popleft()
+            print(u, end=" ")
+            for v in self.adj[u]:
+                if not visited[v]:
+                    visited[v] = True
+                    q.append(v)
+
+g = Graph(5)
+g.add_edge(0, 1)
+g.add_edge(0, 2)
+g.add_edge(1, 3)
+g.bfs(${startNode})`;
+    if (algo === 'DFS') return `class Graph:
+    def __init__(self, V):
+        self.adj = [[] for _ in range(V)]
+    def add_edge(self, u, v):
+        self.adj[u].append(v)
+        self.adj[v].append(u)
+    def dfs_util(self, u, visited):
+        visited[u] = True
+        print(u, end=" ")
+        for v in self.adj[u]:
+            if not visited[v]:
+                self.dfs_util(v, visited)
+    def dfs(self, start):
+        visited = [False] * len(self.adj)
+        self.dfs_util(start, visited)
+
+g = Graph(5)
+g.add_edge(0, 1)
+g.dfs(${startNode})`;
+    if (algo === 'Dijkstra') return `import heapq
+
+class Graph:
+    def __init__(self, V):
+        self.adj = [[] for _ in range(V)]
+    def add_edge(self, u, v, w):
+        self.adj[u].append((v, w))
+        self.adj[v].append((u, w))
+    def dijkstra(self, src, target):
+        dist = [float('inf')] * len(self.adj)
+        dist[src] = 0
+        pq = [(0, src)]
+        while pq:
+            d, u = heapq.heappop(pq)
+            if u == target: break
+            for v, w in self.adj[u]:
+                if dist[u] + w < dist[v]:
+                    dist[v] = dist[u] + w
+                    heapq.heappush(pq, (dist[v], v))
+        print("Shortest path cost:", dist[target])`;
+    if (algo === 'Prim') return `import heapq
+
+class Graph:
+    def __init__(self, V):
+        self.V = V
+        self.adj = [[] for _ in range(V)]
+    def add_edge(self, u, v, w):
+        self.adj[u].append((v, w))
+        self.adj[v].append((u, w))
+    def prim_mst(self, start):
+        key = [float('inf')] * self.V
+        parent = [-1] * self.V
+        in_mst = [False] * self.V
+        key[start] = 0
+        pq = [(0, start)]
+        while pq:
+            _, u = heapq.heappop(pq)
+            if in_mst[u]: continue
+            in_mst[u] = True
+            for v, weight in self.adj[u]:
+                if not in_mst[v] and key[v] > weight:
+                    key[v] = weight
+                    parent[v] = u
+                    heapq.heappush(pq, (key[v], v))
+        for i in range(self.V):
+            if parent[i] != -1:
+                print(f"{parent[i]} - {i}")`;
+    if (algo === 'Kruskal') return `class DisjointSet:
+    def __init__(self, n):
+        self.parent = list(range(n))
+        self.rank = [0] * n
+    def find(self, i):
+        if self.parent[i] == i:
+            return i
+        self.parent[i] = self.find(self.parent[i])
+        return self.parent[i]
+    def union(self, i, j):
+        root_i = self.find(i)
+        root_j = self.find(j)
+        if root_i != root_j:
+            if self.rank[root_i] < self.rank[root_j]:
+                self.parent[root_i] = root_j
+            elif self.rank[root_i] > self.rank[root_j]:
+                self.parent[root_j] = root_i
+            else:
+                self.parent[root_j] = root_i
+                self.rank[root_i] += 1
+            return True
+        return False
+
+class Graph:
+    def __init__(self, V):
+        self.V = V
+        self.edges = []
+    def add_edge(self, u, v, w):
+        self.edges.append((u, v, w))
+    def kruskal_mst(self):
+        result = []
+        ds = DisjointSet(self.V)
+        self.edges.sort(key=lambda x: x[2])
+        for u, v, w in self.edges:
+            if ds.union(u, v):
+                result.append((u, v, w))
+        for u, v, w in result:
+            print(f"{u} - {v} ({w})")
+
+if __name__ == "__main__":
+    g = Graph(5)
+    g.add_edge(0, 1, 2)
+    g.add_edge(0, 3, 6)
+    g.add_edge(1, 2, 3)
+    g.add_edge(1, 3, 8)
+    g.add_edge(1, 4, 5)
+    g.kruskal_mst()`;
+    if (algo === 'Bellman-Ford') return `class Graph:
+    def __init__(self, V):
+        self.V = V
+        self.edges = []
+    def add_edge(self, u, v, w):
+        self.edges.append((u, v, w))
+    def bellman_ford(self, start):
+        dist = [float('inf')] * self.V
+        dist[start] = 0
+        for _ in range(self.V - 1):
+            for u, v, w in self.edges:
+                if dist[u] != float('inf') and dist[u] + w < dist[v]:
+                    dist[v] = dist[u] + w
+        for u, v, w in self.edges:
+            if dist[u] != float('inf') and dist[u] + w < dist[v]:
+                print("Graph contains negative weight cycle!")
+                return
+        for i in range(self.V):
+            print(f"{i} : {dist[i]}")`;
+    if (algo === 'Floyd-Warshall') return `def floyd_warshall(graph, V):
+    dist = [row[:] for row in graph]
+    for k in range(V):
+        for i in range(V):
+            for j in range(V):
+                dist[i][j] = min(dist[i][j], dist[i][k] + dist[k][j])
+    for i in range(V):
+        for j in range(V):
+            print(dist[i][j] if dist[i][j] != float('inf') else "INF", end=" ")
+        print()`;
+    if (algo === 'Kahn') return `from collections import deque
+
+class Graph:
+    def __init__(self, V):
+        self.V = V
+        self.adj = [[] for _ in range(V)]
+    def add_edge(self, u, v):
+        self.adj[u].append(v)
+    def topological_sort(self):
+        in_degree = [0] * self.V
+        for u in range(self.V):
+            for v in self.adj[u]:
+                in_degree[v] += 1
+        q = deque([i for i in range(self.V) if in_degree[i] == 0])
+        count = 0
+        top_order = []
+        while q:
+            u = q.popleft()
+            top_order.append(u)
+            for v in self.adj[u]:
+                in_degree[v] -= 1
+                if in_degree[v] == 0:
+                    q.append(v)
+            count += 1
+        if count != self.V:
+            print("There exists a cycle in the graph!")
+            return
+        print(*top_order)`;
+    // Greedy
+    return `import heapq
+
+class Graph:
+    def __init__(self, V):
+        self.adj = [[] for _ in range(V)]
+    def add_edge(self, u, v, w):
+        self.adj[u].append((v, w))
+        self.adj[v].append((u, w))
+    def greedy(self, src, target, h):
+        visited = [False] * len(self.adj)
+        pq = [(h[src], src)]
+        while pq:
+            _, u = heapq.heappop(pq)
+            if visited[u]: continue
+            visited[u] = True
+            print(u, end=" ")
+            if u == target: break
+            for v, w in self.adj[u]:
+                if not visited[v]:
+                    heapq.heappush(pq, (h[v], v))`;
+  }
+
+  // JS
+  if (algo === 'BFS') return `class Graph {
+  constructor(V) {
+    this.V = V;
+    this.adj = Array.from({ length: V }, () => []);
+  }
+  addEdge(u, v) {
+    this.adj[u].push(v);
+    this.adj[v].push(u);
+  }
+  bfs(start) {
+    let visited = new Array(this.V).fill(false);
+    let q = [start];
+    visited[start] = true;
+    while (q.length > 0) {
+      let u = q.shift();
+      console.log(u);
+      this.adj[u].forEach(v => {
+        if (!visited[v]) {
+          visited[v] = true;
+          q.push(v);
+        }
+      });
+    }
+  }
+}
+
+const g = new Graph(5);
+g.addEdge(0, 1);
+g.bfs(${startNode});`;
+
+  if (algo === 'DFS') return `class Graph {
+  constructor(V) {
+    this.adj = Array.from({ length: V }, () => []);
+  }
+  addEdge(u, v) {
+    this.adj[u].push(v);
+    this.adj[v].push(u);
+  }
+  dfsUtil(u, visited) {
+    visited[u] = true;
+    console.log(u);
+    this.adj[u].forEach(v => {
+      if (!visited[v]) this.dfsUtil(v, visited);
+    });
+  }
+  dfs(start) {
+    let visited = new Array(this.adj.length).fill(false);
+    this.dfsUtil(start, visited);
+  }
+}`;
+
+  if (algo === 'Dijkstra') return `class Graph {
+  constructor(V) {
+    this.adj = Array.from({ length: V }, () => []);
+  }
+  addEdge(u, v, w) {
+    this.adj[u].push({ v, w });
+    this.adj[v].push({ u, w });
+  }
+  dijkstra(src, target) {
+    let dist = new Array(this.adj.length).fill(Infinity);
+    dist[src] = 0;
+    let pq = [{ d: 0, u: src }];
+    while (pq.length > 0) {
+      pq.sort((a,b) => a.d - b.d);
+      let { u } = pq.shift();
+      if (u === target) break;
+      this.adj[u].forEach(edge => {
+        if (dist[u] + edge.w < dist[edge.v]) {
+          dist[edge.v] = dist[u] + edge.w;
+          pq.push({ d: dist[edge.v], u: edge.v });
+        }
+      });
+    }
+    console.log("Shortest Path:", dist[target]);
+  }
+}`;
+
+  if (algo === 'Prim') return `class Graph {
+  constructor(V) {
+    this.V = V;
+    this.adj = Array.from({ length: V }, () => []);
+  }
+  addEdge(u, v, w) {
+    this.adj[u].push({ v, w });
+    this.adj[v].push({ u: u, w }); // Undirected
+  }
+  primMST(start) {
+    let key = new Array(this.V).fill(Infinity);
+    let parent = new Array(this.V).fill(-1);
+    let inMST = new Array(this.V).fill(false);
+    key[start] = 0;
+    let pq = [{ key: 0, u: start }];
+    while (pq.length > 0) {
+      pq.sort((a, b) => a.key - b.key);
+      let { u } = pq.shift();
+      if (inMST[u]) continue;
+      inMST[u] = true;
+      this.adj[u].forEach(edge => {
+        let v = edge.v, w = edge.w;
+        if (!inMST[v] && key[v] > w) {
+          key[v] = w;
+          parent[v] = u;
+          pq.push({ key: key[v], u: v });
+        }
+      });
+    }
+    for (let i = 0; i < this.V; i++) {
+      if (parent[i] !== -1) console.log(parent[i] + " - " + i);
+    }
+  }
+}`;
+
+  if (algo === 'Kruskal') return `class DisjointSet {
+  constructor(n) {
+    this.parent = Array.from({ length: n }, (_, i) => i);
+    this.rank = new Array(n).fill(0);
+  }
+  find(i) {
+    if (this.parent[i] === i) return i;
+    this.parent[i] = this.find(this.parent[i]);
+    return this.parent[i];
+  }
+  union(i, j) {
+    let rootI = this.find(i);
+    let rootJ = this.find(j);
+    if (rootI !== rootJ) {
+      if (this.rank[rootI] < this.rank[rootJ]) this.parent[rootI] = rootJ;
+      else if (this.rank[rootI] > this.rank[rootJ]) this.parent[rootJ] = rootI;
+      else {
+        this.parent[rootJ] = rootI;
+        this.rank[rootI]++;
+      }
+      return true;
+    }
+    return false;
+  }
+}
+
+class Graph {
+  constructor(V) {
+    this.V = V;
+    this.edges = [];
+  }
+  addEdge(u, v, w) {
+    this.edges.push({ src: u, dest: v, weight: w });
+  }
+  kruskalMST() {
+    let result = [];
+    let ds = new DisjointSet(this.V);
+    this.edges.sort((a, b) => a.weight - b.weight);
+    this.edges.forEach(edge => {
+      if (ds.union(edge.src, edge.dest)) {
+        result.push(edge);
+      }
+    });
+    result.forEach(edge => {
+      console.log(edge.src + " - " + edge.dest + " (" + edge.weight + ")");
+    });
+  }
+}
+
+const g = new Graph(5);
+g.addEdge(0, 1, 2);
+g.addEdge(0, 3, 6);
+g.addEdge(1, 2, 3);
+g.addEdge(1, 3, 8);
+g.addEdge(1, 4, 5);
+g.kruskalMST();`;
+
+  if (algo === 'Bellman-Ford') return `class Graph {
+  constructor(V) {
+    this.V = V;
+    this.edges = [];
+  }
+  addEdge(u, v, w) {
+    this.edges.push({ src: u, dest: v, weight: w });
+  }
+  bellmanFord(start) {
+    let dist = new Array(this.V).fill(Infinity);
+    dist[start] = 0;
+    for (let i = 1; i <= this.V - 1; i++) {
+      this.edges.forEach(edge => {
+        if (dist[edge.src] !== Infinity && dist[edge.src] + edge.weight < dist[edge.dest]) {
+          dist[edge.dest] = dist[edge.src] + edge.weight;
+        }
+      });
+    }
+    for (let i = 0; i < this.edges.length; i++) {
+      let edge = this.edges[i];
+      if (dist[edge.src] !== Infinity && dist[edge.src] + edge.weight < dist[edge.dest]) {
+        console.log("Graph contains negative cycle!");
+        return;
+      }
+    }
+    for (let i = 0; i < this.V; i++) console.log(i + " : " + dist[i]);
+  }
+}`;
+
+  if (algo === 'Floyd-Warshall') return `function floydWarshall(graph, V) {
+  let dist = graph.map(row => [...row]);
+  for (let k = 0; k < V; k++) {
+    for (let i = 0; i < V; i++) {
+      for (let j = 0; j < V; j++) {
+        if (dist[i][k] + dist[k][j] < dist[i][j]) {
+          dist[i][j] = dist[i][k] + dist[k][j];
+        }
+      }
+    }
+  }
+  console.log(dist);
+}`;
+
+  if (algo === 'Kahn') return `class Graph {
+  constructor(V) {
+    this.V = V;
+    this.adj = Array.from({ length: V }, () => []);
+  }
+  addEdge(u, v) {
+    this.adj[u].push(v);
+  }
+  topologicalSort() {
+    let inDegree = new Array(this.V).fill(0);
+    for (let u = 0; u < this.V; u++) {
+      this.adj[u].forEach(v => inDegree[v]++);
+    }
+    let q = [];
+    for (let i = 0; i < this.V; i++) {
+      if (inDegree[i] === 0) q.push(i);
+    }
+    let count = 0;
+    let topoOrder = [];
+    while (q.length > 0) {
+      let u = q.shift();
+      topoOrder.push(u);
+      this.adj[u].forEach(v => {
+        if (--inDegree[v] === 0) q.push(v);
+      });
+      count++;
+    }
+    if (count !== this.V) {
+      console.log("Cycle detected in graph!");
+      return;
+    }
+    console.log(topoOrder.join(" "));
+  }
+}`;
+
+  return `class Graph {
+  constructor(V) {
+    this.adj = Array.from({ length: V }, () => []);
+  }
+  addEdge(u, v, w) {
+    this.adj[u].push({ v, w });
+    this.adj[v].push({ u, w });
+  }
+  greedy(src, target, h) {
+    let visited = new Array(this.adj.length).fill(false);
+    let pq = [{ cost: h[src], u: src }];
+    while (pq.length > 0) {
+      pq.sort((a,b) => a.cost - b.cost);
+      let { u } = pq.shift();
+      if (visited[u]) continue;
+      visited[u] = true;
+      console.log(u);
+      if (u === target) break;
+      this.adj[u].forEach(edge => {
+        if (!visited[edge.v]) pq.push({ cost: h[edge.v], u: edge.v });
+      });
+    }
+  }
+}`;
+};
+
+// Fallback-safe Clipboard Copy Helper
+const copyToClipboard = (text) => {
+  const fallbackCopy = (txt) => {
+    const textArea = document.createElement("textarea");
+    textArea.value = txt;
+    textArea.style.position = "fixed";
+    textArea.style.left = "-999999px";
+    textArea.style.top = "-999999px";
+    textArea.style.width = "2em";
+    textArea.style.height = "2em";
+    textArea.style.padding = "0";
+    textArea.style.border = "none";
+    textArea.style.outline = "none";
+    textArea.style.boxShadow = "none";
+    textArea.style.background = "transparent";
+    document.body.appendChild(textArea);
+    textArea.focus();
+    textArea.select();
+    textArea.setSelectionRange(0, 999999);
+    try {
+      const successful = document.execCommand('copy');
+      document.body.removeChild(textArea);
+      if (successful) {
+        return Promise.resolve();
+      } else {
+        return Promise.reject(new Error("execCommand('copy') returned false"));
+      }
+    } catch (err) {
+      document.body.removeChild(textArea);
+      return Promise.reject(err);
+    }
+  };
+
+  if (navigator.clipboard) {
+    return navigator.clipboard.writeText(text).catch((err) => {
+      console.warn("navigator.clipboard failed, falling back to execCommand:", err);
+      return fallbackCopy(text);
+    });
+  } else {
+    return fallbackCopy(text);
+  }
+};
+
+const highlightLogText = (text) => {
+  if (!text) return '';
+  const str = String(text);
+  const lower = str.toLowerCase();
+  
+  if (
+    lower.includes('root full') ||
+    lower.includes('split') ||
+    lower.includes('imbalance') ||
+    lower.includes('rotate') ||
+    lower.includes('rotation') ||
+    lower.includes('delete') ||
+    lower.includes('deleted') ||
+    lower.includes('remove') ||
+    lower.includes('removed') ||
+    lower.includes('pop') ||
+    lower.includes('popped') ||
+    lower.includes('mismatch') ||
+    lower.includes('⚡')
+  ) {
+    const regex = /(\b\d+(?:\.\d+)?\b)/g;
+    const parts = str.split(regex);
+    return (
+      <span style={{ color: '#f87171', fontWeight: 'bold' }}>
+        {parts.map((p, i) => 
+          regex.test(p) ? <span key={i} style={{ color: '#fbbf24', textShadow: '0 0 8px rgba(251,191,36,0.3)' }}>{p}</span> : p
+        )}
+      </span>
+    );
+  }
+  
+  if (
+    lower.includes('inserted') ||
+    lower.includes('insert(') ||
+    lower.includes('insert ') ||
+    lower.includes('create node') ||
+    lower.includes('success') ||
+    lower.includes('match') ||
+    lower.includes('completed') ||
+    lower.includes('done') ||
+    lower.includes('✦') ||
+    lower.includes('✓') ||
+    lower.includes('✅')
+  ) {
+    const regex = /(\b\d+(?:\.\d+)?\b)/g;
+    const parts = str.split(regex);
+    return (
+      <span style={{ color: '#34d399', fontWeight: 'bold' }}>
+        {parts.map((p, i) => 
+          regex.test(p) ? <span key={i} style={{ color: '#fbbf24' }}>{p}</span> : p
+        )}
+      </span>
+    );
+  }
+
+  if (
+    lower.includes('going to') ||
+    lower.includes('compare') ||
+    lower.includes('comparing') ||
+    lower.includes('probe') ||
+    lower.includes('probing') ||
+    lower.includes('relaxation') ||
+    lower.includes('check') ||
+    lower.includes('relax') ||
+    lower.includes('reached') ||
+    lower.includes('extract') ||
+    lower.includes('➜') ||
+    lower.includes('↳')
+  ) {
+    const regex = /(\b\d+(?:\.\d+)?\b)/g;
+    const parts = str.split(regex);
+    return (
+      <span style={{ color: '#fb923c', fontWeight: 600 }}>
+        {parts.map((p, i) => 
+          regex.test(p) ? <span key={i} style={{ color: '#fbbf24', fontWeight: 'bold' }}>{p}</span> : p
+        )}
+      </span>
+    );
+  }
+  
+  const regex = /(\b\d+(?:\.\d+)?\b)/g;
+  const parts = str.split(regex);
+  return parts.map((p, i) => 
+    /^\d+(?:\.\d+)?$/.test(p) ? <strong key={i} style={{ color: '#fbbf24' }}>{p}</strong> : p
+  );
+};
+
+const GraphVisualizer = ({ onBack, openSettings, initialAlgo = 'Dijkstra', onCopyCode, onCodeChange, fontSize = 14, wordWrap = 'off', onShowUpcomingFeatures }) => {
+  const [localFontSize, setLocalFontSize] = useState(fontSize);
+  useEffect(() => {
+    setLocalFontSize(fontSize);
+  }, [fontSize]);
+
+  const [nodes, setNodes] = useState([
+    { id: 0, label: '0', x: 120, y: 220, dist: Infinity, h: 4 },
+    { id: 1, label: '1', x: 260, y: 120, dist: Infinity, h: 3 },
+    { id: 2, label: '2', x: 260, y: 320, dist: Infinity, h: 2 },
+    { id: 3, label: '3', x: 440, y: 120, dist: Infinity, h: 2 },
+    { id: 4, label: '4', x: 440, y: 320, dist: Infinity, h: 0 }
+  ]);
+  const [edges, setEdges] = useState([
+    { id: '0-1', from: 0, to: 1, weight: 4 },
+    { id: '0-2', from: 0, to: 2, weight: 2 },
+    { id: '1-3', from: 1, to: 3, weight: 5 },
+    { id: '2-4', from: 2, to: 4, weight: 3 },
+    { id: '3-4', from: 3, to: 4, weight: 1 }
+  ]);
+  const [nodeLabel, setNodeLabel] = useState('');
+  const [edgeFrom, setEdgeFrom] = useState('');
+  const [edgeTo, setEdgeTo] = useState('');
+  const [edgeWeight, setEdgeWeight] = useState(1);
+  const [isDirected, setIsDirected] = useState(false);
+  const [startNode, setStartNode] = useState(0);
+  const [targetNode, setTargetNode] = useState(4);
+  const [algoMode, setAlgoMode] = useState(initialAlgo);
+  const [nodeToDelete, setNodeToDelete] = useState('');
+  const [edgeToDelete, setEdgeToDelete] = useState('');
+
+  const [isMobile, setIsMobile] = useState(typeof window !== 'undefined' ? window.innerWidth < 768 : false);
+  const [mobileTab, setMobileTab] = useState('vis');
+  const [showEditControls, setShowEditControls] = useState(false);
+  const [showTopicInfo, setShowTopicInfo] = useState(false);
+
+  useEffect(() => {
+    const handleResize = () => {
+      setIsMobile(window.innerWidth < 768);
+    };
+    window.addEventListener('resize', handleResize);
+    return () => window.removeEventListener('resize', handleResize);
+  }, []);
+
+  // Draggable execution log states
+  const [showLogPanel, setShowLogPanel] = useState(true);
+  const [logPosition, setLogPosition] = useState({ x: 50, y: 150 });
+  const [logSize, setLogSize] = useState({ width: 520, height: 280 });
+  const [isDraggingLog, setIsDraggingLog] = useState(false);
+  const dragStart = useRef({ x: 0, y: 0 });
+  const panelStart = useRef({ x: 0, y: 0 });
+  const [activeStateWidth, setActiveStateWidth] = useState(240);
+  const [codeWidth, setCodeWidth] = useState(360);
+
+  const logContainerRef = useRef(null);
+
+  const handleLogHeaderMouseDown = (e) => {
+    if (e.button !== 0 && e.type !== 'touchstart') return;
+    setIsDraggingLog(true);
+    const isTouch = e.type.startsWith('touch');
+    const clientX = isTouch ? e.touches[0].clientX : e.clientX;
+    const clientY = isTouch ? e.touches[0].clientY : e.clientY;
+    dragStart.current = { x: clientX, y: clientY };
+    panelStart.current = { x: logPosition.x, y: logPosition.y };
+    if (e.cancelable) e.preventDefault();
+  };
+
+  useEffect(() => {
+    if (!isDraggingLog) return;
+    const handleMouseMove = (e) => {
+      const isTouch = e.type.startsWith('touch');
+      const clientX = isTouch ? e.touches[0].clientX : e.clientX;
+      const clientY = isTouch ? e.touches[0].clientY : e.clientY;
+      const dx = clientX - dragStart.current.x;
+      const dy = clientY - dragStart.current.y;
+      
+      setLogPosition({
+        x: Math.max(-logSize.width + 40, Math.min(window.innerWidth - 40, panelStart.current.x + dx)),
+        y: Math.max(0, Math.min(window.innerHeight - 40, panelStart.current.y + dy))
+      });
+    };
+
+    const handleMouseUp = () => {
+      setIsDraggingLog(false);
+    };
+
+    window.addEventListener('mousemove', handleMouseMove);
+    window.addEventListener('mouseup', handleMouseUp);
+    window.addEventListener('touchmove', handleMouseMove, { passive: false });
+    window.addEventListener('touchend', handleMouseUp);
+    return () => {
+      window.removeEventListener('mousemove', handleMouseMove);
+      window.removeEventListener('mouseup', handleMouseUp);
+      window.removeEventListener('touchmove', handleMouseMove);
+      window.removeEventListener('touchend', handleMouseUp);
+    };
+  }, [isDraggingLog, logSize]);
+
+  const handleLogResizeMouseDown = (e) => {
+    if (e.cancelable) e.preventDefault();
+    e.stopPropagation();
+    const isTouch = e.type.startsWith('touch');
+    const startX = isTouch ? e.touches[0].clientX : e.clientX;
+    const startY = isTouch ? e.touches[0].clientY : e.clientY;
+    const startWidth = logSize.width;
+    const startHeight = logSize.height;
+
+    const handleMouseMove = (moveEvent) => {
+      const currentX = moveEvent.type.startsWith('touch') ? moveEvent.touches[0].clientX : moveEvent.clientX;
+      const currentY = moveEvent.type.startsWith('touch') ? moveEvent.touches[0].clientY : moveEvent.clientY;
+      const newWidth = Math.max(300, Math.min(800, startWidth + (currentX - startX)));
+      const newHeight = Math.max(150, Math.min(600, startHeight + (currentY - startY)));
+      setLogSize({ width: newWidth, height: newHeight });
+    };
+
+    const handleMouseUp = () => {
+      document.removeEventListener('mousemove', handleMouseMove);
+      document.removeEventListener('mouseup', handleMouseUp);
+      document.removeEventListener('touchmove', handleMouseMove);
+      document.removeEventListener('touchend', handleMouseUp);
+    };
+
+    document.addEventListener('mousemove', handleMouseMove);
+    document.addEventListener('mouseup', handleMouseUp);
+    document.addEventListener('touchmove', handleMouseMove, { passive: false });
+    document.addEventListener('touchend', handleMouseUp);
+  };
+
+  const handleActiveStateColDragStart = (e) => {
+    if (e.cancelable) e.preventDefault();
+    const isTouch = e.type.startsWith('touch');
+    const startX = isTouch ? e.touches[0].clientX : e.clientX;
+    const startWidth = activeStateWidth;
+    const drag = (moveEvent) => {
+      const currentX = moveEvent.type.startsWith('touch') ? moveEvent.touches[0].clientX : moveEvent.clientX;
+      const newWidth = Math.max(120, Math.min(450, startWidth + (currentX - startX)));
+      setActiveStateWidth(newWidth);
+    };
+    const end = () => {
+      document.removeEventListener('mousemove', drag);
+      document.removeEventListener('mouseup', end);
+      document.removeEventListener('touchmove', drag);
+      document.removeEventListener('touchend', end);
+    };
+    document.addEventListener('mousemove', drag);
+    document.addEventListener('mouseup', end);
+    document.addEventListener('touchmove', drag, { passive: false });
+    document.addEventListener('touchend', end);
+  };
+
+  const handleColDragStart = e => {
+    if (e.cancelable) e.preventDefault();
+    const isTouch = e.type.startsWith('touch');
+    const startX = isTouch ? e.touches[0].clientX : e.clientX;
+    const startW = codeWidth;
+    const drag = ev => {
+      const currentX = ev.type.startsWith('touch') ? ev.touches[0].clientX : ev.clientX;
+      setCodeWidth(Math.max(200, Math.min(startW + (startX - currentX), window.innerWidth - 300)));
+    };
+    const end = () => {
+      document.removeEventListener('mousemove', drag);
+      document.removeEventListener('mouseup', end);
+      document.removeEventListener('touchmove', drag);
+      document.removeEventListener('touchend', end);
+    };
+    document.addEventListener('mousemove', drag);
+    document.addEventListener('mouseup', end);
+    document.addEventListener('touchmove', drag, { passive: false });
+    document.addEventListener('touchend', end);
+  };
+
+
+
+  // Animation timeline state
+  const [timeline, setTimeline] = useState([]);
+  const [currentStep, setCurrentStep] = useState(0);
+  const [isPlaying, setIsPlaying] = useState(false);
+
+  useEffect(() => {
+    if (logContainerRef.current) {
+      logContainerRef.current.scrollTop = logContainerRef.current.scrollHeight;
+    }
+  }, [currentStep, showLogPanel, timeline]);
+  const [speed, setSpeed] = useState(400);
+
+  // Side-by-side Code
+  const [codeLang, setCodeLang] = useState('C');
+  const [showCode, setShowCode] = useState(false);
+
+  const [copied, setCopied] = useState(false);
+  const [isRunnerOpen, setIsRunnerOpen] = useState(false);
+  const handleCopyCode = () => {
+    const rawCode = getGraphCodeTemplate(codeLang, algoMode, String(startNode), String(targetNode));
+    copyToClipboard(rawCode).then(() => {
+      setCopied(true);
+      setTimeout(() => setCopied(false), 2000);
+      if (onCopyCode) onCopyCode(rawCode, codeLang);
+    }).catch(err => console.error("Clipboard copy failed:", err));
+  };
+
+  const handleDeleteNode = () => {
+    if (nodeToDelete === '') return;
+    const nid = parseInt(nodeToDelete);
+    const updatedNodes = nodes.filter(n => n.id !== nid);
+    setNodes(updatedNodes);
+    setEdges(prev => prev.filter(e => e.from !== nid && e.to !== nid));
+    if (startNode === nid) {
+      setStartNode(updatedNodes.length > 0 ? updatedNodes[0].id : '');
+    }
+    if (targetNode === nid) {
+      setTargetNode(updatedNodes.length > 1 ? updatedNodes[updatedNodes.length - 1].id : (updatedNodes.length > 0 ? updatedNodes[0].id : ''));
+    }
+    setNodeToDelete('');
+    handleResetAnimation();
+  };
+
+  const handleDeleteEdge = () => {
+    if (edgeToDelete === '') return;
+    setEdges(prev => prev.filter(e => e.id !== edgeToDelete));
+    setEdgeToDelete('');
+    handleResetAnimation();
+  };
+
+  useEffect(() => {
+    const rawCode = getGraphCodeTemplate(codeLang, algoMode, String(startNode), String(targetNode));
+    if (onCodeChange) onCodeChange(rawCode, codeLang);
+  }, [codeLang, algoMode, startNode, targetNode, onCodeChange]);
+
+  // Drag state
+  const [draggingNode, setDraggingNode] = useState(null);
+  const containerRef = useRef(null);
+  const lineRefs = useRef({});
+  const nodeCircleRefs = useRef({});
+
+  // Animation scheduler hook
+  useEffect(() => {
+    let timer;
+    if (isPlaying && currentStep < timeline.length - 1) {
+      timer = setTimeout(() => setCurrentStep(p => p + 1), speed);
+    } else if (currentStep >= timeline.length - 1) {
+      setTimeout(() => setIsPlaying(false), 0);
+    }
+    return () => clearTimeout(timer);
+  }, [isPlaying, currentStep, timeline.length, speed]);
+
+  // Node drawing click placement helper
+  const handleCanvasClick = (e) => {
+    if (draggingNode !== null) return;
+    const rect = containerRef.current.getBoundingClientRect();
+    const x = e.clientX - rect.left;
+    const y = e.clientY - rect.top;
+
+    // Check if clicked too close to existing node
+    const close = nodes.some(n => Math.hypot(n.x - x, n.y - y) < 60);
+    if (close) return;
+
+    const newId = nodes.length > 0 ? Math.max(...nodes.map(n => n.id)) + 1 : 0;
+    const label = nodeLabel.trim() || String(newId);
+    // calculate simple Euclidean h value relative to the target node
+    const target = nodes.find(n => n.id === targetNode) || { x: 500, y: 300 };
+    const h = Math.round(Math.hypot(x - target.x, y - target.y) / 100);
+
+    setNodes(prev => [...prev, { id: newId, label, x, y, dist: Infinity, h }]);
+    setNodeLabel('');
+  };
+
+  const handleAddNode = () => {
+    const newId = nodes.length > 0 ? Math.max(...nodes.map(n => n.id)) + 1 : 0;
+    const label = nodeLabel.trim() || String(newId);
+    const x = 100 + Math.random() * 400;
+    const y = 100 + Math.random() * 250;
+    const target = nodes.find(n => n.id === targetNode) || { x: 440, y: 320 };
+    const h = Math.round(Math.hypot(x - target.x, y - target.y) / 100);
+    setNodes(prev => [...prev, { id: newId, label, x, y, dist: Infinity, h }]);
+    setNodeLabel('');
+  };
+
+  const handleAddEdge = () => {
+    if (edgeFrom === '' || edgeTo === '' || edgeFrom === edgeTo) return;
+    const fId = parseInt(edgeFrom);
+    const tId = parseInt(edgeTo);
+    const edgeId = `${fId}-${tId}`;
+    if (edges.some(e => e.id === edgeId || (!isDirected && e.id === `${tId}-${fId}`))) {
+      alert('Edge already exists!');
+      return;
+    }
+    setEdges(prev => [...prev, { id: edgeId, from: fId, to: tId, weight: parseInt(edgeWeight) || 1 }]);
+  };
+
+  const handleClear = () => {
+    setNodes([]);
+    setEdges([]);
+    setTimeline([]);
+    setCurrentStep(0);
+    setIsPlaying(false);
+  };
+
+  const handleResetAnimation = () => {
+    setTimeline([]);
+    setCurrentStep(0);
+    setIsPlaying(false);
+    setNodes(p => p.map(n => ({ ...n, dist: Infinity })));
+  };
+
+  // Node Dragging Logic
+  const handleNodeMouseDown = (nodeId) => {
+    setDraggingNode(nodeId);
+  };
+
+  const handleCanvasMouseMove = (e) => {
+    if (draggingNode === null) return;
+    const rect = containerRef.current.getBoundingClientRect();
+    const x = e.clientX - rect.left;
+    const y = e.clientY - rect.top;
+
+    setNodes(prev => prev.map(n => {
+      if (n.id === draggingNode) {
+        const target = prev.find(no => no.id === targetNode) || { x: 500, y: 300 };
+        const h = Math.round(Math.hypot(x - target.x, y - target.y) / 100);
+        return { ...n, x, y, h };
+      }
+      return n;
+    }));
+  };
+
+  const handleCanvasMouseUp = () => {
+    setDraggingNode(null);
+  };
+
+  // Traversal simulations
+  const runTraversal = () => {
+    if (nodes.length === 0) return;
+    const frames = [];
+    const adj = {};
+    nodes.forEach(n => adj[n.id] = []);
+    edges.forEach(e => {
+      adj[e.from].push({ to: e.to, w: e.weight });
+      if (!isDirected) {
+        adj[e.to].push({ to: e.from, w: e.weight });
+      }
+    });
+
+    if (algoMode === 'BFS') {
+      const visited = {};
+      const q = [startNode];
+      visited[startNode] = true;
+      frames.push({
+        visited: { ...visited },
+        active: startNode,
+        queue: [...q],
+        activeEdge: null,
+        msg: `Initialize BFS from Node ${startNode}`,
+        activeLine: 'visited[start] = true'
+      });
+
+      while (q.length > 0) {
+        const u = q.shift();
+        frames.push({
+          visited: { ...visited },
+          active: u,
+          queue: [...q],
+          activeEdge: null,
+          msg: `Dequeued Node ${u} from the queue`,
+          activeLine: 'int u = q.front()'
+        });
+
+        for (let edge of adj[u]) {
+          const v = edge.to;
+          if (!visited[v]) {
+            visited[v] = true;
+            q.push(v);
+            frames.push({
+              visited: { ...visited },
+              active: u,
+              queue: [...q],
+              activeEdge: `${u}-${v}`,
+              msg: `Discovered neighbor ${v}, pushing to queue`,
+              activeLine: 'q.push(v)'
+            });
+          }
+        }
+      }
+    } else if (algoMode === 'DFS') {
+      const visited = {};
+      const stack = [startNode];
+
+      frames.push({
+        visited: { ...visited },
+        active: startNode,
+        stack: [...stack],
+        msg: `Initialize DFS recursion from Node ${startNode}`,
+        activeLine: 'DFSUtil(start)'
+      });
+
+      const dfs = (u) => {
+        visited[u] = true;
+        frames.push({
+          visited: { ...visited },
+          active: u,
+          stack: [...stack],
+          msg: `Visited Node ${u}`,
+          activeLine: 'visited[u] = true'
+        });
+
+        for (let edge of adj[u]) {
+          const v = edge.to;
+          if (!visited[v]) {
+            stack.push(v);
+            frames.push({
+              visited: { ...visited },
+              active: u,
+              stack: [...stack],
+              activeEdge: `${u}-${v}`,
+              msg: `Traversing edge ${u} ➔ ${v}`,
+              activeLine: 'DFSUtil(v)'
+            });
+            dfs(v);
+            stack.pop();
+            frames.push({
+              visited: { ...visited },
+              active: u,
+              stack: [...stack],
+              msg: `Backtracking from ${v} to ${u}`,
+              activeLine: '}'
+            });
+          }
+        }
+      };
+      dfs(startNode);
+    } else if (algoMode === 'Dijkstra') {
+      const dist = {};
+      const parent = {};
+      nodes.forEach(n => dist[n.id] = Infinity);
+      dist[startNode] = 0;
+
+      const q = [...nodes.map(n => n.id)];
+      frames.push({
+        dist: { ...dist },
+        active: startNode,
+        queue: [...q],
+        msg: `Initialize Dijkstra: dist[${startNode}] = 0, others = ∞`,
+        activeLine: 'dist[start] = 0'
+      });
+
+      while (q.length > 0) {
+        // Extract minimum distance node
+        q.sort((a, b) => dist[a] - dist[b]);
+        const u = q.shift();
+
+        if (dist[u] === Infinity) break;
+        if (u === targetNode) {
+          frames.push({
+            dist: { ...dist },
+            active: u,
+            queue: [...q],
+            msg: `Reached target Node ${targetNode}! Shortest path is found.`,
+            activeLine: 'if (u == target) break;'
+          });
+          break;
+        }
+
+        frames.push({
+          dist: { ...dist },
+          active: u,
+          queue: [...q],
+          msg: `Extract minimum node ${u} with dist = ${dist[u]}`,
+          activeLine: 'int u = pq.top().second'
+        });
+
+        for (let edge of adj[u]) {
+          const v = edge.to;
+          const alt = dist[u] + edge.w;
+          frames.push({
+            dist: { ...dist },
+            active: u,
+            queue: [...q],
+            activeEdge: `${u}-${v}`,
+            msg: `Relaxation probe: Check ${u}➔${v} (cost: ${dist[u]} + ${edge.w} vs current: ${dist[v]})`,
+            activeLine: 'if (dist[u] + w < dist[v])'
+          });
+
+          if (alt < dist[v]) {
+            dist[v] = alt;
+            parent[v] = u;
+            frames.push({
+              dist: { ...dist },
+              active: u,
+              queue: [...q],
+              activeEdge: `${u}-${v}`,
+              msg: `Success! Relax dist[${v}] to ${alt}`,
+              activeLine: 'dist[v] = dist[u] + w'
+            });
+          }
+        }
+      }
+
+      // Trace path
+      let curr = targetNode;
+      const pathEdges = [];
+      while (parent[curr] !== undefined) {
+        pathEdges.push(`${parent[curr]}-${curr}`);
+        curr = parent[curr];
+      }
+      if (pathEdges.length > 0) {
+        frames.push({
+          dist: { ...dist },
+          active: targetNode,
+          pathHighlight: pathEdges,
+          msg: `Finished! Glowing gold highlights the optimal path.`,
+          activeLine: 'cout << dist[target]'
+        });
+      }
+    } else if (algoMode === 'Greedy') {
+      // Greedy Best-First Search using Euclidean distance heuristics
+      const visited = {};
+      const pq = [{ id: startNode, h: nodes.find(n => n.id === startNode)?.h || 0 }];
+
+      frames.push({
+        visited: { ...visited },
+        active: startNode,
+        queue: [...pq],
+        msg: `Initialize Greedy Best-First: Start at ${startNode} with heuristic value h=${pq[0].h}`,
+        activeLine: 'pq.push({start, h[start]})'
+      });
+
+      while (pq.length > 0) {
+        pq.sort((a, b) => a.h - b.h);
+        const { id: u } = pq.shift();
+        if (visited[u]) continue;
+        visited[u] = true;
+
+        frames.push({
+          visited: { ...visited },
+          active: u,
+          queue: [...pq],
+          msg: `Visiting Node ${u} (h=${nodes.find(n => n.id === u)?.h})`,
+          activeLine: 'int u = pq.top().id'
+        });
+
+        if (u === targetNode) {
+          frames.push({
+            visited: { ...visited },
+            active: u,
+            queue: [...pq],
+            msg: `Reached target Node ${targetNode}! Traversal complete.`,
+            activeLine: 'if (u == target) break;'
+          });
+          break;
+        }
+
+        for (let edge of adj[u]) {
+          const v = edge.to;
+          if (!visited[v]) {
+            const hVal = nodes.find(n => n.id === v)?.h || 0;
+            pq.push({ id: v, h: hVal });
+            frames.push({
+              visited: { ...visited },
+              active: u,
+              queue: [...pq],
+              activeEdge: `${u}-${v}`,
+              msg: `Push neighbor ${v} to queue with heuristic h=${hVal}`,
+              activeLine: 'pq.push({v, h[v]})'
+            });
+          }
+        }
+      }
+    } else if (algoMode === 'Prim') {
+      // Prim's MST Algorithm
+      const visited = {};
+      const parent = {};
+      const keys = {};
+      nodes.forEach(n => keys[n.id] = Infinity);
+      keys[startNode] = 0;
+
+      const q = [...nodes.map(n => n.id)];
+      const pathHighlight = [];
+
+      frames.push({
+        visited: { ...visited },
+        keys: { ...keys },
+        active: startNode,
+        pathHighlight: [],
+        msg: `Initialize Prim's MST from Node ${startNode}: set all keys = ∞, key[${startNode}] = 0`,
+        activeLine: 'key[start] = 0'
+      });
+
+      while (q.length > 0) {
+        // Pick vertex with min key value from the queue
+        q.sort((a, b) => keys[a] - keys[b]);
+        const u = q.shift();
+
+        if (keys[u] === Infinity) {
+          // Disconnected node
+          break;
+        }
+
+        visited[u] = true;
+
+        // If u has a parent, add edge parent[u]➔u to MST pathHighlight
+        if (parent[u] !== undefined) {
+          const edgeKey1 = `${parent[u]}-${u}`;
+          const edgeKey2 = `${u}-${parent[u]}`;
+          pathHighlight.push(edgeKey1);
+        }
+
+        frames.push({
+          visited: { ...visited },
+          keys: { ...keys },
+          active: u,
+          pathHighlight: [...pathHighlight],
+          msg: `Add Node ${u} to MST (Min Key: ${keys[u]})`,
+          activeLine: 'visited[u] = true'
+        });
+
+        for (let edge of adj[u]) {
+          const v = edge.to;
+          if (!visited[v] && edge.w < keys[v]) {
+            parent[v] = u;
+            keys[v] = edge.w;
+            frames.push({
+              visited: { ...visited },
+              keys: { ...keys },
+              active: u,
+              activeEdge: `${u}-${v}`,
+              pathHighlight: [...pathHighlight],
+              msg: `Update key[${v}] to ${edge.w} via edge ${u}➔${v}`,
+              activeLine: 'key[v] = weight'
+            });
+          }
+        }
+      }
+
+      frames.push({
+        visited: { ...visited },
+        keys: { ...keys },
+        active: -1,
+        pathHighlight: [...pathHighlight],
+        msg: `Prim's MST completed successfully! Total edges in MST: ${pathHighlight.length}`,
+        activeLine: 'printMST()'
+      });
+    } else if (algoMode === 'Bellman-Ford') {
+      // Bellman-Ford Shortest Path Algorithm
+      const dist = {};
+      nodes.forEach(n => dist[n.id] = Infinity);
+      dist[startNode] = 0;
+
+      frames.push({
+        dist: { ...dist },
+        active: startNode,
+        msg: `Initialize Bellman-Ford: set dist[${startNode}] = 0, all others = ∞`,
+        activeLine: 'dist[start] = 0'
+      });
+
+      const V = nodes.length;
+      let hasChange = false;
+
+      // Relax edges V-1 times
+      for (let i = 1; i <= V - 1; i++) {
+        hasChange = false;
+        frames.push({
+          dist: { ...dist },
+          active: -1,
+          msg: `Start Relaxation Pass ${i} of ${V - 1}`,
+          activeLine: 'for (int i = 1; i <= V-1; i++)'
+        });
+
+        for (let edge of edges) {
+          const u = edge.from;
+          const v = edge.to;
+          const w = edge.weight;
+
+          // Process directed or undirected
+          const processEdge = (fromNode, toNode) => {
+            if (dist[fromNode] !== Infinity && dist[fromNode] + w < dist[toNode]) {
+              dist[toNode] = dist[fromNode] + w;
+              hasChange = true;
+              frames.push({
+                dist: { ...dist },
+                active: toNode,
+                activeEdge: `${fromNode}-${toNode}`,
+                msg: `Relax edge ${fromNode}➔${toNode}: update dist[${toNode}] to ${dist[toNode]}`,
+                activeLine: 'dist[v] = dist[u] + w'
+              });
+            }
+          };
+
+          processEdge(u, v);
+          if (!isDirected) {
+            processEdge(v, u);
+          }
+        }
+
+        if (!hasChange) {
+          frames.push({
+            dist: { ...dist },
+            active: -1,
+            msg: `No changes in pass ${i}, terminating relaxation early.`,
+            activeLine: 'break;'
+          });
+          break;
+        }
+      }
+
+      // Check for negative weight cycles
+      let hasNegativeCycle = false;
+      for (let edge of edges) {
+        const u = edge.from;
+        const v = edge.to;
+        const w = edge.weight;
+
+        const checkEdge = (fromNode, toNode) => {
+          if (dist[fromNode] !== Infinity && dist[fromNode] + w < dist[toNode]) {
+            hasNegativeCycle = true;
+            frames.push({
+              dist: { ...dist },
+              active: toNode,
+              activeEdge: `${fromNode}-${toNode}`,
+              msg: `⚠️ Negative-weight cycle detected! Edge ${fromNode}➔${toNode} can still be relaxed.`,
+              activeLine: 'cout << "Graph contains negative weight cycle"'
+            });
+          }
+        };
+
+        checkEdge(u, v);
+        if (!isDirected && !hasNegativeCycle) {
+          checkEdge(v, u);
+        }
+        if (hasNegativeCycle) break;
+      }
+
+      if (!hasNegativeCycle) {
+        // Trace shortest path if target exists
+        const pathEdges = [];
+        let curr = targetNode;
+        let visitedTrace = {};
+        while (curr !== startNode && visitedTrace[curr] === undefined) {
+          visitedTrace[curr] = true;
+          let prev = null;
+          for (let n of nodes) {
+            const edge = edges.find(e =>
+              (e.from === n.id && e.to === curr) ||
+              (!isDirected && e.from === curr && e.to === n.id)
+            );
+            if (edge) {
+              const uDist = dist[n.id];
+              if (uDist !== Infinity && uDist + edge.weight === dist[curr]) {
+                prev = n.id;
+                break;
+              }
+            }
+          }
+          if (prev !== null) {
+            pathEdges.push(`${prev}-${curr}`);
+            curr = prev;
+          } else {
+            break;
+          }
+        }
+
+        frames.push({
+          dist: { ...dist },
+          active: targetNode,
+          pathHighlight: pathEdges.reverse(),
+          msg: `Bellman-Ford complete. Target ${targetNode} distance is ${dist[targetNode] === Infinity ? '∞' : dist[targetNode]}.`,
+          activeLine: 'printDistances()'
+        });
+      }
+    } else if (algoMode === 'Floyd-Warshall') {
+      // Floyd-Warshall All-Pairs Shortest Path
+      const V = nodes.length;
+      const nodeIds = nodes.map(n => n.id);
+
+      const distMatrix = {};
+      nodeIds.forEach(u => {
+        distMatrix[u] = {};
+        nodeIds.forEach(v => {
+          distMatrix[u][v] = u === v ? 0 : Infinity;
+        });
+      });
+
+      edges.forEach(edge => {
+        distMatrix[edge.from][edge.to] = Math.min(distMatrix[edge.from][edge.to], edge.weight);
+        if (!isDirected) {
+          distMatrix[edge.to][edge.from] = Math.min(distMatrix[edge.to][edge.from], edge.weight);
+        }
+      });
+
+      frames.push({
+        dist: { ...distMatrix[startNode] },
+        active: -1,
+        msg: `Initialize Floyd-Warshall matrix. Displaying shortest paths from Node ${startNode}.`,
+        activeLine: 'dist[i][j] = weight'
+      });
+
+      for (let kIndex = 0; kIndex < V; kIndex++) {
+        const k = nodeIds[kIndex];
+        frames.push({
+          dist: { ...distMatrix[startNode] },
+          active: k,
+          msg: `Consider Node ${k} as intermediate vertex`,
+          activeLine: 'for (int k = 0; k < V; k++)'
+        });
+
+        for (let iIndex = 0; iIndex < V; iIndex++) {
+          const i = nodeIds[iIndex];
+          for (let jIndex = 0; jIndex < V; jIndex++) {
+            const j = nodeIds[jIndex];
+
+            if (distMatrix[i][k] !== Infinity && distMatrix[k][j] !== Infinity) {
+              const newDist = distMatrix[i][k] + distMatrix[k][j];
+              if (newDist < distMatrix[i][j]) {
+                distMatrix[i][j] = newDist;
+
+                const edgesToHighlight = [];
+                edgesToHighlight.push(`${i}-${k}`);
+                edgesToHighlight.push(`${k}-${j}`);
+
+                frames.push({
+                  dist: { ...distMatrix[startNode] },
+                  active: k,
+                  activeEdge: `${i}-${j}`,
+                  pathHighlight: edgesToHighlight,
+                  msg: `Shortcut: dist[${i}➔${j}] via ${k} updates from ${distMatrix[i][j] === Infinity ? '∞' : distMatrix[i][j]} to ${newDist}`,
+                  activeLine: 'dist[i][j] = dist[i][k] + dist[k][j]'
+                });
+              }
+            }
+          }
+        }
+      }
+
+      frames.push({
+        dist: { ...distMatrix[startNode] },
+        active: -1,
+        msg: `Floyd-Warshall complete. All pairs shortest paths computed.`,
+        activeLine: 'printMatrix()'
+      });
+    } else if (algoMode === 'Kahn') {
+      // Kahn's Topological Sort Algorithm
+      const inDegrees = {};
+      nodes.forEach(n => inDegrees[n.id] = 0);
+
+      edges.forEach(edge => {
+        inDegrees[edge.to]++;
+      });
+
+      const q = [];
+      nodes.forEach(n => {
+        if (inDegrees[n.id] === 0) {
+          q.push(n.id);
+        }
+      });
+
+      const topoOrder = [];
+      const visited = {};
+
+      frames.push({
+        visited: { ...visited },
+        inDegrees: { ...inDegrees },
+        queue: [...q],
+        active: -1,
+        msg: `Calculate in-degrees. Queue nodes with In-Degree = 0: [${q.join(', ')}]`,
+        activeLine: 'if (inDegree[i] == 0) q.push(i);'
+      });
+
+      while (q.length > 0) {
+        const u = q.shift();
+        visited[u] = true;
+        topoOrder.push(u);
+
+        frames.push({
+          visited: { ...visited },
+          inDegrees: { ...inDegrees },
+          queue: [...q],
+          active: u,
+          msg: `Dequeue Node ${u} and add to topological order: [${topoOrder.join(', ')}]`,
+          activeLine: 'int u = q.front(); q.pop();'
+        });
+
+        for (let edge of adj[u]) {
+          const v = edge.to;
+          inDegrees[v]--;
+
+          frames.push({
+            visited: { ...visited },
+            inDegrees: { ...inDegrees },
+            queue: [...q],
+            active: u,
+            activeEdge: `${u}-${v}`,
+            msg: `Decrement in-degree of neighbor ${v} to ${inDegrees[v]}`,
+            activeLine: 'inDegree[v]--;'
+          });
+
+          if (inDegrees[v] === 0) {
+            q.push(v);
+            frames.push({
+              visited: { ...visited },
+              inDegrees: { ...inDegrees },
+              queue: [...q],
+              active: v,
+              msg: `In-degree of Node ${v} became 0. Pushing to queue.`,
+              activeLine: 'q.push(v);'
+            });
+          }
+        }
+      }
+
+      const hasCycle = topoOrder.length < nodes.length;
+      frames.push({
+        visited: { ...visited },
+        inDegrees: { ...inDegrees },
+        queue: [...q],
+        active: -1,
+        msg: hasCycle
+          ? `⚠️ Topological Sort completed: Graph has a cycle (not a DAG)! Only sorted: [${topoOrder.join(', ')}]`
+          : `Topological Sort complete! Order: [${topoOrder.join(', ')}]`,
+        activeLine: 'return topoOrder;'
+      });
+    } else if (algoMode === 'Kruskal') {
+      const parent = {};
+      const rank = {};
+      nodes.forEach(n => {
+        parent[n.id] = n.id;
+        rank[n.id] = 0;
+      });
+
+      const find = (i) => {
+        if (parent[i] === i) return i;
+        parent[i] = find(parent[i]);
+        return parent[i];
+      };
+
+      const union = (i, j) => {
+        const rootI = find(i);
+        const rootJ = find(j);
+        if (rootI !== rootJ) {
+          if (rank[rootI] < rank[rootJ]) parent[rootI] = rootJ;
+          else if (rank[rootI] > rank[rootJ]) parent[rootJ] = rootI;
+          else {
+            parent[rootJ] = rootI;
+            rank[rootI]++;
+          }
+          return true;
+        }
+        return false;
+      };
+
+      const sortedEdges = [...edges].sort((a, b) => a.weight - b.weight);
+      const pathHighlight = [];
+
+      frames.push({
+        parent: { ...parent },
+        active: -1,
+        pathHighlight: [],
+        dsuState: { ...parent },
+        msg: `Initialize Kruskal's MST: Sort all edges by weight. Sorted edges count: ${sortedEdges.length}`,
+        activeLine: 'sort(edges.begin(), edges.end())'
+      });
+
+      for (let edge of sortedEdges) {
+        const u = edge.from;
+        const v = edge.to;
+        const rootU = find(u);
+        const rootV = find(v);
+
+        frames.push({
+          parent: { ...parent },
+          active: -1,
+          activeEdge: edge.id,
+          pathHighlight: [...pathHighlight],
+          dsuState: { ...parent },
+          msg: `Inspect edge ${nodes.find(n => n.id === u)?.label}➔${nodes.find(n => n.id === v)?.label} (wt: ${edge.weight}). Component representatives: ${nodes.find(n => n.id === rootU)?.label} vs ${nodes.find(n => n.id === rootV)?.label}`,
+          activeLine: 'if (find(u) != find(v))'
+        });
+
+        if (rootU !== rootV) {
+          union(u, v);
+          pathHighlight.push(edge.id);
+          frames.push({
+            parent: { ...parent },
+            active: -1,
+            activeEdge: edge.id,
+            pathHighlight: [...pathHighlight],
+            dsuState: { ...parent },
+            msg: `Success! Union components for edge ${nodes.find(n => n.id === u)?.label}➔${nodes.find(n => n.id === v)?.label}. Adding to MST.`,
+            activeLine: 'union(u, v); MST.push(edge);'
+          });
+        } else {
+          frames.push({
+            parent: { ...parent },
+            active: -1,
+            activeEdge: edge.id,
+            pathHighlight: [...pathHighlight],
+            dsuState: { ...parent },
+            msg: `Cycle Detected! Edge ${nodes.find(n => n.id === u)?.label}➔${nodes.find(n => n.id === v)?.label} forms a loop. Rejected.`,
+            activeLine: '// forms cycle'
+          });
+        }
+      }
+
+      frames.push({
+        parent: { ...parent },
+        active: -1,
+        pathHighlight: [...pathHighlight],
+        dsuState: { ...parent },
+        msg: `Kruskal's MST completed successfully! Total edges in MST: ${pathHighlight.length}`,
+        activeLine: 'printMST()'
+      });
+    }
+
+    setTimeline(frames);
+    setCurrentStep(0);
+    setIsPlaying(true);
+  };
+
+  const currentFrame = timeline[currentStep] || {
+    visited: {},
+    dist: {},
+    active: -1,
+    queue: [],
+    stack: [],
+    activeEdge: null,
+    pathHighlight: [],
+    msg: 'Assemble your graph, select start/target nodes, and click Run Traversal!'
+  };
+
+  // GSAP pulse triggers on active nodes
+  useEffect(() => {
+    if (currentFrame.active !== -1 && nodeCircleRefs.current[currentFrame.active]) {
+      gsap.fromTo(nodeCircleRefs.current[currentFrame.active],
+        { scale: 0.8, filter: 'brightness(1.5)' },
+        { scale: 1.15, filter: 'brightness(1)', duration: 0.4, yoyo: true, repeat: 1, ease: 'power2.out' }
+      );
+    }
+  }, [currentStep]);
+
+  return (
+    <div style={{ display: 'flex', flexDirection: 'column', height: '100vh', background: 'var(--bg-primary, #0f172a)', overflow: 'hidden' }}>
+
+      {/* Top Header */}
+      <div style={{ textAlign: 'center', padding: '1rem 0 0.5rem 0', background: 'var(--glass-bg)', borderBottom: '1px solid var(--glass-border)' }}>
+        <h1 className="title-gradient" style={{ fontSize: '2.2rem', fontWeight: 800, margin: 0, textShadow: '0 0 25px rgba(59,130,246,0.3)' }}>
+          Graph Visualizer
+        </h1>
+      </div>
+
+      {/* Control Bar matching user screenshot exact design */}
+      <div className="controls-glass" style={{
+        display: 'flex',
+        alignItems: 'center',
+        justifyContent: 'center',
+        gap: '12px',
+        padding: '0.8rem 1.5rem',
+        background: 'var(--glass-bg)',
+        borderBottom: '1px solid var(--glass-border)',
+        flexWrap: 'wrap'
+      }}>
+        {(!isMobile || showEditControls) && (
+          <>
+            {/* Node controls */}
+            <input
+              type="text"
+              className="styled-input"
+              style={{ width: '110px', fontSize: '0.9rem', padding: '0.35rem 0.6rem' }}
+              placeholder="Node Label"
+              value={nodeLabel}
+              onChange={e => setNodeLabel(e.target.value)}
+              onKeyDown={e => { if (e.key === 'Enter') handleAddNode(); }}
+            />
+            <button className="btn btn-insert" style={{ padding: '0.4rem 1rem' }} onClick={handleAddNode}>
+              + Node
+            </button>
+
+            <div style={{ width: '1px', height: '22px', background: 'var(--glass-border)' }} />
+
+            {/* Edge links */}
+            <select
+              className="styled-select"
+              style={{ width: '100px', padding: '0.35rem' }}
+              value={edgeFrom}
+              onChange={e => setEdgeFrom(e.target.value)}
+            >
+              <option value="">From...</option>
+              {nodes.map(n => <option key={n.id} value={n.id}>{n.label}</option>)}
+            </select>
+
+            <span style={{ color: 'var(--text-secondary)', fontWeight: 'bold' }}>➔</span>
+
+            <select
+              className="styled-select"
+              style={{ width: '100px', padding: '0.35rem' }}
+              value={edgeTo}
+              onChange={e => setEdgeTo(e.target.value)}
+            >
+              <option value="">To...</option>
+              {nodes.map(n => <option key={n.id} value={n.id}>{n.label}</option>)}
+            </select>
+
+            <input
+              type="number"
+              className="styled-input"
+              style={{ width: '60px', padding: '0.35rem' }}
+              placeholder="Wt"
+              value={edgeWeight}
+              onChange={e => setEdgeWeight(Math.max(1, parseInt(e.target.value) || 1))}
+              onKeyDown={e => { if (e.key === 'Enter') handleAddEdge(); }}
+              title="Edge Weight"
+            />
+
+            <button className="btn btn-insert" style={{ padding: '0.4rem 1rem', background: '#8b5cf6' }} onClick={handleAddEdge}>
+              + Edge
+            </button>
+
+            <div style={{ width: '1px', height: '22px', background: 'var(--glass-border)' }} />
+
+            {/* Delete controls */}
+            <select
+              className="styled-select"
+              style={{ width: '90px', padding: '0.35rem' }}
+              value={nodeToDelete}
+              onChange={e => setNodeToDelete(e.target.value)}
+            >
+              <option value="">Node...</option>
+              {nodes.map(n => <option key={n.id} value={n.id}>{n.label}</option>)}
+            </select>
+            <button className="btn btn-clear" style={{ padding: '0.4rem 0.8rem', background: '#ef4444', color: 'white', borderColor: 'transparent' }} onClick={handleDeleteNode}>
+              Delete Node
+            </button>
+
+            <select
+              className="styled-select"
+              style={{ width: '110px', padding: '0.35rem' }}
+              value={edgeToDelete}
+              onChange={e => setEdgeToDelete(e.target.value)}
+            >
+              <option value="">Edge...</option>
+              {edges.map(e => {
+                const fromLabel = nodes.find(n => n.id === e.from)?.label || String(e.from);
+                const toLabel = nodes.find(n => n.id === e.to)?.label || String(e.to);
+                return <option key={e.id} value={e.id}>{`${fromLabel} ➔ ${toLabel}`}</option>;
+              })}
+            </select>
+            <button className="btn btn-clear" style={{ padding: '0.4rem 0.8rem', background: '#ef4444', color: 'white', borderColor: 'transparent' }} onClick={handleDeleteEdge}>
+              Delete Edge
+            </button>
+
+            {isMobile && <div style={{ width: '100%', height: '1px', background: 'var(--glass-border)', margin: '4px 0' }} />}
+          </>
+        )}
+
+        {/* Graph directed/undirected toggle */}
+        <button
+          className="btn btn-clear"
+          style={{
+            background: isDirected ? 'rgba(59,130,246,0.2)' : 'rgba(255,255,255,0.03)',
+            border: `1.5px solid ${isDirected ? 'var(--accent-primary)' : 'var(--glass-border)'}`,
+            color: isDirected ? 'var(--accent-primary)' : 'var(--text-primary)',
+            fontWeight: 800,
+            padding: '0.4rem 1.1rem'
+          }}
+          onClick={() => setIsDirected(!isDirected)}
+        >
+          {isDirected ? 'Directed Graph' : 'Undirected Graph'}
+        </button>
+
+        {isMobile && (
+          <button
+            className="btn btn-clear"
+            style={{
+              background: showEditControls ? 'rgba(139,92,246,0.2)' : 'rgba(255,255,255,0.03)',
+              border: `1.5px solid ${showEditControls ? 'var(--accent-primary)' : 'var(--glass-border)'}`,
+              color: showEditControls ? 'var(--accent-primary)' : 'var(--text-primary)',
+              fontWeight: 800,
+              padding: '0.4rem 1.1rem'
+            }}
+            onClick={() => setShowEditControls(!showEditControls)}
+          >
+            🔧 Edit Graph
+          </button>
+        )}
+
+        <div style={{ display: 'flex', gap: '15px', alignItems: 'center', background: 'rgba(255,255,255,0.03)', padding: '6px 14px', borderRadius: '10px', border: '1px solid var(--glass-border)', fontSize: '0.82rem' }}>
+          <span style={{ fontWeight: 'bold', color: 'var(--text-secondary)' }}>View:</span>
+          <label style={{ display: 'flex', alignItems: 'center', gap: '6px', cursor: 'pointer', color: 'var(--text-primary)', userSelect: 'none' }}>
+            <input type="checkbox" checked={showLogPanel} onChange={e => setShowLogPanel(e.target.checked)} style={{ accentColor: 'var(--accent-primary)', cursor: 'pointer' }} />
+            <span>Log</span>
+          </label>
+          <label style={{ display: 'flex', alignItems: 'center', gap: '6px', cursor: 'pointer', color: 'var(--text-primary)', userSelect: 'none' }}>
+            <input type="checkbox" checked={showCode} onChange={e => setShowCode(e.target.checked)} style={{ accentColor: 'var(--accent-primary)', cursor: 'pointer' }} />
+            <span>Code</span>
+          </label>
+        </div>
+
+        <div style={{ width: '1px', height: '22px', background: 'var(--glass-border)' }} />
+
+        {/* Action controls */}
+        <span
+          style={{ color: '#94a3b8', cursor: 'pointer', fontSize: '0.9rem', fontWeight: 600, textDecoration: 'underline', transition: 'color 0.2s' }}
+          onClick={handleResetAnimation}
+          onMouseOver={e => e.currentTarget.style.color = '#fff'}
+          onMouseOut={e => e.currentTarget.style.color = '#94a3b8'}
+        >
+          Reset
+        </span>
+
+        <span
+          style={{ color: '#ef4444', cursor: 'pointer', fontSize: '0.9rem', fontWeight: 600, textDecoration: 'underline', transition: 'color 0.2s' }}
+          onClick={handleClear}
+          onMouseOver={e => e.currentTarget.style.color = '#f87171'}
+          onMouseOut={e => e.currentTarget.style.color = '#ef4444'}
+        >
+          Clear
+        </span>
+
+        <div style={{ width: '1px', height: '22px', background: 'var(--glass-border)' }} />
+
+        {openSettings && (
+          <button className="btn btn-clear" style={{ padding: '0.4rem 1rem' }} onClick={openSettings}>
+            ⚙ Settings
+          </button>
+        )}
+
+        <button 
+          className="btn btn-clear" 
+          style={{ background: 'rgba(0, 229, 255, 0.1)', border: '1px solid var(--accent-primary)', color: 'var(--accent-primary)', padding: '0.4rem 1rem' }} 
+          onClick={() => setShowTopicInfo(true)} 
+          title="Learn about this algorithm"
+        >
+          ℹ️ Info
+        </button>
+
+        <button className="btn btn-clear" style={{ padding: '0.4rem 1rem' }} onClick={onBack}>
+          🏠 Home
+        </button>
+
+      </div>
+
+      {isMobile && (
+        <div className="mobile-tabs-container">
+          <button className={`mobile-tab-btn ${mobileTab === 'vis' ? 'active' : ''}`} onClick={() => setMobileTab('vis')}>📊 Visualizer</button>
+          <button className={`mobile-tab-btn ${mobileTab === 'code' ? 'active' : ''}`} onClick={() => { setMobileTab('code'); setShowCode(true); }}>💻 Code</button>
+          <button className={`mobile-tab-btn ${mobileTab === 'log' ? 'active' : ''}`} onClick={() => { setMobileTab('log'); setShowLogPanel(true); }}>📋 Logs</button>
+        </div>
+      )}
+
+      {/* Main Workspace split */}
+      <div style={{ flex: 1, display: 'flex', flexDirection: isMobile ? 'column' : 'row', overflow: 'hidden' }}>
+
+        {/* Left Side: Visualizer and Animation Controls */}
+        <div style={{ display: (isMobile && mobileTab !== 'vis') ? 'none' : 'flex', flex: 1, flexDirection: 'column', padding: isMobile ? '0.35rem' : '1.2rem', overflow: 'hidden' }}>
+
+          {/* Active step message bar */}
+          <div style={{ textAlign: 'center', marginBottom: '1rem', height: '38px', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+            <span style={{
+              fontSize: '1.2rem',
+              color: 'var(--text-primary)',
+              fontWeight: 'bold',
+              background: 'rgba(255,255,255,0.04)',
+              padding: '5px 22px',
+              borderRadius: '20px',
+              border: '1px solid var(--glass-border)',
+              boxShadow: '0 4px 15px rgba(0,0,0,0.15)'
+            }}>
+              {currentFrame.msg}
+              {currentFrame.queue && currentFrame.queue.length > 0 && (
+                <span style={{ color: '#fbbf24', marginLeft: '10px', fontSize: '0.95rem' }}>
+                  | Queue: [{currentFrame.queue.map(id => {
+                    // Extract node label or id if node has id format
+                    const parsedId = typeof id === 'object' ? id.id : id;
+                    const node = nodes.find(n => n.id === parsedId);
+                    return node ? node.label : parsedId;
+                  }).join(', ')}]
+                </span>
+              )}
+              {currentFrame.stack && currentFrame.stack.length > 0 && (
+                <span style={{ color: '#ec4899', marginLeft: '10px', fontSize: '0.95rem' }}>
+                  | Stack: [{currentFrame.stack.map(id => {
+                    const node = nodes.find(n => n.id === id);
+                    return node ? node.label : id;
+                  }).join(', ')}]
+                </span>
+              )}
+            </span>
+          </div>
+
+          {/* Graph Canvas */}
+          <div
+            ref={containerRef}
+            onClick={handleCanvasClick}
+            onMouseMove={handleCanvasMouseMove}
+            onMouseUp={handleCanvasMouseUp}
+            style={{
+              flex: 1,
+              background: 'rgba(15,23,42,0.4)',
+              borderRadius: '16px',
+              border: '1px solid var(--glass-border)',
+              position: 'relative',
+              overflow: 'hidden',
+              cursor: draggingNode !== null ? 'grabbing' : 'crosshair',
+              boxShadow: 'inset 0 0 40px rgba(0,0,0,0.2)'
+            }}
+          >
+            {/* Edge Lines drawing */}
+            <svg style={{ position: 'absolute', top: 0, left: 0, width: '100%', height: '100%', pointerEvents: 'none', overflow: 'visible' }}>
+              <defs>
+                <marker id="arrow" viewBox="0 0 10 10" refX="22" refY="5" markerWidth="6" markerHeight="6" orient="auto-start-reverse">
+                  <path d="M 0 0 L 10 5 L 0 10 z" fill="#6366f1" />
+                </marker>
+                <marker id="arrow-active" viewBox="0 0 10 10" refX="22" refY="5" markerWidth="8" markerHeight="8" orient="auto-start-reverse">
+                  <path d="M 0 0 L 10 5 L 0 10 z" fill="#fbbf24" />
+                </marker>
+                <marker id="arrow-path" viewBox="0 0 10 10" refX="22" refY="5" markerWidth="8" markerHeight="8" orient="auto-start-reverse">
+                  <path d="M 0 0 L 10 5 L 0 10 z" fill="#10b981" />
+                </marker>
+              </defs>
+
+              {edges.map(edge => {
+                const fromNode = nodes.find(n => n.id === edge.from);
+                const toNode = nodes.find(n => n.id === edge.to);
+                if (!fromNode || !toNode) return null;
+
+                const edgeKey1 = `${edge.from}-${edge.to}`;
+                const edgeKey2 = `${edge.to}-${edge.from}`;
+                const isActive = currentFrame.activeEdge === edgeKey1 || currentFrame.activeEdge === edgeKey2;
+                const isPath = currentFrame.pathHighlight?.includes(edgeKey1) || currentFrame.pathHighlight?.includes(edgeKey2);
+
+                let color = 'rgba(99, 102, 241, 0.4)';
+                let strokeWidth = 2.5;
+                if (isActive) { color = '#fbbf24'; strokeWidth = 4.5; }
+                if (isPath) { color = '#10b981'; strokeWidth = 5.5; }
+
+                // Text placement in center
+                const midX = (fromNode.x + toNode.x) / 2;
+                const midY = (fromNode.y + toNode.y) / 2;
+
+                return (
+                  <g key={edge.id}>
+                    <line
+                      x1={fromNode.x}
+                      y1={fromNode.y}
+                      x2={toNode.x}
+                      y2={toNode.y}
+                      stroke={color}
+                      strokeWidth={strokeWidth}
+                      markerEnd={isDirected ? (isPath ? 'url(#arrow-path)' : isActive ? 'url(#arrow-active)' : 'url(#arrow') : undefined}
+                      style={{ transition: 'stroke 0.3s, stroke-width 0.3s' }}
+                    />
+                    <rect x={midX - 10} y={midY - 10} width={20} height={20} rx={4} fill="#1e293b" stroke="var(--glass-border)" strokeWidth="1" />
+                    <text x={midX} y={midY + 4} textAnchor="middle" fill="#fff" fontSize="10" fontWeight="bold">{edge.weight}</text>
+                  </g>
+                );
+              })}
+            </svg>
+
+            {/* Nodes drawing */}
+            {nodes.map(node => {
+              const isVisited = currentFrame.visited && currentFrame.visited[node.id];
+              const isActive = currentFrame.active === node.id;
+
+              let bg = 'linear-gradient(135deg, var(--accent-primary), var(--accent-secondary))';
+              let border = '2px solid var(--glass-border)';
+              let glow = '0 0 10px rgba(99,102,241,0.2)';
+
+              if (isVisited) {
+                bg = 'linear-gradient(135deg, #10b981, #059669)';
+                glow = '0 0 18px rgba(16,185,129,0.5)';
+              }
+              if (isActive) {
+                bg = 'linear-gradient(135deg, #fbbf24, #f59e0b)';
+                border = '3px solid #fff';
+                glow = '0 0 25px rgba(245,158,11,0.8)';
+              }
+
+              // Dynamic distance/status badge on nodes
+              let distText = '';
+              if (algoMode === 'Dijkstra' || algoMode === 'Bellman-Ford' || algoMode === 'Floyd-Warshall') {
+                const currentDist = currentFrame.dist && currentFrame.dist[node.id] !== undefined ? currentFrame.dist[node.id] : node.dist;
+                distText = currentDist === Infinity ? '∞' : String(currentDist);
+              } else if (algoMode === 'Prim') {
+                const keyVal = currentFrame.keys && currentFrame.keys[node.id] !== undefined ? currentFrame.keys[node.id] : Infinity;
+                distText = keyVal === Infinity ? '∞' : String(keyVal);
+              } else if (algoMode === 'Kahn') {
+                const inDeg = currentFrame.inDegrees && currentFrame.inDegrees[node.id] !== undefined ? currentFrame.inDegrees[node.id] : 0;
+                distText = `In:${inDeg}`;
+              } else if (algoMode === 'Greedy') {
+                distText = `h:${node.h}`;
+              }
+
+              return (
+                <div
+                  key={node.id}
+                  ref={el => nodeCircleRefs.current[node.id] = el}
+                  onMouseDown={(e) => { e.stopPropagation(); handleNodeMouseDown(node.id); }}
+                  style={{
+                    position: 'absolute',
+                    left: node.x - 25,
+                    top: node.y - 25,
+                    width: '50px',
+                    height: '50px',
+                    borderRadius: '50%',
+                    background: bg,
+                    border: border,
+                    display: 'flex',
+                    flexDirection: 'column',
+                    alignItems: 'center',
+                    justifyContent: 'center',
+                    color: '#fff',
+                    fontWeight: 'bold',
+                    fontSize: '1.1rem',
+                    boxShadow: glow,
+                    cursor: 'grab',
+                    userSelect: 'none',
+                    zIndex: 10,
+                    transition: 'background 0.3s, border 0.3s, box-shadow 0.3s'
+                  }}
+                >
+                  <span>{node.label}</span>
+                  {distText !== '' && (
+                    <span style={{
+                      position: 'absolute',
+                      top: '-18px',
+                      fontSize: '0.75rem',
+                      background: 'rgba(30,41,59,0.9)',
+                      padding: '2px 6px',
+                      borderRadius: '8px',
+                      border: '1px solid var(--glass-border)',
+                      color: '#fbbf24',
+                      fontWeight: 800
+                    }}>
+                      {distText}
+                    </span>
+                  )}
+                </div>
+              );
+            })}
+
+            {nodes.length === 0 && (
+              <div style={{ position: 'absolute', top: '45%', left: '30%', transform: 'translateY(-50%)', color: 'var(--text-secondary)', textAlign: 'center', width: '40%' }}>
+                <span style={{ fontSize: '1.8rem', display: 'block', marginBottom: '8px' }}>🎨 Drawing Workspace</span>
+                Click anywhere on the workspace to add nodes, or use the select tools in the control bar to construct custom paths!
+              </div>
+            )}
+
+
+          </div>
+
+          {/* Bottom animation steps & algorithm configuration bar */}
+          <div style={{ display: 'flex', flexDirection: isMobile ? 'column' : 'row', gap: '10px', marginTop: '1.2rem', background: 'var(--glass-bg)', padding: isMobile ? '10px 14px' : '12px 24px', borderRadius: '16px', border: '1px solid var(--glass-border)', alignItems: 'center', flexWrap: 'wrap', justifyContent: 'space-between' }}>
+
+            <div style={{ display: 'flex', alignItems: 'center', gap: isMobile ? '4px' : '8px', flexWrap: 'wrap', justifyContent: 'center' }}>
+              <select className="styled-select" style={{ width: isMobile ? '110px' : '130px', fontWeight: 'bold' }} value={algoMode} onChange={e => { setAlgoMode(e.target.value); handleResetAnimation(); }} disabled={isPlaying}>
+                <option value="Dijkstra">Dijkstra</option>
+                <option value="BFS">BFS</option>
+                <option value="DFS">DFS</option>
+                <option value="Greedy">Greedy BFS</option>
+                <option value="Prim">{"Prim's MST"}</option>
+                <option value="Kruskal">{"Kruskal's MST"}</option>
+                <option value="Bellman-Ford">Bellman-Ford</option>
+                <option value="Floyd-Warshall">Floyd-Warshall</option>
+                <option value="Kahn">{"Kahn's (Topo Sort)"}</option>
+              </select>
+
+              <div style={{ display: 'flex', gap: '4px', alignItems: 'center' }}>
+                <span style={{ fontSize: '0.75rem', color: 'var(--text-secondary)', fontWeight: 'bold' }}>Start:</span>
+                <select className="styled-select" style={{ width: '55px', padding: '2px 4px' }} value={startNode} onChange={e => setStartNode(parseInt(e.target.value))} disabled={isPlaying}>
+                  {nodes.map(n => <option key={n.id} value={n.id}>{n.label}</option>)}
+                </select>
+              </div>
+
+              {(algoMode === 'Dijkstra' || algoMode === 'Greedy' || algoMode === 'Bellman-Ford') && (
+                <div style={{ display: 'flex', gap: '4px', alignItems: 'center' }}>
+                  <span style={{ fontSize: '0.75rem', color: 'var(--text-secondary)', fontWeight: 'bold' }}>Target:</span>
+                  <select className="styled-select" style={{ width: '55px', padding: '2px 4px' }} value={targetNode} onChange={e => setTargetNode(parseInt(e.target.value))} disabled={isPlaying}>
+                    {nodes.map(n => <option key={n.id} value={n.id}>{n.label}</option>)}
+                  </select>
+                </div>
+              )}
+
+              <button className="btn btn-insert" style={{ padding: '0.4rem 0.8rem', boxShadow: '0 4px 15px rgba(59,130,246,0.3)' }} onClick={runTraversal} disabled={isPlaying || nodes.length === 0}>
+                ▶ Run
+              </button>
+            </div>
+
+            {!isMobile && <div style={{ width: '1px', height: '24px', background: 'var(--glass-border)' }} />}
+
+            {/* Playback controller */}
+            <div style={{ display: 'flex', alignItems: 'center', gap: '6px', flexWrap: 'wrap', justifyContent: 'center' }}>
+              <button className="btn btn-clear" style={{ padding: '0.4rem 0.8rem' }} onClick={() => { setIsPlaying(false); setCurrentStep(0); }} disabled={!timeline.length || currentStep === 0}>⏮</button>
+              <button className="btn btn-clear" style={{ padding: '0.4rem 0.8rem' }} onClick={() => { setIsPlaying(false); setCurrentStep(p => Math.max(0, p - 1)); }} disabled={!timeline.length || currentStep === 0}>◀</button>
+              <button className="btn btn-clear" style={{ padding: '0.4rem 1.2rem', background: isPlaying ? 'rgba(59,130,246,0.5)' : 'var(--accent-primary)', color: 'white' }} onClick={() => setIsPlaying(!isPlaying)} disabled={!timeline.length}>
+                {isPlaying ? '⏸ Pause' : '▶ Play'}
+              </button>
+              <button className="btn btn-clear" style={{ padding: '0.4rem 0.8rem' }} onClick={() => { setIsPlaying(false); setCurrentStep(p => Math.min(timeline.length - 1, p + 1)); }} disabled={!timeline.length || currentStep === timeline.length - 1}>▶</button>
+              <button className="btn btn-clear" style={{ padding: '0.4rem 0.8rem' }} onClick={() => { setIsPlaying(false); setCurrentStep(timeline.length - 1); }} disabled={!timeline.length || currentStep === timeline.length - 1}>⏭</button>
+              <span style={{ fontSize: '0.85rem', color: 'var(--text-secondary)', fontFamily: 'monospace', marginLeft: '5px' }}>{timeline.length ? currentStep + 1 : 0}/{timeline.length}</span>
+            </div>
+
+            <div style={{ display: 'flex', alignItems: 'center', gap: '8px', width: isMobile ? '100%' : 'auto', justifyContent: 'center' }}>
+              <span style={{ color: 'var(--text-secondary)', fontSize: '0.8rem', fontWeight: 'bold', whiteSpace: 'nowrap' }}>Speed ({speed}ms)</span>
+              <input type="range" min={50} max={3500} step={50} value={3550 - speed} onChange={e => setSpeed(3550 - Number(e.target.value))} style={{ width: '120px', accentColor: 'var(--accent-primary)', cursor: 'pointer' }} title={`Delay: ${speed}ms`}/>
+            </div>
+          </div>
+
+          {showLogPanel && !isMobile && (
+            <div 
+              style={{
+                position: 'absolute',
+                left: `${logPosition.x}px`,
+                top: `${logPosition.y}px`,
+                width: `${logSize.width}px`,
+                height: `${logSize.height}px`,
+                background: 'rgba(15, 23, 42, 0.45)', // Translucent glassmorphism
+                backdropFilter: 'blur(16px) saturate(180%)',
+                WebkitBackdropFilter: 'blur(16px) saturate(180%)',
+                border: '1px solid rgba(255, 255, 255, 0.08)',
+                borderRadius: '16px',
+                boxShadow: '0 20px 50px rgba(0,0,0,0.5)',
+                display: 'flex',
+                flexDirection: 'column',
+                overflow: 'hidden',
+                zIndex: 100
+              }}
+            >
+              {/* Drag Handle Header */}
+              <div
+                onMouseDown={handleLogHeaderMouseDown}
+                onTouchStart={handleLogHeaderMouseDown}
+                style={{
+                  padding: '8px 12px',
+                  background: 'rgba(255, 255, 255, 0.04)',
+                  borderBottom: '1px solid rgba(255, 255, 255, 0.08)',
+                  display: 'flex',
+                  justifyContent: 'space-between',
+                  alignItems: 'center',
+                  userSelect: 'none',
+                  flexShrink: 0,
+                  cursor: 'move'
+                }}
+              >
+                <span style={{ fontWeight: 600, fontSize: '0.8rem', color: 'var(--text-primary)', display: 'flex', alignItems: 'center', gap: '6px' }}>
+                  📋 Execution Log & Active State
+                </span>
+                <button
+                  onClick={() => setShowLogPanel(false)}
+                  style={{
+                    background: 'transparent',
+                    border: 'none',
+                    color: 'var(--text-secondary)',
+                    cursor: 'pointer',
+                    fontSize: '1rem',
+                    padding: '0 4px',
+                    lineHeight: 1
+                  }}
+                  title="Hide Log"
+                >
+                  ×
+                </button>
+              </div>
+
+              {/* Content Body */}
+              <div style={{ display: 'flex', flex: 1, overflow: 'hidden' }}>
+
+                {/* Left Column: Graph Variables & Traversal state */}
+                <div
+                  style={{
+                    width: `${activeStateWidth}px`,
+                    background: 'rgba(0, 0, 0, 0.25)',
+                    borderRight: '1px solid var(--glass-border)',
+                    padding: '6px 8px',
+                    display: 'flex',
+                    flexDirection: 'column',
+                    gap: '4px',
+                    fontSize: '0.72rem',
+                    color: 'var(--text-secondary)',
+                    overflowY: 'auto',
+                    flexShrink: 0
+                  }}
+                >
+                  <div style={{ fontSize: '0.72rem', color: 'var(--accent-primary)', textTransform: 'uppercase', fontWeight: 'bold', borderBottom: '1px solid rgba(255,255,255,0.06)', paddingBottom: '2px' }}>
+                    Active State
+                  </div>
+                  <div>
+                    <span style={{ color: 'var(--text-secondary)' }}>Algorithm: </span>
+                    <span style={{ color: 'var(--text-primary)', fontWeight: 'bold' }}>{algoMode}</span>
+                  </div>
+
+                  {(() => {
+                    const frame = timeline[currentStep] || {};
+                    return (
+                      <>
+                        <div>
+                          <span style={{ color: 'var(--text-secondary)' }}>Active Node: </span>
+                          <span style={{ color: '#fbbf24', fontWeight: 'bold' }}>
+                            {frame.active !== undefined && frame.active !== null && frame.active !== -1 ? `Node ${nodes.find(n => n.id === frame.active)?.label || frame.active}` : 'None'}
+                          </span>
+                        </div>
+
+                        <div>
+                          <div style={{ marginBottom: '2px', fontSize: '0.7rem' }}>Visited / Resolved Nodes:</div>
+                          <div style={{ background: 'rgba(0,0,0,0.18)', padding: '2px 4px', borderRadius: '4px', fontFamily: 'monospace', color: '#34d399', wordBreak: 'break-all', fontWeight: 'bold' }}>
+                            {frame.visited ? (
+                              Object.keys(frame.visited).length > 0 ? Object.keys(frame.visited).join(', ') : 'None'
+                            ) : frame.dist ? (
+                              Object.keys(frame.dist).filter(k => frame.dist[k] !== Infinity).join(', ') || 'None'
+                            ) : 'None'}
+                          </div>
+                        </div>
+
+                        <div>
+                          <div style={{ marginBottom: '2px', fontSize: '0.7rem' }}>
+                            {algoMode === 'DFS' ? 'Stack State:' : 'Queue State:'}
+                          </div>
+                          <div style={{ background: 'rgba(0,0,0,0.18)', padding: '2px 4px', borderRadius: '4px', fontFamily: 'monospace', color: '#60a5fa', wordBreak: 'break-all' }}>
+                            {frame.queue ? (
+                              `[${frame.queue.map(item => typeof item === 'object' ? item.id : item).join(', ')}]`
+                            ) : frame.stack ? (
+                              `[${frame.stack.join(', ')}]`
+                            ) : '[]'}
+                          </div>
+                        </div>
+
+                        {frame.dsuState && (
+                          <div>
+                            <div style={{ marginBottom: '2px', fontSize: '0.7rem', color: '#fbbf24', marginTop: '4px' }}>Union-Find Parents:</div>
+                            <div style={{ background: 'rgba(0,0,0,0.18)', padding: '4px 6px', borderRadius: '4px', fontFamily: 'monospace', color: '#10b981', fontSize: '0.7rem', display: 'flex', flexDirection: 'column', gap: '2px' }}>
+                              {Object.keys(frame.dsuState).map(k => {
+                                const nodeLabel = nodes.find(n => n.id === parseInt(k))?.label || k;
+                                const parentLabel = nodes.find(n => n.id === frame.dsuState[k])?.label || frame.dsuState[k];
+                                return (
+                                  <div key={k} style={{ display: 'flex', justifyContent: 'space-between' }}>
+                                    <span>{nodeLabel}:</span>
+                                    <span style={{ color: 'white', fontWeight: 'bold' }}>parent ➔ {parentLabel}</span>
+                                  </div>
+                                );
+                              })}
+                            </div>
+                          </div>
+                        )}
+
+                        <div style={{ borderTop: '1px solid rgba(255,255,255,0.06)', paddingTop: '4px', marginTop: '2px' }}>
+                          <div style={{ fontSize: '0.7rem', textTransform: 'uppercase', fontWeight: 'bold', marginBottom: '2px', color: 'var(--accent-secondary)' }}>Trace Variables</div>
+                          <div style={{ display: 'flex', flexDirection: 'column', gap: '2px' }}>
+                            {frame.activeEdge && (
+                              <div style={{ display: 'flex', justifyContent: 'space-between' }}>
+                                <span>Active Edge:</span>
+                                <span style={{ color: 'var(--text-primary)', fontFamily: 'monospace' }}>
+                                  {frame.activeEdge}
+                                </span>
+                              </div>
+                            )}
+                            {frame.activeLine && (
+                              <div style={{ marginTop: '4px' }}>
+                                <div style={{ fontSize: '0.65rem', color: 'var(--text-secondary)' }}>Snippet:</div>
+                                <div style={{ fontSize: '0.7rem', color: '#60a5fa', fontFamily: 'monospace', background: 'rgba(0,0,0,0.2)', padding: '2px 4px', borderRadius: '4px', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }} title={frame.activeLine}>
+                                  {frame.activeLine}
+                                </div>
+                              </div>
+                            )}
+                          </div>
+                        </div>
+                      </>
+                    );
+                  })()}
+                </div>
+
+                {/* Col Resize bar */}
+                <div 
+                  onMouseDown={handleActiveStateColDragStart} 
+                  onTouchStart={handleActiveStateColDragStart}
+                  style={{ width: '4px', cursor: 'col-resize', background: 'transparent', zIndex: 5 }} 
+                />
+
+                {/* Operations/Timeline Log */}
+                <div ref={logContainerRef} style={{ flex: 1, background: 'rgba(0,0,0,0.15)', padding: '6px 8px', overflowY: 'auto' }}>
+                  <div style={{ fontSize: '0.7rem', color: 'var(--text-secondary)', fontWeight: 'bold', textTransform: 'uppercase', marginBottom: '4px' }}>Log Steps</div>
+                  {timeline.length === 0 && (
+                    <div style={{ color: 'var(--text-secondary)', fontStyle: 'italic', fontSize: '0.7rem' }}>
+                      No simulation logs yet. Run traversal to start.
+                    </div>
+                  )}
+                  {timeline.slice(0, currentStep + 1).map((f, idx) => (
+                    <div key={idx} style={{ display: 'flex', alignItems: 'flex-start', gap: '8px', fontSize: '0.75rem', marginBottom: '6px', lineHeight: '1.4' }}>
+                      <span style={{ color: 'var(--text-secondary)', flexShrink: 0, width: '24px', textAlign: 'right', fontWeight: 'bold', userSelect: 'none' }}>
+                        {idx === currentStep ? '➔' : `${idx + 1}.`}
+                      </span>
+                      <span style={{ color: idx === currentStep ? 'var(--accent-primary)' : 'var(--text-primary)', wordBreak: 'break-word', flex: 1 }}>
+                        {highlightLogText(f.msg)}
+                      </span>
+                    </div>
+                  ))}
+                </div>
+
+              </div>
+
+              {/* Resize Handle */}
+              <div
+                onMouseDown={handleLogResizeMouseDown}
+                onTouchStart={handleLogResizeMouseDown}
+                style={{
+                  position: 'absolute', bottom: '0', right: '0', width: '15px', height: '15px',
+                  cursor: 'se-resize', background: 'transparent',
+                  display: 'flex', alignItems: 'flex-end', justifyContent: 'flex-end', padding: '2px',
+                  zIndex: 10
+                }}
+              >
+                <svg width="8" height="8" viewBox="0 0 8 8"><path d="M6 0 L8 0 L8 8 L0 8 L0 6 L4 6 L4 4 L6 4 Z" fill="rgba(255,255,255,0.3)" /></svg>
+              </div>
+
+            </div>
+          )}
+
+        </div>
+
+        {/* Inline Mobile Log Panel */}
+        {isMobile && showLogPanel && mobileTab === 'log' && (
+          <div style={{ flex: 1, background: 'var(--bg-secondary)', borderRadius: '14px', border: '1px solid var(--glass-border)', display: 'flex', flexDirection: 'column', padding: '0.85rem', overflow: 'hidden', height: '100%', width: '100%' }}>
+            <div style={{ padding: '6px 12px', background: 'rgba(255, 255, 255, 0.04)', borderBottom: '1px solid var(--glass-border)', display: 'flex', justifyContent: 'space-between', alignItems: 'center', flexShrink: 0 }}>
+              <span style={{ fontWeight: 600, fontSize: '0.85rem', color: 'var(--text-primary)' }}>
+                📋 Execution Log & Active State
+              </span>
+            </div>
+
+            <div style={{ display: 'flex', flex: 1, flexDirection: 'column', overflowY: 'auto', gap: '10px', marginTop: '10px' }}>
+              {/* Active State Details */}
+              <div style={{ background: 'rgba(0,0,0,0.25)', border: '1px solid var(--glass-border)', borderRadius: '8px', padding: '10px 12px', display: 'flex', flexDirection: 'column', gap: '8px', fontSize: '0.8rem', color: 'var(--text-secondary)' }}>
+                <div style={{ fontSize: '0.75rem', color: 'var(--accent-primary)', textTransform: 'uppercase', fontWeight: 'bold', borderBottom: '1px solid rgba(255,255,255,0.06)', paddingBottom: '4px' }}>
+                  Active State
+                </div>
+                <div>
+                  <span style={{ color: 'var(--text-secondary)' }}>Algorithm: </span>
+                  <span style={{ color: 'var(--text-primary)', fontWeight: 'bold' }}>{algoMode}</span>
+                </div>
+                <div>
+                  <span style={{ color: 'var(--text-secondary)' }}>Active Node: </span>
+                  <span style={{ color: '#fbbf24', fontWeight: 'bold' }}>
+                    {currentFrame.active !== undefined && currentFrame.active !== null && currentFrame.active !== -1 ? `Node ${nodes.find(n => n.id === currentFrame.active)?.label || currentFrame.active}` : 'None'}
+                  </span>
+                </div>
+
+                <div>
+                  <div style={{ marginBottom: '2px', fontSize: '0.75rem' }}>Visited / Resolved Nodes:</div>
+                  <div style={{ background: 'rgba(0,0,0,0.18)', padding: '4px 6px', borderRadius: '4px', fontFamily: 'monospace', color: '#34d399', wordBreak: 'break-all', fontWeight: 'bold' }}>
+                    {currentFrame.visited ? (
+                      Object.keys(currentFrame.visited).length > 0 ? Object.keys(currentFrame.visited).join(', ') : 'None'
+                    ) : currentFrame.dist ? (
+                      Object.keys(currentFrame.dist).filter(k => currentFrame.dist[k] !== Infinity).join(', ') || 'None'
+                    ) : 'None'}
+                  </div>
+                </div>
+
+                <div>
+                  <div style={{ marginBottom: '2px', fontSize: '0.75rem' }}>
+                    {algoMode === 'DFS' ? 'Stack State:' : 'Queue State:'}
+                  </div>
+                  <div style={{ background: 'rgba(0,0,0,0.18)', padding: '4px 6px', borderRadius: '4px', fontFamily: 'monospace', color: '#60a5fa', wordBreak: 'break-all' }}>
+                    {currentFrame.queue ? (
+                      `[${currentFrame.queue.map(item => typeof item === 'object' ? item.id : item).join(', ')}]`
+                    ) : currentFrame.stack ? (
+                      `[${currentFrame.stack.join(', ')}]`
+                    ) : '[]'}
+                  </div>
+                </div>
+
+                <div style={{ borderTop: '1px solid rgba(255,255,255,0.06)', paddingTop: '6px', marginTop: '4px' }}>
+                  <div style={{ fontSize: '0.72rem', textTransform: 'uppercase', fontWeight: 'bold', marginBottom: '4px', color: 'var(--accent-secondary)' }}>Trace Variables</div>
+                  <div style={{ display: 'flex', flexDirection: 'column', gap: '4px' }}>
+                    {currentFrame.activeEdge && (
+                      <div style={{ display: 'flex', justifyContent: 'space-between' }}>
+                        <span>Active Edge:</span>
+                        <span style={{ color: 'var(--text-primary)', fontFamily: 'monospace' }}>
+                          {currentFrame.activeEdge}
+                        </span>
+                      </div>
+                    )}
+                    {currentFrame.activeLine && (
+                      <div style={{ marginTop: '8px' }}>
+                        <div style={{ fontSize: '0.65rem', color: 'var(--text-secondary)' }}>Snippet:</div>
+                        <div style={{ fontSize: '0.72rem', color: '#60a5fa', fontFamily: 'monospace', background: 'rgba(0,0,0,0.2)', padding: '2px 4px', borderRadius: '4px', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }} title={currentFrame.activeLine}>
+                          {currentFrame.activeLine}
+                        </div>
+                      </div>
+                    )}
+                  </div>
+                </div>
+              </div>
+
+              {/* Log Timeline Steps */}
+              <div style={{ flex: 1, background: 'rgba(0,0,0,0.15)', borderRadius: '10px', padding: '0.75rem 1rem', overflowY: 'auto', border: '1px solid rgba(255,255,255,0.03)' }}>
+                {timeline.length === 0 && (
+                  <div style={{ color: 'var(--text-secondary)', fontStyle: 'italic', textAlign: 'center', marginTop: '20px' }}>
+                    No simulation logs yet. Run traversal to start.
+                  </div>
+                )}
+                {timeline.slice(0, currentStep + 1).map((f, idx) => (
+                  <div key={idx} style={{ display: 'flex', alignItems: 'flex-start', gap: '8px', fontSize: '0.75rem', marginBottom: '6px', lineHeight: '1.4' }}>
+                    <span style={{ color: 'var(--text-secondary)', flexShrink: 0, width: '24px', textAlign: 'right', fontWeight: 'bold', userSelect: 'none' }}>
+                      {idx === currentStep ? '➔' : `${idx + 1}.`}
+                    </span>
+                    <span style={{ color: idx === currentStep ? 'var(--accent-primary)' : 'var(--text-primary)', wordBreak: 'break-word', flex: 1 }}>
+                      {highlightLogText(f.msg)}
+                    </span>
+                  </div>
+                ))}
+              </div>
+            </div>
+          </div>
+        )}
+
+        {/* Right Side Code Panel */}
+        {showCode && (isMobile ? mobileTab === 'code' : true) && (
+          <>
+            {/* Vertical Drag Handle for column resizing */}
+            {!isMobile && (
+              <div onMouseDown={handleColDragStart} onTouchStart={handleColDragStart} style={{ width: '8px', background: 'var(--glass-border)', borderRadius: '4px', cursor: 'col-resize', flexShrink: 0, transition: 'background 0.2s', touchAction: 'none' }}
+                onMouseOver={e => e.currentTarget.style.background = 'rgba(96,165,250,0.5)'}
+                onMouseOut={e => e.currentTarget.style.background = 'var(--glass-border)'}
+                title="Drag to resize columns" />
+            )}
+
+            <div style={{ width: isMobile ? '100%' : `${codeWidth}px`, background: 'var(--bg-secondary)', borderLeft: isMobile ? 'none' : '1px solid var(--glass-border)', display: 'flex', flexDirection: 'column', overflow: 'hidden', minWidth: isMobile ? '100%' : '200px' }}>
+              {/* Sticky 2-row header */}
+              <div style={{ flexShrink: 0, borderBottom: '1px solid var(--glass-border)', background: 'var(--bg-secondary)' }}>
+                {/* Row 1: Language pills */}
+                <div style={{ padding: '8px 12px', display: 'flex', alignItems: 'center', gap: '5px', borderBottom: '1px solid rgba(255,255,255,0.05)', flexWrap: 'wrap' }}>
+                  <span style={{ fontSize: '0.78rem', fontWeight: 700, color: 'var(--text-secondary)', whiteSpace: 'nowrap' }}>🌐 Lang:</span>
+                  {['C','Java','Python','JS'].map(lang => (
+                    <button key={lang} onClick={() => setCodeLang(lang)}
+                      style={{
+                        padding: '2px 9px',
+                        fontSize: '0.74rem',
+                        borderRadius: '5px',
+                        border: codeLang === lang ? '1.5px solid var(--accent-primary)' : '1px solid var(--glass-border)',
+                        background: codeLang === lang ? 'var(--accent-primary)' : 'transparent',
+                        color: codeLang === lang ? '#fff' : 'var(--text-secondary)',
+                        cursor: 'pointer',
+                        fontWeight: codeLang === lang ? 700 : 400,
+                        transition: 'all 0.15s'
+                      }}
+                    >{lang === 'JS' ? 'JavaScript' : lang}</button>
+                  ))}
+                </div>
+                {/* Row 2: Utility actions */}
+                <div style={{ padding: '6px 12px', display: 'flex', alignItems: 'center', gap: '6px', flexWrap: 'wrap' }}>
+                  <h3 style={{ margin: 0, fontSize: '0.9rem', color: 'var(--text-primary)', fontWeight: 'bold' }}>Code</h3>
+                  <button onClick={() => setLocalFontSize(prev => Math.max(10, prev - 2))} style={{ background: 'transparent', border: '1px solid var(--glass-border)', borderRadius: '4px', color: 'var(--text-secondary)', fontSize: '0.73rem', padding: '1px 6px', cursor: 'pointer' }}>A−</button>
+                  <button onClick={() => setLocalFontSize(prev => Math.min(40, prev + 2))} style={{ background: 'transparent', border: '1px solid var(--glass-border)', borderRadius: '4px', color: 'var(--text-secondary)', fontSize: '0.73rem', padding: '1px 6px', cursor: 'pointer' }}>A+</button>
+                  <button
+                    onClick={() => onShowUpcomingFeatures ? onShowUpcomingFeatures() : setIsRunnerOpen(true)}
+                    style={{ padding: '2px 8px', fontSize: '0.74rem', whiteSpace: 'nowrap', display: 'inline-flex', alignItems: 'center', background: 'rgba(16,185,129,0.15)', color: '#34d399', border: '1px solid rgba(16,185,129,0.3)', borderRadius: '5px', cursor: 'pointer' }}
+                  >▶ Run</button>
+                  <button onClick={handleCopyCode} style={{ padding: '2px 8px', fontSize: '0.74rem', background: 'transparent', border: '1px solid var(--glass-border)', borderRadius: '5px', color: 'var(--text-secondary)', cursor: 'pointer' }}>
+                    {copied ? '✓ Copied' : '📋 Copy'}
+                  </button>
+                </div>
+              </div>
+
+              <div style={{ flex: 1, padding: '1rem 0', overflow: 'auto', background: 'var(--bg-secondary)' }}>
+                <pre style={{
+                  margin: 0,
+                  color: 'var(--text-primary)',
+                  fontFamily: "'Fira Code', monospace",
+                  fontSize: `${localFontSize}px`,
+                  lineHeight: '1.55'
+                }}>
+                  <code>
+                    {toAllman(getGraphCodeTemplate(codeLang, algoMode, String(startNode), String(targetNode))).split('\n').map((line, i) => {
+                      const isMatch = currentFrame.activeLine && line.includes(currentFrame.activeLine);
+                      return (
+                        <div key={i} style={{
+                          background: isMatch ? 'rgba(16, 185, 129, 0.15)' : 'transparent',
+                          borderLeft: isMatch ? '3px solid #10b981' : '3px solid transparent',
+                          padding: '1px 12px',
+                          transition: 'all 0.15s'
+                        }}>
+                          <span style={{ whiteSpace: wordWrap === 'on' ? 'pre-wrap' : 'pre', fontFamily: "'Fira Code', monospace", color: isMatch ? '#ffffff' : 'var(--text-primary)' }}>{line || ' '}</span>
+                        </div>
+                      );
+                    })}
+                  </code>
+                </pre>
+              </div>
+
+              <div style={{ padding: '0.8rem', borderTop: '1px solid var(--glass-border)', display: 'flex', justifyContent: 'space-between', background: 'var(--glass-bg)' }}>
+                <button className="btn btn-clear" style={{ width: '100%' }} onClick={() => setShowCode(false)}>💻 Hide Panel</button>
+              </div>
+            </div>
+          </>
+        )}
+
+      </div>
+
+      {/* Floating workspace buttons */}
+      {!showCode && !isMobile && (
+        <button
+          style={{ position: 'absolute', right: '20px', bottom: '80px', background: 'var(--accent-primary)', color: 'white', border: 'none', borderRadius: '50%', width: '50px', height: '50px', cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: '1.4rem', boxShadow: '0 4px 15px rgba(59,130,246,0.4)', zIndex: 100 }}
+          onClick={() => setShowCode(true)}
+          title="Show Code Panel"
+        >
+          💻
+        </button>
+      )}
+
+      <CodeRunnerModal
+        isOpen={isRunnerOpen}
+        onClose={() => setIsRunnerOpen(false)}
+        code={getGraphCodeTemplate(codeLang, algoMode, String(startNode), String(targetNode))}
+        language={codeLang}
+      />
+      <TopicInfoModal
+        topicKey={algoMode === 'Dijkstra' ? 'DIJKSTRA_GRAPH' : algoMode === 'BFS' ? 'BFS_GRAPH' : algoMode === 'DFS' ? 'DFS_GRAPH' : algoMode === 'Greedy' ? 'GREEDY_GRAPH' : algoMode === 'Prim' ? 'PRIM_GRAPH' : algoMode === 'Bellman-Ford' ? 'BELLMAN_GRAPH' : algoMode === 'Floyd-Warshall' ? 'FLOYD_GRAPH' : 'KAHN_GRAPH'}
+        isOpen={showTopicInfo}
+        onClose={() => setShowTopicInfo(false)}
+      />
+    </div>
+  );
+};
+
+export default GraphVisualizer;
