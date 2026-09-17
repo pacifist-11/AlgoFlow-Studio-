@@ -1,6 +1,12 @@
 import sql from '../_db.js';
 import { cors } from '../_cors.js';
 import nodemailer from 'nodemailer';
+import dotenv from 'dotenv';
+
+try {
+  dotenv.config();
+  dotenv.config({ path: '.env.local' });
+} catch {}
 
 // Fast in-memory cache for instant OTP lookups and rate-limiting
 const memoryOtpStore = new Map();
