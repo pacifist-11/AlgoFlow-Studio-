@@ -29,7 +29,7 @@ export function ChatMessageRenderer({ text = '', isUser = false, onSelectPrompt 
       gap: '10px',
       lineHeight: '1.65',
       fontSize: '13px',
-      color: '#e2e8f0',
+      color: 'var(--text-primary)',
       fontFamily: '-apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif'
     }}>
       {renderBlocks(mainText)}
@@ -39,14 +39,14 @@ export function ChatMessageRenderer({ text = '', isUser = false, onSelectPrompt 
           marginTop: '12px',
           padding: '12px 14px',
           borderRadius: '12px',
-          background: 'linear-gradient(135deg, rgba(15, 23, 42, 0.95) 0%, rgba(30, 41, 59, 0.9) 100%)',
-          border: '1.5px solid rgba(56, 189, 248, 0.35)',
-          boxShadow: '0 6px 18px rgba(0, 0, 0, 0.4)',
+          background: 'var(--bg-secondary)',
+          border: '1.5px solid var(--glass-border)',
+          boxShadow: '0 6px 18px rgba(0, 0, 0, 0.1)',
           display: 'flex',
           flexDirection: 'column',
           gap: '8px'
         }}>
-          <div style={{ display: 'flex', alignItems: 'center', gap: '6px', fontSize: '11px', color: '#38bdf8', fontWeight: 'bold', letterSpacing: '0.4px' }}>
+          <div style={{ display: 'flex', alignItems: 'center', gap: '6px', fontSize: '11px', color: 'var(--accent-primary)', fontWeight: 'bold', letterSpacing: '0.4px' }}>
             <span>💡</span>
             <span>SUGGESTED NEXT QUESTIONS (CLICK TO ASK):</span>
           </div>
@@ -56,11 +56,11 @@ export function ChatMessageRenderer({ text = '', isUser = false, onSelectPrompt 
                 key={idx}
                 onClick={() => onSelectPrompt && onSelectPrompt(q)}
                 style={{
-                  background: 'rgba(15, 23, 42, 0.85)',
-                  border: '1px solid rgba(56, 189, 248, 0.35)',
+                  background: 'var(--glass-bg)',
+                  border: '1px solid var(--glass-border)',
                   borderRadius: '16px',
                   padding: '6px 12px',
-                  color: '#f1f5f9',
+                  color: 'var(--text-primary)',
                   fontSize: '11.5px',
                   fontWeight: '600',
                   cursor: onSelectPrompt ? 'pointer' : 'default',
@@ -68,24 +68,24 @@ export function ChatMessageRenderer({ text = '', isUser = false, onSelectPrompt 
                   alignItems: 'center',
                   gap: '6px',
                   transition: 'all 0.18s ease',
-                  boxShadow: '0 2px 6px rgba(0, 0, 0, 0.3)'
+                  boxShadow: '0 2px 6px rgba(0, 0, 0, 0.1)'
                 }}
                 onMouseEnter={e => {
                   if (onSelectPrompt) {
-                    e.currentTarget.style.background = 'linear-gradient(135deg, rgba(2, 132, 199, 0.4), rgba(99, 102, 241, 0.4))';
-                    e.currentTarget.style.borderColor = '#38bdf8';
+                    e.currentTarget.style.background = 'rgba(56, 189, 248, 0.15)';
+                    e.currentTarget.style.borderColor = 'var(--accent-primary)';
                     e.currentTarget.style.transform = 'translateY(-1px) scale(1.02)';
                   }
                 }}
                 onMouseLeave={e => {
                   if (onSelectPrompt) {
-                    e.currentTarget.style.background = 'rgba(15, 23, 42, 0.85)';
-                    e.currentTarget.style.borderColor = 'rgba(56, 189, 248, 0.35)';
+                    e.currentTarget.style.background = 'var(--glass-bg)';
+                    e.currentTarget.style.borderColor = 'var(--glass-border)';
                     e.currentTarget.style.transform = 'translateY(0) scale(1)';
                   }
                 }}
               >
-                <span style={{ color: '#38bdf8', fontSize: '10px' }}>✦</span>
+                <span style={{ color: 'var(--accent-primary)', fontSize: '10px' }}>✦</span>
                 <span>{q}</span>
               </button>
             ))}
@@ -171,8 +171,8 @@ function renderBlocks(rawText) {
           margin: '12px 0 6px 0',
           fontSize: '16.5px',
           fontWeight: '800',
-          color: '#38bdf8',
-          borderBottom: '1.5px solid rgba(56, 189, 248, 0.3)',
+          color: 'var(--accent-primary)',
+          borderBottom: '1.5px solid var(--glass-border)',
           paddingBottom: '4px',
           display: 'flex',
           alignItems: 'center',
@@ -192,12 +192,12 @@ function renderBlocks(rawText) {
           margin: '10px 0 4px 0',
           fontSize: '14.5px',
           fontWeight: '700',
-          color: '#c084fc',
+          color: '#7c3aed',
           display: 'flex',
           alignItems: 'center',
           gap: '6px'
         }}>
-          <span style={{ color: '#38bdf8', fontSize: '11px' }}>◆</span> {headingText}
+          <span style={{ color: 'var(--accent-primary)', fontSize: '11px' }}>◆</span> {headingText}
         </h4>
       );
       continue;
@@ -209,13 +209,13 @@ function renderBlocks(rawText) {
       const isWarn = /⚠️|error|risk|drawdown|warning|myth/i.test(calloutText);
       elements.push(
         <div key={i} style={{
-          background: isWarn ? 'rgba(239, 68, 68, 0.12)' : 'rgba(56, 189, 248, 0.12)',
-          borderLeft: isWarn ? '3.5px solid #ef4444' : '3.5px solid #38bdf8',
+          background: isWarn ? 'rgba(220, 38, 38, 0.08)' : 'rgba(56, 189, 248, 0.08)',
+          borderLeft: isWarn ? '3.5px solid #dc2626' : '3.5px solid var(--accent-primary)',
           borderRadius: '0 8px 8px 0',
           padding: '8px 12px',
           margin: '4px 0',
           fontSize: '12.5px',
-          color: isWarn ? '#fca5a5' : '#bae6fd'
+          color: isWarn ? '#dc2626' : 'var(--text-primary)'
         }}>
           {parseInlineSpans(calloutText)}
         </div>
@@ -240,7 +240,7 @@ function renderBlocks(rawText) {
             fontSize: '12.5px'
           }}>
             <span style={{
-              color: isNum ? '#fbbf24' : '#38bdf8',
+              color: isNum ? '#d97706' : 'var(--accent-primary)',
               fontWeight: '700',
               fontSize: isNum ? '12px' : '14px',
               lineHeight: '1.5',
@@ -248,7 +248,7 @@ function renderBlocks(rawText) {
             }}>
               {isNum ? bulletSymbol : '•'}
             </span>
-            <div style={{ flex: 1, color: '#f1f5f9' }}>
+            <div style={{ flex: 1, color: 'var(--text-primary)' }}>
               {parseInlineSpans(content)}
             </div>
           </div>
@@ -260,7 +260,7 @@ function renderBlocks(rawText) {
     // 6. Regular Paragraph
     if (line.trim().length > 0) {
       elements.push(
-        <div key={i} style={{ color: '#f8fafc', fontSize: '13px' }}>
+        <div key={i} style={{ color: 'var(--text-primary)', fontSize: '13px' }}>
           {parseInlineSpans(line)}
         </div>
       );
@@ -284,9 +284,9 @@ function parseInlineSpans(text) {
       const code = part.slice(1, -1);
       return (
         <code key={idx} style={{
-          background: '#090d16',
-          color: '#38bdf8',
-          border: '1px solid rgba(56, 189, 248, 0.4)',
+          background: 'var(--glass-bg)',
+          color: 'var(--accent-primary)',
+          border: '1px solid var(--glass-border)',
           borderRadius: '5px',
           padding: '2px 6px',
           fontFamily: 'Consolas, Monaco, "Courier New", monospace',
@@ -304,9 +304,9 @@ function parseInlineSpans(text) {
       const math = part.slice(1, -1);
       return (
         <span key={idx} style={{
-          background: 'rgba(99, 102, 241, 0.2)',
-          color: '#a5b4fc',
-          border: '1px solid rgba(99, 102, 241, 0.4)',
+          background: 'rgba(99, 102, 241, 0.12)',
+          color: '#6366f1',
+          border: '1px solid rgba(99, 102, 241, 0.35)',
           borderRadius: '5px',
           padding: '1px 7px',
           fontFamily: 'Consolas, monospace',
@@ -328,9 +328,9 @@ function parseInlineSpans(text) {
       if (upper === 'BUY' || upper.includes('LONG') || upper === 'PASSED' || upper === 'O(1)') {
         return (
           <span key={idx} style={{
-            background: 'rgba(34, 197, 94, 0.2)',
-            color: '#4ade80',
-            border: '1px solid rgba(34, 197, 94, 0.45)',
+            background: 'rgba(5, 150, 105, 0.15)',
+            color: '#059669',
+            border: '1px solid rgba(5, 150, 105, 0.35)',
             borderRadius: '5px',
             padding: '1px 7px',
             fontWeight: '800',
@@ -346,9 +346,9 @@ function parseInlineSpans(text) {
       if (upper === 'SELL' || upper.includes('SHORT') || upper === 'FAILED' || upper.includes('CRITICAL') || upper.includes('RISK')) {
         return (
           <span key={idx} style={{
-            background: 'rgba(239, 68, 68, 0.2)',
-            color: '#f87171',
-            border: '1px solid rgba(239, 68, 68, 0.45)',
+            background: 'rgba(220, 38, 38, 0.12)',
+            color: '#dc2626',
+            border: '1px solid rgba(220, 38, 38, 0.35)',
             borderRadius: '5px',
             padding: '1px 7px',
             fontWeight: '800',
@@ -364,9 +364,9 @@ function parseInlineSpans(text) {
       if (/(\d+(st|nd|rd|th)\s+Year|Step\s+\d+|Time Complexity|Space Complexity)/i.test(bold)) {
         return (
           <span key={idx} style={{
-            background: 'rgba(245, 158, 11, 0.18)',
-            color: '#fbbf24',
-            border: '1px solid rgba(245, 158, 11, 0.4)',
+            background: 'rgba(217, 119, 6, 0.12)',
+            color: '#d97706',
+            border: '1px solid rgba(217, 119, 6, 0.35)',
             borderRadius: '5px',
             padding: '1px 7px',
             fontWeight: '700',
@@ -379,7 +379,7 @@ function parseInlineSpans(text) {
       }
 
       return (
-        <strong key={idx} style={{ color: '#38bdf8', fontWeight: '700' }}>
+        <strong key={idx} style={{ color: 'var(--accent-primary)', fontWeight: '700' }}>
           {bold}
         </strong>
       );
@@ -405,9 +405,9 @@ function CodeBlockItem({ code, language }) {
       margin: '8px 0',
       borderRadius: '8px',
       overflow: 'hidden',
-      border: '1px solid rgba(56, 189, 248, 0.3)',
-      background: '#070c18',
-      boxShadow: '0 4px 14px rgba(0, 0, 0, 0.5)'
+      border: '1px solid var(--glass-border)',
+      background: 'var(--glass-bg)',
+      boxShadow: '0 4px 14px rgba(0, 0, 0, 0.08)'
     }}>
       {/* Code Header Bar */}
       <div style={{
@@ -415,22 +415,22 @@ function CodeBlockItem({ code, language }) {
         justifyContent: 'space-between',
         alignItems: 'center',
         padding: '5px 10px',
-        background: '#0f172a',
-        borderBottom: '1px solid rgba(56, 189, 248, 0.2)',
+        background: 'var(--bg-secondary)',
+        borderBottom: '1px solid var(--glass-border)',
         fontSize: '11px',
         fontWeight: 'bold',
-        color: '#94a3b8'
+        color: 'var(--text-secondary)'
       }}>
         <div style={{ display: 'flex', alignItems: 'center', gap: '6px' }}>
-          <span style={{ width: '8px', height: '8px', borderRadius: '50%', background: '#38bdf8', display: 'inline-block' }}></span>
-          <span style={{ color: '#38bdf8', letterSpacing: '0.5px' }}>{language || 'CODE'}</span>
+          <span style={{ width: '8px', height: '8px', borderRadius: '50%', background: 'var(--accent-primary)', display: 'inline-block' }}></span>
+          <span style={{ color: 'var(--accent-primary)', letterSpacing: '0.5px' }}>{language || 'CODE'}</span>
         </div>
         <button
           onClick={handleCopy}
           style={{
-            background: copied ? '#10b981' : 'rgba(56, 189, 248, 0.15)',
-            border: copied ? '1px solid #10b981' : '1px solid rgba(56, 189, 248, 0.35)',
-            color: copied ? '#ffffff' : '#38bdf8',
+            background: copied ? '#059669' : 'rgba(56, 189, 248, 0.15)',
+            border: copied ? '1px solid #059669' : '1px solid var(--glass-border)',
+            color: copied ? '#ffffff' : 'var(--accent-primary)',
             borderRadius: '4px',
             padding: '2px 8px',
             fontSize: '10.5px',
@@ -451,7 +451,7 @@ function CodeBlockItem({ code, language }) {
         fontFamily: 'Consolas, Monaco, "Courier New", monospace',
         fontSize: '12px',
         lineHeight: '1.5',
-        color: '#4ade80'
+        color: '#059669'
       }}>
         {code}
       </pre>

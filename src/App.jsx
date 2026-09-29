@@ -536,11 +536,8 @@ const THEMES = {
     '--glass-border': 'rgba(5, 150, 105, 0.22)',
     '--node-fill-1': '#059669',
     '--node-fill-2': '#10b981',
-    '--glass-border': 'rgba(79, 70, 229, 0.2)',
-    '--node-fill-1': '#4f46e5',
-    '--node-fill-2': '#6366f1',
-    '--edge-color': 'rgba(79, 70, 229, 0.7)',
-    bodyBg: 'radial-gradient(circle at 10% 20%, rgba(99,102,241,0.08), transparent 40%), radial-gradient(circle at 90% 80%, rgba(79,70,229,0.06), transparent 40%)',
+    '--edge-color': 'rgba(5, 150, 105, 0.7)',
+    bodyBg: 'radial-gradient(circle at 10% 20%, rgba(5,150,105,0.08), transparent 40%), radial-gradient(circle at 90% 80%, rgba(16,185,129,0.06), transparent 40%)',
     type: 'light'
   },
   'Nordic Chalk': {
@@ -683,6 +680,59 @@ const LineDebugger = ({ initialCode, lang: initialLang, fontSize, wordWrap, onBa
     }
   };
 
+  const handleEditorKeyDown = (e) => {
+    if (e.key === 'Tab') {
+      e.preventDefault();
+      const textarea = e.target;
+      const { selectionStart, selectionEnd, value } = textarea;
+      const tabSpaces = '    '; // 4 spaces
+
+      if (selectionStart !== selectionEnd && value.substring(selectionStart, selectionEnd).includes('\n')) {
+        const startOfFirstLine = value.lastIndexOf('\n', selectionStart - 1) + 1;
+        const endOfLastLine = value.indexOf('\n', selectionEnd);
+        const actualEnd = endOfLastLine === -1 ? value.length : endOfLastLine;
+        const selectedBlock = value.substring(startOfFirstLine, actualEnd);
+        const lines = selectedBlock.split('\n');
+
+        let modifiedBlock;
+        if (e.shiftKey) {
+          modifiedBlock = lines.map(line => line.replace(/^ {1,4}/, '')).join('\n');
+        } else {
+          modifiedBlock = lines.map(line => tabSpaces + line).join('\n');
+        }
+
+        const updatedCode = value.substring(0, startOfFirstLine) + modifiedBlock + value.substring(actualEnd);
+        setLocalCode(updatedCode);
+
+        requestAnimationFrame(() => {
+          textarea.selectionStart = startOfFirstLine;
+          textarea.selectionEnd = startOfFirstLine + modifiedBlock.length;
+        });
+        return;
+      }
+
+      if (e.shiftKey) {
+        const lineStart = value.lastIndexOf('\n', selectionStart - 1) + 1;
+        const linePrefix = value.substring(lineStart, selectionStart);
+        const spacesToRemove = linePrefix.match(/^ {1,4}/)?.[0].length || 0;
+        if (spacesToRemove > 0) {
+          const updatedCode = value.substring(0, lineStart) + value.substring(lineStart + spacesToRemove);
+          setLocalCode(updatedCode);
+          requestAnimationFrame(() => {
+            textarea.selectionStart = textarea.selectionEnd = Math.max(lineStart, selectionStart - spacesToRemove);
+          });
+        }
+        return;
+      }
+
+      const updatedCode = value.substring(0, selectionStart) + tabSpaces + value.substring(selectionEnd);
+      setLocalCode(updatedCode);
+      requestAnimationFrame(() => {
+        textarea.selectionStart = textarea.selectionEnd = selectionStart + tabSpaces.length;
+      });
+    }
+  };
+
 const makeCodePythonTutorRunnable = (code, lang) => {
   if (!code) return '';
   let src = code.trim();
@@ -748,12 +798,72 @@ const makeCodePythonTutorRunnable = (code, lang) => {
         src = `public class Main {\n  public static void main(String[] args) {\n    ${src.split('\n').join('\n    ')}\n  }\n}`;
       }
     } else {
-      const match = src.match(/\bclass\s+(\w+)/);
-      if (match && match[1] !== 'Main') {
-        src = src.replace(new RegExp(`\\bclass\\s+${match[1]}\\b`, 'g'), 'class Main');
+      // Find all classes in Java code
+      const classRegex = /\b(?:public\s+)?class\s+(\w+)/g;
+      let match;
+      const classNames = [];
+      while ((match = classRegex.exec(src)) !== null) {
+        classNames.push(match[1]);
       }
-      if (src.includes('class Main') && !src.includes('public class Main')) {
-        src = src.replace(/\bclass\s+Main\b/, 'public class Main');
+
+      if (classNames.length === 1) {
+        // Single class: rename it to Main if it's not Main
+        if (classNames[0] !== 'Main') {
+          src = src.replace(new RegExp(`\\bclass\\s+${classNames[0]}\\b`, 'g'), 'class Main');
+        }
+        if (src.includes('class Main') && !src.includes('public class Main')) {
+          src = src.replace(/\bclass\s+Main\b/, 'public class Main');
+        }
+      } else {
+        // Multiple classes (e.g. class HashTable and public class Main):
+        // Ensure Main exists. If not, create Main. Make all non-Main classes 'static class' inside Main or non-public
+        if (classNames.includes('Main')) {
+          // If public class Main already exists, ensure sibling classes are non-public
+          src = src.replace(/\bpublic\s+class\s+((?!Main\b)\w+)/g, 'class $1');
+          if (!src.includes('public class Main')) {
+            src = src.replace(/\bclass\s+Main\b/, 'public class Main');
+          }
+        } else {
+          // No Main class: Pick the class with main() if any, or wrap everything in public class Main
+          const mainMethodRegex = /public\s+static\s+void\s+main\s*\(/;
+          if (mainMethodRegex.test(src)) {
+            // Find which class owns main()
+            const parts = src.split(/\bclass\s+/);
+            // Rename first class that contains main() to Main
+            for (const cn of classNames) {
+              const cnRegex = new RegExp(`class\\s+${cn}[^{]*\\{[\\s\\S]*?public\\s+static\\s+void\\s+main`);
+              if (cnRegex.test(src)) {
+                src = src.replace(new RegExp(`\\bclass\\s+${cn}\\b`), 'public class Main');
+                break;
+              }
+            }
+          } else {
+            // Wrap sibling classes inside public class Main as static nested classes
+            const imports = [];
+            const nonImports = [];
+            src.split('\n').forEach(line => {
+              if (line.trim().startsWith('import ')) imports.push(line);
+              else nonImports.push(line);
+            });
+            const innerCode = nonImports.join('\n').replace(/\bclass\s+(\w+)/g, 'static class $1');
+            src = `${imports.join('\n')}\n\npublic class Main {\n${innerCode}\n  public static void main(String[] args) {\n    System.out.println("Execution started");\n  }\n}`;
+          }
+        }
+      }
+
+      // Check if main() method is empty or has only comments
+      const mainBodyMatch = src.match(/public\s+static\s+void\s+main\s*\([^)]*\)\s*\{([\s\S]*?)\}/);
+      if (mainBodyMatch) {
+        const mainContent = mainBodyMatch[1].replace(/\/\/.*$/gm, '').replace(/\/\*[\s\S]*?\*\//g, '').trim();
+        if (mainContent.length === 0) {
+          // Main is empty! Auto-generate execution calls for any declared classes
+          const nonMainClass = classNames.find(c => c !== 'Main');
+          let injectedDriver = '\n    System.out.println("AlgoFlow: Tracing execution...");\n';
+          if (nonMainClass) {
+            injectedDriver += `    ${nonMainClass} instance = new ${nonMainClass}(5);\n    System.out.println("Initialized " + instance);\n`;
+          }
+          src = src.replace(mainBodyMatch[0], `public static void main(String[] args) {${injectedDriver}  }`);
+        }
       }
     }
   } else if (lang === 'Python') {
@@ -781,15 +891,60 @@ const makeCodePythonTutorRunnable = (code, lang) => {
       alert("🙏 We apologize for the inconvenience!\n\nYour code is too long (exceeds PythonTutor's 5,500 byte limit) even after auto-cleaning comments.\n\nPlease reduce size or execute it directly in our Sandboxed Code Runner!");
       return;
     }
-    
-    setIsIframeLoading(true);
+
+    const lastLoadedTime = parseInt(localStorage.getItem('algoflow_pt_last_loaded') || '0', 10);
+    const THIRTY_MINUTES_MS = 30 * 60 * 1000;
+    const isFirstTimeInWindow = Date.now() - lastLoadedTime > THIRTY_MINUTES_MS;
+
+    try {
+      window.history.pushState({ lineDebuggerActive: true }, '', window.location.href);
+    } catch (e) {
+      console.warn("History pushState failed:", e);
+    }
+
     setIsDebugStarted(true);
-    setTimeout(() => setIsIframeLoading(false), 8000);
+
+    if (isFirstTimeInWindow) {
+      // First time after 30+ minutes / fresh visit: show the informative cycling loader
+      setIsIframeLoading(true);
+      localStorage.setItem('algoflow_pt_last_loaded', Date.now().toString());
+      setTimeout(() => setIsIframeLoading(false), 5000);
+    } else {
+      // Subsequent runs: iframe is cached / warm, do not block with full 8s loader
+      setIsIframeLoading(false);
+    }
+  };
+
+  const handleExitDebug = () => {
+    if (window.history.state && window.history.state.lineDebuggerActive) {
+      window.history.back();
+    } else {
+      setIsDebugStarted(false);
+      setIsIframeLoading(false);
+    }
+  };
+
+  const handleHomeClick = () => {
+    if (window.history.state && window.history.state.lineDebuggerActive) {
+      window.history.back();
+    }
+    onBack();
   };
 
   useEffect(() => {
+    const handlePopState = () => {
+      if (isDebugStarted) {
+        setIsDebugStarted(false);
+        setIsIframeLoading(false);
+      }
+    };
+    window.addEventListener('popstate', handlePopState);
+    return () => window.removeEventListener('popstate', handlePopState);
+  }, [isDebugStarted]);
+
+  useEffect(() => {
     let interval;
-    if (isIframeLoading) interval = setInterval(() => setQuoteIndex(p => (p + 1) % loadingQuotes.length), 4000);
+    if (isIframeLoading) interval = setInterval(() => setQuoteIndex(p => (p + 1) % loadingQuotes.length), 3000);
     return () => clearInterval(interval);
   }, [isIframeLoading]);
 
@@ -890,13 +1045,30 @@ const makeCodePythonTutorRunnable = (code, lang) => {
         <div>
           <div style={{ display: 'flex', alignItems: 'center', gap: '0.8rem' }}>
             <h1 className="title-gradient" style={{ fontSize: '1.55rem', margin: 0 }}>🐞 Line-by-Line Debugger</h1>
-            <select className="styled-select" value={detectedLang} onChange={(e) => setDetectedLang(e.target.value)} style={{ padding: '4px 24px 4px 8px', borderRadius: '6px', fontSize: '0.85rem', fontWeight: 600, outline: 'none', cursor: 'pointer', height: 'auto', width: 'auto', backgroundPosition: 'right 6px center', backgroundSize: '10px' }}>
-              <option value="C">C</option>
-              <option value="C++">C++</option>
-              <option value="Java">Java</option>
-              <option value="Python">Python</option>
-              <option value="JS">JavaScript</option>
-            </select>
+            {!isDebugStarted ? (
+              <select className="styled-select" value={detectedLang} onChange={(e) => setDetectedLang(e.target.value)} style={{ padding: '4px 24px 4px 8px', borderRadius: '6px', fontSize: '0.85rem', fontWeight: 600, outline: 'none', cursor: 'pointer', height: 'auto', width: 'auto', backgroundPosition: 'right 6px center', backgroundSize: '10px' }}>
+                <option value="C">C</option>
+                <option value="C++">C++</option>
+                <option value="Java">Java</option>
+                <option value="Python">Python</option>
+                <option value="JS">JavaScript</option>
+              </select>
+            ) : (
+              <span style={{
+                display: 'inline-flex',
+                alignItems: 'center',
+                gap: '5px',
+                padding: '3px 10px',
+                borderRadius: '6px',
+                fontSize: '0.85rem',
+                fontWeight: 700,
+                background: 'rgba(59, 130, 246, 0.15)',
+                border: '1px solid rgba(59, 130, 246, 0.35)',
+                color: '#60a5fa'
+              }}>
+                {detectedLang === 'JS' ? 'JavaScript' : detectedLang}
+              </span>
+            )}
           </div>
           <div style={{ fontSize: '0.78rem', color: 'var(--text-secondary)', marginTop: '4px' }}>
             {isDebugStarted ? 'Interactive Execution Mode' : 'Ready — write code and press Start Debug'}
@@ -913,13 +1085,13 @@ const makeCodePythonTutorRunnable = (code, lang) => {
               </button>
             </>
           ) : (
-            <button className="btn btn-clear" style={{ padding: '0.4rem 1rem' }} onClick={() => setIsDebugStarted(false)}>
+            <button className="btn btn-clear" style={{ padding: '0.4rem 1rem' }} onClick={handleExitDebug}>
               ✏️ Edit Code
             </button>
           )}
           <div style={{ width: '1px', height: '22px', background: 'var(--glass-border)', margin: '0 4px' }} />
           {openSettings && <button className="btn btn-clear" onClick={openSettings}>⚙ Settings</button>}
-          <button className="btn btn-clear" onClick={onBack}>🏠 Home</button>
+          <button className="btn btn-clear" onClick={handleHomeClick}>🏠 Home</button>
         </div>
       </header>
 
@@ -928,13 +1100,13 @@ const makeCodePythonTutorRunnable = (code, lang) => {
           <div style={{ display: 'flex', alignItems: 'flex-start', gap: '12px' }}>
             <div style={{ fontSize: '2rem', lineHeight: '1' }}>🙏</div>
             <div>
-              <h4 style={{ margin: '0 0 4px 0', fontSize: '1rem', color: '#fca5a5', fontWeight: 'bold', letterSpacing: '0.3px' }}>
+              <h4 style={{ margin: '0 0 4px 0', fontSize: '1rem', color: '#dc2626', fontWeight: 'bold', letterSpacing: '0.3px' }}>
                 OUR SINCERE APOLOGY FOR THIS INCONVENIENCE — {unsupportedInfo.title.toUpperCase()}
               </h4>
               <div style={{ fontSize: '0.88rem', color: 'var(--text-primary)', lineHeight: '1.5' }}>
                 {unsupportedInfo.reason}
               </div>
-              <div style={{ fontSize: '0.84rem', color: '#fbbf24', marginTop: '4px', fontWeight: '500' }}>
+              <div style={{ fontSize: '0.84rem', color: '#d97706', marginTop: '4px', fontWeight: '500' }}>
                 💡 Recommended Fix: {unsupportedInfo.solution}
               </div>
             </div>
@@ -945,7 +1117,7 @@ const makeCodePythonTutorRunnable = (code, lang) => {
                 Switch to C++ Mode
               </button>
             )}
-            <button className="btn btn-clear" style={{ fontSize: '0.85rem', padding: '6px 14px', whiteSpace: 'nowrap', background: 'rgba(16,185,129,0.25)', color: '#34d399', border: '1px solid rgba(16,185,129,0.4)', fontWeight: 'bold' }} onClick={() => setIsRunnerOpen(true)}>
+            <button className="btn btn-clear" style={{ fontSize: '0.85rem', padding: '6px 14px', whiteSpace: 'nowrap', background: 'rgba(16,185,129,0.15)', color: '#059669', border: '1px solid rgba(16,185,129,0.4)', fontWeight: 'bold' }} onClick={() => setIsRunnerOpen(true)}>
               ▶ Run in Sandboxed Code Runner
             </button>
           </div>
@@ -963,7 +1135,7 @@ const makeCodePythonTutorRunnable = (code, lang) => {
                 <div ref={lineNumbersRef} style={{ width: '44px', background: 'rgba(0,0,0,0.12)', color: 'var(--text-secondary)', textAlign: 'right', padding: '1rem 6px 2rem 0', fontFamily: 'monospace', fontSize: `${fontSize}px`, lineHeight: '1.6', flexShrink: 0, userSelect: 'none', borderRight: '1px solid var(--glass-border)', overflow: 'hidden' }}>
                   {localCode.split('\n').map((_, i) => <div key={i}>{i + 1}</div>)}
                 </div>
-                <textarea className="code-textarea" value={localCode} onChange={e => setLocalCode(e.target.value)} onScroll={handleScroll}
+                <textarea className="code-textarea" value={localCode} onChange={e => setLocalCode(e.target.value)} onKeyDown={handleEditorKeyDown} onScroll={handleScroll}
                   style={{ flex: 1, padding: '1rem', fontSize: `${fontSize}px`, lineHeight: '1.6', whiteSpace: wordWrap === 'on' ? 'pre-wrap' : 'pre', border: 'none', borderRadius: 0, height: '100%', background: 'transparent', color: 'var(--text-primary)', outline: 'none', resize: 'none', overflow: 'auto' }}
                   placeholder={
                     detectedLang === 'C' ? `Write C code here...\n\nExample:\n\n#include <stdio.h>\n\nint main() {\n  int x = 10;\n  printf("%d\\n", x);\n  return 0;\n}` :
@@ -984,8 +1156,18 @@ const makeCodePythonTutorRunnable = (code, lang) => {
                 </p>
 
                 <div style={{ background: '#ffffff', border: '1px solid #cbd5e1', borderRadius: '10px', padding: '14px 18px', maxWidth: '420px', boxShadow: '0 4px 12px rgba(0,0,0,0.05)' }}>
-                  <div style={{ display: 'flex', alignItems: 'center', gap: '8px', color: '#1e293b', fontWeight: 'bold', fontSize: '0.88rem', marginBottom: '6px' }}>
-                    <span>ℹ️</span> Execution Engine Guidance
+                  <div style={{ display: 'flex', alignItems: 'center', gap: '8px', color: '#1e293b', fontWeight: 'bold', fontSize: '0.88rem', marginBottom: '8px' }}>
+                    <span>ℹ️</span> Execution Engine Line Color Guidance
+                  </div>
+                  <div style={{ display: 'flex', flexDirection: 'column', gap: '6px', marginBottom: '10px' }}>
+                    <div style={{ display: 'flex', alignItems: 'center', gap: '8px', background: 'rgba(16, 185, 129, 0.1)', border: '1px solid rgba(16, 185, 129, 0.3)', padding: '4px 8px', borderRadius: '6px', fontSize: '0.8rem', color: '#059669', fontWeight: 600 }}>
+                      <span>🟢 ➔</span>
+                      <span>Line that just executed (Green)</span>
+                    </div>
+                    <div style={{ display: 'flex', alignItems: 'center', gap: '8px', background: 'rgba(239, 68, 68, 0.1)', border: '1px solid rgba(239, 68, 68, 0.3)', padding: '4px 8px', borderRadius: '6px', fontSize: '0.8rem', color: '#dc2626', fontWeight: 600 }}>
+                      <span>🔴 ➔</span>
+                      <span>Next line to execute (Red)</span>
+                    </div>
                   </div>
                   <p style={{ color: '#475569', fontSize: '0.8rem', margin: 0, lineHeight: '1.5' }}>
                     We apologize for any inconvenience if a specific complex code snippet cannot be visualised line-by-line due to cloud execution limits (e.g. C++ headers in C mode or 5,500 bytes max limit). You can always copy full C/C++ code or execute it in our <strong>Sandboxed Code Runner</strong>!
@@ -995,7 +1177,7 @@ const makeCodePythonTutorRunnable = (code, lang) => {
             )}
           </>
         ) : (
-          <div style={{ flex: 1, background: '#fff', position: 'relative' }}>
+          <div style={{ flex: 1, background: '#fff', position: 'relative', display: 'flex', flexDirection: 'column' }}>
             {isIframeLoading && (
               <div style={{ position: 'absolute', top: 0, left: 0, width: '100%', height: '100%', background: 'var(--bg-primary)', display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', zIndex: 10 }}>
                 <svg className="bike" viewBox="0 0 48 30" width="80px" height="50px" style={{ color: 'var(--accent-primary)' }}>
@@ -1039,6 +1221,7 @@ const makeCodePythonTutorRunnable = (code, lang) => {
               frameBorder="0" 
               src={`https://pythontutor.com/iframe-embed.html#code=${encodeURIComponent(localCode)}&cumulative=false&curInstr=0&heapPrimitives=nevernest&origin=opt-frontend.js&py=${ptLangMap[detectedLang] || 'js'}&rawInputLstJSON=%5B%5D&textReferences=false`}
               title="Execution Trace"
+              onLoad={() => setIsIframeLoading(false)}
             />
           </div>
         )}
@@ -3440,10 +3623,10 @@ function App() {
     if (!allNodes.length) return null;
     const maxRight = Math.max(...allNodes.map(n => n.node.x + getNodeDimensions(n.node).w / 2));
     const maxBottom = Math.max(...allNodes.map(n => n.node.y + getNodeDimensions(n.node).h / 2));
-    const containerW = containerRef.current ? Math.max(containerRef.current.clientWidth - 40, 700) : 900;
+    const containerW = containerRef.current ? Math.max(containerRef.current.clientWidth - 40, isMobile ? 380 : 700) : (isMobile ? 400 : 900);
     
-    const svgW = Math.max(containerW, maxRight + 50);
-    const svgH = Math.max(300, maxBottom + 50);
+    const svgW = Math.max(containerW, maxRight + (isMobile ? 120 : 60));
+    const svgH = Math.max(isMobile ? 460 : 300, maxBottom + (isMobile ? 140 : 60));
 
     return (
       <svg width={svgW} height={svgH} style={{ display: 'block', overflow: 'visible' }}>
@@ -3693,8 +3876,8 @@ function App() {
                       </div>
                     )}
                     <div>
-                      <div style={{ fontWeight: '700', fontSize: '0.95rem', color: '#f8fafc' }}>{activeUser.name}</div>
-                      <div style={{ fontSize: '0.78rem', color: '#38bdf8' }}>✉ {activeUser.email}</div>
+                      <div style={{ fontWeight: '700', fontSize: '0.95rem', color: 'var(--text-primary)' }}>{activeUser.name}</div>
+                      <div style={{ fontSize: '0.78rem', color: '#0284c7' }}>✉ {activeUser.email}</div>
                     </div>
                   </div>
                   <span style={{ fontSize: '0.72rem', background: 'rgba(34, 197, 94, 0.15)', color: '#4ade80', border: '1px solid rgba(34, 197, 94, 0.3)', padding: '2px 8px', borderRadius: '8px', fontWeight: 'bold' }}>
@@ -4596,14 +4779,14 @@ function App() {
                     setIsUpcomingOpen(true);
                   }}
                   className="btn btn-clear" 
-                  style={{ background: 'rgba(16,185,129,0.2)', color: '#34d399', display: 'inline-flex', alignItems: 'center' }}
+                  style={{ background: 'rgba(16,185,129,0.15)', color: '#059669', display: 'inline-flex', alignItems: 'center', fontWeight: 'bold' }}
                 >
                   ▶ Run Code
                 </button>
                 {isLineDebuggerSupported(codeLang) && (
                   <button 
                     className="btn btn-clear" 
-                    style={{ background: 'rgba(236,72,153,0.2)', color: '#fbcfe8' }} 
+                    style={{ background: 'rgba(236,72,153,0.15)', color: '#db2777', fontWeight: 'bold' }} 
                     onClick={() => {
                       enterMode('LINE_BY_LINE_VIS');
                       setSetupComplete(true);
@@ -4874,18 +5057,18 @@ function App() {
                 {/* Secondary settings / Playbacks */}
                 {(!isMobile || showMobileOptions) && (
                   <>
-                    <div style={{ display: 'flex', alignItems: 'center', gap: '4px', background: 'rgba(0,0,0,0.35)', padding: '0.4rem 0.6rem', borderRadius: '10px' }}>
+                    <div style={{ display: 'flex', alignItems: 'center', gap: '4px', background: 'var(--glass-bg)', padding: '0.4rem 0.6rem', borderRadius: '10px', border: '1px solid var(--glass-border)' }}>
                       <button className="btn btn-clear" style={{ padding: '0.4rem 0.6rem', border: 'none' }} onClick={() => { setIsPlaying(false); setCurrentStep(0); }} disabled={!timeline.length||currentStep===0}>⏮ First</button>
                       <button className="btn btn-clear" style={{ padding: '0.4rem 0.6rem', border: 'none' }} onClick={() => { setIsPlaying(false); setCurrentStep(p => Math.max(0, p - 1)); }} disabled={!timeline.length||currentStep===0}>◀ Prev</button>
                       <button className="btn btn-clear" style={{ padding: '0.4rem 1rem', border: 'none', background: isPlaying ? 'rgba(59,130,246,0.4)' : 'transparent', fontWeight: 'bold' }} onClick={() => setIsPlaying(p => !p)} disabled={!timeline.length}>{isPlaying ? '⏸' : '▶ Play'}</button>
                       <button className="btn btn-clear" style={{ padding: '0.4rem 0.6rem', border: 'none' }} onClick={() => { setIsPlaying(false); setCurrentStep(p => Math.min(timeline.length - 1, p + 1)); }} disabled={!timeline.length||currentStep===timeline.length-1}>Next ▶</button>
-                      <button className="btn btn-clear" style={{ padding: '0.4rem 0.6rem', border: 'none', fontWeight: 'bold', background: 'rgba(236, 72, 153, 0.2)', color: '#fbcfe8' }} onClick={() => { setIsPlaying(false); setCurrentStep(timeline.length - 1); }} disabled={!timeline.length||currentStep===timeline.length-1}>Last ⏭</button>
+                      <button className="btn btn-clear" style={{ padding: '0.4rem 0.6rem', border: 'none', fontWeight: 'bold', background: 'rgba(236, 72, 153, 0.2)', color: '#db2777' }} onClick={() => { setIsPlaying(false); setCurrentStep(timeline.length - 1); }} disabled={!timeline.length||currentStep===timeline.length-1}>Last ⏭</button>
                       <span style={{ fontSize: '0.85rem', color: 'var(--text-secondary)', marginLeft: '8px', whiteSpace: 'nowrap', fontWeight: 'bold' }}>{timeline.length ? currentStep + 1 : 0}/{timeline.length}</span>
                     </div>
 
-                    <div style={{ display: 'flex', alignItems: 'center', gap: '5px' }}>
-                      <span style={{ fontSize: '0.75rem', color: 'var(--text-secondary)' }}>Speed</span>
-                      <input type="range" min={80} max={3500} step={50} value={animationSpeed} onChange={e => setAnimationSpeed(Number(e.target.value))} style={{ width: '85px', accentColor: 'var(--accent-primary)', cursor: 'pointer' }} title={`Speed: ${animationSpeed}ms delay`} />
+                    <div style={{ display: 'flex', alignItems: 'center', gap: '6px', background: 'var(--glass-bg)', padding: '0.35rem 0.65rem', borderRadius: '8px', border: '1px solid var(--glass-border)' }}>
+                      <span style={{ fontSize: '0.78rem', color: 'var(--accent-primary)', fontWeight: 600, whiteSpace: 'nowrap' }}>⚡ Speed ({animationSpeed}ms)</span>
+                      <input type="range" min={80} max={2500} step={50} value={animationSpeed} onChange={e => setAnimationSpeed(Number(e.target.value))} style={{ width: '85px', accentColor: 'var(--accent-primary)', cursor: 'pointer' }} title={`Speed: ${animationSpeed}ms delay`} />
                     </div>
 
                     {(treeType === 'B_TREE' || treeType === 'B_PLUS_TREE') && (
@@ -4958,19 +5141,32 @@ function App() {
             {frame.root && (treeType === 'BST' || treeType === 'AVL' || treeType === 'RB_TREE') && (() => {
               const travs = getTraversals(frame.root);
               return (
-                <div style={{ background: 'rgba(15,23,42,0.85)', backdropFilter: 'blur(12px)', borderBottom: '1px solid var(--glass-border)', padding: '8px 20px', display: 'grid', gridTemplateColumns: 'repeat(3, 1fr)', gap: '15px', fontSize: '0.9rem', flexShrink: 0, zIndex: 20 }}>
-                  <div><span style={{color: 'var(--accent-primary)', fontWeight: 'bold'}}>Inorder:</span> <span style={{fontFamily: 'monospace', color: '#e2e8f0', wordBreak: 'break-all'}}>{travs.inorder || 'None'}</span></div>
-                  <div><span style={{color: '#a78bfa', fontWeight: 'bold'}}>Preorder:</span> <span style={{fontFamily: 'monospace', color: '#e2e8f0', wordBreak: 'break-all'}}>{travs.preorder || 'None'}</span></div>
-                  <div><span style={{color: '#f43f5e', fontWeight: 'bold'}}>Postorder:</span> <span style={{fontFamily: 'monospace', color: '#e2e8f0', wordBreak: 'break-all'}}>{travs.postorder || 'None'}</span></div>
+                <div style={{ 
+                  background: 'var(--glass-bg)', 
+                  backdropFilter: 'blur(12px)', 
+                  borderBottom: '1px solid var(--glass-border)', 
+                  padding: isMobile ? '6px 12px' : '8px 20px', 
+                  display: isMobile ? 'flex' : 'grid', 
+                  gridTemplateColumns: isMobile ? 'none' : 'repeat(3, 1fr)', 
+                  gap: isMobile ? '14px' : '15px', 
+                  fontSize: isMobile ? '0.78rem' : '0.9rem', 
+                  flexShrink: 0, 
+                  overflowX: isMobile ? 'auto' : 'visible', 
+                  whiteSpace: isMobile ? 'nowrap' : 'normal',
+                  zIndex: 20 
+                }}>
+                  <div><span style={{color: 'var(--accent-primary)', fontWeight: 'bold'}}>Inorder:</span> <span style={{fontFamily: 'monospace', color: 'var(--text-primary)', wordBreak: isMobile ? 'normal' : 'break-all'}}>{travs.inorder || 'None'}</span></div>
+                  <div><span style={{color: '#a78bfa', fontWeight: 'bold'}}>Preorder:</span> <span style={{fontFamily: 'monospace', color: 'var(--text-primary)', wordBreak: isMobile ? 'normal' : 'break-all'}}>{travs.preorder || 'None'}</span></div>
+                  <div><span style={{color: '#f43f5e', fontWeight: 'bold'}}>Postorder:</span> <span style={{fontFamily: 'monospace', color: 'var(--text-primary)', wordBreak: isMobile ? 'normal' : 'break-all'}}>{travs.postorder || 'None'}</span></div>
                 </div>
               );
             })()}
             {frame.root && (treeType === 'MIN_HEAP' || treeType === 'MAX_HEAP') && (
-              <div style={{ background: 'rgba(15,23,42,0.85)', backdropFilter: 'blur(12px)', borderBottom: '1px solid var(--glass-border)', padding: '8px 20px', display: 'flex', alignItems: 'center', gap: '10px', fontSize: '0.9rem', flexShrink: 0, overflowX: 'auto', zIndex: 20 }}>
+              <div style={{ background: 'var(--glass-bg)', backdropFilter: 'blur(12px)', borderBottom: '1px solid var(--glass-border)', padding: '8px 20px', display: 'flex', alignItems: 'center', gap: '10px', fontSize: '0.9rem', flexShrink: 0, overflowX: 'auto', zIndex: 20 }}>
                 <span style={{color: 'var(--accent-primary)', fontWeight: 'bold', whiteSpace: 'nowrap'}}>Heap Array:</span>
                 <div style={{ display: 'flex', gap: '6px' }}>
                   {insertedValues.map((v, idx) => (
-                    <span key={idx} style={{ background: frame.highlight === v ? 'var(--accent-primary)' : 'rgba(255,255,255,0.1)', padding: '2px 8px', borderRadius: '4px', fontFamily: 'monospace', color: frame.highlight === v ? '#fff' : '#e2e8f0', fontWeight: 'bold' }}>
+                    <span key={idx} style={{ background: frame.highlight === v ? 'var(--accent-primary)' : 'rgba(255,255,255,0.1)', padding: '2px 8px', borderRadius: '4px', fontFamily: 'monospace', color: frame.highlight === v ? '#fff' : 'var(--text-primary)', fontWeight: 'bold' }}>
                       {v}
                     </span>
                   ))}
@@ -5063,7 +5259,21 @@ function App() {
 
             <div style={{ display: 'flex', flexDirection: isMobile ? 'column' : 'row', flex: 1, padding: isMobile ? '0.25rem' : '0.75rem', gap: '0.75rem', overflow: 'hidden' }}>
               <div style={{ display: (isMobile && mobileTab !== 'vis') ? 'none' : 'flex', flexDirection: 'column', flex: 1, overflow: 'hidden' }}>
-                <div className="tree-container" ref={containerRef} style={{ flex: 1, background: 'rgba(15,23,42,0.5)', borderRadius: '14px', border: '1px solid var(--glass-border)', position: 'relative', overflow: 'auto', minHeight: '260px', marginBottom: '0.75rem', display: 'flex', flexDirection: 'column' }}>
+                <div className="tree-container" ref={containerRef} style={{ 
+                  flex: 1, 
+                  background: 'rgba(15,23,42,0.5)', 
+                  borderRadius: '14px', 
+                  border: '1px solid var(--glass-border)', 
+                  position: 'relative', 
+                  overflow: 'auto', 
+                  WebkitOverflowScrolling: 'touch',
+                  touchAction: 'pan-x pan-y',
+                  minHeight: isMobile ? '340px' : '260px', 
+                  padding: isMobile ? '16px 12px 60px 12px' : '16px 16px 30px 16px',
+                  marginBottom: isMobile ? '0.4rem' : '0.75rem', 
+                  display: 'flex', 
+                  flexDirection: 'column' 
+                }}>
                   <div style={{ flex: 1, position: 'relative', minHeight: '200px' }}>
                     {frame.root ? renderTreeSVG(frame.root, frame.highlight) : (
                       <div style={{ position: 'absolute', inset: 0, display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', gap: '10px', color: 'var(--text-secondary)' }}>
@@ -5125,6 +5335,80 @@ function App() {
                     })()}
                   </div>
                 </div>
+
+                {/* Mobile Dedicated Playback & Speed Bar */}
+                {isMobile && (
+                  <div style={{
+                    background: 'rgba(15, 23, 42, 0.92)',
+                    backdropFilter: 'blur(16px)',
+                    border: '1px solid var(--glass-border)',
+                    borderRadius: '12px',
+                    padding: '8px 12px',
+                    display: 'flex',
+                    flexDirection: 'column',
+                    gap: '8px',
+                    marginBottom: '0.5rem',
+                    boxShadow: '0 8px 24px rgba(0,0,0,0.35)',
+                    flexShrink: 0
+                  }}>
+                    {/* Stepper Controls & Counter */}
+                    <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', gap: '4px' }}>
+                      <div style={{ display: 'flex', alignItems: 'center', gap: '4px' }}>
+                        <button className="btn btn-clear" style={{ padding: '5px 9px', fontSize: '0.85rem' }} onClick={() => { setIsPlaying(false); setCurrentStep(0); }} disabled={!timeline.length || currentStep === 0} title="First Step">⏮</button>
+                        <button className="btn btn-clear" style={{ padding: '5px 9px', fontSize: '0.85rem' }} onClick={() => { setIsPlaying(false); setCurrentStep(p => Math.max(0, p - 1)); }} disabled={!timeline.length || currentStep === 0} title="Previous Step">◀</button>
+                        <button className="btn btn-start" style={{ padding: '5px 14px', fontSize: '0.85rem', fontWeight: 'bold', background: isPlaying ? 'rgba(239, 68, 68, 0.85)' : 'linear-gradient(135deg, var(--accent-primary), var(--accent-secondary))', color: '#fff', border: 'none', borderRadius: '8px' }} onClick={() => setIsPlaying(p => !p)} disabled={!timeline.length}>
+                          {isPlaying ? '⏸ Pause' : '▶ Play'}
+                        </button>
+                        <button className="btn btn-clear" style={{ padding: '5px 9px', fontSize: '0.85rem' }} onClick={() => { setIsPlaying(false); setCurrentStep(p => Math.min(timeline.length - 1, p + 1)); }} disabled={!timeline.length || currentStep === timeline.length - 1} title="Next Step">▶</button>
+                        <button className="btn btn-clear" style={{ padding: '5px 9px', fontSize: '0.85rem' }} onClick={() => { setIsPlaying(false); setCurrentStep(timeline.length - 1); }} disabled={!timeline.length || currentStep === timeline.length - 1} title="Last Step">⏭</button>
+                      </div>
+                      <span style={{ fontSize: '0.8rem', fontWeight: 700, color: 'var(--text-secondary)', background: 'rgba(255,255,255,0.06)', padding: '3px 7px', borderRadius: '6px', whiteSpace: 'nowrap' }}>
+                        Step {timeline.length ? currentStep + 1 : 0} / {timeline.length}
+                      </span>
+                    </div>
+
+                    {/* Speed Slider & Fast/Med/Slow Presets */}
+                    <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: '8px', borderTop: '1px solid rgba(255,255,255,0.06)', paddingTop: '6px' }}>
+                      <div style={{ display: 'flex', alignItems: 'center', gap: '6px', flex: 1 }}>
+                        <span style={{ fontSize: '0.78rem', color: '#38bdf8', fontWeight: 600, whiteSpace: 'nowrap' }}>
+                          ⚡ Speed ({animationSpeed}ms)
+                        </span>
+                        <input 
+                          type="range" 
+                          min={80} 
+                          max={2000} 
+                          step={50} 
+                          value={animationSpeed} 
+                          onChange={e => setAnimationSpeed(Number(e.target.value))} 
+                          style={{ flex: 1, accentColor: 'var(--accent-primary)', cursor: 'pointer', height: '6px' }} 
+                        />
+                      </div>
+                      <div style={{ display: 'flex', gap: '3px' }}>
+                        {[
+                          { label: 'Slow', val: 900 },
+                          { label: 'Med', val: 400 },
+                          { label: 'Fast', val: 150 }
+                        ].map(preset => (
+                          <button
+                            key={preset.label}
+                            onClick={() => setAnimationSpeed(preset.val)}
+                            style={{
+                              padding: '2px 6px',
+                              fontSize: '0.7rem',
+                              borderRadius: '5px',
+                              border: animationSpeed === preset.val ? '1px solid var(--accent-primary)' : '1px solid rgba(255,255,255,0.1)',
+                              background: animationSpeed === preset.val ? 'rgba(59,130,246,0.25)' : 'transparent',
+                              color: animationSpeed === preset.val ? '#60a5fa' : 'var(--text-secondary)',
+                              cursor: 'pointer'
+                            }}
+                          >
+                            {preset.label}
+                          </button>
+                        ))}
+                      </div>
+                    </div>
+                  </div>
+                )}
 
                 {showTreeLogPanel && !isMobile && (
                   <div
@@ -5625,20 +5909,20 @@ function App() {
       {/* Interactive Review & Feedback Modal */}
       {isFeedbackOpen && (
         <div className="modal-overlay" style={{ zIndex: 1000 }}>
-          <div className="modal-content" style={{ maxWidth: '520px', width: '90%', position: 'relative', overflow: 'hidden', padding: '2rem', maxHeight: '90vh', display: 'flex', flexDirection: 'column' }}>
+          <div className="modal-content" style={{ maxWidth: '540px', width: isMobile ? '95%' : '90%', position: 'relative', overflow: 'hidden', padding: isMobile ? '1.2rem 1rem' : '2rem', maxHeight: isMobile ? '94vh' : '90vh', display: 'flex', flexDirection: 'column' }}>
             
             {!isOtpVerifying && !isFeedbackSubmitted && (
               <>
-                <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', borderBottom: '1px solid var(--glass-border)', paddingBottom: '0.85rem', marginBottom: '1.2rem', flexShrink: 0 }}>
-                  <h2 className="title-gradient" style={{ margin: 0, fontSize: '1.6rem', textAlign: 'left', fontWeight: 'bold' }}>Send Feedback</h2>
+                <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', borderBottom: '1px solid var(--glass-border)', paddingBottom: '0.75rem', marginBottom: isMobile ? '0.8rem' : '1.2rem', flexShrink: 0 }}>
+                  <h2 className="title-gradient" style={{ margin: 0, fontSize: isMobile ? '1.35rem' : '1.6rem', textAlign: 'left', fontWeight: 'bold' }}>Send Feedback</h2>
                   <button style={{ background: 'transparent', border: 'none', color: 'var(--text-secondary)', fontSize: '1.4rem', cursor: 'pointer', transition: 'color 0.2s' }} onClick={() => setIsFeedbackOpen(false)} onMouseEnter={e => e.currentTarget.style.color = '#fff'} onMouseLeave={e => e.currentTarget.style.color = 'var(--text-secondary)'}>✕</button>
                 </div>
 
                 <div ref={feedbackScrollRef} style={{ flex: 1, overflowY: 'auto', paddingRight: '4px', display: 'flex', flexDirection: 'column', gap: '0.2rem' }}>
                   {/* Feedback Category selection - 6 distinct categories including AI Assistant */}
-                  <div className="select-group" style={{ marginBottom: '1.2rem' }}>
-                    <label style={{ fontSize: '0.95rem', color: 'var(--text-primary)', fontWeight: 600, display: 'block', marginBottom: '8px' }}>Feedback Type</label>
-                    <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '10px' }}>
+                  <div className="select-group" style={{ marginBottom: isMobile ? '0.75rem' : '1.2rem' }}>
+                    <label style={{ fontSize: '0.9rem', color: 'var(--text-primary)', fontWeight: 600, display: 'block', marginBottom: '6px' }}>Feedback Type</label>
+                    <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: isMobile ? '6px' : '10px' }}>
                       {[
                         { id: 'AI Assistant / Bot', label: 'AI Bot & Mentor', emoji: '✨' },
                         { id: 'Bug Report', label: 'Bug Report', emoji: '🐛' },
@@ -5655,11 +5939,11 @@ function App() {
                             style={{
                               background: isSelected ? 'rgba(59, 130, 246, 0.2)' : 'rgba(30, 41, 59, 0.4)',
                               border: isSelected ? '2px solid #38bdf8' : '1px solid var(--glass-border)',
-                              borderRadius: '12px',
-                              padding: '10px 14px',
+                              borderRadius: '10px',
+                              padding: isMobile ? '7px 10px' : '10px 14px',
                               display: 'flex',
                               alignItems: 'center',
-                              gap: '10px',
+                              gap: isMobile ? '6px' : '10px',
                               cursor: 'pointer',
                               transition: 'all 0.2s ease',
                               color: isSelected ? '#38bdf8' : 'var(--text-primary)',
@@ -5669,8 +5953,8 @@ function App() {
                             onMouseEnter={e => { if(!isSelected) e.currentTarget.style.borderColor = 'rgba(255,255,255,0.2)'; }}
                             onMouseLeave={e => { if(!isSelected) e.currentTarget.style.borderColor = 'var(--glass-border)'; }}
                           >
-                            <span style={{ fontSize: '1.25rem' }}>{type.emoji}</span>
-                            <span style={{ fontSize: '0.9rem' }}>{type.label}</span>
+                            <span style={{ fontSize: isMobile ? '1.1rem' : '1.25rem' }}>{type.emoji}</span>
+                            <span style={{ fontSize: isMobile ? '0.8rem' : '0.9rem' }}>{type.label}</span>
                           </div>
                         );
                       })}
@@ -5678,9 +5962,9 @@ function App() {
                   </div>
 
                   {/* Rating selection - Star layout matching screenshot */}
-                  <div className="select-group" style={{ marginBottom: '1.2rem' }}>
-                    <label style={{ fontSize: '0.95rem', color: 'var(--text-primary)', fontWeight: 600, display: 'block', marginBottom: '6px' }}>Rate Your Experience</label>
-                    <div style={{ display: 'flex', gap: '8px', fontSize: '2.4rem' }}>
+                  <div className="select-group" style={{ marginBottom: isMobile ? '0.75rem' : '1.2rem' }}>
+                    <label style={{ fontSize: '0.9rem', color: 'var(--text-primary)', fontWeight: 600, display: 'block', marginBottom: '4px' }}>Rate Your Experience</label>
+                    <div style={{ display: 'flex', gap: isMobile ? '6px' : '8px', fontSize: isMobile ? '2rem' : '2.4rem' }}>
                       {[1, 2, 3, 4, 5].map(star => (
                         <span 
                           key={star} 
@@ -5703,26 +5987,26 @@ function App() {
                   {/* Name & Email (Auto-filled if Google Connected) */}
                   {activeUser && activeUser.email ? (
                     <div style={{
-                      padding: '10px 14px',
+                      padding: '8px 12px',
                       background: 'rgba(56, 189, 248, 0.08)',
                       border: '1.5px solid rgba(56, 189, 248, 0.35)',
-                      borderRadius: '12px',
+                      borderRadius: '10px',
                       display: 'flex',
                       alignItems: 'center',
                       justifyContent: 'space-between',
-                      marginBottom: '1.2rem'
+                      marginBottom: isMobile ? '0.75rem' : '1.2rem'
                     }}>
-                      <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
+                      <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
                         {activeUser.picture ? (
-                          <img src={activeUser.picture} alt="" style={{ width: '32px', height: '32px', borderRadius: '50%' }} onError={e => e.target.style.display = 'none'} />
+                          <img src={activeUser.picture} alt="" style={{ width: '28px', height: '28px', borderRadius: '50%' }} onError={e => e.target.style.display = 'none'} />
                         ) : (
-                          <div style={{ width: '32px', height: '32px', borderRadius: '50%', background: '#0284c7', color: '#fff', display: 'flex', alignItems: 'center', justifyContent: 'center', fontWeight: 'bold' }}>
+                          <div style={{ width: '28px', height: '28px', borderRadius: '50%', background: '#0284c7', color: '#fff', display: 'flex', alignItems: 'center', justifyContent: 'center', fontWeight: 'bold', fontSize: '0.85rem' }}>
                             {activeUser.initial || 'U'}
                           </div>
                         )}
                         <div>
-                          <div style={{ fontSize: '0.9rem', fontWeight: '700', color: '#f8fafc' }}>{activeUser.name}</div>
-                          <div style={{ fontSize: '0.78rem', color: '#38bdf8', display: 'flex', alignItems: 'center', gap: '4px' }}>
+                          <div style={{ fontSize: '0.88rem', fontWeight: '700', color: 'var(--text-primary)' }}>{activeUser.name}</div>
+                          <div style={{ fontSize: '0.75rem', color: '#0284c7', display: 'flex', alignItems: 'center', gap: '4px' }}>
                             <span>✓ Google Verified:</span> <strong>{activeUser.email}</strong>
                           </div>
                         </div>
@@ -5730,7 +6014,7 @@ function App() {
                       <button
                         type="button"
                         onClick={() => setIsConnectModalOpen(true)}
-                        style={{ background: 'transparent', border: 'none', color: '#94a3b8', fontSize: '0.75rem', cursor: 'pointer', textDecoration: 'underline' }}
+                        style={{ background: 'transparent', border: 'none', color: 'var(--text-secondary)', fontSize: '0.75rem', cursor: 'pointer', textDecoration: 'underline' }}
                       >
                         Change
                       </button>
@@ -5738,12 +6022,12 @@ function App() {
                   ) : (
                     <>
                       {/* Name input */}
-                      <div className="select-group" style={{ marginBottom: '1.2rem' }}>
-                        <label style={{ fontSize: '0.95rem', color: 'var(--text-primary)', fontWeight: 600, display: 'block', marginBottom: '4px' }}>Your Name</label>
+                      <div className="select-group" style={{ marginBottom: isMobile ? '0.75rem' : '1.2rem' }}>
+                        <label style={{ fontSize: '0.9rem', color: 'var(--text-primary)', fontWeight: 600, display: 'block', marginBottom: '4px' }}>Your Name</label>
                         <input 
-                          type="text"
+                          type="text" 
                           className="styled-input" 
-                          style={{ width: '100%', padding: '0.65rem 0.85rem', fontSize: '0.95rem', borderRadius: '8px', border: '1px solid var(--glass-border)', background: 'rgba(0,0,0,0.2)', color: '#fff' }} 
+                          style={{ width: '100%', padding: '0.65rem 0.85rem', fontSize: '1rem', borderRadius: '8px', border: '1px solid var(--glass-border)', background: 'var(--glass-bg)', color: 'var(--text-primary)', boxSizing: 'border-box' }} 
                           placeholder="Enter your name" 
                           value={feedbackName} 
                           onChange={e => setFeedbackName(e.target.value)}
@@ -5752,15 +6036,15 @@ function App() {
                       </div>
 
                       {/* Email verification input */}
-                      <div className="select-group" style={{ marginBottom: '1.2rem' }}>
-                        <label style={{ fontSize: '0.95rem', color: 'var(--text-primary)', fontWeight: 600, display: 'block', marginBottom: '4px' }}>Your Email Address</label>
-                        <p style={{ fontSize: '0.78rem', color: '#60a5fa', margin: '0 0 8px 0', lineHeight: '1.4' }}>
-                          💡 Please give your correct email so we can contact you and notify you once the problem you reported is fixed or the feature is developed!
+                      <div className="select-group" style={{ marginBottom: isMobile ? '0.75rem' : '1.2rem' }}>
+                        <label style={{ fontSize: '0.9rem', color: 'var(--text-primary)', fontWeight: 600, display: 'block', marginBottom: '4px' }}>Your Email Address</label>
+                        <p style={{ fontSize: '0.75rem', color: '#0284c7', margin: '0 0 6px 0', lineHeight: '1.4' }}>
+                          💡 We will contact you once your feedback/request is updated!
                         </p>
                         <input 
-                          type="email"
+                          type="email" 
                           className="styled-input" 
-                          style={{ width: '100%', padding: '0.65rem 0.85rem', fontSize: '0.95rem', borderRadius: '8px', border: '1px solid var(--glass-border)', background: 'rgba(0,0,0,0.2)', color: '#fff' }} 
+                          style={{ width: '100%', padding: '0.65rem 0.85rem', fontSize: '1rem', borderRadius: '8px', border: '1px solid var(--glass-border)', background: 'var(--glass-bg)', color: 'var(--text-primary)', boxSizing: 'border-box' }} 
                           placeholder="name@example.com" 
                           value={feedbackEmail} 
                           onChange={e => setFeedbackEmail(e.target.value)}
@@ -5772,8 +6056,8 @@ function App() {
 
                   {/* Quick Topics & Suggestions */}
                   <div style={{ marginBottom: '0.6rem' }}>
-                    <span style={{ fontSize: '0.8rem', color: 'var(--text-secondary)', display: 'block', marginBottom: '6px' }}>💡 Quick topics to add:</span>
-                    <div style={{ display: 'flex', gap: '6px', flexWrap: 'wrap' }}>
+                    <span style={{ fontSize: '0.78rem', color: 'var(--text-secondary)', display: 'block', marginBottom: '5px' }}>💡 Quick topics to add:</span>
+                    <div style={{ display: 'flex', gap: '5px', flexWrap: 'wrap' }}>
                       {[
                         { text: '✨ AI Accuracy & Explanations', cat: 'AI Assistant / Bot' },
                         { text: '💧 AI Transparency & Motion', cat: 'AI Assistant / Bot' },
@@ -5794,9 +6078,9 @@ function App() {
                             background: 'rgba(56, 189, 248, 0.12)',
                             border: '1px solid rgba(56, 189, 248, 0.3)',
                             color: '#38bdf8',
-                            borderRadius: '8px',
-                            padding: '3px 8px',
-                            fontSize: '0.74rem',
+                            borderRadius: '6px',
+                            padding: '3px 7px',
+                            fontSize: '0.72rem',
                             cursor: 'pointer',
                             transition: 'all 0.15s'
                           }}
@@ -5810,11 +6094,25 @@ function App() {
                   </div>
 
                   {/* Comment box */}
-                  <div className="select-group" style={{ marginBottom: '1.2rem' }}>
-                    <label style={{ fontSize: '0.95rem', color: 'var(--text-primary)', fontWeight: 600, display: 'block', marginBottom: '6px' }}>Your Message</label>
+                  <div className="select-group" style={{ marginBottom: isMobile ? '0.75rem' : '1.2rem' }}>
+                    <label style={{ fontSize: '0.9rem', color: 'var(--text-primary)', fontWeight: 600, display: 'block', marginBottom: '6px' }}>Your Message</label>
                     <textarea 
                       className="styled-input" 
-                      style={{ width: '100%', height: '90px', resize: 'none', padding: '0.65rem 0.85rem', fontFamily: 'sans-serif', fontSize: '0.95rem', borderRadius: '8px', border: '1px solid var(--glass-border)', background: 'rgba(0,0,0,0.2)', color: '#fff' }} 
+                      style={{ 
+                        width: '100%', 
+                        minHeight: isMobile ? '150px' : '110px', 
+                        height: isMobile ? '160px' : '120px', 
+                        resize: 'vertical', 
+                        padding: '0.75rem 0.85rem', 
+                        fontFamily: 'inherit', 
+                        fontSize: '1rem', 
+                        borderRadius: '10px', 
+                        border: '1px solid var(--glass-border)', 
+                        background: 'rgba(0,0,0,0.25)', 
+                        color: '#fff',
+                        lineHeight: '1.5',
+                        boxSizing: 'border-box'
+                      }} 
                       placeholder="Tell us your feedback about the AI Mentor, Visualizers, DSA study notes, or features you want..." 
                       value={feedbackText} 
                       onChange={e => setFeedbackText(e.target.value)} 
@@ -5830,7 +6128,7 @@ function App() {
 
                 <button 
                   className="btn btn-start" 
-                  style={{ width: '100%', marginTop: '0.75rem', padding: '0.85rem', borderRadius: '12px', fontSize: '1.05rem', fontWeight: 'bold', border: 'none', cursor: isFeedbackVerifyingOtp ? 'not-allowed' : 'pointer', background: 'linear-gradient(135deg, var(--accent-primary), var(--accent-secondary))', color: 'white', flexShrink: 0 }} 
+                  style={{ width: '100%', marginTop: '0.5rem', padding: '0.85rem', borderRadius: '12px', fontSize: '1.05rem', fontWeight: 'bold', border: 'none', cursor: isFeedbackVerifyingOtp ? 'not-allowed' : 'pointer', background: 'linear-gradient(135deg, var(--accent-primary), var(--accent-secondary))', color: 'white', flexShrink: 0 }} 
                   onClick={submitDirectFeedback}
                   disabled={isFeedbackVerifyingOtp}
                 >
@@ -5925,7 +6223,7 @@ function App() {
                   <input 
                     type="password" 
                     className="styled-input" 
-                    style={{ width: '100%', padding: '0.65rem 0.85rem', fontSize: '1rem', borderRadius: '8px', border: '1px solid var(--glass-border)', background: 'rgba(0,0,0,0.2)', color: '#fff', textAlign: 'center', letterSpacing: '4px' }} 
+                    style={{ width: '100%', padding: '0.65rem 0.85rem', fontSize: '1rem', borderRadius: '8px', border: '1px solid var(--glass-border)', background: 'var(--glass-bg)', color: 'var(--text-primary)', textAlign: 'center', letterSpacing: '4px' }} 
                     placeholder="••••" 
                     value={adminPinInput} 
                     onChange={e => setAdminPinInput(e.target.value)} 
@@ -5972,7 +6270,7 @@ function App() {
                   )}
                   <button 
                     className="btn btn-clear" 
-                    style={{ padding: '0.5rem 1.2rem', fontSize: '0.85rem', borderColor: 'rgba(59,130,246,0.3)', color: '#60a5fa', background: 'rgba(59,130,246,0.08)', display: 'flex', alignItems: 'center', gap: '5px' }} 
+                    style={{ padding: '0.5rem 1.2rem', fontSize: '0.85rem', borderColor: 'var(--accent-primary)', color: 'var(--accent-primary)', background: 'rgba(59,130,246,0.08)', display: 'flex', alignItems: 'center', gap: '5px' }} 
                     onClick={() => fetchAdminFeedbacks(adminPinInput.trim() || 'Irctc@11')}
                   >
                     🔄 Refresh
@@ -6001,7 +6299,7 @@ function App() {
                     }
 
                     return filtered.map((log, idx) => (
-                      <div key={log.id || idx} style={{ background: 'rgba(255,255,255,0.03)', border: '1px solid var(--glass-border)', borderRadius: '10px', padding: '1rem', display: 'flex', flexDirection: 'column', gap: '0.5rem' }}>
+                      <div key={log.id || idx} style={{ background: 'var(--glass-bg)', border: '1px solid var(--glass-border)', borderRadius: '10px', padding: '1rem', display: 'flex', flexDirection: 'column', gap: '0.5rem' }}>
                         <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', flexWrap: 'wrap', gap: '5px' }}>
                           <span style={{ fontSize: '0.85rem', color: 'var(--accent-primary)', fontWeight: 'bold', fontFamily: 'monospace' }}>
                             {log.email}
@@ -6012,16 +6310,16 @@ function App() {
                         </div>
 
                         <div style={{ display: 'flex', gap: '10px', alignItems: 'center', flexWrap: 'wrap' }}>
-                          <span style={{ fontSize: '0.78rem', background: log.category === 'Bug Report' ? 'rgba(239,68,68,0.15)' : 'rgba(59,130,246,0.15)', border: `1px solid ${log.category === 'Bug Report' ? '#ef4444' : '#3b82f6'}`, color: log.category === 'Bug Report' ? '#f87171' : '#60a5fa', padding: '2px 8px', borderRadius: '12px', fontWeight: 'bold' }}>
+                          <span style={{ fontSize: '0.78rem', background: log.category === 'Bug Report' ? 'rgba(239,68,68,0.15)' : 'rgba(59,130,246,0.15)', border: `1px solid ${log.category === 'Bug Report' ? '#ef4444' : '#3b82f6'}`, color: log.category === 'Bug Report' ? '#dc2626' : 'var(--accent-primary)', padding: '2px 8px', borderRadius: '12px', fontWeight: 'bold' }}>
                             {log.category}
                           </span>
-                          <span style={{ color: '#fbbf24', fontSize: '1rem' }}>
+                          <span style={{ color: '#d97706', fontSize: '1rem' }}>
                             {'★'.repeat(log.rating || 5)}{'☆'.repeat(5 - (log.rating || 5))}
                           </span>
                         </div>
 
                         {log.feedback_text && (
-                          <p style={{ color: 'var(--text-primary)', fontSize: '0.88rem', margin: '4px 0 0 0', lineHeight: '1.45', whiteSpace: 'pre-wrap', background: 'rgba(0,0,0,0.15)', padding: '0.6rem 0.8rem', borderRadius: '6px', borderLeft: '3px solid var(--glass-border)' }}>
+                          <p style={{ color: 'var(--text-primary)', fontSize: '0.88rem', margin: '4px 0 0 0', lineHeight: '1.45', whiteSpace: 'pre-wrap', background: 'var(--glass-bg)', padding: '0.6rem 0.8rem', borderRadius: '6px', borderLeft: '3px solid var(--accent-primary)' }}>
                             {log.feedback_text}
                           </p>
                         )}
@@ -6034,14 +6332,14 @@ function App() {
                 <div style={{ display: 'flex', gap: '0.75rem', marginTop: '1.2rem', paddingTop: '1rem', borderTop: '1px solid var(--glass-border)', flexShrink: 0 }}>
                   <button 
                     className="btn btn-clear" 
-                    style={{ flex: 1, borderColor: '#ef4444', color: '#f87171', background: 'rgba(239,68,68,0.05)', fontSize: '0.85rem' }} 
+                    style={{ flex: 1, borderColor: '#ef4444', color: '#dc2626', background: 'rgba(239,68,68,0.05)', fontSize: '0.85rem' }} 
                     onClick={clearAdminFeedbacks}
                   >
                     🗑️ Clear Database Logs
                   </button>
                   <button 
                     className="btn btn-clear" 
-                    style={{ flex: 1, borderColor: 'var(--accent-primary)', color: '#60a5fa', background: 'rgba(59,130,246,0.05)', fontSize: '0.85rem' }} 
+                    style={{ flex: 1, borderColor: 'var(--accent-primary)', color: 'var(--accent-primary)', background: 'rgba(59,130,246,0.05)', fontSize: '0.85rem' }} 
                     onClick={() => {
                       const blob = new Blob([JSON.stringify(adminFeedbacksList, null, 2)], { type: 'application/json' });
                       const url = URL.createObjectURL(blob);

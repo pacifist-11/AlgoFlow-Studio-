@@ -481,7 +481,7 @@ const BASE_CURRICULUM_KNOWLEDGE = [
   },
   {
     topic: "Array & Matrix Algorithms: 2D Manipulations, Two Pointers, Prefix Sum & Sliding Window",
-    keywords: ["arrays in java", "memory representation of arrays", "2d arrays", "matrix manipulation", "matrix transpose", "matrix rotation", "two-pointer technique", "prefix sum", "sliding window", "searching and sorting techniques"],
+    keywords: ["arrays in java", "memory representation of arrays", "2d arrays", "matrix manipulation", "matrix transpose", "matrix rotation", "two-pointer technique", "prefix sum", "sliding window", "2d matrix operations"],
     summary: "Array memory representation, matrix operations (transpose, 90-degree rotation, diagonals), and optimal algorithmic techniques: Two Pointers, Prefix Sums, and Sliding Window.",
     primaryLang: "Java / C++ / DSA",
     placementDemand: "High-Frequency Coding Rounds (LeetCode / HackerRank)",
@@ -3797,6 +3797,32 @@ When a record is inserted into a full bucket:
    * The overflowing bucket splits, and its local depth becomes $d + 1$.
 * **Key Advantage:** Fast $O(1)$ lookups requiring at most 2 disk accesses (1 for directory, 1 for data block), with minimal rehashing!`,
       sources: ['Database System Implementation (Garcia-Molina/Ullman/Widom)', 'Extendible Hashing Architecture']
+    };
+  }
+
+  if (lower.includes('pythontutor') || lower.includes('python tutor') || lower.includes('line by line debugger') || (lower.includes('debugger') && lower.includes('restriction'))) {
+    return {
+      text: `### 🐞 Python Tutor & Line-by-Line Debugger Constraints & Auto-Fixes
+
+AlgoFlow Studio automatically preprocesses and optimizes code before sending it to Python Tutor. Here is how Python Tutor's restrictions work and how to handle them:
+
+---
+
+#### 1. Core Python Tutor Restrictions:
+* **Java Entrypoint Requirement:** Java code must contain a \`public class Main\` with \`public static void main(String[] args)\`. Sibling top-level classes must be non-public or declared as \`static class\` inside \`Main\`.
+* **Empty \`main\` Method:** If \`main()\` contains only comments or no executable statements, Python Tutor creates 0 execution steps and cannot visualize.
+* **Code Size Limit:** The total URL-encoded payload must be under **5,500 bytes**.
+* **Step Count Limit:** Cloud execution terminates if an infinite loop or heavy loop exceeds **1,000 steps**.
+* **Unsupported Libraries:** Third-party modules (\`numpy\`, \`pandas\`, \`javax.swing\`, \`java.io.File\`, multithreading \`<thread>\`, \`pthread\`) are disabled in cloud tracing sandboxes.
+
+---
+
+#### 2. Automatic Fixes Applied by AlgoFlow:
+1. **Multi-class Java Support:** AlgoFlow automatically converts sibling helper classes into non-public classes or static nested classes under \`public class Main\`.
+2. **Auto-Populating \`main()\`:** If \`main()\` is empty, AlgoFlow automatically injects sample driver calls (e.g. instantiating the class and running operations) so execution steps are immediately visible.
+3. **4-Space Tab Indentation:** The code editor supports 4-space indent on \`Tab\` and unindent on \`Shift + Tab\` to prevent Python \`IndentationError\` and \`TabError\`.
+4. **Sandboxed Code Runner Fallback:** If code uses external packages or complex I/O, switch to AlgoFlow's Sandboxed Code Runner for full terminal output!`,
+      sources: ['AlgoFlow Execution Engine & PythonTutor Architecture']
     };
   }
 

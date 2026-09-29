@@ -163,12 +163,12 @@ Ask any custom question, or pick a preset topic on the left to start!`,
 
   return (
     <div style={{
-      background: `rgba(15, 23, 42, ${studioOpacity})`,
+      background: 'var(--glass-bg)',
       borderRadius: '18px',
-      border: '1.5px solid rgba(56, 189, 248, 0.35)',
+      border: '1.5px solid var(--glass-border)',
       padding: '24px',
-      color: '#e2e8f0',
-      boxShadow: '0 20px 40px rgba(0, 0, 0, 0.6)',
+      color: 'var(--text-primary)',
+      boxShadow: '0 20px 40px rgba(0, 0, 0, 0.2)',
       display: 'flex',
       flexDirection: 'column',
       gap: '20px',
@@ -177,28 +177,29 @@ Ask any custom question, or pick a preset topic on the left to start!`,
     }}>
       {/* Main Studio Banner */}
       <div style={{
-        background: 'linear-gradient(135deg, rgba(30, 41, 59, 0.95) 0%, rgba(15, 23, 42, 0.95) 100%)',
+        background: 'var(--bg-secondary)',
         borderRadius: '14px',
         padding: '20px 22px',
-        border: '1px solid rgba(255, 255, 255, 0.08)',
+        border: '1px solid var(--glass-border)',
         display: 'flex',
         justifyContent: 'space-between',
         alignItems: 'center',
         flexWrap: 'wrap',
-        gap: '16px'
+        gap: '16px',
+        boxShadow: '0 8px 24px rgba(0,0,0,0.08)'
       }}>
         <div style={{ display: 'flex', alignItems: 'center', gap: '14px' }}>
           <CalmAiAvatar size={38} />
           <div>
             <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
-              <h2 style={{ margin: 0, fontSize: '22px', fontWeight: '800', color: '#38bdf8' }}>
+              <h2 style={{ margin: 0, fontSize: '22px', fontWeight: '800', color: 'var(--accent-primary)' }}>
                 AlgoFlow AI Mentor Studio
               </h2>
               <span style={{
                 fontSize: '11px',
-                background: (apiKey || getActiveGeminiApiKey()) ? 'rgba(56, 189, 248, 0.15)' : 'rgba(74, 222, 128, 0.15)',
-                color: (apiKey || getActiveGeminiApiKey()) ? '#38bdf8' : '#4ade80',
-                border: `1px solid ${(apiKey || getActiveGeminiApiKey()) ? 'rgba(56, 189, 248, 0.4)' : 'rgba(74, 222, 128, 0.3)'}`,
+                background: (apiKey || getActiveGeminiApiKey()) ? 'rgba(56, 189, 248, 0.15)' : 'rgba(5, 150, 105, 0.15)',
+                color: (apiKey || getActiveGeminiApiKey()) ? 'var(--accent-primary)' : '#059669',
+                border: `1px solid ${(apiKey || getActiveGeminiApiKey()) ? 'rgba(56, 189, 248, 0.4)' : 'rgba(5, 150, 105, 0.3)'}`,
                 padding: '2px 8px',
                 borderRadius: '12px',
                 fontWeight: 'bold',
@@ -210,9 +211,9 @@ Ask any custom question, or pick a preset topic on the left to start!`,
               </span>
               <span style={{
                 fontSize: '11px',
-                background: 'linear-gradient(135deg, rgba(245, 158, 11, 0.25) 0%, rgba(217, 119, 6, 0.25) 100%)',
-                color: '#fbbf24',
-                border: '1px solid rgba(251, 191, 36, 0.6)',
+                background: 'linear-gradient(135deg, rgba(217, 119, 6, 0.2) 0%, rgba(245, 158, 11, 0.2) 100%)',
+                color: '#d97706',
+                border: '1px solid rgba(217, 119, 6, 0.5)',
                 padding: '2px 8px',
                 borderRadius: '12px',
                 fontWeight: 'bold',
@@ -222,7 +223,7 @@ Ask any custom question, or pick a preset topic on the left to start!`,
                 Beta Version
               </span>
             </div>
-            <p style={{ margin: '4px 0 0 0', color: '#94a3b8', fontSize: '13px' }}>
+            <p style={{ margin: '4px 0 0 0', color: 'var(--text-secondary)', fontSize: '13px' }}>
               Ground-truth RAG knowledge over 16 B.Tech branches, 8 languages, Core CS & placement transitions.
             </p>
           </div>
@@ -233,13 +234,13 @@ Ask any custom question, or pick a preset topic on the left to start!`,
           display: 'flex',
           alignItems: 'center',
           gap: '10px',
-          background: `rgba(15, 23, 42, ${Math.max(studioOpacity * 0.8, 0.3)})`,
+          background: 'var(--glass-bg)',
           padding: '6px 14px',
           borderRadius: '10px',
-          border: '1px solid rgba(56, 189, 248, 0.35)',
+          border: '1px solid var(--glass-border)',
           backdropFilter: 'blur(8px)'
         }}>
-          <span style={{ fontSize: '12px', color: '#38bdf8', fontWeight: 'bold', display: 'flex', alignItems: 'center', gap: '4px', textShadow: '0 1px 2px rgba(0,0,0,0.8)' }}>
+          <span style={{ fontSize: '12px', color: 'var(--accent-primary)', fontWeight: 'bold', display: 'flex', alignItems: 'center', gap: '4px' }}>
             💧 Opacity:
           </span>
           <input
@@ -249,9 +250,9 @@ Ask any custom question, or pick a preset topic on the left to start!`,
             step="0.05"
             value={studioOpacity}
             onChange={handleOpacityChange}
-            style={{ width: '90px', accentColor: '#38bdf8', cursor: 'pointer' }}
+            style={{ width: '90px', accentColor: 'var(--accent-primary)', cursor: 'pointer' }}
           />
-          <span style={{ fontSize: '11.5px', color: '#f8fafc', fontWeight: 'bold', minWidth: '32px', textShadow: '0 1px 2px rgba(0,0,0,0.8)' }}>
+          <span style={{ fontSize: '11.5px', color: 'var(--text-primary)', fontWeight: 'bold', minWidth: '32px' }}>
             {Math.round(studioOpacity * 100)}%
           </span>
         </div>
@@ -264,8 +265,8 @@ Ask any custom question, or pick a preset topic on the left to start!`,
         <div style={{ display: 'flex', flexDirection: 'column', gap: '16px' }}>
           
           {/* Quick Presets */}
-          <div style={{ background: '#0f172a', padding: '16px', borderRadius: '12px', border: '1px solid #334155' }}>
-            <h4 style={{ margin: '0 0 10px 0', fontSize: '14.5px', color: '#38bdf8', display: 'flex', alignItems: 'center', gap: '6px' }}>
+          <div style={{ background: 'var(--bg-secondary)', padding: '16px', borderRadius: '12px', border: '1px solid var(--glass-border)' }}>
+            <h4 style={{ margin: '0 0 10px 0', fontSize: '14.5px', color: 'var(--accent-primary)', display: 'flex', alignItems: 'center', gap: '6px' }}>
               <span>⚡</span> Curated Knowledge Presets
             </h4>
 
@@ -280,9 +281,9 @@ Ask any custom question, or pick a preset topic on the left to start!`,
                     style={{
                       padding: '4px 8px',
                       borderRadius: '6px',
-                      border: isSelected ? '1.5px solid #38bdf8' : '1px solid #334155',
-                      background: isSelected ? '#0284c7' : '#1e293b',
-                      color: isSelected ? '#fff' : '#94a3b8',
+                      border: isSelected ? '1.5px solid var(--accent-primary)' : '1px solid var(--glass-border)',
+                      background: isSelected ? 'var(--accent-primary)' : 'var(--glass-bg)',
+                      color: isSelected ? '#fff' : 'var(--text-secondary)',
                       fontSize: '11px',
                       fontWeight: isSelected ? 'bold' : 'normal',
                       cursor: 'pointer',
@@ -301,11 +302,11 @@ Ask any custom question, or pick a preset topic on the left to start!`,
                   key={idx}
                   onClick={() => handleSend(pq.query)}
                   style={{
-                    background: 'rgba(30, 41, 59, 0.7)',
-                    border: '1px solid #334155',
+                    background: 'var(--glass-bg)',
+                    border: '1px solid var(--glass-border)',
                     borderRadius: '8px',
                     padding: '10px 12px',
-                    color: '#e2e8f0',
+                    color: 'var(--text-secondary)',
                     textAlign: 'left',
                     fontSize: '12.5px',
                     cursor: 'pointer',
@@ -315,42 +316,42 @@ Ask any custom question, or pick a preset topic on the left to start!`,
                     gap: '2px'
                   }}
                   onMouseEnter={e => {
-                    e.currentTarget.style.borderColor = '#38bdf8';
+                    e.currentTarget.style.borderColor = 'var(--accent-primary)';
                     e.currentTarget.style.background = 'rgba(56, 189, 248, 0.1)';
                   }}
                   onMouseLeave={e => {
-                    e.currentTarget.style.borderColor = '#334155';
-                    e.currentTarget.style.background = 'rgba(30, 41, 59, 0.7)';
+                    e.currentTarget.style.borderColor = 'var(--glass-border)';
+                    e.currentTarget.style.background = 'var(--glass-bg)';
                   }}
                 >
-                  <strong style={{ color: '#38bdf8' }}>{pq.title}</strong>
-                  <span style={{ fontSize: '11.5px', color: '#94a3b8' }}>{pq.query}</span>
+                  <strong style={{ color: 'var(--accent-primary)' }}>{pq.title}</strong>
+                  <span style={{ fontSize: '11.5px', color: 'var(--text-secondary)' }}>{pq.query}</span>
                 </button>
               ))}
             </div>
           </div>
 
           {/* RAG Retrieved Context Inspector */}
-          <div style={{ background: '#0f172a', padding: '16px', borderRadius: '12px', border: '1px solid rgba(56, 189, 248, 0.3)' }}>
+          <div style={{ background: 'var(--bg-secondary)', padding: '16px', borderRadius: '12px', border: '1px solid var(--glass-border)' }}>
             <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '8px' }}>
-              <h4 style={{ margin: 0, fontSize: '13.5px', color: '#10b981', display: 'flex', alignItems: 'center', gap: '6px' }}>
+              <h4 style={{ margin: 0, fontSize: '13.5px', color: '#059669', display: 'flex', alignItems: 'center', gap: '6px' }}>
                 <span>🔍</span> Live RAG Context Inspector
               </h4>
-              <span style={{ fontSize: '11px', color: '#94a3b8' }}>
+              <span style={{ fontSize: '11px', color: 'var(--text-secondary)' }}>
                 {retrievedContextInspector.length} chunks retrieved
               </span>
             </div>
 
             {retrievedContextInspector.length === 0 ? (
-              <p style={{ margin: 0, fontSize: '12px', color: '#64748b' }}>
+              <p style={{ margin: 0, fontSize: '12px', color: 'var(--text-secondary)' }}>
                 Ask a question to see real-time semantic document chunks retrieved from the AlgoFlow Knowledge Base!
               </p>
             ) : (
               <div style={{ display: 'flex', flexDirection: 'column', gap: '8px' }}>
                 {retrievedContextInspector.map((doc, idx) => (
-                  <div key={idx} style={{ background: '#1e293b', padding: '10px', borderRadius: '6px', borderLeft: '3px solid #10b981' }}>
-                    <strong style={{ fontSize: '12px', color: '#f8fafc', display: 'block' }}>{doc.topic}</strong>
-                    <p style={{ margin: '4px 0 0 0', fontSize: '11px', color: '#cbd5e1', lineHeight: '1.4' }}>
+                  <div key={idx} style={{ background: 'var(--glass-bg)', padding: '10px', borderRadius: '6px', borderLeft: '3px solid #059669' }}>
+                    <strong style={{ fontSize: '12px', color: 'var(--text-primary)', display: 'block' }}>{doc.topic}</strong>
+                    <p style={{ margin: '4px 0 0 0', fontSize: '11px', color: 'var(--text-secondary)', lineHeight: '1.4' }}>
                       {doc.summary}
                     </p>
                   </div>
@@ -363,9 +364,9 @@ Ask any custom question, or pick a preset topic on the left to start!`,
 
         {/* Right Column: Interactive Chat Interface */}
         <div style={{
-          background: '#0f172a',
+          background: 'var(--bg-secondary)',
           borderRadius: '14px',
-          border: '1px solid #334155',
+          border: '1px solid var(--glass-border)',
           display: 'flex',
           flexDirection: 'column',
           height: '620px'
@@ -396,12 +397,12 @@ Ask any custom question, or pick a preset topic on the left to start!`,
                   <div style={{
                     padding: '14px 18px',
                     borderRadius: isUser ? '16px 16px 2px 16px' : '16px 16px 16px 2px',
-                    background: isUser ? 'linear-gradient(135deg, #0284c7, #0369a1)' : '#0f172a',
-                    color: '#f8fafc',
+                    background: isUser ? 'linear-gradient(135deg, #0284c7, #0369a1)' : 'var(--glass-bg)',
+                    color: isUser ? '#f8fafc' : 'var(--text-primary)',
                     fontSize: '13px',
                     lineHeight: '1.5',
-                    border: isUser ? 'none' : '1px solid #334155',
-                    boxShadow: '0 4px 15px rgba(0,0,0,0.3)',
+                    border: isUser ? 'none' : '1px solid var(--glass-border)',
+                    boxShadow: '0 4px 15px rgba(0,0,0,0.1)',
                     wordBreak: 'break-word'
                   }}>
                     <ChatMessageRenderer text={m.text} isUser={isUser} onSelectPrompt={handleSend} />
@@ -412,9 +413,9 @@ Ask any custom question, or pick a preset topic on the left to start!`,
                       marginTop: '6px',
                       padding: '4px 10px',
                       borderRadius: '8px',
-                      background: 'rgba(245, 158, 11, 0.12)',
-                      border: '1px solid rgba(245, 158, 11, 0.35)',
-                      color: '#fcd34d',
+                      background: 'rgba(217, 119, 6, 0.12)',
+                      border: '1px solid rgba(217, 119, 6, 0.35)',
+                      color: '#d97706',
                       fontSize: '10.5px',
                       display: 'flex',
                       alignItems: 'center',
@@ -427,16 +428,16 @@ Ask any custom question, or pick a preset topic on the left to start!`,
 
                   {!isUser && m.sources && m.sources.length > 0 && (
                     <div style={{ display: 'flex', gap: '6px', flexWrap: 'wrap', marginTop: '4px' }}>
-                      <span style={{ fontSize: '10px', color: '#94a3b8' }}>Grounding Sources:</span>
+                      <span style={{ fontSize: '10px', color: 'var(--text-secondary)' }}>Grounding Sources:</span>
                       {m.sources.map((s, idx) => (
-                        <span key={idx} style={{ fontSize: '10px', color: '#38bdf8', background: 'rgba(56,189,248,0.12)', padding: '2px 6px', borderRadius: '4px' }}>
+                        <span key={idx} style={{ fontSize: '10px', color: 'var(--accent-primary)', background: 'rgba(56,189,248,0.12)', padding: '2px 6px', borderRadius: '4px' }}>
                           {s}
                         </span>
                       ))}
                     </div>
                   )}
 
-                  <span style={{ fontSize: '10px', color: '#64748b', marginTop: '3px' }}>
+                  <span style={{ fontSize: '10px', color: 'var(--text-secondary)', marginTop: '3px' }}>
                     {m.timestamp}
                   </span>
                 </div>
@@ -446,16 +447,16 @@ Ask any custom question, or pick a preset topic on the left to start!`,
             {isLoading && (
               <div style={{
                 alignSelf: 'flex-start',
-                background: 'linear-gradient(135deg, rgba(15, 23, 42, 0.95) 0%, rgba(30, 41, 59, 0.9) 100%)',
+                background: 'var(--glass-bg)',
                 padding: '14px 20px',
                 borderRadius: '16px 16px 16px 3px',
-                color: '#38bdf8',
+                color: 'var(--accent-primary)',
                 fontSize: '13px',
                 display: 'flex',
                 flexDirection: 'column',
                 gap: '8px',
-                border: '1.5px solid rgba(56, 189, 248, 0.4)',
-                boxShadow: '0 4px 16px rgba(0,0,0,0.4)'
+                border: '1.5px solid var(--glass-border)',
+                boxShadow: '0 4px 16px rgba(0,0,0,0.1)'
               }}>
                 <div style={{ display: 'flex', alignItems: 'center', gap: '8px', fontWeight: 'bold' }}>
                   <span style={{ animation: 'spin 1.2s linear infinite' }}>⚡</span>
@@ -479,16 +480,16 @@ Ask any custom question, or pick a preset topic on the left to start!`,
           {/* Edge-Cutting Multi-Line Input Box */}
           <div style={{
             padding: '14px 16px',
-            background: 'rgba(15, 23, 42, 0.95)',
-            borderTop: '1px solid #334155'
+            background: 'var(--glass-bg)',
+            borderTop: '1px solid var(--glass-border)'
           }}>
             <div style={{
               borderRadius: '16px',
-              background: '#1e293b',
-              border: isInputFocused ? '1.5px solid #38bdf8' : '1.5px solid #475569',
+              background: 'var(--bg-secondary)',
+              border: isInputFocused ? '1.5px solid var(--accent-primary)' : '1.5px solid var(--glass-border)',
               boxShadow: isInputFocused 
                 ? '0 0 16px rgba(56, 189, 248, 0.22), inset 0 1px 2px rgba(255,255,255,0.06)' 
-                : '0 2px 8px rgba(0, 0, 0, 0.35)',
+                : '0 2px 8px rgba(0, 0, 0, 0.1)',
               transition: 'border-color 0.2s ease, box-shadow 0.2s ease',
               display: 'flex',
               flexDirection: 'column',
@@ -512,7 +513,7 @@ Ask any custom question, or pick a preset topic on the left to start!`,
                   border: 'none',
                   outline: 'none',
                   background: 'transparent',
-                  color: '#f8fafc',
+                  color: 'var(--text-primary)',
                   fontSize: '13px',
                   lineHeight: '1.5',
                   fontFamily: '-apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif',
@@ -528,32 +529,32 @@ Ask any custom question, or pick a preset topic on the left to start!`,
                 alignItems: 'center',
                 justifyContent: 'space-between',
                 paddingTop: '6px',
-                borderTop: '1px solid rgba(255, 255, 255, 0.08)'
+                borderTop: '1px solid var(--glass-border)'
               }}>
                 <div style={{ display: 'flex', alignItems: 'center', gap: '5px' }}>
                   <span style={{
                     fontSize: '11px',
-                    color: '#64748b',
+                    color: 'var(--text-secondary)',
                     display: 'flex',
                     alignItems: 'center',
                     gap: '4px'
                   }}>
                     <kbd style={{
-                      background: 'rgba(255, 255, 255, 0.08)',
-                      border: '1px solid rgba(255, 255, 255, 0.15)',
+                      background: 'var(--glass-bg)',
+                      border: '1px solid var(--glass-border)',
                       borderRadius: '4px',
                       padding: '1px 5px',
                       fontSize: '10px',
-                      color: '#94a3b8'
+                      color: 'var(--text-secondary)'
                     }}>↵ Enter</kbd> send
                     <span style={{ margin: '0 3px' }}>•</span>
                     <kbd style={{
-                      background: 'rgba(255, 255, 255, 0.08)',
-                      border: '1px solid rgba(255, 255, 255, 0.15)',
+                      background: 'var(--glass-bg)',
+                      border: '1px solid var(--glass-border)',
                       borderRadius: '4px',
                       padding: '1px 5px',
                       fontSize: '10px',
-                      color: '#94a3b8'
+                      color: 'var(--text-secondary)'
                     }}>Shift+↵</kbd> next line
                   </span>
                 </div>
@@ -565,8 +566,8 @@ Ask any custom question, or pick a preset topic on the left to start!`,
                   style={{
                     padding: '8px 18px',
                     borderRadius: '10px',
-                    background: inputQuery.trim() ? 'linear-gradient(135deg, #0284c7, #38bdf8)' : '#334155',
-                    color: inputQuery.trim() ? '#04101e' : '#94a3b8',
+                    background: inputQuery.trim() ? 'linear-gradient(135deg, #0284c7, #38bdf8)' : 'var(--glass-bg)',
+                    color: inputQuery.trim() ? '#04101e' : 'var(--text-secondary)',
                     fontWeight: '800',
                     border: 'none',
                     cursor: inputQuery.trim() ? 'pointer' : 'default',

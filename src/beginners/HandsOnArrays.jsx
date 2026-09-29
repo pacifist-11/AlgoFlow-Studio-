@@ -49,22 +49,22 @@ export default function HandsOnArrays({ selectedLang: propLang }) {
 
   return (
     <div style={{
-      background: 'rgba(15, 23, 42, 0.75)',
+      background: 'var(--glass-bg)',
       borderRadius: '16px',
-      border: '1px solid rgba(255, 255, 255, 0.1)',
+      border: '1px solid var(--glass-border)',
       padding: '24px',
-      color: '#e2e8f0',
-      boxShadow: '0 20px 25px -5px rgba(0, 0, 0, 0.5)'
+      color: 'var(--text-primary)',
+      boxShadow: '0 20px 25px -5px rgba(0, 0, 0, 0.08)'
     }}>
       {/* Header */}
       <div style={{ marginBottom: '20px' }}>
         <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
           <span style={{ fontSize: '24px' }}>📊</span>
-          <h2 style={{ margin: 0, fontSize: '20px', fontWeight: '700', color: '#38bdf8' }}>
+          <h2 style={{ margin: 0, fontSize: '20px', fontWeight: '700', color: 'var(--accent-primary)' }}>
             Module 2: Arrays & Indexing ("Rows of Memory Boxes")
           </h2>
         </div>
-        <p style={{ margin: '8px 0 0 0', color: '#94a3b8', fontSize: '14px', lineHeight: '1.5' }}>
+        <p style={{ margin: '8px 0 0 0', color: 'var(--text-secondary)', fontSize: '14px', lineHeight: '1.5' }}>
           What if you want to store multiple items (like a music playlist or high scores) under a single name? 
           An <strong>Array</strong> is a row of memory boxes placed side-by-side. 
           Each box has an <strong>Index Number</strong> starting at <code>0</code>!
@@ -80,17 +80,17 @@ export default function HandsOnArrays({ selectedLang: propLang }) {
       }}>
         {/* Form */}
         <div style={{
-          background: 'rgba(30, 41, 59, 0.8)',
+          background: 'var(--bg-secondary)',
           padding: '18px',
           borderRadius: '12px',
-          border: '1px solid rgba(56, 189, 248, 0.2)'
+          border: '1px solid var(--glass-border)'
         }}>
-          <h3 style={{ margin: '0 0 14px 0', fontSize: '15px', color: '#f1f5f9' }}>
+          <h3 style={{ margin: '0 0 14px 0', fontSize: '15px', color: 'var(--text-primary)' }}>
             🎵 Manage Your Array Playlist
           </h3>
 
           <form onSubmit={handleAddItem} style={{ marginBottom: '16px' }}>
-            <label style={{ display: 'block', fontSize: '12px', color: '#cbd5e1', marginBottom: '4px' }}>
+            <label style={{ display: 'block', fontSize: '12px', color: 'var(--text-secondary)', marginBottom: '4px' }}>
               Add a new item to the end of the array:
             </label>
             <div style={{ display: 'flex', gap: '8px' }}>
@@ -103,9 +103,9 @@ export default function HandsOnArrays({ selectedLang: propLang }) {
                   flex: 1,
                   padding: '8px 12px',
                   borderRadius: '6px',
-                  background: '#0f172a',
-                  border: '1px solid #475569',
-                  color: '#fff',
+                  background: 'var(--glass-bg)',
+                  border: '1px solid var(--glass-border)',
+                  color: 'var(--text-primary)',
                   fontSize: '14px'
                 }}
               />
@@ -114,8 +114,8 @@ export default function HandsOnArrays({ selectedLang: propLang }) {
                 style={{
                   padding: '8px 16px',
                   borderRadius: '6px',
-                  background: '#38bdf8',
-                  color: '#0f172a',
+                  background: 'var(--accent-primary)',
+                  color: '#fff',
                   border: 'none',
                   fontWeight: 'bold',
                   cursor: 'pointer'
@@ -127,15 +127,15 @@ export default function HandsOnArrays({ selectedLang: propLang }) {
           </form>
 
           <div style={{
-            background: 'rgba(15, 23, 42, 0.6)',
+            background: 'var(--glass-bg)',
             padding: '12px',
             borderRadius: '8px',
-            border: '1px solid rgba(255, 255, 255, 0.05)'
+            border: '1px solid var(--glass-border)'
           }}>
-            <h4 style={{ margin: '0 0 8px 0', fontSize: '13px', color: '#38bdf8' }}>
+            <h4 style={{ margin: '0 0 8px 0', fontSize: '13px', color: 'var(--accent-primary)' }}>
               💡 Why does indexing start at 0?
             </h4>
-            <p style={{ margin: 0, fontSize: '12px', color: '#94a3b8', lineHeight: '1.4' }}>
+            <p style={{ margin: 0, fontSize: '12px', color: 'var(--text-secondary)', lineHeight: '1.4' }}>
               Index <code>0</code> means <em>"0 steps away from the start of the memory row"</em>. 
               Index <code>1</code> means <em>"1 step away from the start"</em>, and so on.
             </p>
@@ -144,50 +144,50 @@ export default function HandsOnArrays({ selectedLang: propLang }) {
 
         {/* Selected Item Info Box */}
         <div style={{
-          background: 'rgba(30, 41, 59, 0.5)',
+          background: 'var(--bg-secondary)',
           padding: '18px',
           borderRadius: '12px',
-          border: '1px solid rgba(255,255,255,0.05)',
+          border: '1px solid var(--glass-border)',
           display: 'flex',
           flexDirection: 'column',
           justifyContent: 'center'
         }}>
-          <h3 style={{ margin: '0 0 10px 0', fontSize: '14px', color: '#94a3b8' }}>
+          <h3 style={{ margin: '0 0 10px 0', fontSize: '14px', color: 'var(--text-secondary)' }}>
             🔍 Selected Index Inspection:
           </h3>
           {items[selectedIndex] !== undefined ? (
             <div style={{
-              background: '#0f172a',
-              border: '2px solid #38bdf8',
+              background: 'var(--glass-bg)',
+              border: '2px solid var(--accent-primary)',
               borderRadius: '10px',
               padding: '16px',
               textAlign: 'center'
             }}>
-              <div style={{ fontSize: '12px', color: '#64748b', marginBottom: '4px' }}>
-                {arrayName}[<span style={{ color: '#fbbf24', fontWeight: 'bold' }}>{selectedIndex}</span>]
+              <div style={{ fontSize: '12px', color: 'var(--text-secondary)', marginBottom: '4px' }}>
+                {arrayName}[<span style={{ color: '#d97706', fontWeight: 'bold' }}>{selectedIndex}</span>]
               </div>
-              <div style={{ fontSize: '20px', fontWeight: 'bold', color: '#34d399', marginBottom: '8px' }}>
+              <div style={{ fontSize: '20px', fontWeight: 'bold', color: '#059669', marginBottom: '8px' }}>
                 "{items[selectedIndex]}"
               </div>
-              <div style={{ fontSize: '11px', color: '#94a3b8' }}>
+              <div style={{ fontSize: '11px', color: 'var(--text-secondary)' }}>
                 Memory Location: <code>0x7FF00 + ({selectedIndex} × 8 bytes)</code>
               </div>
             </div>
           ) : (
-            <div style={{ color: '#64748b', textAlign: 'center' }}>No index selected</div>
+            <div style={{ color: 'var(--text-secondary)', textAlign: 'center' }}>No index selected</div>
           )}
         </div>
       </div>
 
       {/* Visual Array Row of Boxes */}
       <div style={{
-        background: '#090d16',
+        background: 'var(--bg-secondary)',
         borderRadius: '12px',
         padding: '20px',
         marginBottom: '24px',
-        border: '1px solid rgba(255, 255, 255, 0.1)'
+        border: '1px solid var(--glass-border)'
       }}>
-        <h3 style={{ margin: '0 0 16px 0', fontSize: '14px', color: '#f1f5f9' }}>
+        <h3 style={{ margin: '0 0 16px 0', fontSize: '14px', color: 'var(--text-primary)' }}>
           📦 Interactive Array Memory Row:
         </h3>
 
@@ -205,21 +205,21 @@ export default function HandsOnArrays({ selectedLang: propLang }) {
                 onClick={() => setSelectedIndex(idx)}
                 style={{
                   minWidth: '120px',
-                  background: isSelected ? 'rgba(56, 189, 248, 0.15)' : '#0f172a',
-                  border: isSelected ? '2px solid #38bdf8' : '1px solid #334155',
+                  background: isSelected ? 'rgba(56, 189, 248, 0.15)' : 'var(--glass-bg)',
+                  border: isSelected ? '2px solid var(--accent-primary)' : '1px solid var(--glass-border)',
                   borderRadius: '10px',
                   padding: '12px',
                   cursor: 'pointer',
                   transition: 'all 0.2s ease',
                   textAlign: 'center',
-                  boxShadow: isSelected ? '0 0 15px rgba(56, 189, 248, 0.3)' : 'none'
+                  boxShadow: isSelected ? '0 0 15px rgba(56, 189, 248, 0.25)' : 'none'
                 }}
               >
                 {/* Index Badge */}
                 <div style={{
                   fontSize: '11px',
                   fontWeight: 'bold',
-                  color: isSelected ? '#fbbf24' : '#64748b',
+                  color: isSelected ? '#d97706' : 'var(--text-secondary)',
                   marginBottom: '8px'
                 }}>
                   Index [{idx}]
@@ -229,7 +229,7 @@ export default function HandsOnArrays({ selectedLang: propLang }) {
                 <div style={{
                   fontSize: '13px',
                   fontWeight: 'bold',
-                  color: '#e2e8f0',
+                  color: 'var(--text-primary)',
                   wordBreak: 'break-word',
                   marginBottom: '10px'
                 }}>
@@ -243,8 +243,8 @@ export default function HandsOnArrays({ selectedLang: propLang }) {
                     handleRemoveItem(idx);
                   }}
                   style={{
-                    background: 'rgba(239, 68, 68, 0.2)',
-                    color: '#f87171',
+                    background: 'rgba(239, 68, 68, 0.15)',
+                    color: '#dc2626',
                     border: '1px solid rgba(239, 68, 68, 0.4)',
                     borderRadius: '4px',
                     fontSize: '10px',
@@ -262,13 +262,13 @@ export default function HandsOnArrays({ selectedLang: propLang }) {
 
       {/* Code Snippet & Language Selector */}
       <div style={{
-        background: '#090d16',
+        background: 'var(--bg-secondary)',
         borderRadius: '12px',
         padding: '16px',
-        border: '1px solid rgba(255,255,255,0.1)'
+        border: '1px solid var(--glass-border)'
       }}>
         <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '10px' }}>
-          <span style={{ fontSize: '13px', fontWeight: '600', color: '#94a3b8' }}>
+          <span style={{ fontSize: '13px', fontWeight: '600', color: 'var(--text-secondary)' }}>
             ⚡ Code syntax to create and access this array ({activeLang.toUpperCase()}):
           </span>
         </div>
@@ -276,9 +276,10 @@ export default function HandsOnArrays({ selectedLang: propLang }) {
         <pre style={{
           margin: 0,
           padding: '12px',
-          background: '#020617',
+          background: 'var(--glass-bg)',
+          border: '1px solid var(--glass-border)',
           borderRadius: '8px',
-          color: '#38bdf8',
+          color: 'var(--text-primary)',
           fontFamily: 'Consolas, Monaco, monospace',
           fontSize: '13px',
           lineHeight: '1.6',

@@ -477,22 +477,22 @@ export default function WhyDSAMattersGuide() {
 
   return (
     <div style={{
-      background: 'rgba(15, 23, 42, 0.85)',
+      background: 'var(--glass-bg)',
       borderRadius: '16px',
-      border: '1px solid rgba(56, 189, 248, 0.3)',
+      border: '1px solid var(--glass-border)',
       padding: '24px',
-      color: '#e2e8f0',
-      boxShadow: '0 20px 25px -5px rgba(0, 0, 0, 0.5)'
+      color: 'var(--text-primary)',
+      boxShadow: '0 20px 25px -5px rgba(0, 0, 0, 0.08)'
     }}>
       {/* Header */}
       <div style={{ marginBottom: '20px' }}>
         <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
           <span style={{ fontSize: '28px' }}>🧠</span>
           <div>
-            <h2 style={{ margin: 0, fontSize: '22px', fontWeight: '800', color: '#38bdf8' }}>
+            <h2 style={{ margin: 0, fontSize: '22px', fontWeight: '800', color: 'var(--accent-primary)' }}>
               Module 7: "Why Do Data Structures & Algorithms (DSA) Matter?"
             </h2>
-            <p style={{ margin: '4px 0 0 0', color: '#94a3b8', fontSize: '14px', lineHeight: '1.5' }}>
+            <p style={{ margin: '4px 0 0 0', color: 'var(--text-secondary)', fontSize: '14px', lineHeight: '1.5' }}>
               Learn why choosing the right data structures and algorithms is the difference between a lightning-fast app and a frozen system!
             </p>
           </div>
@@ -512,9 +512,9 @@ export default function WhyDSAMattersGuide() {
             style={{
               padding: '10px 16px',
               borderRadius: '10px',
-              border: activeTab === t.id ? '2px solid #38bdf8' : '1px solid #334155',
-              background: activeTab === t.id ? 'rgba(56, 189, 248, 0.2)' : '#0f172a',
-              color: activeTab === t.id ? '#38bdf8' : '#cbd5e1',
+              border: activeTab === t.id ? '2px solid var(--accent-primary)' : '1px solid var(--glass-border)',
+              background: activeTab === t.id ? 'rgba(56, 189, 248, 0.2)' : 'var(--bg-secondary)',
+              color: activeTab === t.id ? 'var(--accent-primary)' : 'var(--text-primary)',
               fontWeight: 'bold',
               fontSize: '13px',
               cursor: 'pointer',
@@ -528,25 +528,25 @@ export default function WhyDSAMattersGuide() {
 
       {/* TAB 1: COMPLEXITY SIMULATOR */}
       {activeTab === 'simulator' && (
-        <div style={{ background: 'rgba(30, 41, 59, 0.7)', borderRadius: '14px', padding: '20px', border: '1px solid #334155' }}>
-          <h3 style={{ margin: '0 0 12px 0', fontSize: '17px', color: '#fbbf24', display: 'flex', alignItems: 'center', gap: '8px' }}>
+        <div style={{ background: 'var(--bg-secondary)', borderRadius: '14px', padding: '20px', border: '1px solid var(--glass-border)' }}>
+          <h3 style={{ margin: '0 0 12px 0', fontSize: '17px', color: '#d97706', display: 'flex', alignItems: 'center', gap: '8px' }}>
             <span>⚡</span> Visualizing Algorithm Scalability (Big-O Notation)
           </h3>
-          <p style={{ fontSize: '13px', color: '#cbd5e1', margin: '0 0 20px 0', lineHeight: '1.5' }}>
+          <p style={{ fontSize: '13px', color: 'var(--text-secondary)', margin: '0 0 20px 0', lineHeight: '1.5' }}>
             Adjust the dataset size <strong>N</strong> below to see how different algorithms perform as data grows!
           </p>
 
           {/* Slider Input */}
           <div style={{
-            background: '#0f172a',
+            background: 'var(--glass-bg)',
             padding: '16px',
             borderRadius: '12px',
-            border: '1px solid #334155',
+            border: '1px solid var(--glass-border)',
             marginBottom: '24px'
           }}>
             <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '10px' }}>
-              <label style={{ fontWeight: 'bold', color: '#38bdf8', fontSize: '14px' }}>
-                Dataset Size (N): <span style={{ color: '#fbbf24', fontSize: '18px' }}>{n.toLocaleString()} items</span>
+              <label style={{ fontWeight: 'bold', color: 'var(--accent-primary)', fontSize: '14px' }}>
+                Dataset Size (N): <span style={{ color: '#d97706', fontSize: '18px' }}>{n.toLocaleString()} items</span>
               </label>
               <div style={{ display: 'flex', gap: '6px' }}>
                 {[100, 10000, 100000, 1000000].map(val => (
@@ -556,9 +556,9 @@ export default function WhyDSAMattersGuide() {
                     style={{
                       padding: '4px 8px',
                       borderRadius: '6px',
-                      border: '1px solid #334155',
-                      background: n === val ? '#0284c7' : '#1e293b',
-                      color: '#fff',
+                      border: '1px solid var(--glass-border)',
+                      background: n === val ? 'var(--accent-primary)' : 'var(--bg-secondary)',
+                      color: n === val ? '#fff' : 'var(--text-primary)',
                       fontSize: '11px',
                       fontWeight: 'bold',
                       cursor: 'pointer'
@@ -576,78 +576,78 @@ export default function WhyDSAMattersGuide() {
               step="5000"
               value={dataSize}
               onChange={(e) => setDataSize(e.target.value)}
-              style={{ width: '100%', cursor: 'pointer', accentColor: '#38bdf8' }}
+              style={{ width: '100%', cursor: 'pointer', accentColor: 'var(--accent-primary)' }}
             />
           </div>
 
           {/* Bars Comparison */}
           <div style={{ display: 'flex', flexDirection: 'column', gap: '14px' }}>
             {/* O(1) */}
-            <div style={{ background: '#0f172a', padding: '14px', borderRadius: '10px', border: '1px solid #334155' }}>
+            <div style={{ background: 'var(--glass-bg)', padding: '14px', borderRadius: '10px', border: '1px solid var(--glass-border)' }}>
               <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: '6px', fontSize: '13px' }}>
-                <span style={{ fontWeight: 'bold', color: '#34d399' }}>⚡ O(1) - Constant Time (Hash Table Lookup)</span>
-                <span style={{ fontWeight: 'bold', color: '#34d399' }}>{formatSteps(o1Steps)} step</span>
+                <span style={{ fontWeight: 'bold', color: '#059669' }}>⚡ O(1) - Constant Time (Hash Table Lookup)</span>
+                <span style={{ fontWeight: 'bold', color: '#059669' }}>{formatSteps(o1Steps)} step</span>
               </div>
-              <div style={{ background: '#1e293b', height: '10px', borderRadius: '5px', overflow: 'hidden' }}>
-                <div style={{ width: '1%', background: '#34d399', height: '100%' }} />
+              <div style={{ background: 'var(--bg-secondary)', height: '10px', borderRadius: '5px', overflow: 'hidden' }}>
+                <div style={{ width: '1%', background: '#059669', height: '100%' }} />
               </div>
-              <span style={{ fontSize: '11px', color: '#94a3b8', marginTop: '4px', display: 'block' }}>
+              <span style={{ fontSize: '11px', color: 'var(--text-secondary)', marginTop: '4px', display: 'block' }}>
                 Status: 🟢 Instantaneous lookup regardless of dataset size!
               </span>
             </div>
 
             {/* O(log N) */}
-            <div style={{ background: '#0f172a', padding: '14px', borderRadius: '10px', border: '1px solid #334155' }}>
+            <div style={{ background: 'var(--glass-bg)', padding: '14px', borderRadius: '10px', border: '1px solid var(--glass-border)' }}>
               <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: '6px', fontSize: '13px' }}>
-                <span style={{ fontWeight: 'bold', color: '#38bdf8' }}>🚀 O(log N) - Logarithmic (Binary Search)</span>
-                <span style={{ fontWeight: 'bold', color: '#38bdf8' }}>{formatSteps(oLogNSteps)} steps</span>
+                <span style={{ fontWeight: 'bold', color: 'var(--accent-primary)' }}>🚀 O(log N) - Logarithmic (Binary Search)</span>
+                <span style={{ fontWeight: 'bold', color: 'var(--accent-primary)' }}>{formatSteps(oLogNSteps)} steps</span>
               </div>
-              <div style={{ background: '#1e293b', height: '10px', borderRadius: '5px', overflow: 'hidden' }}>
-                <div style={{ width: `${Math.min(100, (oLogNSteps / 30) * 100)}%`, background: '#38bdf8', height: '100%' }} />
+              <div style={{ background: 'var(--bg-secondary)', height: '10px', borderRadius: '5px', overflow: 'hidden' }}>
+                <div style={{ width: `${Math.min(100, (oLogNSteps / 30) * 100)}%`, background: 'var(--accent-primary)', height: '100%' }} />
               </div>
-              <span style={{ fontSize: '11px', color: '#94a3b8', marginTop: '4px', display: 'block' }}>
+              <span style={{ fontSize: '11px', color: 'var(--text-secondary)', marginTop: '4px', display: 'block' }}>
                 Status: 🟢 Blazing fast — halves remaining dataset on every step!
               </span>
             </div>
 
             {/* O(N) */}
-            <div style={{ background: '#0f172a', padding: '14px', borderRadius: '10px', border: '1px solid #334155' }}>
+            <div style={{ background: 'var(--glass-bg)', padding: '14px', borderRadius: '10px', border: '1px solid var(--glass-border)' }}>
               <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: '6px', fontSize: '13px' }}>
-                <span style={{ fontWeight: 'bold', color: '#fbbf24' }}>🏃 O(N) - Linear Time (Unsorted Search)</span>
-                <span style={{ fontWeight: 'bold', color: '#fbbf24' }}>{formatSteps(oNSteps)} steps</span>
+                <span style={{ fontWeight: 'bold', color: '#d97706' }}>🏃 O(N) - Linear Time (Unsorted Search)</span>
+                <span style={{ fontWeight: 'bold', color: '#d97706' }}>{formatSteps(oNSteps)} steps</span>
               </div>
-              <div style={{ background: '#1e293b', height: '10px', borderRadius: '5px', overflow: 'hidden' }}>
-                <div style={{ width: `${Math.min(100, (n / 1000000) * 100)}%`, background: '#fbbf24', height: '100%' }} />
+              <div style={{ background: 'var(--bg-secondary)', height: '10px', borderRadius: '5px', overflow: 'hidden' }}>
+                <div style={{ width: `${Math.min(100, (n / 1000000) * 100)}%`, background: '#d97706', height: '100%' }} />
               </div>
-              <span style={{ fontSize: '11px', color: '#94a3b8', marginTop: '4px', display: 'block' }}>
+              <span style={{ fontSize: '11px', color: 'var(--text-secondary)', marginTop: '4px', display: 'block' }}>
                 Status: 🟡 Acceptable for small N, but degrades linearly as data grows.
               </span>
             </div>
 
             {/* O(N log N) */}
-            <div style={{ background: '#0f172a', padding: '14px', borderRadius: '10px', border: '1px solid #334155' }}>
+            <div style={{ background: 'var(--glass-bg)', padding: '14px', borderRadius: '10px', border: '1px solid var(--glass-border)' }}>
               <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: '6px', fontSize: '13px' }}>
-                <span style={{ fontWeight: 'bold', color: '#a78bfa' }}>📊 O(N log N) - Log-Linear (Merge / Quick Sort)</span>
-                <span style={{ fontWeight: 'bold', color: '#a78bfa' }}>{formatSteps(oNLogNSteps)} steps</span>
+                <span style={{ fontWeight: 'bold', color: '#7c3aed' }}>📊 O(N log N) - Log-Linear (Merge / Quick Sort)</span>
+                <span style={{ fontWeight: 'bold', color: '#7c3aed' }}>{formatSteps(oNLogNSteps)} steps</span>
               </div>
-              <div style={{ background: '#1e293b', height: '10px', borderRadius: '5px', overflow: 'hidden' }}>
-                <div style={{ width: `${Math.min(100, (oNLogNSteps / 20000000) * 100)}%`, background: '#a78bfa', height: '100%' }} />
+              <div style={{ background: 'var(--bg-secondary)', height: '10px', borderRadius: '5px', overflow: 'hidden' }}>
+                <div style={{ width: `${Math.min(100, (oNLogNSteps / 20000000) * 100)}%`, background: '#7c3aed', height: '100%' }} />
               </div>
-              <span style={{ fontSize: '11px', color: '#94a3b8', marginTop: '4px', display: 'block' }}>
+              <span style={{ fontSize: '11px', color: 'var(--text-secondary)', marginTop: '4px', display: 'block' }}>
                 Status: 🟣 Standard algorithm complexity for sorting large datasets efficiently.
               </span>
             </div>
 
             {/* O(N^2) */}
-            <div style={{ background: '#0f172a', padding: '14px', borderRadius: '10px', border: '1px solid #f87171' }}>
+            <div style={{ background: 'var(--glass-bg)', padding: '14px', borderRadius: '10px', border: '1px solid #dc2626' }}>
               <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: '6px', fontSize: '13px' }}>
-                <span style={{ fontWeight: 'bold', color: '#f87171' }}>🐢 O(N²) - Quadratic (Nested Loops / Bubble Sort)</span>
-                <span style={{ fontWeight: 'bold', color: '#f87171' }}>{formatSteps(oN2Steps)} steps</span>
+                <span style={{ fontWeight: 'bold', color: '#dc2626' }}>🐢 O(N²) - Quadratic (Nested Loops / Bubble Sort)</span>
+                <span style={{ fontWeight: 'bold', color: '#dc2626' }}>{formatSteps(oN2Steps)} steps</span>
               </div>
-              <div style={{ background: '#1e293b', height: '10px', borderRadius: '5px', overflow: 'hidden' }}>
-                <div style={{ width: '100%', background: '#ef4444', height: '100%' }} />
+              <div style={{ background: 'var(--bg-secondary)', height: '10px', borderRadius: '5px', overflow: 'hidden' }}>
+                <div style={{ width: '100%', background: '#dc2626', height: '100%' }} />
               </div>
-              <span style={{ fontSize: '11px', color: '#fca5a5', marginTop: '4px', display: 'block' }}>
+              <span style={{ fontSize: '11px', color: '#dc2626', marginTop: '4px', display: 'block' }}>
                 Status: 🔴 DANGER — Unusable for large N! Would freeze or crash your application!
               </span>
             </div>
@@ -893,33 +893,33 @@ export default function WhyDSAMattersGuide() {
             {activeQuestions.map((q, idx) => {
               const selected = userAnswers[q.id];
               const isAnswered = selected !== undefined;
-              const diffColor = q.difficulty === 'Easy' ? '#34d399' : q.difficulty === 'Medium' ? '#fbbf24' : '#f87171';
+              const diffColor = q.difficulty === 'Easy' ? '#059669' : q.difficulty === 'Medium' ? '#d97706' : '#dc2626';
 
               return (
                 <div key={q.id} style={{
-                  background: '#0f172a',
+                  background: 'var(--bg-secondary)',
                   padding: '18px',
                   borderRadius: '12px',
                   border: isAnswered
                     ? selected === q.correct
-                      ? '1px solid rgba(52, 211, 153, 0.4)'
-                      : '1px solid rgba(248, 113, 113, 0.4)'
-                    : '1px solid #334155',
-                  boxShadow: isAnswered && selected === q.correct ? '0 0 15px rgba(52, 211, 153, 0.08)' : 'none'
+                      ? '1.5px solid #059669'
+                      : '1.5px solid #dc2626'
+                    : '1px solid var(--glass-border)',
+                  boxShadow: isAnswered && selected === q.correct ? '0 0 15px rgba(5, 150, 105, 0.12)' : 'none'
                 }}>
                   {/* Question Meta Badges */}
                   <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '8px', flexWrap: 'wrap', gap: '6px' }}>
                     <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
-                      <span style={{ color: '#38bdf8', fontWeight: '800', fontSize: '13px' }}>
+                      <span style={{ color: 'var(--accent-primary)', fontWeight: '800', fontSize: '13px' }}>
                         Question {idx + 1} of {activeQuestions.length}
                       </span>
                       <span style={{
-                        background: 'rgba(255, 255, 255, 0.06)',
-                        color: '#94a3b8',
+                        background: 'var(--glass-bg)',
+                        color: 'var(--text-secondary)',
                         fontSize: '11px',
                         padding: '2px 8px',
                         borderRadius: '4px',
-                        border: '1px solid rgba(255, 255, 255, 0.1)'
+                        border: '1px solid var(--glass-border)'
                       }}>
                         {q.category}
                       </span>
@@ -939,25 +939,25 @@ export default function WhyDSAMattersGuide() {
                   </div>
 
                   {/* Question Text */}
-                  <p style={{ margin: '0 0 14px 0', fontSize: '14.5px', fontWeight: '600', color: '#f1f5f9', lineHeight: '1.5' }}>
+                  <p style={{ margin: '0 0 14px 0', fontSize: '14.5px', fontWeight: '600', color: 'var(--text-primary)', lineHeight: '1.5' }}>
                     {q.question}
                   </p>
 
                   {/* Multiple Choice Options */}
                   <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(220px, 1fr))', gap: '10px', marginBottom: '12px' }}>
                     {q.options.map((opt, oIdx) => {
-                      let btnBg = '#1e293b';
-                      let btnBorder = '#334155';
-                      let btnColor = '#cbd5e1';
+                      let btnBg = 'var(--glass-bg)';
+                      let btnBorder = 'var(--glass-border)';
+                      let btnColor = 'var(--text-primary)';
 
                       if (isAnswered) {
                         if (oIdx === q.correct) {
                           btnBg = '#059669';
-                          btnBorder = '#34d399';
+                          btnBorder = '#059669';
                           btnColor = '#fff';
                         } else if (selected === oIdx) {
-                          btnBg = '#991b1b';
-                          btnBorder = '#f87171';
+                          btnBg = '#dc2626';
+                          btnBorder = '#dc2626';
                           btnColor = '#fff';
                         }
                       }
