@@ -137,22 +137,22 @@ export default function LanguageQuirksExceptions({ selectedLang = 'C' }) {
 
   return (
     <div style={{
-      background: 'rgba(15, 23, 42, 0.85)',
+      background: 'var(--glass-bg)',
       borderRadius: '16px',
-      border: '1px solid rgba(56, 189, 248, 0.3)',
+      border: '1px solid var(--glass-border)',
       padding: '24px',
-      color: '#e2e8f0',
-      boxShadow: '0 20px 25px -5px rgba(0, 0, 0, 0.5)'
+      color: 'var(--text-primary)',
+      boxShadow: '0 20px 25px -5px rgba(0, 0, 0, 0.08)'
     }}>
       {/* Module Title */}
       <div style={{ marginBottom: '20px' }}>
         <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
           <span style={{ fontSize: '28px' }}>⚠️</span>
           <div>
-            <h2 style={{ margin: 0, fontSize: '22px', fontWeight: '800', color: '#38bdf8' }}>
+            <h2 style={{ margin: 0, fontSize: '22px', fontWeight: '800', color: 'var(--accent-primary)' }}>
               Module 4: Language Quirks, Exceptions & Syntax Rules
             </h2>
-            <p style={{ margin: '4px 0 0 0', color: '#94a3b8', fontSize: '14px', lineHeight: '1.5' }}>
+            <p style={{ margin: '4px 0 0 0', color: 'var(--text-secondary)', fontSize: '14px', lineHeight: '1.5' }}>
               Every programming language has hidden traps! Learn about Java null pointers, Python indentation rules, C manual pointers, and Frontend (HTML/CSS/JS) type coercion.
             </p>
           </div>
@@ -162,13 +162,13 @@ export default function LanguageQuirksExceptions({ selectedLang = 'C' }) {
       {/* Active Language Badge Indicator */}
       <div style={{ display: 'flex', alignItems: 'center', gap: '10px', marginBottom: '20px' }}>
         <span style={{
-          background: quirksData[activeLangTab]?.color || '#0284c7',
+          background: 'var(--accent-primary)',
           color: '#fff',
           fontSize: '12px',
           fontWeight: 'bold',
           padding: '6px 14px',
           borderRadius: '20px',
-          boxShadow: '0 0 10px rgba(0,0,0,0.3)'
+          boxShadow: '0 0 10px rgba(0,0,0,0.1)'
         }}>
           {quirksData[activeLangTab]?.icon || '🌐'} Showing Quirks for {activeLangTab === 'JS' ? 'Frontend (HTML/CSS/JS)' : activeLangTab}
         </span>
@@ -176,10 +176,10 @@ export default function LanguageQuirksExceptions({ selectedLang = 'C' }) {
 
       {/* Main Quirk Card */}
       <div style={{
-        background: 'rgba(30, 41, 59, 0.8)',
+        background: 'var(--bg-secondary)',
         borderRadius: '14px',
         padding: '20px',
-        border: `1px solid ${currentQuirksGroup.color}`
+        border: `1px solid var(--glass-border)`
       }}>
         {/* Quirk Topics Sub-Nav */}
         <div style={{ display: 'flex', gap: '8px', marginBottom: '20px', flexWrap: 'wrap' }}>
@@ -193,9 +193,9 @@ export default function LanguageQuirksExceptions({ selectedLang = 'C' }) {
               style={{
                 padding: '8px 12px',
                 borderRadius: '8px',
-                border: activeQuirkIndex === idx ? `1.5px solid ${currentQuirksGroup.color}` : '1px solid #334155',
-                background: activeQuirkIndex === idx ? '#1e293b' : '#0f172a',
-                color: activeQuirkIndex === idx ? '#fff' : '#94a3b8',
+                border: activeQuirkIndex === idx ? `1.5px solid var(--accent-primary)` : '1px solid var(--glass-border)',
+                background: activeQuirkIndex === idx ? 'rgba(56, 189, 248, 0.2)' : 'var(--glass-bg)',
+                color: activeQuirkIndex === idx ? 'var(--accent-primary)' : 'var(--text-primary)',
                 fontSize: '12px',
                 fontWeight: 'bold',
                 cursor: 'pointer'
@@ -207,10 +207,10 @@ export default function LanguageQuirksExceptions({ selectedLang = 'C' }) {
         </div>
 
         {/* Selected Quirk Header */}
-        <h3 style={{ margin: '0 0 8px 0', fontSize: '18px', color: '#f8fafc' }}>
+        <h3 style={{ margin: '0 0 8px 0', fontSize: '18px', color: 'var(--text-primary)' }}>
           {currentQuirk.title}
         </h3>
-        <p style={{ fontSize: '13.5px', color: '#fbbf24', fontWeight: '600', margin: '0 0 16px 0', lineHeight: '1.5' }}>
+        <p style={{ fontSize: '13.5px', color: '#d97706', fontWeight: '600', margin: '0 0 16px 0', lineHeight: '1.5' }}>
           💡 {currentQuirk.concept}
         </p>
 
@@ -223,22 +223,23 @@ export default function LanguageQuirksExceptions({ selectedLang = 'C' }) {
         }}>
           {/* Trap Box */}
           <div style={{
-            background: '#0f172a',
+            background: 'var(--glass-bg)',
             padding: '16px',
             borderRadius: '10px',
-            border: '1px solid #ef4444'
+            border: '1px solid #dc2626'
           }}>
             <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '8px' }}>
-              <span style={{ fontSize: '13px', fontWeight: 'bold', color: '#f87171' }}>
+              <span style={{ fontSize: '13px', fontWeight: 'bold', color: '#dc2626' }}>
                 ❌ Common Beginner Trap / Exception:
               </span>
             </div>
             <pre style={{
               margin: 0,
               padding: '12px',
-              background: '#1e1e2e',
+              background: 'var(--bg-secondary)',
+              border: '1px solid var(--glass-border)',
               borderRadius: '8px',
-              color: '#fca5a5',
+              color: '#dc2626',
               fontSize: '12.5px',
               fontFamily: 'monospace',
               overflowX: 'auto'
@@ -249,22 +250,23 @@ export default function LanguageQuirksExceptions({ selectedLang = 'C' }) {
 
           {/* Fix Box */}
           <div style={{
-            background: '#0f172a',
+            background: 'var(--glass-bg)',
             padding: '16px',
             borderRadius: '10px',
-            border: '1px solid #10b981'
+            border: '1px solid #059669'
           }}>
             <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '8px' }}>
-              <span style={{ fontSize: '13px', fontWeight: 'bold', color: '#34d399' }}>
+              <span style={{ fontSize: '13px', fontWeight: 'bold', color: '#059669' }}>
                 ✅ Correct Solution & Best Practice:
               </span>
             </div>
             <pre style={{
               margin: 0,
               padding: '12px',
-              background: '#1e1e2e',
+              background: 'var(--bg-secondary)',
+              border: '1px solid var(--glass-border)',
               borderRadius: '8px',
-              color: '#6ee7b7',
+              color: '#059669',
               fontSize: '12.5px',
               fontFamily: 'monospace',
               overflowX: 'auto'
@@ -276,15 +278,15 @@ export default function LanguageQuirksExceptions({ selectedLang = 'C' }) {
 
         {/* Detailed Explanation */}
         <div style={{
-          background: 'rgba(15, 23, 42, 0.9)',
+          background: 'var(--glass-bg)',
           padding: '14px 18px',
           borderRadius: '10px',
-          border: '1px solid #334155',
+          border: '1px solid var(--glass-border)',
           fontSize: '13px',
-          color: '#cbd5e1',
+          color: 'var(--text-primary)',
           lineHeight: '1.6'
         }}>
-          <strong style={{ color: '#38bdf8' }}>📖 Why does this happen?</strong>
+          <strong style={{ color: 'var(--accent-primary)' }}>📖 Why does this happen?</strong>
           <p style={{ margin: '4px 0 0 0' }}>{currentQuirk.explanation}</p>
         </div>
 

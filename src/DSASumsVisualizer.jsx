@@ -754,7 +754,7 @@ const DSASumsVisualizer = ({ onBack, onOpenDebugger }) => {
       {/* MAIN DUAL-PANE VIEW */}
       <div style={{ display: 'flex', flex: 1, overflow: 'hidden' }}>
         {/* SIDEBAR: PROBLEM LIST */}
-        <div style={{ width: '330px', borderRight: '1px solid var(--glass-border)', background: 'rgba(15,23,42,0.6)', display: 'flex', flexDirection: 'column' }}>
+        <div style={{ width: '330px', borderRight: '1px solid var(--glass-border)', background: 'var(--glass-bg)', display: 'flex', flexDirection: 'column' }}>
           {/* SEARCH & FILTERS */}
           <div style={{ padding: '12px', borderBottom: '1px solid var(--glass-border)', display: 'flex', flexDirection: 'column', gap: '8px' }}>
             <input 
@@ -870,7 +870,7 @@ const DSASumsVisualizer = ({ onBack, onOpenDebugger }) => {
               </span>
 
               {/* CONTROLS */}
-              <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+              <div style={{ display: 'flex', alignItems: 'center', gap: '8px', flexWrap: 'wrap' }}>
                 <button 
                   className="btn btn-clear"
                   style={{ padding: '4px 10px', fontSize: '0.8rem' }}
@@ -901,20 +901,33 @@ const DSASumsVisualizer = ({ onBack, onOpenDebugger }) => {
                 >
                   🔄 Reset
                 </button>
+                <div style={{ display: 'flex', alignItems: 'center', gap: '6px', background: 'rgba(0,0,0,0.25)', padding: '3px 8px', borderRadius: '6px' }}>
+                  <span style={{ fontSize: '0.75rem', color: '#60a5fa', fontWeight: 600 }}>⚡ {(speed / 1000).toFixed(1)}s</span>
+                  <input 
+                    type="range" 
+                    min={200} 
+                    max={2500} 
+                    step={100} 
+                    value={speed} 
+                    onChange={e => setSpeed(Number(e.target.value))} 
+                    style={{ width: '70px', accentColor: '#3b82f6', cursor: 'pointer' }}
+                    title={`Speed: ${speed}ms per step`}
+                  />
+                </div>
               </div>
             </div>
 
             {/* LIVE STEP MESSAGE */}
-            <div style={{ padding: '10px 14px', background: 'rgba(59,130,246,0.12)', borderRadius: '8px', borderLeft: '4px solid #3b82f6', marginBottom: '12px', fontSize: '0.9rem', color: '#fff' }}>
+            <div style={{ padding: '10px 14px', background: 'rgba(59,130,246,0.12)', borderRadius: '8px', borderLeft: '4px solid #3b82f6', marginBottom: '12px', fontSize: '0.9rem', color: 'var(--text-primary)' }}>
               {currentStep.msg || "Initializing problem simulation..."}
             </div>
 
             {/* VARIABLES TABLE */}
             {currentStep.variables && (
-              <div style={{ display: 'flex', flexWrap: 'wrap', gap: '8px', padding: '8px 12px', background: 'rgba(0,0,0,0.3)', borderRadius: '8px' }}>
+              <div style={{ display: 'flex', flexWrap: 'wrap', gap: '8px', padding: '8px 12px', background: 'var(--glass-bg)', border: '1px solid var(--glass-border)', borderRadius: '8px' }}>
                 {Object.entries(currentStep.variables).map(([k, v]) => (
-                  <span key={k} style={{ fontSize: '0.78rem', fontFamily: 'monospace', background: 'rgba(255,255,255,0.06)', padding: '3px 8px', borderRadius: '4px', color: 'var(--text-primary)' }}>
-                    <strong style={{ color: '#60a5fa' }}>{k}:</strong> {Array.isArray(v) ? JSON.stringify(v) : String(v)}
+                  <span key={k} style={{ fontSize: '0.78rem', fontFamily: 'monospace', background: 'var(--glass-bg)', border: '1px solid var(--glass-border)', padding: '3px 8px', borderRadius: '4px', color: 'var(--text-primary)' }}>
+                    <strong style={{ color: 'var(--accent-primary)' }}>{k}:</strong> {Array.isArray(v) ? JSON.stringify(v) : String(v)}
                   </span>
                 ))}
               </div>
@@ -923,7 +936,7 @@ const DSASumsVisualizer = ({ onBack, onOpenDebugger }) => {
 
           {/* MULTI-LANGUAGE CODE VIEWER */}
           <div style={{ background: 'var(--bg-secondary)', borderRadius: '14px', border: '1px solid var(--glass-border)', overflow: 'hidden' }}>
-            <div style={{ padding: '8px 14px', display: 'flex', justifyContent: 'space-between', alignItems: 'center', borderBottom: '1px solid var(--glass-border)', background: 'rgba(0,0,0,0.2)' }}>
+            <div style={{ padding: '8px 14px', display: 'flex', justifyContent: 'space-between', alignItems: 'center', borderBottom: '1px solid var(--glass-border)', background: 'var(--glass-bg)' }}>
               <div style={{ display: 'flex', alignItems: 'center', gap: '6px' }}>
                 <span style={{ fontSize: '0.78rem', fontWeight: 700, color: 'var(--text-secondary)' }}>💻 Solution Code:</span>
                 {['C++', 'Java', 'Python', 'JS', 'C'].map(lang => (
@@ -946,7 +959,7 @@ const DSASumsVisualizer = ({ onBack, onOpenDebugger }) => {
                 ))}
 
                 {/* Full Program vs Snippet Toggle */}
-                <div style={{ display: 'flex', background: 'rgba(0,0,0,0.3)', borderRadius: '6px', padding: '2px', border: '1px solid var(--glass-border)', marginLeft: '6px' }}>
+                <div style={{ display: 'flex', background: 'var(--glass-bg)', borderRadius: '6px', padding: '2px', border: '1px solid var(--glass-border)', marginLeft: '6px' }}>
                   <button 
                     onClick={() => setCodeViewMode('full')}
                     style={{
@@ -988,6 +1001,18 @@ const DSASumsVisualizer = ({ onBack, onOpenDebugger }) => {
                 </div>
               </div>
 
+              {/* Execution Line Legend */}
+              <div style={{ display: 'flex', alignItems: 'center', gap: '8px', fontSize: '0.74rem', flexWrap: 'wrap' }}>
+                <div style={{ display: 'flex', alignItems: 'center', gap: '4px', background: 'rgba(16, 185, 129, 0.15)', border: '1px solid rgba(16, 185, 129, 0.35)', padding: '2px 8px', borderRadius: '6px', color: '#34d399', fontWeight: 600 }}>
+                  <span>🟢 ➔</span>
+                  <span>Line that just executed</span>
+                </div>
+                <div style={{ display: 'flex', alignItems: 'center', gap: '4px', background: 'rgba(239, 68, 68, 0.15)', border: '1px solid rgba(239, 68, 68, 0.35)', padding: '2px 8px', borderRadius: '6px', color: '#f87171', fontWeight: 600 }}>
+                  <span>🔴 ➔</span>
+                  <span>Next line to execute</span>
+                </div>
+              </div>
+
               <div style={{ display: 'flex', gap: '8px' }}>
                 <button
                   className="btn btn-clear"
@@ -1008,20 +1033,71 @@ const DSASumsVisualizer = ({ onBack, onOpenDebugger }) => {
 
             <pre style={{
               margin: 0,
-              padding: '16px 20px',
-              background: 'var(--bg-primary, rgba(0,0,0,0.3))',
-              color: '#f8fafc',
+              padding: '12px 16px',
+              background: 'var(--bg-secondary)',
+              color: 'var(--text-primary)',
               fontFamily: "'Fira Code', 'Cascadia Code', monospace",
               fontSize: `${codeFontSize}px`,
               lineHeight: '1.75',
               fontWeight: 500,
               overflowX: 'auto'
             }}>
-              {toAllman(activeCodeToDisplay).split('\n').map((line, idx) => (
-                <div key={idx} style={{ padding: '1px 0', whiteSpace: 'pre', color: '#f8fafc' }}>
-                  {line || ' '}
-                </div>
-              ))}
+              {toAllman(activeCodeToDisplay).split('\n').map((line, idx) => {
+                const lineNum = idx + 1;
+                const nextStep = steps[currentStepIdx + 1];
+                const isJustExecuted = (codeViewMode === 'snippet' && currentStep?.line === lineNum);
+                const isNextToExecute = (codeViewMode === 'snippet' && nextStep?.line === lineNum && nextStep?.line !== currentStep?.line);
+
+                let rowBg = 'transparent';
+                let rowBorder = '4px solid transparent';
+                let indicator = null;
+
+                if (isJustExecuted) {
+                  rowBg = 'rgba(16, 185, 129, 0.22)';
+                  rowBorder = '4px solid #10b981';
+                  indicator = <span style={{ color: '#10b981', fontWeight: 'bold', fontSize: '0.78rem', marginRight: '6px' }}>🟢 ➔</span>;
+                } else if (isNextToExecute) {
+                  rowBg = 'rgba(239, 68, 68, 0.22)';
+                  rowBorder = '4px solid #ef4444';
+                  indicator = <span style={{ color: '#ef4444', fontWeight: 'bold', fontSize: '0.78rem', marginRight: '6px' }}>🔴 ➔</span>;
+                }
+
+                return (
+                  <div 
+                    key={idx} 
+                    style={{ 
+                      display: 'flex', 
+                      alignItems: 'center', 
+                      padding: '2px 8px', 
+                      background: rowBg, 
+                      borderLeft: rowBorder, 
+                      borderRadius: isJustExecuted || isNextToExecute ? '4px' : '0', 
+                      transition: 'all 0.15s ease' 
+                    }}
+                  >
+                    <span style={{ 
+                      width: '36px', 
+                      userSelect: 'none', 
+                      textAlign: 'right', 
+                      paddingRight: '12px', 
+                      color: isJustExecuted ? '#10b981' : isNextToExecute ? '#ef4444' : 'var(--text-secondary)', 
+                      fontSize: '0.82em', 
+                      flexShrink: 0,
+                      fontWeight: isJustExecuted || isNextToExecute ? 700 : 400
+                    }}>
+                      {lineNum}
+                    </span>
+                    {indicator}
+                    <span style={{ 
+                      whiteSpace: 'pre', 
+                      color: 'var(--text-primary)',
+                      fontWeight: isJustExecuted || isNextToExecute ? 700 : 500
+                    }}>
+                      {line || ' '}
+                    </span>
+                  </div>
+                );
+              })}
             </pre>
           </div>
         </div>

@@ -1574,6 +1574,59 @@ public double divideAndLog(int numerator, int denominator) {
     };
   }
 
+  // ── 00G2. BEST SORTING TECHNIQUE / SORTING PARADIGMS ──
+  const isBestSortQuery = lower.includes('best sorting') || lower.includes('best sort') || lower.includes('which sorting is best') || lower.includes('optimal sorting') || lower.includes('fastest sorting') || lower.includes('sorting technique') || lower.includes('sorting techniques') || lower.includes('which sorting algorithm') || lower.includes('best sorting technique');
+
+  if (isBestSortQuery) {
+    return {
+      text: `### ⚡ The "Best" Sorting Technique: In-Depth Engineering Analysis
+
+In computer science, **there is no single "best" sorting algorithm for every situation** — the optimal choice depends strictly on your data size, memory constraints, hardware cache, and whether stability is required!
+
+---
+
+#### 🏆 Quick Decision Guide (Which one to use?):
+
+1. **For General In-Memory Primitive Arrays (C++ \`std::sort\`, standard arrays):**
+   * 🥇 **Quick Sort / Dual-Pivot QuickSort / IntroSort:** **Fastest in practice!**
+   * *Why:* Outstanding **CPU Cache Locality** (contiguous memory access) and runs in **$O(N \\log N)$** average time with minimal auxiliary memory ($O(\\log N)$ recursion stack).
+
+2. **For Object Arrays & Stable Sorting (Java \`Arrays.sort(Object[])\`, Python \`list.sort()\`, JS \`Array.prototype.sort\`):**
+   * 🥇 **TimSort (Hybrid of Merge Sort + Insertion Sort):**
+   * *Why:* **Stable** (preserves equal element order) and takes advantage of already-sorted sub-runs in real-world data ($O(N)$ best-case for partially sorted data, guaranteed $O(N \\log N)$ worst-case).
+
+3. **For Linked Lists & External Large Datasets (Disk / Big Data):**
+   * 🥇 **Merge Sort:**
+   * *Why:* Guaranteed $O(N \\log N)$ with **zero random disk seeks**, and merges linked list nodes in $O(1)$ extra space without contiguous memory allocation.
+
+4. **When Auxiliary Memory is Strictly $O(1)$ & Guaranteed $O(N \\log N)$ is needed:**
+   * 🥇 **Heap Sort:**
+   * *Why:* $O(N \\log N)$ guaranteed time with strictly $O(1)$ auxiliary space, but slower cache performance than QuickSort.
+
+5. **For Small Arrays ($N < 30$) or Nearly Sorted Lists:**
+   * 🥇 **Insertion Sort:**
+   * *Why:* Extremely lightweight with almost zero overhead, running in **$O(N)$ linear time** for nearly-sorted data.
+
+6. **For Bounded Integers / Frequency Counting ($K \\le 10^6$):**
+   * 🥇 **Counting Sort / Radix Sort:**
+   * *Why:* Non-comparison sorts that run in **linear $O(N + K)$ time**, beating the theoretical $O(N \\log N)$ comparison lower bound!
+
+---
+
+#### 📊 Master Sorting Comparison Matrix:
+
+| Algorithm | Best Time | Average Time | Worst Time | Space | Stable? | Best Used For |
+|---|---|---|---|---|---|---|
+| **Quick Sort** | $O(N \\log N)$ | $O(N \\log N)$ | $O(N^2)$ (rare) | $O(\\log N)$ | ❌ No | Fast general in-memory array sorting |
+| **TimSort** | $O(N)$ | $O(N \\log N)$ | $O(N \\log N)$ | $O(N)$ | ✅ Yes | Real-world software runtimes (Java / Python) |
+| **Merge Sort** | $O(N \\log N)$ | $O(N \\log N)$ | $O(N \\log N)$ | $O(N)$ | ✅ Yes | Linked lists, external files, stable needs |
+| **Heap Sort** | $O(N \\log N)$ | $O(N \\log N)$ | $O(N \\log N)$ | $O(1)$ | ❌ No | Embedded systems with tight memory limits |
+| **Insertion Sort** | $O(N)$ | $O(N^2)$ | $O(N^2)$ | $O(1)$ | ✅ Yes | Small lists ($N < 30$), nearly sorted arrays |
+| **Counting Sort** | $O(N + K)$ | $O(N + K)$ | $O(N + K)$ | $O(K)$ | ✅ Yes | Fixed-range small integers |`,
+      sources: ['AlgoFlow Algorithm Engine', 'Introduction to Algorithms (CLRS)', 'TimSort Specification']
+    };
+  }
+
   // ── 00H. DIFFERENCE BETWEEN HASHING ONES ("difference btw hashing ones", "chaining vs probing") ──
   const isHashDiffQuery = lower.includes('difference btw hashing') || lower.includes('difference between hashing') || lower.includes('difference between hash') || lower.includes('chaining vs probing') || lower.includes('linear probing vs quadratic probing') || lower.includes('hashing techniques') || lower.includes('compare hashing') || (lower.includes('difference') && lower.includes('hash'));
 

@@ -1341,12 +1341,12 @@ print(f"Theoretical Density of Copper (FCC): {cu_density:.2f} g/cm^3")`
 
   return (
     <div style={{
-      background: 'rgba(15, 23, 42, 0.85)',
+      background: 'var(--glass-bg)',
       borderRadius: '18px',
-      border: '1px solid rgba(56, 189, 248, 0.25)',
+      border: '1px solid var(--glass-border)',
       padding: '24px',
-      color: '#e2e8f0',
-      boxShadow: '0 20px 40px -10px rgba(0, 0, 0, 0.6)',
+      color: 'var(--text-primary)',
+      boxShadow: '0 20px 40px -10px rgba(0, 0, 0, 0.2)',
       display: 'flex',
       flexDirection: 'column',
       gap: '24px'
@@ -1354,19 +1354,19 @@ print(f"Theoretical Density of Copper (FCC): {cu_density:.2f} g/cm^3")`
       
       {/* ── Main Module Header ── */}
       <div style={{
-        background: 'linear-gradient(135deg, rgba(30, 41, 59, 0.9) 0%, rgba(15, 23, 42, 0.95) 100%)',
+        background: 'var(--bg-secondary)',
         borderRadius: '14px',
         padding: '22px',
-        border: '1px solid rgba(255, 255, 255, 0.08)',
-        boxShadow: '0 8px 24px rgba(0,0,0,0.3)'
+        border: '1px solid var(--glass-border)',
+        boxShadow: '0 8px 24px rgba(0,0,0,0.1)'
       }}>
         <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
           <span style={{ fontSize: '28px' }}>🎓</span>
           <div>
-            <h2 style={{ margin: 0, fontSize: '22px', fontWeight: '800', color: '#38bdf8' }}>
+            <h2 style={{ margin: 0, fontSize: '22px', fontWeight: '800', color: 'var(--accent-primary)' }}>
               🎓 B.Tech Engineering Branch Roadmaps (16 Branches & Smart Advisor)
             </h2>
-            <p style={{ margin: '4px 0 0 0', color: '#94a3b8', fontSize: '13.5px', lineHeight: '1.5' }}>
+            <p style={{ margin: '4px 0 0 0', color: 'var(--text-secondary)', fontSize: '13.5px', lineHeight: '1.5' }}>
               Explore comprehensive 4-year coding roadmaps, primary & secondary programming languages, and core vs. IT placement transition guides for all engineering branches!
             </p>
             {/* General College / Curriculum Advisory Note */}
@@ -1374,34 +1374,34 @@ print(f"Theoretical Density of Copper (FCC): {cu_density:.2f} g/cm^3")`
               marginTop: '10px',
               padding: '8px 12px',
               background: 'rgba(56, 189, 248, 0.08)',
-              borderLeft: '3px solid #38bdf8',
+              borderLeft: '3px solid var(--accent-primary)',
               borderRadius: '6px',
               display: 'flex',
               alignItems: 'center',
               gap: '8px'
             }}>
               <span style={{ fontSize: '15px' }}>💡</span>
-              <span style={{ fontSize: '12.5px', color: '#cbd5e1', lineHeight: '1.4' }}>
-                <strong style={{ color: '#38bdf8' }}>Curriculum Note:</strong> Primary programming languages (such as C, C++, Java, or Python) taught in 1st & 2nd year may vary depending on your college or university syllabus and department specializations.
+              <span style={{ fontSize: '12.5px', color: 'var(--text-secondary)', lineHeight: '1.4' }}>
+                <strong style={{ color: 'var(--accent-primary)' }}>Curriculum Note:</strong> Primary programming languages (such as C, C++, Java, or Python) taught in 1st & 2nd year may vary depending on your college or university syllabus and department specializations.
               </span>
             </div>
           </div>
         </div>
       </div>
 
-      {/* ── Filter & Sort Toolbar ── */}
+      {/* ── Filter Toolbar ── */}
       <div style={{
         display: 'flex',
         flexDirection: 'column',
         gap: '12px',
-        background: 'rgba(15, 23, 42, 0.5)',
+        background: 'var(--bg-secondary)',
         padding: '14px 16px',
         borderRadius: '14px',
-        border: '1px solid rgba(255, 255, 255, 0.06)'
+        border: '1px solid var(--glass-border)'
       }}>
         {/* Category Filter Bar */}
         <div style={{ display: 'flex', gap: '8px', flexWrap: 'wrap', alignItems: 'center' }}>
-          <span style={{ fontSize: '11px', fontWeight: '800', color: '#94a3b8', letterSpacing: '0.05em', marginRight: '4px' }}>
+          <span style={{ fontSize: '11px', fontWeight: '800', color: 'var(--text-secondary)', letterSpacing: '0.05em', marginRight: '4px' }}>
             BRANCH FILTER:
           </span>
           {categories.map(c => {
@@ -1413,9 +1413,9 @@ print(f"Theoretical Density of Copper (FCC): {cu_density:.2f} g/cm^3")`
                 style={{
                   padding: '5px 12px',
                   borderRadius: '20px',
-                  border: isActive ? '1.5px solid #38bdf8' : '1px solid #334155',
-                  background: isActive ? 'rgba(56, 189, 248, 0.18)' : 'rgba(15, 23, 42, 0.6)',
-                  color: isActive ? '#38bdf8' : '#94a3b8',
+                  border: isActive ? '1.5px solid var(--accent-primary)' : '1px solid var(--glass-border)',
+                  background: isActive ? 'rgba(56, 189, 248, 0.18)' : 'var(--glass-bg)',
+                  color: isActive ? 'var(--accent-primary)' : 'var(--text-secondary)',
                   fontSize: '11.5px',
                   fontWeight: '600',
                   cursor: 'pointer',
@@ -1426,94 +1426,6 @@ print(f"Theoretical Density of Copper (FCC): {cu_density:.2f} g/cm^3")`
               </button>
             );
           })}
-        </div>
-
-        {/* Ordering / Sorting Bar */}
-        <div style={{ display: 'flex', gap: '8px', flexWrap: 'wrap', alignItems: 'center', paddingTop: '4px', borderTop: '1px dashed rgba(255,255,255,0.07)' }}>
-          <span style={{ fontSize: '11px', fontWeight: '800', color: '#38bdf8', letterSpacing: '0.05em', marginRight: '4px', display: 'flex', alignItems: 'center', gap: '4px' }}>
-            <span>⚡</span> ORDER BY:
-          </span>
-
-          <button
-            onClick={() => setSortBy('demand_desc')}
-            title="Sort branches with 5-star placement demand first"
-            style={{
-              padding: '5px 12px',
-              borderRadius: '20px',
-              border: sortBy === 'demand_desc' ? '1.5px solid #facc15' : '1px solid #334155',
-              background: sortBy === 'demand_desc' ? 'rgba(250, 204, 21, 0.18)' : 'rgba(15, 23, 42, 0.6)',
-              color: sortBy === 'demand_desc' ? '#facc15' : '#cbd5e1',
-              fontSize: '11.5px',
-              fontWeight: '700',
-              cursor: 'pointer',
-              display: 'flex',
-              alignItems: 'center',
-              gap: '6px',
-              transition: 'all 0.2s ease'
-            }}
-          >
-            <span>💼</span> Placement Demand (High → Low)
-          </button>
-
-          <button
-            onClick={() => setSortBy('difficulty_desc')}
-            title="Sort branches requiring highest logic & math difficulty first"
-            style={{
-              padding: '5px 12px',
-              borderRadius: '20px',
-              border: sortBy === 'difficulty_desc' ? '1.5px solid #ef4444' : '1px solid #334155',
-              background: sortBy === 'difficulty_desc' ? 'rgba(239, 68, 68, 0.18)' : 'rgba(15, 23, 42, 0.6)',
-              color: sortBy === 'difficulty_desc' ? '#f87171' : '#cbd5e1',
-              fontSize: '11.5px',
-              fontWeight: '700',
-              cursor: 'pointer',
-              display: 'flex',
-              alignItems: 'center',
-              gap: '6px',
-              transition: 'all 0.2s ease'
-            }}
-          >
-            <span>🔥</span> Difficulty (High → Low)
-          </button>
-
-          <button
-            onClick={() => setSortBy('difficulty_asc')}
-            title="Sort branches with beginner-friendly coding entry first"
-            style={{
-              padding: '5px 12px',
-              borderRadius: '20px',
-              border: sortBy === 'difficulty_asc' ? '1.5px solid #10b981' : '1px solid #334155',
-              background: sortBy === 'difficulty_asc' ? 'rgba(16, 185, 129, 0.18)' : 'rgba(15, 23, 42, 0.6)',
-              color: sortBy === 'difficulty_asc' ? '#34d399' : '#cbd5e1',
-              fontSize: '11.5px',
-              fontWeight: '700',
-              cursor: 'pointer',
-              display: 'flex',
-              alignItems: 'center',
-              gap: '6px',
-              transition: 'all 0.2s ease'
-            }}
-          >
-            <span>🌱</span> Difficulty (Beginner Friendly / Low → High)
-          </button>
-
-          {sortBy !== 'default' && (
-            <button
-              onClick={() => setSortBy('default')}
-              title="Reset to default curriculum branch order"
-              style={{
-                padding: '4px 10px',
-                borderRadius: '16px',
-                border: '1px solid #475569',
-                background: 'transparent',
-                color: '#94a3b8',
-                fontSize: '11px',
-                cursor: 'pointer'
-              }}
-            >
-              ✕ Reset Order
-            </button>
-          )}
         </div>
       </div>
 
@@ -1526,8 +1438,6 @@ print(f"Theoretical Density of Copper (FCC): {cu_density:.2f} g/cm^3")`
         {filteredBranches.map(b => {
           const isSelected = selectedBranch === b.id;
           const isHovered = hoveredBranchId === b.id;
-          const diffMeta = getDifficultyMeta(b.difficulty);
-          const starsOnly = (b.placementDemand.match(/⭐/g) || []).join('');
 
           return (
             <div
@@ -1543,7 +1453,7 @@ print(f"Theoretical Density of Copper (FCC): {cu_density:.2f} g/cm^3")`
                   width: '100%',
                   position: 'relative',
                   display: 'flex',
-                  alignItems: 'flex-start',
+                  alignItems: 'center',
                   gap: '10px',
                   padding: isHovered ? '12px 14px' : '11px 13px',
                   borderRadius: '12px',
@@ -1551,13 +1461,13 @@ print(f"Theoretical Density of Copper (FCC): {cu_density:.2f} g/cm^3")`
                     ? `2px solid ${b.color}`
                     : isHovered
                     ? `2px solid ${b.color}`
-                    : '1px solid #334155',
+                    : '1px solid var(--glass-border)',
                   background: isSelected
-                    ? `linear-gradient(135deg, ${b.accentBg} 0%, rgba(15, 23, 42, 0.95) 100%)`
+                    ? `linear-gradient(135deg, ${b.accentBg} 0%, var(--bg-secondary) 100%)`
                     : isHovered
-                    ? `linear-gradient(135deg, ${b.accentBg} 0%, rgba(15, 23, 42, 0.95) 100%)`
-                    : '#0f172a',
-                  color: isSelected || isHovered ? '#f8fafc' : '#cbd5e1',
+                    ? `linear-gradient(135deg, ${b.accentBg} 0%, var(--bg-secondary) 100%)`
+                    : 'var(--bg-secondary)',
+                  color: isSelected || isHovered ? b.color : 'var(--text-primary)',
                   fontSize: '12.5px',
                   fontWeight: '700',
                   cursor: 'pointer',
@@ -1565,7 +1475,7 @@ print(f"Theoretical Density of Copper (FCC): {cu_density:.2f} g/cm^3")`
                   transition: 'all 0.22s cubic-bezier(0.16, 1, 0.3, 1)',
                   transform: isHovered ? 'translateY(-3px) scale(1.02)' : isSelected ? 'scale(1.01)' : 'translateY(0) scale(1)',
                   boxShadow: isHovered
-                    ? `0 0 30px ${b.color}95, 0 8px 24px rgba(0,0,0,0.6), inset 0 0 16px ${b.color}35`
+                    ? `0 0 30px ${b.color}95, 0 8px 24px rgba(0,0,0,0.2), inset 0 0 16px ${b.color}35`
                     : isSelected
                     ? `0 0 16px ${b.color}40, inset 0 0 8px ${b.color}15`
                     : 'none',
@@ -1574,7 +1484,6 @@ print(f"Theoretical Density of Copper (FCC): {cu_density:.2f} g/cm^3")`
               >
                 <span style={{
                   fontSize: '22px',
-                  marginTop: '1px',
                   filter: isHovered || isSelected ? `drop-shadow(0 0 8px ${b.color})` : 'none',
                   transition: 'transform 0.2s ease',
                   transform: isHovered ? 'scale(1.12)' : 'scale(1)',
@@ -1582,11 +1491,11 @@ print(f"Theoretical Density of Copper (FCC): {cu_density:.2f} g/cm^3")`
                 }}>
                   {b.icon}
                 </span>
-                <div style={{ display: 'flex', flexDirection: 'column', gap: '4px', minWidth: 0, flex: 1 }}>
+                <div style={{ display: 'flex', flexDirection: 'column', gap: '2px', minWidth: 0, flex: 1 }}>
                   <span style={{
                     fontSize: isHovered ? '12px' : '12.5px',
                     fontWeight: '700',
-                    color: isHovered || isSelected ? b.color : '#f1f5f9',
+                    color: isHovered || isSelected ? b.color : 'var(--text-primary)',
                     lineHeight: '1.3',
                     whiteSpace: isHovered ? 'normal' : 'nowrap',
                     overflow: isHovered ? 'visible' : 'hidden',
@@ -1596,48 +1505,6 @@ print(f"Theoretical Density of Copper (FCC): {cu_density:.2f} g/cm^3")`
                   }}>
                     {b.name}
                   </span>
-
-                  {/* Demand Stars and Difficulty Order Badges */}
-                  <div style={{ display: 'flex', alignItems: 'center', gap: '6px', flexWrap: 'wrap', marginTop: '2px' }}>
-                    <span
-                      title={`Placement Demand: ${b.placementDemand}`}
-                      style={{
-                        fontSize: '10px',
-                        letterSpacing: '-1px',
-                        color: '#facc15'
-                      }}
-                    >
-                      {starsOnly}
-                    </span>
-                    <span
-                      title={`Difficulty: ${b.difficulty}`}
-                      style={{
-                        fontSize: '9.5px',
-                        padding: '1px 6px',
-                        borderRadius: '4px',
-                        background: diffMeta.bg,
-                        color: diffMeta.color,
-                        border: `1px solid ${diffMeta.border}`,
-                        fontWeight: '700',
-                        letterSpacing: '0.02em'
-                      }}
-                    >
-                      {diffMeta.label}
-                    </span>
-                  </div>
-
-                  {isHovered && (
-                    <span style={{
-                      fontSize: '10.5px',
-                      color: '#94a3b8',
-                      display: 'flex',
-                      alignItems: 'center',
-                      gap: '4px',
-                      marginTop: '2px'
-                    }}>
-                      <span>⚡ Primary:</span> <strong style={{ color: '#38bdf8' }}>{b.primaryLang.name.split(' ')[0]}</strong>
-                    </span>
-                  )}
                 </div>
               </button>
             </div>
@@ -1647,7 +1514,7 @@ print(f"Theoretical Density of Copper (FCC): {cu_density:.2f} g/cm^3")`
 
       {/* ── Active Branch Header Showcase ── */}
       <div style={{
-        background: `linear-gradient(135deg, ${currentBranch.accentBg} 0%, rgba(15, 23, 42, 0.9) 100%)`,
+        background: 'var(--bg-secondary)',
         borderRadius: '16px',
         padding: '24px',
         border: `1.5px solid ${currentBranch.color}40`,
@@ -1659,83 +1526,68 @@ print(f"Theoretical Density of Copper (FCC): {cu_density:.2f} g/cm^3")`
           display: 'flex',
           justifyContent: 'space-between',
           alignItems: 'flex-start',
-          borderBottom: '1px solid rgba(255, 255, 255, 0.08)',
+          borderBottom: '1px solid var(--glass-border)',
           paddingBottom: '16px',
           flexWrap: 'wrap',
-          gap: '12px'
+          gap: '16px'
         }}>
-          <div>
+          <div style={{ flex: 1, minWidth: '280px' }}>
             <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
               <span style={{ fontSize: '28px' }}>{currentBranch.icon}</span>
               <h3 style={{ margin: 0, fontSize: '22px', fontWeight: '800', color: currentBranch.color }}>
                 {currentBranch.name}
               </h3>
             </div>
-            <p style={{ margin: '8px 0 0 0', color: '#cbd5e1', fontSize: '13.5px', maxWidth: '850px', lineHeight: '1.5' }}>
+            <p style={{ margin: '8px 0 0 0', color: 'var(--text-secondary)', fontSize: '13.5px', maxWidth: '850px', lineHeight: '1.5' }}>
               {currentBranch.welcomeMessage}
             </p>
           </div>
 
-          {/* Clean Ordered Badges: Placement Demand & Difficulty */}
+          {/* Placement Demand & Difficulty stacked directly below */}
           <div style={{
             display: 'flex',
-            alignItems: 'center',
-            gap: '10px',
-            flexWrap: 'wrap'
+            flexDirection: 'column',
+            gap: '8px',
+            alignItems: 'stretch',
+            minWidth: '280px'
           }}>
-            {/* 1. Placement Demand Badge */}
+            {/* Placement Demand */}
             <div style={{
-              background: 'rgba(15, 23, 42, 0.85)',
-              padding: '6px 14px',
+              background: 'var(--glass-bg)',
+              padding: '8px 14px',
               borderRadius: '10px',
               fontSize: '12.5px',
-              border: '1px solid rgba(250, 204, 21, 0.35)',
+              border: '1px solid rgba(217, 119, 6, 0.35)',
               display: 'flex',
               alignItems: 'center',
               gap: '8px',
-              boxShadow: '0 4px 12px rgba(0,0,0,0.2)'
+              boxShadow: '0 4px 12px rgba(0,0,0,0.1)'
             }}>
               <span style={{ fontSize: '15px' }}>💼</span>
-              <strong style={{ color: '#facc15' }}>Placement Demand:</strong>
-              <span style={{ color: '#fef08a', fontWeight: '600' }}>
+              <strong style={{ color: '#d97706' }}>Placement Demand:</strong>
+              <span style={{ color: '#d97706', fontWeight: '600' }}>
                 {currentBranch.placementDemand}
               </span>
             </div>
 
-            {/* 2. Difficulty Badge in Clear Order */}
-            {(() => {
-              const dMeta = getDifficultyMeta(currentBranch.difficulty);
-              return (
-                <div style={{
-                  background: 'rgba(15, 23, 42, 0.85)',
-                  padding: '6px 14px',
-                  borderRadius: '10px',
-                  fontSize: '12.5px',
-                  border: '1px solid rgba(255, 255, 255, 0.12)',
-                  display: 'flex',
-                  alignItems: 'center',
-                  gap: '8px',
-                  boxShadow: '0 4px 12px rgba(0,0,0,0.2)'
-                }}>
-                  <span style={{ fontSize: '15px' }}>📊</span>
-                  <strong style={{ color: '#cbd5e1' }}>Difficulty:</strong>
-                  <span style={{
-                    padding: '2px 8px',
-                    borderRadius: '6px',
-                    background: dMeta.bg,
-                    color: dMeta.color,
-                    border: `1px solid ${dMeta.border}`,
-                    fontWeight: '800',
-                    fontSize: '11.5px'
-                  }}>
-                    {dMeta.label}
-                  </span>
-                  <span style={{ color: '#94a3b8', fontSize: '12px' }}>
-                    — {currentBranch.difficulty}
-                  </span>
-                </div>
-              );
-            })()}
+            {/* Difficulty exactly down to Placement */}
+            <div style={{
+              background: 'var(--glass-bg)',
+              padding: '8px 14px',
+              borderRadius: '10px',
+              fontSize: '12.5px',
+              border: '1px solid var(--glass-border)',
+              display: 'flex',
+              alignItems: 'center',
+              gap: '8px',
+              boxShadow: '0 4px 12px rgba(0,0,0,0.1)'
+            }}>
+              <span style={{ fontSize: '15px' }}>📊</span>
+              <strong style={{ color: 'var(--text-secondary)' }}>Difficulty:</strong>
+              <span style={{ color: 'var(--text-primary)', fontSize: '12.5px', fontWeight: '600' }}>
+                {currentBranch.difficulty}
+              </span>
+            </div>
           </div>
         </div>
 
@@ -1743,7 +1595,7 @@ print(f"Theoretical Density of Copper (FCC): {cu_density:.2f} g/cm^3")`
         <div style={{
           display: 'flex',
           gap: '8px',
-          borderBottom: '1.5px solid #334155',
+          borderBottom: '1.5px solid var(--glass-border)',
           paddingBottom: '10px',
           flexWrap: 'wrap'
         }}>
@@ -1766,9 +1618,9 @@ print(f"Theoretical Density of Copper (FCC): {cu_density:.2f} g/cm^3")`
                   gap: '6px',
                   padding: '8px 16px',
                   borderRadius: '8px',
-                  border: 'none',
-                  background: isActive ? currentBranch.color : 'rgba(30, 41, 59, 0.6)',
-                  color: isActive ? '#0f172a' : '#cbd5e1',
+                  border: isActive ? 'none' : '1px solid var(--glass-border)',
+                  background: isActive ? currentBranch.color : 'var(--glass-bg)',
+                  color: isActive ? '#0f172a' : 'var(--text-secondary)',
                   fontSize: '13px',
                   fontWeight: '700',
                   cursor: 'pointer',
@@ -1787,28 +1639,28 @@ print(f"Theoretical Density of Copper (FCC): {cu_density:.2f} g/cm^3")`
         <div style={{ display: 'flex', flexDirection: 'column', gap: '20px' }}>
           {/* Languages Recommendation Cards */}
           <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(320px, 1fr))', gap: '16px' }}>
-            <div style={{ background: '#0f172a', padding: '18px', borderRadius: '12px', border: '1.5px solid #38bdf8' }}>
+            <div style={{ background: 'var(--glass-bg)', padding: '18px', borderRadius: '12px', border: '1.5px solid var(--accent-primary)' }}>
               <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '8px' }}>
-                <span style={{ fontSize: '11px', fontWeight: 'bold', background: '#0284c7', color: '#fff', padding: '2px 8px', borderRadius: '6px' }}>
+                <span style={{ fontSize: '11px', fontWeight: 'bold', background: 'var(--accent-primary)', color: '#fff', padding: '2px 8px', borderRadius: '6px' }}>
                   PRIMARY LANGUAGE
                 </span>
-                <span style={{ fontSize: '11.5px', color: '#94a3b8' }}>{currentBranch.primaryLang.badge}</span>
+                <span style={{ fontSize: '11.5px', color: 'var(--text-secondary)' }}>{currentBranch.primaryLang.badge}</span>
               </div>
-              <h4 style={{ margin: 0, fontSize: '18px', color: '#38bdf8' }}>{currentBranch.primaryLang.name}</h4>
-              <p style={{ margin: '8px 0 0 0', fontSize: '13px', color: '#cbd5e1', lineHeight: '1.5' }}>
+              <h4 style={{ margin: 0, fontSize: '18px', color: 'var(--accent-primary)' }}>{currentBranch.primaryLang.name}</h4>
+              <p style={{ margin: '8px 0 0 0', fontSize: '13px', color: 'var(--text-secondary)', lineHeight: '1.5' }}>
                 {currentBranch.primaryLang.reason}
               </p>
             </div>
 
-            <div style={{ background: '#0f172a', padding: '18px', borderRadius: '12px', border: '1.5px solid #f59e0b' }}>
+            <div style={{ background: 'var(--glass-bg)', padding: '18px', borderRadius: '12px', border: '1.5px solid #d97706' }}>
               <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '8px' }}>
                 <span style={{ fontSize: '11px', fontWeight: 'bold', background: '#d97706', color: '#fff', padding: '2px 8px', borderRadius: '6px' }}>
                   SECONDARY LANGUAGE
                 </span>
-                <span style={{ fontSize: '11.5px', color: '#94a3b8' }}>{currentBranch.secondaryLang.badge}</span>
+                <span style={{ fontSize: '11.5px', color: 'var(--text-secondary)' }}>{currentBranch.secondaryLang.badge}</span>
               </div>
-              <h4 style={{ margin: 0, fontSize: '18px', color: '#f59e0b' }}>{currentBranch.secondaryLang.name}</h4>
-              <p style={{ margin: '8px 0 0 0', fontSize: '13px', color: '#cbd5e1', lineHeight: '1.5' }}>
+              <h4 style={{ margin: 0, fontSize: '18px', color: '#d97706' }}>{currentBranch.secondaryLang.name}</h4>
+              <p style={{ margin: '8px 0 0 0', fontSize: '13px', color: 'var(--text-secondary)', lineHeight: '1.5' }}>
                 {currentBranch.secondaryLang.reason}
               </p>
             </div>
@@ -1821,11 +1673,11 @@ print(f"Theoretical Density of Copper (FCC): {cu_density:.2f} g/cm^3")`
             </h4>
             <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(240px, 1fr))', gap: '12px' }}>
               {currentBranch.coreRoadmap.map((r, i) => (
-                <div key={i} style={{ background: '#0f172a', padding: '14px', borderRadius: '10px', border: '1px solid #334155' }}>
+                <div key={i} style={{ background: 'var(--glass-bg)', padding: '14px', borderRadius: '10px', border: '1px solid var(--glass-border)' }}>
                   <div style={{ fontSize: '12px', fontWeight: 'bold', color: currentBranch.color, marginBottom: '4px' }}>
                     {r.year}
                   </div>
-                  <p style={{ margin: 0, fontSize: '13px', color: '#f1f5f9', lineHeight: '1.4' }}>
+                  <p style={{ margin: 0, fontSize: '13px', color: 'var(--text-primary)', lineHeight: '1.4' }}>
                     {r.focus}
                   </p>
                 </div>
@@ -1834,9 +1686,9 @@ print(f"Theoretical Density of Copper (FCC): {cu_density:.2f} g/cm^3")`
           </div>
 
           {/* Top Hiring Companies */}
-          <div style={{ background: 'rgba(15, 23, 42, 0.6)', padding: '14px 18px', borderRadius: '10px', border: '1px dashed #334155' }}>
-            <span style={{ fontSize: '12.5px', fontWeight: 'bold', color: '#94a3b8' }}>🏢 Top Hiring Companies for this Branch: </span>
-            <span style={{ fontSize: '13px', color: '#f8fafc', fontWeight: '600' }}>
+          <div style={{ background: 'var(--glass-bg)', padding: '14px 18px', borderRadius: '10px', border: '1px dashed var(--glass-border)' }}>
+            <span style={{ fontSize: '12.5px', fontWeight: 'bold', color: 'var(--text-secondary)' }}>🏢 Top Hiring Companies for this Branch: </span>
+            <span style={{ fontSize: '13px', color: 'var(--text-primary)', fontWeight: '600' }}>
               {currentBranch.topCompanies.join(' • ')}
             </span>
           </div>
@@ -1846,26 +1698,26 @@ print(f"Theoretical Density of Copper (FCC): {cu_density:.2f} g/cm^3")`
       {/* ── SUB TAB 2: Core vs Software SDE Route ── */}
       {activeSubTab === 'dualtrack' && (
         <div style={{ display: 'flex', flexDirection: 'column', gap: '16px' }}>
-          <div style={{ background: '#0f172a', padding: '18px', borderRadius: '12px', border: '1px solid #38bdf8' }}>
-            <h4 style={{ margin: '0 0 6px 0', fontSize: '16px', color: '#38bdf8' }}>
+          <div style={{ background: 'var(--glass-bg)', padding: '18px', borderRadius: '12px', border: '1.5px solid var(--accent-primary)' }}>
+            <h4 style={{ margin: '0 0 6px 0', fontSize: '16px', color: 'var(--accent-primary)' }}>
               {currentBranch.dualTrack.coreTitle}
             </h4>
-            <p style={{ margin: 0, fontSize: '13.5px', color: '#cbd5e1' }}>
+            <p style={{ margin: 0, fontSize: '13.5px', color: 'var(--text-secondary)' }}>
               {currentBranch.dualTrack.coreDescription}
             </p>
           </div>
 
-          <div style={{ background: '#0f172a', padding: '18px', borderRadius: '12px', border: '1.5px solid #10b981' }}>
-            <h4 style={{ margin: '0 0 6px 0', fontSize: '16px', color: '#10b981' }}>
+          <div style={{ background: 'var(--glass-bg)', padding: '18px', borderRadius: '12px', border: '1.5px solid #059669' }}>
+            <h4 style={{ margin: '0 0 6px 0', fontSize: '16px', color: '#059669' }}>
               {currentBranch.dualTrack.transitionTitle || '💻 Software SDE Strategy'}
             </h4>
-            <p style={{ margin: '0 0 12px 0', fontSize: '13.5px', color: '#cbd5e1' }}>
+            <p style={{ margin: '0 0 12px 0', fontSize: '13.5px', color: 'var(--text-secondary)' }}>
               {currentBranch.dualTrack.transitionDescription || 'How to stand out in software campus placements:'}
             </p>
             <div style={{ display: 'flex', flexDirection: 'column', gap: '8px' }}>
               {currentBranch.dualTrack.steps.map((step, idx) => (
-                <div key={idx} style={{ display: 'flex', alignItems: 'flex-start', gap: '8px', fontSize: '13px', color: '#f1f5f9' }}>
-                  <span style={{ color: '#10b981', fontWeight: 'bold' }}>✓</span>
+                <div key={idx} style={{ display: 'flex', alignItems: 'flex-start', gap: '8px', fontSize: '13px', color: 'var(--text-primary)' }}>
+                  <span style={{ color: '#059669', fontWeight: 'bold' }}>✓</span>
                   <span>{step}</span>
                 </div>
               ))}
@@ -1879,7 +1731,7 @@ print(f"Theoretical Density of Copper (FCC): {cu_density:.2f} g/cm^3")`
         <div style={{ display: 'flex', flexDirection: 'column', gap: '20px' }}>
           {/* MOOCs (Harvard, NPTEL, Coursera, edX) */}
           <div>
-            <h4 style={{ margin: '0 0 12px 0', fontSize: '16px', color: '#38bdf8', display: 'flex', alignItems: 'center', gap: '8px' }}>
+            <h4 style={{ margin: '0 0 12px 0', fontSize: '16px', color: 'var(--accent-primary)', display: 'flex', alignItems: 'center', gap: '8px' }}>
               <span>🎓</span> Recommended MOOCs & College-Credit Courses
             </h4>
             <div style={{
@@ -1889,10 +1741,10 @@ print(f"Theoretical Density of Copper (FCC): {cu_density:.2f} g/cm^3")`
             }}>
               {currentBranch.moocsAndCerts.moocs.map((m, idx) => (
                 <div key={idx} style={{
-                  background: '#0f172a',
+                  background: 'var(--glass-bg)',
                   padding: '16px',
                   borderRadius: '10px',
-                  border: '1px solid #334155',
+                  border: '1px solid var(--glass-border)',
                   display: 'flex',
                   flexDirection: 'column',
                   justifyContent: 'space-between',
@@ -1901,7 +1753,7 @@ print(f"Theoretical Density of Copper (FCC): {cu_density:.2f} g/cm^3")`
                   <div>
                     <span style={{
                       background: 'rgba(56, 189, 248, 0.15)',
-                      color: '#38bdf8',
+                      color: 'var(--accent-primary)',
                       fontSize: '10.5px',
                       fontWeight: 'bold',
                       padding: '2px 8px',
@@ -1909,8 +1761,8 @@ print(f"Theoretical Density of Copper (FCC): {cu_density:.2f} g/cm^3")`
                     }}>
                       {m.tag}
                     </span>
-                    <h5 style={{ margin: '8px 0 4px 0', fontSize: '14px', color: '#f1f5f9' }}>{m.name}</h5>
-                    <span style={{ fontSize: '12px', color: '#94a3b8' }}>{m.provider}</span>
+                    <h5 style={{ margin: '8px 0 4px 0', fontSize: '14px', color: 'var(--text-primary)' }}>{m.name}</h5>
+                    <span style={{ fontSize: '12px', color: 'var(--text-secondary)' }}>{m.provider}</span>
                   </div>
                 </div>
               ))}
@@ -1919,7 +1771,7 @@ print(f"Theoretical Density of Copper (FCC): {cu_density:.2f} g/cm^3")`
 
           {/* Industry Certifications */}
           <div>
-            <h4 style={{ margin: '0 0 12px 0', fontSize: '16px', color: '#10b981', display: 'flex', alignItems: 'center', gap: '8px' }}>
+            <h4 style={{ margin: '0 0 12px 0', fontSize: '16px', color: '#059669', display: 'flex', alignItems: 'center', gap: '8px' }}>
               <span>📜</span> Top Recognized Industry Certifications for Placements
             </h4>
             <div style={{
@@ -1929,16 +1781,16 @@ print(f"Theoretical Density of Copper (FCC): {cu_density:.2f} g/cm^3")`
             }}>
               {currentBranch.moocsAndCerts.certifications.map((c, idx) => (
                 <div key={idx} style={{
-                  background: '#0f172a',
+                  background: 'var(--glass-bg)',
                   padding: '16px',
                   borderRadius: '10px',
-                  border: '1px solid #334155',
+                  border: '1px solid var(--glass-border)',
                   display: 'flex',
                   flexDirection: 'column',
                   gap: '6px'
                 }}>
-                  <strong style={{ fontSize: '14px', color: '#f8fafc' }}>{c.name}</strong>
-                  <span style={{ fontSize: '12px', color: '#94a3b8' }}>Issuer: <span style={{ color: '#cbd5e1' }}>{c.issuer}</span></span>
+                  <strong style={{ fontSize: '14px', color: 'var(--text-primary)' }}>{c.name}</strong>
+                  <span style={{ fontSize: '12px', color: 'var(--text-secondary)' }}>Issuer: <span style={{ color: 'var(--text-primary)' }}>{c.issuer}</span></span>
                 </div>
               ))}
             </div>
@@ -1978,10 +1830,10 @@ print(f"Theoretical Density of Copper (FCC): {cu_density:.2f} g/cm^3")`
               alignItems: 'center',
               flexWrap: 'wrap',
               gap: '10px',
-              background: '#0f172a',
+              background: 'var(--glass-bg)',
               padding: '12px 16px',
               borderRadius: '10px',
-              border: '1px solid #334155'
+              border: '1px solid var(--glass-border)'
             }}>
               <div>
                 <span style={{
@@ -1996,7 +1848,7 @@ print(f"Theoretical Density of Copper (FCC): {cu_density:.2f} g/cm^3")`
                 }}>
                   {currentBranch.codeSample.language}
                 </span>
-                <span style={{ fontSize: '14.5px', fontWeight: '700', color: '#f8fafc' }}>
+                <span style={{ fontSize: '14.5px', fontWeight: '700', color: 'var(--text-primary)' }}>
                   {currentBranch.codeSample.title}
                 </span>
               </div>
@@ -2013,9 +1865,9 @@ print(f"Theoretical Density of Copper (FCC): {cu_density:.2f} g/cm^3")`
                     gap: '6px',
                     padding: '6px 12px',
                     borderRadius: '6px',
-                    background: 'rgba(30, 41, 59, 0.8)',
-                    border: '1px solid #475569',
-                    color: '#cbd5e1',
+                    background: 'var(--bg-secondary)',
+                    border: '1px solid var(--glass-border)',
+                    color: 'var(--text-primary)',
                     fontSize: '12px',
                     fontWeight: '600',
                     cursor: 'pointer'
@@ -2030,9 +1882,9 @@ print(f"Theoretical Density of Copper (FCC): {cu_density:.2f} g/cm^3")`
                   gap: '6px',
                   padding: '6px 12px',
                   borderRadius: '6px',
-                  background: 'rgba(16, 185, 129, 0.15)',
-                  border: '1px solid #10b981',
-                  color: '#34d399',
+                  background: 'rgba(5, 150, 105, 0.15)',
+                  border: '1px solid #059669',
+                  color: '#059669',
                   fontSize: '12px',
                   fontWeight: '700'
                 }}>
@@ -2048,21 +1900,22 @@ print(f"Theoretical Density of Copper (FCC): {cu_density:.2f} g/cm^3")`
                 top: '10px',
                 right: '12px',
                 fontSize: '11px',
-                color: '#64748b',
+                color: 'var(--text-secondary)',
                 fontFamily: 'monospace',
-                background: 'rgba(15, 23, 42, 0.8)',
+                background: 'var(--bg-secondary)',
                 padding: '2px 8px',
                 borderRadius: '4px',
+                border: '1px solid var(--glass-border)',
                 zIndex: 2
               }}>
                 Source Code ({currentBranch.codeSample.language})
               </div>
               <pre style={{
-                background: '#090d16',
+                background: 'var(--glass-bg)',
                 padding: '20px',
                 borderRadius: '12px',
-                border: '1.5px solid #334155',
-                color: '#38bdf8',
+                border: '1.5px solid var(--glass-border)',
+                color: 'var(--accent-primary)',
                 fontFamily: 'Consolas, Monaco, "Courier New", monospace',
                 fontSize: '13px',
                 lineHeight: '1.6',
@@ -2075,36 +1928,36 @@ print(f"Theoretical Density of Copper (FCC): {cu_density:.2f} g/cm^3")`
 
             {/* Output Terminal Preview */}
             <div style={{
-              background: '#0a0f1d',
+              background: 'var(--bg-secondary)',
               borderRadius: '12px',
-              border: '1.5px solid #10b98150',
+              border: '1.5px solid rgba(5, 150, 105, 0.4)',
               overflow: 'hidden',
-              boxShadow: '0 4px 20px rgba(0, 0, 0, 0.35)'
+              boxShadow: '0 4px 20px rgba(0, 0, 0, 0.1)'
             }}>
               {/* Terminal top status bar */}
               <div style={{
-                background: '#0f172a',
+                background: 'var(--glass-bg)',
                 padding: '10px 16px',
-                borderBottom: '1px solid #1e293b',
+                borderBottom: '1px solid var(--glass-border)',
                 display: 'flex',
                 justifyContent: 'space-between',
                 alignItems: 'center'
               }}>
                 <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
                   <div style={{ display: 'flex', gap: '6px' }}>
-                    <span style={{ width: '10px', height: '10px', borderRadius: '50%', background: '#ef4444', display: 'inline-block' }} />
-                    <span style={{ width: '10px', height: '10px', borderRadius: '50%', background: '#f59e0b', display: 'inline-block' }} />
-                    <span style={{ width: '10px', height: '10px', borderRadius: '50%', background: '#10b981', display: 'inline-block' }} />
+                    <span style={{ width: '10px', height: '10px', borderRadius: '50%', background: '#dc2626', display: 'inline-block' }} />
+                    <span style={{ width: '10px', height: '10px', borderRadius: '50%', background: '#d97706', display: 'inline-block' }} />
+                    <span style={{ width: '10px', height: '10px', borderRadius: '50%', background: '#059669', display: 'inline-block' }} />
                   </div>
-                  <span style={{ fontSize: '12px', fontWeight: 'bold', color: '#94a3b8', marginLeft: '6px' }}>
+                  <span style={{ fontSize: '12px', fontWeight: 'bold', color: 'var(--text-secondary)', marginLeft: '6px' }}>
                     💻 Terminal Execution Output Preview
                   </span>
                 </div>
                 <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
                   <span style={{
                     fontSize: '11px',
-                    color: '#34d399',
-                    background: 'rgba(16, 185, 129, 0.12)',
+                    color: '#059669',
+                    background: 'rgba(5, 150, 105, 0.12)',
                     padding: '2px 8px',
                     borderRadius: '4px',
                     fontWeight: 'bold',
@@ -2112,7 +1965,7 @@ print(f"Theoretical Density of Copper (FCC): {cu_density:.2f} g/cm^3")`
                     alignItems: 'center',
                     gap: '4px'
                   }}>
-                    <span style={{ width: '6px', height: '6px', borderRadius: '50%', background: '#34d399', display: 'inline-block' }} />
+                    <span style={{ width: '6px', height: '6px', borderRadius: '50%', background: '#059669', display: 'inline-block' }} />
                     Status: 0 (Success)
                   </span>
                 </div>
@@ -2122,13 +1975,13 @@ print(f"Theoretical Density of Copper (FCC): {cu_density:.2f} g/cm^3")`
               <pre style={{
                 margin: 0,
                 padding: '16px 20px',
-                color: '#4ade80',
+                color: '#059669',
                 fontFamily: 'Consolas, Monaco, "Courier New", monospace',
                 fontSize: '13px',
                 lineHeight: '1.65',
                 whiteSpace: 'pre-wrap',
                 wordBreak: 'break-word',
-                background: 'rgba(10, 15, 29, 0.95)'
+                background: 'var(--glass-bg)'
               }}>
                 {currentOutput}
               </pre>
@@ -2140,19 +1993,19 @@ print(f"Theoretical Density of Copper (FCC): {cu_density:.2f} g/cm^3")`
       {/* ── SUB TAB 5: Supercharged Smart Advisor Quiz ── */}
       {activeSubTab === 'advisor_quiz' && (
         <div style={{
-          background: 'rgba(30, 41, 59, 0.7)',
+          background: 'var(--bg-secondary)',
           borderRadius: '14px',
           padding: '24px',
-          border: '1.5px solid rgba(56, 189, 248, 0.3)',
+          border: '1.5px solid var(--glass-border)',
           display: 'flex',
           flexDirection: 'column',
           gap: '20px'
         }}>
           <div>
-            <h4 style={{ margin: 0, fontSize: '18px', color: '#38bdf8', fontWeight: '800' }}>
+            <h4 style={{ margin: 0, fontSize: '18px', color: 'var(--accent-primary)', fontWeight: '800' }}>
               ✨ Interactive Smart Advisor: Generate Your Year-Specific Roadmap
             </h4>
-            <p style={{ margin: '6px 0 0 0', color: '#94a3b8', fontSize: '13.5px' }}>
+            <p style={{ margin: '6px 0 0 0', color: 'var(--text-secondary)', fontSize: '13.5px' }}>
               Select your B.Tech branch, target career dream role, and current college year to generate a customized 30-60-90 day milestone plan!
             </p>
           </div>
@@ -2164,7 +2017,7 @@ print(f"Theoretical Density of Copper (FCC): {cu_density:.2f} g/cm^3")`
           }}>
             {/* Question 1: Branch */}
             <div>
-              <label style={{ display: 'block', fontSize: '12.5px', fontWeight: 'bold', color: '#cbd5e1', marginBottom: '6px' }}>
+              <label style={{ display: 'block', fontSize: '12.5px', fontWeight: 'bold', color: 'var(--text-primary)', marginBottom: '6px' }}>
                 1. Your B.Tech Branch (16 Options):
               </label>
               <select
@@ -2174,9 +2027,9 @@ print(f"Theoretical Density of Copper (FCC): {cu_density:.2f} g/cm^3")`
                   width: '100%',
                   padding: '10px 12px',
                   borderRadius: '8px',
-                  background: '#0f172a',
-                  border: '1.5px solid #334155',
-                  color: '#fff',
+                  background: 'var(--glass-bg)',
+                  border: '1.5px solid var(--glass-border)',
+                  color: 'var(--text-primary)',
                   fontSize: '13px'
                 }}
               >
@@ -2188,7 +2041,7 @@ print(f"Theoretical Density of Copper (FCC): {cu_density:.2f} g/cm^3")`
 
             {/* Question 2: Career Goal */}
             <div>
-              <label style={{ display: 'block', fontSize: '12.5px', fontWeight: 'bold', color: '#cbd5e1', marginBottom: '6px' }}>
+              <label style={{ display: 'block', fontSize: '12.5px', fontWeight: 'bold', color: 'var(--text-primary)', marginBottom: '6px' }}>
                 2. Your Primary Career Goal:
               </label>
               <select
@@ -2198,9 +2051,9 @@ print(f"Theoretical Density of Copper (FCC): {cu_density:.2f} g/cm^3")`
                   width: '100%',
                   padding: '10px 12px',
                   borderRadius: '8px',
-                  background: '#0f172a',
-                  border: '1.5px solid #334155',
-                  color: '#fff',
+                  background: 'var(--glass-bg)',
+                  border: '1.5px solid var(--glass-border)',
+                  color: 'var(--text-primary)',
                   fontSize: '13px'
                 }}
               >
@@ -2214,7 +2067,7 @@ print(f"Theoretical Density of Copper (FCC): {cu_density:.2f} g/cm^3")`
 
             {/* Question 3: College Year */}
             <div>
-              <label style={{ display: 'block', fontSize: '12.5px', fontWeight: 'bold', color: '#cbd5e1', marginBottom: '6px' }}>
+              <label style={{ display: 'block', fontSize: '12.5px', fontWeight: 'bold', color: 'var(--text-primary)', marginBottom: '6px' }}>
                 3. Current College Year:
               </label>
               <select
@@ -2224,9 +2077,9 @@ print(f"Theoretical Density of Copper (FCC): {cu_density:.2f} g/cm^3")`
                   width: '100%',
                   padding: '10px 12px',
                   borderRadius: '8px',
-                  background: '#0f172a',
-                  border: '1.5px solid #334155',
-                  color: '#fff',
+                  background: 'var(--glass-bg)',
+                  border: '1.5px solid var(--glass-border)',
+                  color: 'var(--text-primary)',
                   fontSize: '13px'
                 }}
               >
@@ -2239,7 +2092,7 @@ print(f"Theoretical Density of Copper (FCC): {cu_density:.2f} g/cm^3")`
 
             {/* Question 4: Current Skill Level */}
             <div>
-              <label style={{ display: 'block', fontSize: '12.5px', fontWeight: 'bold', color: '#cbd5e1', marginBottom: '6px' }}>
+              <label style={{ display: 'block', fontSize: '12.5px', fontWeight: 'bold', color: 'var(--text-primary)', marginBottom: '6px' }}>
                 4. Current Coding Level:
               </label>
               <select
@@ -2249,9 +2102,9 @@ print(f"Theoretical Density of Copper (FCC): {cu_density:.2f} g/cm^3")`
                   width: '100%',
                   padding: '10px 12px',
                   borderRadius: '8px',
-                  background: '#0f172a',
-                  border: '1.5px solid #334155',
-                  color: '#fff',
+                  background: 'var(--glass-bg)',
+                  border: '1.5px solid var(--glass-border)',
+                  color: 'var(--text-primary)',
                   fontSize: '13px'
                 }}
               >
@@ -2283,26 +2136,26 @@ print(f"Theoretical Density of Copper (FCC): {cu_density:.2f} g/cm^3")`
           {/* Supercharged Year-Specific Result Box */}
           {quizResult && (
             <div style={{
-              background: '#0f172a',
+              background: 'var(--glass-bg)',
               borderRadius: '12px',
               padding: '22px',
-              border: '2px solid #38bdf8',
+              border: '2px solid var(--accent-primary)',
               display: 'flex',
               flexDirection: 'column',
               gap: '16px',
-              boxShadow: '0 0 25px rgba(56, 189, 248, 0.2)'
+              boxShadow: '0 0 25px rgba(56, 189, 248, 0.15)'
             }}>
               {/* Header Title */}
-              <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', flexWrap: 'wrap', gap: '10px', borderBottom: '1px solid #334155', paddingBottom: '12px' }}>
+              <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', flexWrap: 'wrap', gap: '10px', borderBottom: '1px solid var(--glass-border)', paddingBottom: '12px' }}>
                 <div>
-                  <h4 style={{ margin: 0, fontSize: '18px', color: '#38bdf8', fontWeight: '800' }}>
+                  <h4 style={{ margin: 0, fontSize: '18px', color: 'var(--accent-primary)', fontWeight: '800' }}>
                     {quizResult.yearGoalTitle}
                   </h4>
-                  <span style={{ fontSize: '12.5px', color: '#94a3b8' }}>
-                    Branch: <strong>{quizResult.branchName}</strong> | Expected Package: <strong style={{ color: '#34d399' }}>{quizResult.salaryRange}</strong>
+                  <span style={{ fontSize: '12.5px', color: 'var(--text-secondary)' }}>
+                    Branch: <strong style={{ color: 'var(--text-primary)' }}>{quizResult.branchName}</strong> | Expected Package: <strong style={{ color: '#059669' }}>{quizResult.salaryRange}</strong>
                   </span>
                 </div>
-                <span style={{ background: 'rgba(56, 189, 248, 0.15)', color: '#38bdf8', padding: '4px 12px', borderRadius: '12px', fontSize: '12px', fontWeight: 'bold' }}>
+                <span style={{ background: 'rgba(56, 189, 248, 0.15)', color: 'var(--accent-primary)', padding: '4px 12px', borderRadius: '12px', fontSize: '12px', fontWeight: 'bold' }}>
                   🎯 Year {quizYear} Action Plan
                 </span>
               </div>
@@ -2313,47 +2166,47 @@ print(f"Theoretical Density of Copper (FCC): {cu_density:.2f} g/cm^3")`
                 gridTemplateColumns: 'repeat(auto-fit, minmax(220px, 1fr))',
                 gap: '12px'
               }}>
-                <div style={{ background: '#1e293b', padding: '14px', borderRadius: '8px', border: '1px solid rgba(56, 189, 248, 0.3)' }}>
-                  <span style={{ fontSize: '11px', color: '#38bdf8', textTransform: 'uppercase', fontWeight: 'bold' }}>Primary Language Today</span>
-                  <p style={{ margin: '4px 0 0 0', fontWeight: '800', color: '#fff', fontSize: '15px' }}>
+                <div style={{ background: 'var(--bg-secondary)', padding: '14px', borderRadius: '8px', border: '1px solid var(--accent-primary)' }}>
+                  <span style={{ fontSize: '11px', color: 'var(--accent-primary)', textTransform: 'uppercase', fontWeight: 'bold' }}>Primary Language Today</span>
+                  <p style={{ margin: '4px 0 0 0', fontWeight: '800', color: 'var(--text-primary)', fontSize: '15px' }}>
                     {quizResult.recommendedPrimary}
                   </p>
                 </div>
 
-                <div style={{ background: '#1e293b', padding: '14px', borderRadius: '8px', border: '1px solid rgba(245, 158, 11, 0.3)' }}>
-                  <span style={{ fontSize: '11px', color: '#f59e0b', textTransform: 'uppercase', fontWeight: 'bold' }}>Secondary Tech Stack</span>
-                  <p style={{ margin: '4px 0 0 0', fontWeight: '800', color: '#fff', fontSize: '15px' }}>
+                <div style={{ background: 'var(--bg-secondary)', padding: '14px', borderRadius: '8px', border: '1px solid #d97706' }}>
+                  <span style={{ fontSize: '11px', color: '#d97706', textTransform: 'uppercase', fontWeight: 'bold' }}>Secondary Tech Stack</span>
+                  <p style={{ margin: '4px 0 0 0', fontWeight: '800', color: 'var(--text-primary)', fontSize: '15px' }}>
                     {quizResult.recommendedSecondary}
                   </p>
                 </div>
 
-                <div style={{ background: '#1e293b', padding: '14px', borderRadius: '8px', border: '1px solid rgba(16, 185, 129, 0.3)' }}>
-                  <span style={{ fontSize: '11px', color: '#10b981', textTransform: 'uppercase', fontWeight: 'bold' }}>Recommended Cert / MOOC</span>
-                  <p style={{ margin: '4px 0 0 0', fontWeight: '800', color: '#fff', fontSize: '13.5px' }}>
+                <div style={{ background: 'var(--bg-secondary)', padding: '14px', borderRadius: '8px', border: '1px solid #059669' }}>
+                  <span style={{ fontSize: '11px', color: '#059669', textTransform: 'uppercase', fontWeight: 'bold' }}>Recommended Cert / MOOC</span>
+                  <p style={{ margin: '4px 0 0 0', fontWeight: '800', color: 'var(--text-primary)', fontSize: '13.5px' }}>
                     {quizResult.topCert}
                   </p>
                 </div>
               </div>
 
               {/* Immediate Focus */}
-              <div style={{ background: 'rgba(56, 189, 248, 0.08)', padding: '14px 18px', borderRadius: '8px', border: '1px solid rgba(56, 189, 248, 0.2)' }}>
-                <span style={{ fontSize: '13px', fontWeight: 'bold', color: '#38bdf8' }}>
+              <div style={{ background: 'rgba(56, 189, 248, 0.08)', padding: '14px 18px', borderRadius: '8px', border: '1px solid var(--glass-border)' }}>
+                <span style={{ fontSize: '13px', fontWeight: 'bold', color: 'var(--accent-primary)' }}>
                   ⚡ Immediate Action Focus for Year {quizYear}:
                 </span>
-                <p style={{ margin: '4px 0 0 0', fontSize: '13.5px', color: '#e2e8f0', lineHeight: '1.5' }}>
+                <p style={{ margin: '4px 0 0 0', fontSize: '13.5px', color: 'var(--text-secondary)', lineHeight: '1.5' }}>
                   {quizResult.immediateAction}
                 </p>
               </div>
 
               {/* 30-60-90 Day Milestones */}
               <div>
-                <span style={{ fontSize: '13px', fontWeight: 'bold', color: '#f59e0b' }}>
+                <span style={{ fontSize: '13px', fontWeight: 'bold', color: '#d97706' }}>
                   📅 Your 30-60-90 Day Milestone Execution Plan:
                 </span>
                 <div style={{ display: 'flex', flexDirection: 'column', gap: '6px', marginTop: '6px' }}>
                   {quizResult.milestones30_60_90.map((m, idx) => (
-                    <div key={idx} style={{ display: 'flex', alignItems: 'flex-start', gap: '8px', fontSize: '13px', color: '#cbd5e1' }}>
-                      <span style={{ color: '#f59e0b', fontWeight: 'bold' }}>📌</span>
+                    <div key={idx} style={{ display: 'flex', alignItems: 'flex-start', gap: '8px', fontSize: '13px', color: 'var(--text-secondary)' }}>
+                      <span style={{ color: '#d97706', fontWeight: 'bold' }}>📌</span>
                       <span>{m}</span>
                     </div>
                   ))}
@@ -2362,22 +2215,22 @@ print(f"Theoretical Density of Copper (FCC): {cu_density:.2f} g/cm^3")`
 
               {/* Targeted Resume Projects */}
               <div>
-                <span style={{ fontSize: '13px', fontWeight: 'bold', color: '#34d399' }}>
+                <span style={{ fontSize: '13px', fontWeight: 'bold', color: '#059669' }}>
                   💡 Top 3 High-Impact Resume Projects for Year {quizYear}:
                 </span>
-                <ul style={{ margin: '6px 0 0 0', paddingLeft: '20px', fontSize: '13px', color: '#cbd5e1', lineHeight: '1.6' }}>
+                <ul style={{ margin: '6px 0 0 0', paddingLeft: '20px', fontSize: '13px', color: 'var(--text-secondary)', lineHeight: '1.6' }}>
                   {quizResult.projects.map((p, i) => (
-                    <li key={i}><strong style={{ color: '#f8fafc' }}>{p}</strong></li>
+                    <li key={i}><strong style={{ color: 'var(--text-primary)' }}>{p}</strong></li>
                   ))}
                 </ul>
               </div>
 
               {/* Common Trap to Avoid */}
-              <div style={{ background: 'rgba(239, 68, 68, 0.1)', padding: '12px 16px', borderRadius: '8px', border: '1px solid rgba(239, 68, 68, 0.25)' }}>
-                <span style={{ fontSize: '12.5px', fontWeight: 'bold', color: '#ef4444' }}>
+              <div style={{ background: 'rgba(220, 38, 38, 0.08)', padding: '12px 16px', borderRadius: '8px', border: '1px solid rgba(220, 38, 38, 0.3)' }}>
+                <span style={{ fontSize: '12.5px', fontWeight: 'bold', color: '#dc2626' }}>
                   ⚠️ Critical Trap to Avoid in Year {quizYear}:
                 </span>
-                <p style={{ margin: '2px 0 0 0', fontSize: '12.5px', color: '#fca5a5' }}>
+                <p style={{ margin: '2px 0 0 0', fontSize: '12.5px', color: '#dc2626', fontWeight: '500' }}>
                   {quizResult.avoidMistake}
                 </p>
               </div>
@@ -2397,12 +2250,12 @@ print(f"Theoretical Density of Copper (FCC): {cu_density:.2f} g/cm^3")`
             flexWrap: 'wrap',
             gap: '10px',
             padding: '10px 14px',
-            background: 'rgba(15, 23, 42, 0.6)',
+            background: 'var(--glass-bg)',
             borderRadius: '10px',
-            border: '1px solid rgba(255, 255, 255, 0.06)'
+            border: '1px solid var(--glass-border)'
           }}>
-            <span style={{ fontSize: '13px', color: '#cbd5e1' }}>
-              Showing <strong>{filteredBranches.length}</strong> branches (ordered by: <strong style={{ color: '#38bdf8' }}>{
+            <span style={{ fontSize: '13px', color: 'var(--text-secondary)' }}>
+              Showing <strong>{filteredBranches.length}</strong> branches (ordered by: <strong style={{ color: 'var(--accent-primary)' }}>{
                 sortBy === 'demand_desc' ? '💼 Placement Demand (High → Low)' :
                 sortBy === 'difficulty_desc' ? '🔥 Difficulty (High → Low)' :
                 sortBy === 'difficulty_asc' ? '🌱 Difficulty (Beginner Friendly)' :
@@ -2415,9 +2268,9 @@ print(f"Theoretical Density of Copper (FCC): {cu_density:.2f} g/cm^3")`
                 style={{
                   padding: '4px 10px',
                   borderRadius: '12px',
-                  border: sortBy === 'demand_desc' ? '1px solid #facc15' : '1px solid #334155',
-                  background: sortBy === 'demand_desc' ? 'rgba(250, 204, 21, 0.2)' : 'transparent',
-                  color: sortBy === 'demand_desc' ? '#facc15' : '#94a3b8',
+                  border: sortBy === 'demand_desc' ? '1px solid #d97706' : '1px solid var(--glass-border)',
+                  background: sortBy === 'demand_desc' ? 'rgba(217, 119, 6, 0.2)' : 'transparent',
+                  color: sortBy === 'demand_desc' ? '#d97706' : 'var(--text-secondary)',
                   fontSize: '11px',
                   fontWeight: '600',
                   cursor: 'pointer'
@@ -2430,9 +2283,9 @@ print(f"Theoretical Density of Copper (FCC): {cu_density:.2f} g/cm^3")`
                 style={{
                   padding: '4px 10px',
                   borderRadius: '12px',
-                  border: sortBy.startsWith('difficulty') ? '1px solid #ef4444' : '1px solid #334155',
-                  background: sortBy.startsWith('difficulty') ? 'rgba(239, 68, 68, 0.2)' : 'transparent',
-                  color: sortBy.startsWith('difficulty') ? '#f87171' : '#94a3b8',
+                  border: sortBy.startsWith('difficulty') ? '1px solid #dc2626' : '1px solid var(--glass-border)',
+                  background: sortBy.startsWith('difficulty') ? 'rgba(220, 38, 38, 0.15)' : 'transparent',
+                  color: sortBy.startsWith('difficulty') ? '#dc2626' : 'var(--text-secondary)',
                   fontSize: '11px',
                   fontWeight: '600',
                   cursor: 'pointer'
@@ -2444,7 +2297,7 @@ print(f"Theoretical Density of Copper (FCC): {cu_density:.2f} g/cm^3")`
           </div>
 
           {/* Comparison Matrix Table */}
-          <div style={{ overflowX: 'auto', borderRadius: '12px', border: '1px solid #334155' }}>
+          <div style={{ overflowX: 'auto', borderRadius: '12px', border: '1px solid var(--glass-border)' }}>
             <table style={{
               width: '100%',
               borderCollapse: 'collapse',
@@ -2452,7 +2305,7 @@ print(f"Theoretical Density of Copper (FCC): {cu_density:.2f} g/cm^3")`
               textAlign: 'left'
             }}>
               <thead>
-                <tr style={{ background: '#1e293b', color: '#38bdf8', borderBottom: '2px solid #334155' }}>
+                <tr style={{ background: 'var(--bg-secondary)', color: 'var(--accent-primary)', borderBottom: '2px solid var(--glass-border)' }}>
                   <th style={{ padding: '12px 14px' }}>Branch</th>
                   <th style={{ padding: '12px 14px' }}>Primary Language</th>
                   <th style={{ padding: '12px 14px' }}>Secondary Stack</th>
@@ -2462,7 +2315,7 @@ print(f"Theoretical Density of Copper (FCC): {cu_density:.2f} g/cm^3")`
                     style={{
                       padding: '12px 14px',
                       cursor: 'pointer',
-                      color: sortBy === 'demand_desc' ? '#facc15' : '#38bdf8',
+                      color: sortBy === 'demand_desc' ? '#d97706' : 'var(--accent-primary)',
                       userSelect: 'none'
                     }}
                     title="Click to sort by Placement Demand"
@@ -2474,7 +2327,7 @@ print(f"Theoretical Density of Copper (FCC): {cu_density:.2f} g/cm^3")`
                     style={{
                       padding: '12px 14px',
                       cursor: 'pointer',
-                      color: sortBy.startsWith('difficulty') ? '#f87171' : '#38bdf8',
+                      color: sortBy.startsWith('difficulty') ? '#dc2626' : 'var(--accent-primary)',
                       userSelect: 'none'
                     }}
                     title="Click to sort by Difficulty"
@@ -2495,9 +2348,9 @@ print(f"Theoretical Density of Copper (FCC): {cu_density:.2f} g/cm^3")`
                         background: isSelected
                           ? 'rgba(56, 189, 248, 0.12)'
                           : idx % 2 === 0
-                          ? 'rgba(15, 23, 42, 0.6)'
-                          : 'rgba(30, 41, 59, 0.4)',
-                        borderBottom: '1px solid #334155',
+                          ? 'var(--glass-bg)'
+                          : 'var(--bg-secondary)',
+                        borderBottom: '1px solid var(--glass-border)',
                         borderLeft: isSelected ? `3px solid ${b.color}` : '3px solid transparent',
                         cursor: 'pointer',
                         transition: 'background 0.15s ease'
@@ -2507,18 +2360,18 @@ print(f"Theoretical Density of Copper (FCC): {cu_density:.2f} g/cm^3")`
                       <td style={{ padding: '12px 14px', fontWeight: 'bold', color: b.color }}>
                         <span style={{ marginRight: '6px' }}>{b.icon}</span> {b.name.split('(')[0]}
                       </td>
-                      <td style={{ padding: '12px 14px', color: '#f1f5f9', fontWeight: '600' }}>
+                      <td style={{ padding: '12px 14px', color: 'var(--text-primary)', fontWeight: '600' }}>
                         {b.primaryLang.name}
                       </td>
-                      <td style={{ padding: '12px 14px', color: '#cbd5e1' }}>
+                      <td style={{ padding: '12px 14px', color: 'var(--text-secondary)' }}>
                         {b.secondaryLang.name}
                       </td>
-                      <td style={{ padding: '12px 14px', color: '#94a3b8', fontSize: '12.5px' }}>
+                      <td style={{ padding: '12px 14px', color: 'var(--text-secondary)', fontSize: '12.5px' }}>
                         {b.coreFocus.split(',').slice(0, 3).join(', ')}...
                       </td>
-                      <td style={{ padding: '12px 14px', color: '#facc15', fontWeight: 'bold', fontSize: '12px', whiteSpace: 'nowrap' }}>
+                      <td style={{ padding: '12px 14px', color: '#d97706', fontWeight: 'bold', fontSize: '12px', whiteSpace: 'nowrap' }}>
                         <div>{(b.placementDemand.match(/⭐/g) || []).join('')}</div>
-                        <span style={{ fontSize: '11px', color: '#cbd5e1', fontWeight: 'normal' }}>
+                        <span style={{ fontSize: '11px', color: 'var(--text-secondary)', fontWeight: 'normal' }}>
                           {b.placementDemand.split('(')[1]?.replace(')', '') || ''}
                         </span>
                       </td>
@@ -2536,7 +2389,7 @@ print(f"Theoretical Density of Copper (FCC): {cu_density:.2f} g/cm^3")`
                         }}>
                           {dMeta.label}
                         </span>
-                        <div style={{ fontSize: '11px', color: '#94a3b8' }}>
+                        <div style={{ fontSize: '11px', color: 'var(--text-secondary)' }}>
                           {b.difficulty}
                         </div>
                       </td>

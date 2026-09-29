@@ -1,5 +1,5 @@
 import React, { useState, useEffect, useRef } from 'react';
-import { getActiveUser, logoutUser, getTopUserHabits, requestAccountDeactivation } from './userAuthService.js';
+import { getActiveUser, logoutUser, requestAccountDeactivation } from './userAuthService.js';
 
 export default function UserProfileBadge({ onOpenConnectModal, onOpenSettings }) {
   const [user, setUser] = useState(() => getActiveUser());
@@ -58,24 +58,24 @@ export default function UserProfileBadge({ onOpenConnectModal, onOpenSettings })
             display: 'flex',
             alignItems: 'center',
             gap: '7px',
-            background: 'rgba(56, 189, 248, 0.1)',
-            border: '1px solid rgba(56, 189, 248, 0.35)',
+            background: 'rgba(56, 189, 248, 0.12)',
+            border: '1px solid var(--accent-primary, rgba(56, 189, 248, 0.35))',
             borderRadius: '20px',
             padding: '5px 12px',
-            color: '#38bdf8',
+            color: 'var(--accent-primary, #0284c7)',
             fontSize: '0.82rem',
             fontWeight: '700',
             cursor: 'pointer',
             transition: 'all 0.2s ease',
-            boxShadow: '0 2px 8px rgba(0, 0, 0, 0.2)'
+            boxShadow: '0 2px 8px rgba(0, 0, 0, 0.1)'
           }}
           onMouseEnter={e => {
             e.currentTarget.style.background = 'rgba(56, 189, 248, 0.2)';
-            e.currentTarget.style.borderColor = '#38bdf8';
+            e.currentTarget.style.borderColor = 'var(--accent-primary, #38bdf8)';
           }}
           onMouseLeave={e => {
-            e.currentTarget.style.background = 'rgba(56, 189, 248, 0.1)';
-            e.currentTarget.style.borderColor = 'rgba(56, 189, 248, 0.35)';
+            e.currentTarget.style.background = 'rgba(56, 189, 248, 0.12)';
+            e.currentTarget.style.borderColor = 'var(--accent-primary, rgba(56, 189, 248, 0.35))';
           }}
           title="Sign in with your 4-Digit PIN or Email"
         >
@@ -89,25 +89,23 @@ export default function UserProfileBadge({ onOpenConnectModal, onOpenSettings })
             display: 'flex',
             alignItems: 'center',
             gap: '5px',
-            background: 'rgba(255, 255, 255, 0.04)',
-            border: '1px solid rgba(255, 255, 255, 0.15)',
+            background: 'var(--glass-bg, rgba(255, 255, 255, 0.04))',
+            border: '1px solid var(--glass-border, rgba(255, 255, 255, 0.15))',
             borderRadius: '20px',
             padding: '5px 11px',
-            color: '#cbd5e1',
+            color: 'var(--text-secondary, #cbd5e1)',
             fontSize: '0.82rem',
             fontWeight: '600',
             cursor: 'pointer',
             transition: 'all 0.2s ease'
           }}
           onMouseEnter={e => {
-            e.currentTarget.style.background = 'rgba(255, 255, 255, 0.1)';
-            e.currentTarget.style.borderColor = 'rgba(255, 255, 255, 0.3)';
-            e.currentTarget.style.color = '#ffffff';
+            e.currentTarget.style.background = 'var(--glass-border, rgba(255, 255, 255, 0.1))';
+            e.currentTarget.style.color = 'var(--text-primary, #ffffff)';
           }}
           onMouseLeave={e => {
-            e.currentTarget.style.background = 'rgba(255, 255, 255, 0.04)';
-            e.currentTarget.style.borderColor = 'rgba(255, 255, 255, 0.15)';
-            e.currentTarget.style.color = '#cbd5e1';
+            e.currentTarget.style.background = 'var(--glass-bg, rgba(255, 255, 255, 0.04))';
+            e.currentTarget.style.color = 'var(--text-secondary, #cbd5e1)';
           }}
           title="Open Settings"
         >
@@ -118,7 +116,6 @@ export default function UserProfileBadge({ onOpenConnectModal, onOpenSettings })
     );
   }
 
-  const topHabits = getTopUserHabits(user.email, 3);
   const scheduledSevenDaysDate = new Date(Date.now() + 7 * 24 * 60 * 60 * 1000).toLocaleDateString('en-US', {
     weekday: 'long',
     year: 'numeric',
@@ -134,17 +131,17 @@ export default function UserProfileBadge({ onOpenConnectModal, onOpenSettings })
           display: 'flex',
           alignItems: 'center',
           gap: '8px',
-          background: 'rgba(30, 41, 59, 0.75)',
-          border: '1px solid rgba(56, 189, 248, 0.4)',
+          background: 'var(--glass-bg, rgba(30, 41, 59, 0.75))',
+          border: '1px solid var(--glass-border, rgba(56, 189, 248, 0.4))',
           borderRadius: '20px',
           padding: '4px 10px 4px 5px',
-          color: '#f8fafc',
+          color: 'var(--text-primary, #f8fafc)',
           cursor: 'pointer',
           transition: 'all 0.2s ease',
-          boxShadow: '0 2px 10px rgba(0,0,0,0.3)'
+          boxShadow: '0 2px 10px rgba(0,0,0,0.1)'
         }}
-        onMouseEnter={e => e.currentTarget.style.borderColor = '#38bdf8'}
-        onMouseLeave={e => e.currentTarget.style.borderColor = 'rgba(56, 189, 248, 0.4)'}
+        onMouseEnter={e => e.currentTarget.style.borderColor = 'var(--accent-primary, #38bdf8)'}
+        onMouseLeave={e => e.currentTarget.style.borderColor = 'var(--glass-border, rgba(56, 189, 248, 0.4))'}
       >
         {user.picture ? (
           <img 
@@ -184,11 +181,11 @@ export default function UserProfileBadge({ onOpenConnectModal, onOpenSettings })
           top: 'calc(100% + 8px)',
           right: 0,
           width: '260px',
-          background: 'rgba(15, 23, 42, 0.98)',
-          border: '1.5px solid rgba(56, 189, 248, 0.3)',
+          background: 'var(--bg-secondary, #0f172a)',
+          border: '1.5px solid var(--glass-border, rgba(56, 189, 248, 0.3))',
           borderRadius: '16px',
           padding: '14px',
-          boxShadow: '0 15px 35px rgba(0,0,0,0.6)',
+          boxShadow: '0 15px 35px rgba(0,0,0,0.25)',
           zIndex: 9999,
           backdropFilter: 'blur(16px)',
           display: 'flex',
@@ -196,11 +193,11 @@ export default function UserProfileBadge({ onOpenConnectModal, onOpenSettings })
           gap: '10px'
         }}>
           {/* User Info Header */}
-          <div style={{ borderBottom: '1px solid rgba(255,255,255,0.08)', paddingBottom: '10px' }}>
-            <div style={{ fontWeight: '700', fontSize: '0.92rem', color: '#f8fafc' }}>
+          <div style={{ borderBottom: '1px solid var(--glass-border, rgba(255,255,255,0.08))', paddingBottom: '10px' }}>
+            <div style={{ fontWeight: '700', fontSize: '0.92rem', color: 'var(--text-primary, #f8fafc)' }}>
               {user.name}
             </div>
-            <div style={{ fontSize: '0.75rem', color: '#94a3b8', wordBreak: 'break-all', marginTop: '2px' }}>
+            <div style={{ fontSize: '0.75rem', color: 'var(--text-secondary, #94a3b8)', wordBreak: 'break-all', marginTop: '2px' }}>
               {user.email}
             </div>
             <div style={{ 
@@ -209,7 +206,7 @@ export default function UserProfileBadge({ onOpenConnectModal, onOpenSettings })
               gap: '4px', 
               marginTop: '6px', 
               fontSize: '0.7rem', 
-              color: '#38bdf8',
+              color: 'var(--accent-primary, #0284c7)',
               background: 'rgba(56, 189, 248, 0.12)',
               padding: '2px 8px',
               borderRadius: '6px'
@@ -217,28 +214,6 @@ export default function UserProfileBadge({ onOpenConnectModal, onOpenSettings })
               <span>✓ Google Verified</span>
             </div>
           </div>
-
-          {/* Habituated Topics */}
-          {topHabits.length > 0 && (
-            <div style={{ fontSize: '0.75rem' }}>
-              <div style={{ color: '#64748b', fontWeight: '600', marginBottom: '4px' }}>
-                🧠 Habituated Topics:
-              </div>
-              <div style={{ display: 'flex', flexWrap: 'wrap', gap: '4px' }}>
-                {topHabits.map((topic, i) => (
-                  <span key={i} style={{
-                    background: 'rgba(255, 255, 255, 0.06)',
-                    padding: '2px 6px',
-                    borderRadius: '4px',
-                    color: '#e2e8f0',
-                    fontSize: '0.7rem'
-                  }}>
-                    {topic}
-                  </span>
-                ))}
-              </div>
-            </div>
-          )}
 
           {/* Actions */}
           <div style={{ display: 'flex', flexDirection: 'column', gap: '6px', paddingTop: '4px' }}>
@@ -251,9 +226,9 @@ export default function UserProfileBadge({ onOpenConnectModal, onOpenSettings })
                 width: '100%',
                 padding: '7px 10px',
                 borderRadius: '8px',
-                background: 'rgba(255, 255, 255, 0.05)',
-                border: '1px solid rgba(255, 255, 255, 0.1)',
-                color: '#e2e8f0',
+                background: 'var(--glass-bg, rgba(255, 255, 255, 0.05))',
+                border: '1px solid var(--glass-border, rgba(255, 255, 255, 0.1))',
+                color: 'var(--text-primary, #e2e8f0)',
                 fontSize: '0.8rem',
                 fontWeight: '600',
                 cursor: 'pointer',
@@ -271,7 +246,7 @@ export default function UserProfileBadge({ onOpenConnectModal, onOpenSettings })
             <div style={{
               marginTop: '4px',
               paddingTop: '8px',
-              borderTop: '1px solid rgba(255, 255, 255, 0.08)',
+              borderTop: '1px solid var(--glass-border, rgba(255, 255, 255, 0.08))',
               display: 'flex',
               flexDirection: 'column',
               gap: '6px'
@@ -287,7 +262,7 @@ export default function UserProfileBadge({ onOpenConnectModal, onOpenSettings })
                   borderRadius: '8px',
                   background: 'rgba(239, 68, 68, 0.08)',
                   border: '1px solid rgba(239, 68, 68, 0.2)',
-                  color: '#f87171',
+                  color: '#dc2626',
                   fontSize: '0.8rem',
                   fontWeight: '600',
                   cursor: 'pointer',
@@ -312,7 +287,7 @@ export default function UserProfileBadge({ onOpenConnectModal, onOpenSettings })
                   borderRadius: '8px',
                   background: 'rgba(239, 68, 68, 0.15)',
                   border: '1px solid rgba(239, 68, 68, 0.35)',
-                  color: '#ef4444',
+                  color: '#dc2626',
                   fontSize: '0.8rem',
                   fontWeight: '700',
                   cursor: 'pointer',
@@ -339,7 +314,7 @@ export default function UserProfileBadge({ onOpenConnectModal, onOpenSettings })
             left: 0,
             right: 0,
             bottom: 0,
-            background: 'rgba(0, 0, 0, 0.85)',
+            background: 'rgba(0, 0, 0, 0.7)',
             backdropFilter: 'blur(12px)',
             zIndex: 999999,
             display: 'flex',
@@ -351,14 +326,14 @@ export default function UserProfileBadge({ onOpenConnectModal, onOpenSettings })
         >
           <div 
             style={{
-              background: '#0f172a',
+              background: 'var(--bg-secondary, #0f172a)',
               border: '1.5px solid rgba(239, 68, 68, 0.4)',
               borderRadius: '20px',
               padding: '28px',
               maxWidth: '460px',
               width: '100%',
-              boxShadow: '0 20px 50px rgba(0,0,0,0.8), 0 0 30px rgba(239,68,68,0.2)',
-              color: '#f8fafc',
+              boxShadow: '0 20px 50px rgba(0,0,0,0.4), 0 0 30px rgba(239,68,68,0.2)',
+              color: 'var(--text-primary, #f8fafc)',
               display: 'flex',
               flexDirection: 'column',
               gap: '16px'
@@ -368,16 +343,16 @@ export default function UserProfileBadge({ onOpenConnectModal, onOpenSettings })
             <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
               <span style={{ fontSize: '28px' }}>🗑️</span>
               <div>
-                <h3 style={{ margin: 0, fontSize: '1.15rem', color: '#ef4444' }}>
+                <h3 style={{ margin: 0, fontSize: '1.15rem', color: '#dc2626' }}>
                   Deactivate &amp; Delete Account
                 </h3>
-                <span style={{ fontSize: '0.78rem', color: '#94a3b8' }}>
+                <span style={{ fontSize: '0.78rem', color: 'var(--text-secondary, #94a3b8)' }}>
                   7-Day Deletion Grace Period
                 </span>
               </div>
             </div>
 
-            <p style={{ margin: 0, fontSize: '0.86rem', color: '#cbd5e1', lineHeight: '1.5' }}>
+            <p style={{ margin: 0, fontSize: '0.86rem', color: 'var(--text-secondary, #cbd5e1)', lineHeight: '1.5' }}>
               Deactivating gives you a <strong>7-day grace period</strong>. Your account data is scheduled for permanent deletion in 7 days.
             </p>
 
@@ -387,17 +362,17 @@ export default function UserProfileBadge({ onOpenConnectModal, onOpenSettings })
               borderRadius: '10px',
               padding: '10px 14px',
               fontSize: '0.8rem',
-              color: '#fca5a5',
+              color: '#dc2626',
               lineHeight: '1.4'
             }}>
               📅 <strong>Scheduled Permanent Deletion:</strong> {scheduledSevenDaysDate}
-              <div style={{ marginTop: '6px', color: '#cbd5e1' }}>
+              <div style={{ marginTop: '6px', color: 'var(--text-secondary, #cbd5e1)' }}>
                 💡 <strong>Restore anytime:</strong> If you change your mind, simply sign in with your email within 7 days to cancel deactivation and restore your account immediately.
               </div>
             </div>
 
             <div>
-              <label style={{ display: 'block', fontSize: '0.8rem', color: '#94a3b8', marginBottom: '6px' }}>
+              <label style={{ display: 'block', fontSize: '0.8rem', color: 'var(--text-secondary, #94a3b8)', marginBottom: '6px' }}>
                 Reason for deactivating:
               </label>
               <select
@@ -407,9 +382,9 @@ export default function UserProfileBadge({ onOpenConnectModal, onOpenSettings })
                   width: '100%',
                   padding: '8px 12px',
                   borderRadius: '8px',
-                  background: 'rgba(30, 41, 59, 0.9)',
-                  border: '1px solid rgba(255, 255, 255, 0.15)',
-                  color: '#ffffff',
+                  background: 'var(--glass-bg, rgba(30, 41, 59, 0.9))',
+                  border: '1px solid var(--glass-border, rgba(255, 255, 255, 0.15))',
+                  color: 'var(--text-primary, #ffffff)',
                   fontSize: '0.84rem',
                   outline: 'none'
                 }}
@@ -423,7 +398,7 @@ export default function UserProfileBadge({ onOpenConnectModal, onOpenSettings })
             </div>
 
             {deactivateError && (
-              <div style={{ color: '#ef4444', fontSize: '0.82rem' }}>
+              <div style={{ color: '#dc2626', fontSize: '0.82rem' }}>
                 ⚠️ {deactivateError}
               </div>
             )}
@@ -436,9 +411,9 @@ export default function UserProfileBadge({ onOpenConnectModal, onOpenSettings })
                   flex: 1,
                   padding: '10px',
                   borderRadius: '10px',
-                  background: 'rgba(255, 255, 255, 0.08)',
-                  border: '1px solid rgba(255, 255, 255, 0.15)',
-                  color: '#e2e8f0',
+                  background: 'var(--glass-bg, rgba(255, 255, 255, 0.08))',
+                  border: '1px solid var(--glass-border, rgba(255, 255, 255, 0.15))',
+                  color: 'var(--text-primary, #e2e8f0)',
                   fontWeight: '600',
                   fontSize: '0.86rem',
                   cursor: 'pointer'
@@ -480,7 +455,7 @@ export default function UserProfileBadge({ onOpenConnectModal, onOpenSettings })
             left: 0,
             right: 0,
             bottom: 0,
-            background: 'rgba(0, 0, 0, 0.85)',
+            background: 'rgba(0, 0, 0, 0.7)',
             backdropFilter: 'blur(10px)',
             zIndex: 999999,
             display: 'flex',
@@ -492,14 +467,14 @@ export default function UserProfileBadge({ onOpenConnectModal, onOpenSettings })
         >
           <div 
             style={{
-              background: '#0f172a',
-              border: '1.5px solid rgba(56, 189, 248, 0.35)',
+              background: 'var(--bg-secondary, #0f172a)',
+              border: '1.5px solid var(--glass-border, rgba(56, 189, 248, 0.35))',
               borderRadius: '20px',
               padding: '24px 28px',
               maxWidth: '400px',
               width: '100%',
-              boxShadow: '0 20px 50px rgba(0,0,0,0.8), 0 0 25px rgba(56, 189, 248, 0.15)',
-              color: '#f8fafc',
+              boxShadow: '0 20px 50px rgba(0,0,0,0.4), 0 0 25px rgba(56, 189, 248, 0.15)',
+              color: 'var(--text-primary, #f8fafc)',
               display: 'flex',
               flexDirection: 'column',
               gap: '16px'
@@ -521,16 +496,16 @@ export default function UserProfileBadge({ onOpenConnectModal, onOpenSettings })
                 🚪
               </div>
               <div>
-                <h3 style={{ margin: 0, fontSize: '1.15rem', color: '#f8fafc', fontWeight: '700' }}>
+                <h3 style={{ margin: 0, fontSize: '1.15rem', color: 'var(--text-primary, #f8fafc)', fontWeight: '700' }}>
                   Log Out
                 </h3>
-                <span style={{ fontSize: '0.8rem', color: '#94a3b8' }}>
+                <span style={{ fontSize: '0.8rem', color: 'var(--text-secondary, #94a3b8)' }}>
                   {user?.email}
                 </span>
               </div>
             </div>
 
-            <p style={{ margin: 0, fontSize: '0.88rem', color: '#cbd5e1', lineHeight: '1.5' }}>
+            <p style={{ margin: 0, fontSize: '0.88rem', color: 'var(--text-secondary, #cbd5e1)', lineHeight: '1.5' }}>
               Are you sure you want to log out from this account? You can sign back in anytime with your 4-digit PIN.
             </p>
 
@@ -542,9 +517,9 @@ export default function UserProfileBadge({ onOpenConnectModal, onOpenSettings })
                   flex: 1,
                   padding: '10px',
                   borderRadius: '10px',
-                  background: 'rgba(255, 255, 255, 0.08)',
-                  border: '1px solid rgba(255, 255, 255, 0.15)',
-                  color: '#e2e8f0',
+                  background: 'var(--glass-bg, rgba(255, 255, 255, 0.08))',
+                  border: '1px solid var(--glass-border, rgba(255, 255, 255, 0.15))',
+                  color: 'var(--text-primary, #e2e8f0)',
                   fontWeight: '600',
                   fontSize: '0.86rem',
                   cursor: 'pointer'

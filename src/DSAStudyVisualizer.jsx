@@ -829,7 +829,7 @@ const DSAStudyVisualizer = ({ onBack, onOpenDebugger }) => {
       {/* MAIN DUAL-PANE VIEW */}
       <div style={{ display: 'flex', flex: 1, overflow: 'hidden' }}>
         {/* SIDEBAR: TOPIC LIST */}
-        <div style={{ width: '320px', borderRight: '1px solid var(--glass-border)', background: 'rgba(15,23,42,0.6)', display: 'flex', flexDirection: 'column' }}>
+        <div style={{ width: '320px', borderRight: '1px solid var(--glass-border)', background: 'var(--glass-bg)', display: 'flex', flexDirection: 'column' }}>
           <div style={{ padding: '12px', borderBottom: '1px solid var(--glass-border)' }}>
             <input 
               type="text"
@@ -858,7 +858,7 @@ const DSAStudyVisualizer = ({ onBack, onOpenDebugger }) => {
                     transition: 'all 0.15s ease'
                   }}
                 >
-                  <div style={{ fontSize: '0.88rem', fontWeight: isSelected ? 700 : 500, color: isSelected ? '#60a5fa' : 'var(--text-primary)' }}>
+                  <div style={{ fontSize: '0.88rem', fontWeight: isSelected ? 700 : 500, color: isSelected ? 'var(--accent-primary)' : 'var(--text-primary)' }}>
                     {item.title}
                   </div>
                   <div style={{ fontSize: '0.72rem', color: 'var(--text-secondary)', marginTop: '2px' }}>
@@ -873,7 +873,7 @@ const DSAStudyVisualizer = ({ onBack, onOpenDebugger }) => {
         {/* CONTENT AREA */}
         <div style={{ flex: 1, overflowY: 'auto', padding: '2rem', display: 'flex', flexDirection: 'column', gap: '1.5rem', maxWidth: '1000px', margin: '0 auto', width: '100%' }}>
           <div>
-            <span style={{ fontSize: '0.78rem', background: 'rgba(59,130,246,0.15)', color: '#60a5fa', padding: '3px 10px', borderRadius: '12px', fontWeight: 'bold' }}>
+            <span style={{ fontSize: '0.78rem', background: 'rgba(59,130,246,0.15)', color: 'var(--accent-primary)', padding: '3px 10px', borderRadius: '12px', fontWeight: 'bold' }}>
               {activeLesson.category}
             </span>
             <h1 className="title-gradient" style={{ fontSize: '1.8rem', margin: '8px 0 0 0' }}>{activeLesson.title}</h1>
@@ -889,7 +889,7 @@ const DSAStudyVisualizer = ({ onBack, onOpenDebugger }) => {
 
           {/* EVERYDAY ANALOGY */}
           <div style={{ background: 'rgba(251,191,36,0.06)', padding: '1.4rem', borderRadius: '14px', border: '1px solid rgba(251,191,36,0.25)' }}>
-            <h3 style={{ color: '#fbbf24', marginTop: 0, fontSize: '1.05rem' }}>💡 Everyday Analogy</h3>
+            <h3 style={{ color: '#d97706', marginTop: 0, fontSize: '1.05rem' }}>💡 Everyday Analogy</h3>
             <p style={{ lineHeight: '1.7', color: 'var(--text-primary)', fontSize: '0.95rem', margin: 0 }}>
               {activeLesson.analogy}
             </p>
@@ -897,13 +897,13 @@ const DSAStudyVisualizer = ({ onBack, onOpenDebugger }) => {
 
           {/* COMPLEXITY BADGE */}
           <div style={{ background: 'rgba(16,185,129,0.08)', padding: '1rem 1.4rem', borderRadius: '12px', border: '1px solid rgba(16,185,129,0.25)', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-            <span style={{ fontWeight: 'bold', color: '#34d399', fontSize: '0.9rem' }}>Complexity Model:</span>
-            <span style={{ fontFamily: 'monospace', color: '#fff', fontSize: '0.95rem', fontWeight: 600 }}>{activeLesson.complexity}</span>
+            <span style={{ fontWeight: 'bold', color: '#059669', fontSize: '0.9rem' }}>Complexity Model:</span>
+            <span style={{ fontFamily: 'monospace', color: 'var(--text-primary)', fontSize: '0.95rem', fontWeight: 700 }}>{activeLesson.complexity}</span>
           </div>
 
           {/* MULTI-LANGUAGE CODE BLOCK */}
           <div style={{ background: 'var(--bg-secondary)', borderRadius: '14px', border: '1px solid var(--glass-border)', overflow: 'hidden' }}>
-            <div style={{ padding: '8px 14px', display: 'flex', justifyContent: 'space-between', alignItems: 'center', borderBottom: '1px solid var(--glass-border)', background: 'rgba(0,0,0,0.2)' }}>
+            <div style={{ padding: '8px 14px', display: 'flex', justifyContent: 'space-between', alignItems: 'center', borderBottom: '1px solid var(--glass-border)', background: 'var(--glass-bg)' }}>
               <div style={{ display: 'flex', alignItems: 'center', gap: '6px' }}>
                 <span style={{ fontSize: '0.78rem', fontWeight: 700, color: 'var(--text-secondary)' }}>💻 Code:</span>
                 {['C++', 'Java', 'Python', 'JS', 'C'].map(lang => (
@@ -926,7 +926,7 @@ const DSAStudyVisualizer = ({ onBack, onOpenDebugger }) => {
                 ))}
 
                 {/* Full Program vs Snippet Toggle */}
-                <div style={{ display: 'flex', background: 'rgba(0,0,0,0.3)', borderRadius: '6px', padding: '2px', border: '1px solid var(--glass-border)', marginLeft: '6px' }}>
+                <div style={{ display: 'flex', background: 'var(--glass-bg)', borderRadius: '6px', padding: '2px', border: '1px solid var(--glass-border)', marginLeft: '6px' }}>
                   <button 
                     onClick={() => setCodeViewMode('full')}
                     style={{
@@ -988,9 +988,9 @@ const DSAStudyVisualizer = ({ onBack, onOpenDebugger }) => {
 
             <pre style={{
               margin: 0,
-              padding: '16px 20px',
-              background: 'var(--bg-primary, rgba(0,0,0,0.3))',
-              color: '#f8fafc',
+              padding: '12px 16px',
+              background: 'var(--bg-secondary)',
+              color: 'var(--text-primary)',
               fontFamily: "'Fira Code', 'Cascadia Code', monospace",
               fontSize: `${codeFontSize}px`,
               lineHeight: '1.75',
@@ -998,8 +998,13 @@ const DSAStudyVisualizer = ({ onBack, onOpenDebugger }) => {
               overflowX: 'auto'
             }}>
               {toAllman(activeCodeToDisplay).split('\n').map((line, idx) => (
-                <div key={idx} style={{ padding: '1px 0', whiteSpace: 'pre', color: '#f8fafc' }}>
-                  {line || ' '}
+                <div key={idx} style={{ display: 'flex', alignItems: 'center', padding: '1px 8px' }}>
+                  <span style={{ width: '36px', userSelect: 'none', textAlign: 'right', paddingRight: '12px', color: 'var(--text-secondary)', fontSize: '0.82em', flexShrink: 0 }}>
+                    {idx + 1}
+                  </span>
+                  <span style={{ whiteSpace: 'pre', color: 'var(--text-primary)' }}>
+                    {line || ' '}
+                  </span>
                 </div>
               ))}
             </pre>

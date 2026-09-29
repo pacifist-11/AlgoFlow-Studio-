@@ -588,20 +588,24 @@ export default function GoogleConnectModal({ isOpen, onClose, onUserConnected, c
                 {/* Email Delivery Notice */}
                 <div style={{
                   display: 'flex',
+                  flexDirection: 'column',
                   alignItems: 'center',
                   justifyContent: 'center',
-                  gap: '8px',
+                  gap: '4px',
                   margin: '0 auto',
-                  padding: '8px 16px',
+                  padding: '9px 16px',
                   borderRadius: '12px',
                   background: 'rgba(56, 189, 248, 0.08)',
                   border: '1px solid rgba(56, 189, 248, 0.25)',
                   fontSize: '0.82rem',
                   color: '#94a3b8',
-                  maxWidth: '380px',
+                  maxWidth: '400px',
                   lineHeight: '1.4'
                 }}>
-                  <span>📬 We sent a 4-digit code to <strong style={{ color: '#38bdf8' }}>{targetInput}</strong>. Please check your inbox.</span>
+                  <span>📬 4-digit code sent to <strong style={{ color: '#38bdf8' }}>{targetInput}</strong></span>
+                  <span style={{ fontSize: '0.78rem', color: '#cbd5e1' }}>
+                    💡 Can't find it in your primary inbox? Please check your <strong>Spam</strong> or <strong>Promotions</strong> folder!
+                  </span>
                 </div>
 
                 {/* Signing In As Auto-Derived Name Display (Clean, No Edit Button) */}

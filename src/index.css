@@ -178,6 +178,8 @@ body {
   overflow: auto;
   min-height: 260px;
   overscroll-behavior: contain;
+  -webkit-overflow-scrolling: touch;
+  touch-action: pan-x pan-y;
   cursor: grab;
 }
 
@@ -233,7 +235,7 @@ body {
 }
 .code-tab.active {
   background: rgba(59,130,246,0.2);
-  color: #60a5fa;
+  color: var(--accent-primary, #2563eb);
   border-color: rgba(59,130,246,0.4);
 }
 
@@ -307,8 +309,8 @@ body {
 /* ── Scrollbars ── */
 ::-webkit-scrollbar { width: 5px; height: 5px; }
 ::-webkit-scrollbar-track { background: transparent; }
-::-webkit-scrollbar-thumb { background: rgba(255,255,255,0.12); border-radius: 4px; }
-::-webkit-scrollbar-thumb:hover { background: rgba(255,255,255,0.22); }
+::-webkit-scrollbar-thumb { background: var(--glass-border, rgba(120,120,120,0.25)); border-radius: 4px; }
+::-webkit-scrollbar-thumb:hover { background: var(--text-secondary, rgba(120,120,120,0.45)); }
 
 /* ── Responsive ── */
 @media (max-width: 768px) {
@@ -344,19 +346,19 @@ body {
   /* Mobile Tab Bar Styles */
   .mobile-tabs-container {
     display: flex;
-    background: rgba(15, 23, 42, 0.65);
-    border: 1px solid rgba(255, 255, 255, 0.08);
+    background: var(--glass-bg, rgba(15, 23, 42, 0.65));
+    border: 1px solid var(--glass-border, rgba(255, 255, 255, 0.08));
     border-radius: 12px;
     padding: 3px;
     margin: 0 0.5rem 0.75rem 0.5rem;
     gap: 4px;
-    box-shadow: 0 4px 15px rgba(0, 0, 0, 0.2);
+    box-shadow: 0 4px 15px rgba(0, 0, 0, 0.08);
   }
   .mobile-tab-btn {
     flex: 1;
     background: transparent;
     border: none;
-    color: #94a3b8;
+    color: var(--text-secondary, #94a3b8);
     padding: 8px 6px;
     border-radius: 8px;
     cursor: pointer;

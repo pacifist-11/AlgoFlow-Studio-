@@ -122,66 +122,48 @@ function formatNameFromEmail(email = '') {
  */
 async function dispatchRealEmail({ to, pin, name }) {
   const recipientName = name || formatNameFromEmail(to) || to.split('@')[0];
-  const subject = `Your AlgoFlow Studio sign-in code: ${pin}`;
+  const subject = `${pin} is your AlgoFlow verification code`;
   
-  // Plain-text alternative (essential for passing Gmail/Outlook spam filters)
-  const textContent = `Hello ${recipientName},
+  // Clean text content
+  const textContent = `Hi ${recipientName},
 
-Your AlgoFlow Studio one-time verification code is: ${pin}
+Your verification code is: ${pin}
 
-Enter this 4-digit code in the app to complete your sign-in. This code will expire in 5 minutes.
+This code will expire in 5 minutes.
 
-Security Notice: Never share this PIN or forward this message to anyone. AlgoFlow Studio staff will never ask for your verification code. If you did not initiate this request, you can safely ignore this email.
+If you did not request this, you can safely ignore this email.
 
-— AlgoFlow Studio Security Team
-https://algoflow-studio.vercel.app
-`;
+— AlgoFlow Team`;
 
-  // Clean, high-deliverability transactional HTML template
-  const htmlContent = `
-<!DOCTYPE html>
-<html lang="en">
+  // Clean, lightweight email without spam trigger elements
+  const htmlContent = `<!DOCTYPE html>
+<html>
 <head>
-  <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>AlgoFlow Verification Code</title>
+  <meta charset="utf-8">
+  <style>
+    body { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif; margin: 0; padding: 24px; color: #1e293b; background-color: #f8fafc; }
+    .box { max-width: 480px; margin: 0 auto; background: #ffffff; padding: 32px; border-radius: 12px; border: 1px solid #e2e8f0; }
+    .code { font-size: 36px; font-weight: 800; letter-spacing: 8px; color: #0284c7; font-family: monospace; padding: 16px; background: #f0f9ff; border-radius: 8px; text-align: center; margin: 20px 0; }
+    .footer { margin-top: 24px; font-size: 12px; color: #94a3b8; border-top: 1px solid #f1f5f9; padding-top: 16px; }
+  </style>
 </head>
-<body style="margin: 0; padding: 20px; background-color: #f1f5f9; font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif;">
-  <table border="0" cellpadding="0" cellspacing="0" width="100%" style="max-width: 520px; margin: 0 auto; background: #ffffff; border-radius: 12px; border: 1px solid #e2e8f0; overflow: hidden; box-shadow: 0 4px 12px rgba(0,0,0,0.05);">
-    <tr>
-      <td style="background: #0f172a; padding: 24px 28px; text-align: left;">
-        <span style="font-size: 22px; font-weight: 800; color: #38bdf8; letter-spacing: -0.5px;">⚡ AlgoFlow Studio</span>
-      </td>
-    </tr>
-    <tr>
-      <td style="padding: 28px 28px 20px 28px; color: #1e293b;">
-        <h1 style="margin: 0 0 16px 0; font-size: 19px; font-weight: 700; color: #0f172a;">Sign-in Verification Code</h1>
-        <p style="margin: 0 0 16px 0; font-size: 14.5px; line-height: 1.5; color: #334155;">Hello <strong>${recipientName}</strong>,</p>
-        <p style="margin: 0 0 20px 0; font-size: 14px; line-height: 1.5; color: #475569;">Please use the following single-use verification code to sign in to your AlgoFlow Studio account:</p>
-        
-        <table border="0" cellpadding="0" cellspacing="0" width="100%" style="margin-bottom: 24px;">
-          <tr>
-            <td align="center" style="background: #f8fafc; border: 2px dashed #0284c7; border-radius: 10px; padding: 20px;">
-              <span style="font-size: 38px; font-weight: 800; letter-spacing: 10px; color: #0284c7; font-family: 'Courier New', Courier, monospace; display: inline-block; padding-left: 10px;">${pin}</span>
-            </td>
-          </tr>
-        </table>
-        
-        <p style="margin: 0 0 16px 0; font-size: 13px; color: #64748b; line-height: 1.5;">
-          ⏱️ <strong>Valid for 5 minutes.</strong> If you did not request this code, no further action is required; someone may have mistyped their email address.
-        </p>
-      </td>
-    </tr>
-    <tr>
-      <td style="background: #f8fafc; padding: 18px 28px; border-top: 1px solid #e2e8f0; font-size: 11.5px; color: #94a3b8; line-height: 1.5;">
-        <p style="margin: 0 0 4px 0;">🛡️ <strong>Security Tip:</strong> Never share your verification code with anyone. AlgoFlow will never ask for your code via phone or chat.</p>
-        <p style="margin: 0;">AlgoFlow Studio • Interactive Algorithms & B.Tech Learning Platform</p>
-      </td>
-    </tr>
-  </table>
+<body>
+  <div class="box">
+    <h2 style="margin: 0 0 16px; font-size: 20px; color: #0f172a;">Verification Code</h2>
+    <p style="margin: 0 0 16px; font-size: 15px; color: #334155;">Hi ${recipientName},</p>
+    <p style="margin: 0; font-size: 14px; color: #475569;">Use this code to sign in to AlgoFlow Studio:</p>
+    
+    <div class="code">${pin}</div>
+    
+    <p style="margin: 0 0 8px; font-size: 13px; color: #64748b;">This code is valid for <strong>5 minutes</strong>.</p>
+    <p style="margin: 0; font-size: 13px; color: #94a3b8;">If you did not request this code, no action is needed.</p>
+    
+    <div class="footer">
+      AlgoFlow Studio • Interactive Learning Platform
+    </div>
+  </div>
 </body>
-</html>
-  `;
+</html>`;
 
   // 1. Check SMTP / Gmail via nodemailer
   const smtpUser = process.env.SMTP_USER || process.env.GMAIL_USER || process.env.EMAIL_USER;
@@ -205,24 +187,13 @@ https://algoflow-studio.vercel.app
       }
     });
 
-    const msgId = `<${Date.now()}.${Math.random().toString(36).substring(2, 9)}@algoflow.studio>`;
-
     await transporter.sendMail({
-      from: `"AlgoFlow Studio" <${smtpUser}>`,
+      from: `"AlgoFlow" <${smtpUser}>`,
+      replyTo: smtpUser,
       to,
       subject,
       text: textContent,
-      html: htmlContent,
-      headers: {
-        'Message-ID': msgId,
-        'X-Priority': '1 (Highest)',
-        'X-MSMail-Priority': 'High',
-        'Importance': 'High',
-        'X-Auto-Response-Suppress': 'All',
-        'Auto-Submitted': 'auto-generated',
-        'Precedence': 'bulk',
-        'List-Unsubscribe-Post': 'List-Unsubscribe=One-Click'
-      }
+      html: htmlContent
     });
     return { success: true, provider: 'smtp' };
   }

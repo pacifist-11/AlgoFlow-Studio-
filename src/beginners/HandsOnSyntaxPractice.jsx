@@ -748,22 +748,22 @@ btn.addEventListener('click', () => {
 
   return (
     <div style={{
-      background: 'rgba(15, 23, 42, 0.75)',
+      background: 'var(--glass-bg)',
       borderRadius: '16px',
-      border: '1px solid rgba(255, 255, 255, 0.1)',
+      border: '1px solid var(--glass-border)',
       padding: '24px',
-      color: '#e2e8f0',
-      boxShadow: '0 20px 25px -5px rgba(0, 0, 0, 0.5)'
+      color: 'var(--text-primary)',
+      boxShadow: '0 20px 25px -5px rgba(0, 0, 0, 0.08)'
     }}>
       {/* Header */}
       <div style={{ marginBottom: '20px' }}>
         <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
           <span style={{ fontSize: '24px' }}>✍️</span>
-          <h2 style={{ margin: 0, fontSize: '20px', fontWeight: '700', color: '#38bdf8' }}>
+          <h2 style={{ margin: 0, fontSize: '20px', fontWeight: '700', color: 'var(--accent-primary)' }}>
             Module 4: Code Anatomy, Comments & Syntax Sandbox ({selectedLang === 'frontend' ? 'FRONTEND (HTML/CSS/JS)' : selectedLang.toUpperCase()})
           </h2>
         </div>
-        <p style={{ margin: '6px 0 0 0', color: '#94a3b8', fontSize: '13.5px' }}>
+        <p style={{ margin: '6px 0 0 0', color: 'var(--text-secondary)', fontSize: '13.5px' }}>
           Learn code structure (Comments, Imports, Main Functions, Returns), test custom code in the sandbox, or complete Level 1 to 4 syntax challenges!
         </p>
       </div>
@@ -775,9 +775,9 @@ btn.addEventListener('click', () => {
           style={{
             padding: '8px 16px',
             borderRadius: '8px',
-            border: activeTab === 'free_sandbox' ? '2px solid #38bdf8' : '1px solid #334155',
-            background: activeTab === 'free_sandbox' ? 'rgba(56, 189, 248, 0.15)' : '#0f172a',
-            color: activeTab === 'free_sandbox' ? '#38bdf8' : '#94a3b8',
+            border: activeTab === 'free_sandbox' ? '2px solid var(--accent-primary)' : '1px solid var(--glass-border)',
+            background: activeTab === 'free_sandbox' ? 'rgba(56, 189, 248, 0.15)' : 'var(--bg-secondary)',
+            color: activeTab === 'free_sandbox' ? 'var(--accent-primary)' : 'var(--text-primary)',
             fontWeight: 'bold',
             fontSize: '13px',
             cursor: 'pointer'
@@ -790,9 +790,9 @@ btn.addEventListener('click', () => {
           style={{
             padding: '8px 16px',
             borderRadius: '8px',
-            border: activeTab === 'practice' ? '2px solid #38bdf8' : '1px solid #334155',
-            background: activeTab === 'practice' ? 'rgba(56, 189, 248, 0.15)' : '#0f172a',
-            color: activeTab === 'practice' ? '#38bdf8' : '#94a3b8',
+            border: activeTab === 'practice' ? '2px solid var(--accent-primary)' : '1px solid var(--glass-border)',
+            background: activeTab === 'practice' ? 'rgba(56, 189, 248, 0.15)' : 'var(--bg-secondary)',
+            color: activeTab === 'practice' ? 'var(--accent-primary)' : 'var(--text-primary)',
             fontWeight: 'bold',
             fontSize: '13px',
             cursor: 'pointer'
@@ -805,9 +805,9 @@ btn.addEventListener('click', () => {
           style={{
             padding: '8px 16px',
             borderRadius: '8px',
-            border: activeTab === 'anatomy' ? '2px solid #38bdf8' : '1px solid #334155',
-            background: activeTab === 'anatomy' ? 'rgba(56, 189, 248, 0.15)' : '#0f172a',
-            color: activeTab === 'anatomy' ? '#38bdf8' : '#94a3b8',
+            border: activeTab === 'anatomy' ? '2px solid var(--accent-primary)' : '1px solid var(--glass-border)',
+            background: activeTab === 'anatomy' ? 'rgba(56, 189, 248, 0.15)' : 'var(--bg-secondary)',
+            color: activeTab === 'anatomy' ? 'var(--accent-primary)' : 'var(--text-primary)',
             fontWeight: 'bold',
             fontSize: '13px',
             cursor: 'pointer'
@@ -820,21 +820,21 @@ btn.addEventListener('click', () => {
       {/* TAB 1: FREE CODE SANDBOX */}
       {activeTab === 'free_sandbox' && (
         <div style={{
-          background: 'rgba(30, 41, 59, 0.8)',
+          background: 'var(--bg-secondary)',
           borderRadius: '12px',
           padding: '20px',
-          border: '1px solid rgba(56, 189, 248, 0.3)'
+          border: '1px solid var(--glass-border)'
         }}>
           <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '12px', flexWrap: 'wrap', gap: '10px' }}>
-            <h3 style={{ margin: 0, fontSize: '16px', color: '#f1f5f9' }}>
+            <h3 style={{ margin: 0, fontSize: '16px', color: 'var(--text-primary)' }}>
               ✨ Free Custom Sandbox ({selectedLang === 'frontend' ? 'FRONTEND (HTML/CSS/JS)' : selectedLang.toUpperCase()})
             </h3>
-            <span style={{ fontSize: '12px', color: '#38bdf8', fontWeight: '600' }}>
+            <span style={{ fontSize: '12px', color: 'var(--accent-primary)', fontWeight: '600' }}>
               Active Language: <strong>{selectedLang === 'frontend' ? 'FRONTEND (HTML/CSS/JS)' : selectedLang.toUpperCase()}</strong>
             </span>
           </div>
 
-          <p style={{ margin: '0 0 12px 0', fontSize: '13px', color: '#94a3b8' }}>
+          <p style={{ margin: '0 0 12px 0', fontSize: '13px', color: 'var(--text-secondary)' }}>
             Write any custom code in {selectedLang === 'frontend' ? 'Frontend (HTML/CSS/JS)' : selectedLang.toUpperCase()} below! Click <strong>"Check Syntax & Run Output"</strong> to test for syntax errors.
           </p>
 
@@ -886,7 +886,7 @@ btn.addEventListener('click', () => {
                     borderRadius: '6px',
                     border: 'none',
                     background: activeFrontendTab === 'js' ? '#fbbf24' : 'transparent',
-                    color: activeFrontendTab === 'js' ? '#0f172a' : '#fff',
+                    color: activeFrontendTab === 'js' ? '#0f172a' : 'var(--text-primary)',
                     fontWeight: 'bold',
                     fontSize: '12.5px',
                     cursor: 'pointer',
@@ -899,11 +899,11 @@ btn.addEventListener('click', () => {
 
               {activeFrontendTab === 'html' && (
                 <div>
-                  <div style={{ fontSize: '11px', color: '#94a3b8', marginBottom: '4px', fontWeight: 'bold' }}>HTML5 STRUCTURE:</div>
+                  <div style={{ fontSize: '11px', color: 'var(--text-secondary)', marginBottom: '4px', fontWeight: 'bold' }}>HTML5 STRUCTURE:</div>
                   <CodeEditorWithLineNumbers
                     value={htmlCode}
                     onChange={e => setHtmlCode(e.target.value)}
-                    color="#f87171"
+                    color="#dc2626"
                     borderColor="#ef4444"
                     rows={11}
                   />
@@ -912,12 +912,12 @@ btn.addEventListener('click', () => {
 
               {activeFrontendTab === 'css' && (
                 <div>
-                  <div style={{ fontSize: '11px', color: '#94a3b8', marginBottom: '4px', fontWeight: 'bold' }}>CSS3 STYLING:</div>
+                  <div style={{ fontSize: '11px', color: 'var(--text-secondary)', marginBottom: '4px', fontWeight: 'bold' }}>CSS3 STYLING:</div>
                   <CodeEditorWithLineNumbers
                     value={cssCode}
                     onChange={e => setCssCode(e.target.value)}
-                    color="#60a5fa"
-                    borderColor="#38bdf8"
+                    color="var(--accent-primary)"
+                    borderColor="var(--accent-primary)"
                     rows={11}
                   />
                 </div>
@@ -925,11 +925,11 @@ btn.addEventListener('click', () => {
 
               {activeFrontendTab === 'js' && (
                 <div>
-                  <div style={{ fontSize: '11px', color: '#94a3b8', marginBottom: '4px', fontWeight: 'bold' }}>JAVASCRIPT LOGIC:</div>
+                  <div style={{ fontSize: '11px', color: 'var(--text-secondary)', marginBottom: '4px', fontWeight: 'bold' }}>JAVASCRIPT LOGIC:</div>
                   <CodeEditorWithLineNumbers
                     value={jsCode}
                     onChange={e => setJsCode(e.target.value)}
-                    color="#fbbf24"
+                    color="#d97706"
                     borderColor="#f59e0b"
                     rows={11}
                   />
@@ -940,8 +940,8 @@ btn.addEventListener('click', () => {
             <CodeEditorWithLineNumbers
               value={freeCode}
               onChange={e => setFreeCode(e.target.value)}
-              color="#38bdf8"
-              borderColor="#475569"
+              color="var(--accent-primary)"
+              borderColor="var(--glass-border)"
               rows={11}
             />
           )}
@@ -969,13 +969,13 @@ btn.addEventListener('click', () => {
               marginTop: '16px',
               padding: '16px',
               borderRadius: '10px',
-              background: sandboxResult.type === 'success' ? 'rgba(52, 211, 153, 0.12)' : 'rgba(239, 68, 68, 0.12)',
-              border: `1.5px solid ${sandboxResult.type === 'success' ? '#34d399' : '#f87171'}`
+              background: sandboxResult.type === 'success' ? 'rgba(5, 150, 105, 0.12)' : 'rgba(220, 38, 38, 0.12)',
+              border: `1.5px solid ${sandboxResult.type === 'success' ? '#059669' : '#dc2626'}`
             }}>
               <div style={{
                 fontSize: '14px',
                 fontWeight: 'bold',
-                color: sandboxResult.type === 'success' ? '#34d399' : '#f87171',
+                color: sandboxResult.type === 'success' ? '#059669' : '#dc2626',
                 marginBottom: sandboxResult.output || sandboxResult.isFrontend ? '10px' : '0'
               }}>
                 {sandboxResult.msg}
@@ -983,12 +983,12 @@ btn.addEventListener('click', () => {
 
               {sandboxResult.isFrontend ? (
                 <div style={{
-                  background: '#0f172a',
+                  background: 'var(--glass-bg)',
                   padding: '12px',
                   borderRadius: '6px',
-                  border: '1px solid rgba(255,255,255,0.08)'
+                  border: '1px solid var(--glass-border)'
                 }}>
-                  <div style={{ fontSize: '11px', color: '#64748b', marginBottom: '6px', textTransform: 'uppercase', fontWeight: 'bold' }}>
+                  <div style={{ fontSize: '11px', color: 'var(--text-secondary)', marginBottom: '6px', textTransform: 'uppercase', fontWeight: 'bold' }}>
                     🖥️ Live Interactive Result Preview (Sandboxed):
                   </div>
                   <iframe
@@ -1022,7 +1022,7 @@ btn.addEventListener('click', () => {
                     style={{
                       width: '100%',
                       height: '240px',
-                      border: '1.5px solid #334155',
+                      border: '1.5px solid var(--glass-border)',
                       borderRadius: '8px',
                       background: '#0b0f19'
                     }}
@@ -1031,15 +1031,15 @@ btn.addEventListener('click', () => {
               ) : (
                 sandboxResult.output && (
                   <div style={{
-                    background: '#0f172a',
+                    background: 'var(--glass-bg)',
                     padding: '12px',
                     borderRadius: '6px',
-                    border: '1px solid rgba(255,255,255,0.08)'
+                    border: '1px solid var(--glass-border)'
                   }}>
-                    <div style={{ fontSize: '11px', color: '#64748b', marginBottom: '4px', textTransform: 'uppercase', fontWeight: 'bold' }}>
+                    <div style={{ fontSize: '11px', color: 'var(--text-secondary)', marginBottom: '4px', textTransform: 'uppercase', fontWeight: 'bold' }}>
                       💻 Output Terminal Preview:
                     </div>
-                    <pre style={{ margin: 0, color: '#38bdf8', fontFamily: 'monospace', fontSize: '13px' }}>
+                    <pre style={{ margin: 0, color: 'var(--accent-primary)', fontFamily: 'monospace', fontSize: '13px' }}>
                       {sandboxResult.output}
                     </pre>
                   </div>
@@ -1061,9 +1061,9 @@ btn.addEventListener('click', () => {
                 style={{
                   padding: '8px 14px',
                   borderRadius: '8px',
-                  border: currentIdx === idx ? '2px solid #38bdf8' : '1px solid #334155',
-                  background: currentIdx === idx ? '#0284c7' : '#0f172a',
-                  color: '#fff',
+                  border: currentIdx === idx ? '2px solid var(--accent-primary)' : '1px solid var(--glass-border)',
+                  background: currentIdx === idx ? 'var(--accent-primary)' : 'var(--glass-bg)',
+                  color: currentIdx === idx ? '#fff' : 'var(--text-primary)',
                   fontSize: '12px',
                   fontWeight: 'bold',
                   cursor: 'pointer'
@@ -1075,23 +1075,23 @@ btn.addEventListener('click', () => {
           </div>
 
           <div style={{
-            background: 'rgba(30, 41, 59, 0.8)',
+            background: 'var(--bg-secondary)',
             borderRadius: '12px',
             padding: '20px',
-            border: '1px solid rgba(56, 189, 248, 0.3)'
+            border: '1px solid var(--glass-border)'
           }}>
-            <h3 style={{ margin: '0 0 6px 0', fontSize: '16px', color: '#38bdf8' }}>
+            <h3 style={{ margin: '0 0 6px 0', fontSize: '16px', color: 'var(--accent-primary)' }}>
               {challenges[currentIdx].title}
             </h3>
-            <p style={{ margin: '0 0 14px 0', fontSize: '13px', color: '#cbd5e1' }}>
+            <p style={{ margin: '0 0 14px 0', fontSize: '13px', color: 'var(--text-secondary)' }}>
               💡 {challenges[currentIdx].concept}
             </p>
 
             <CodeEditorWithLineNumbers
               value={userChallengeCode}
               onChange={e => setUserChallengeCode(e.target.value)}
-              color="#38bdf8"
-              borderColor="#475569"
+              color="var(--accent-primary)"
+              borderColor="var(--glass-border)"
               rows={5}
             />
 
@@ -1116,9 +1116,9 @@ btn.addEventListener('click', () => {
                 style={{
                   padding: '8px 14px',
                   borderRadius: '6px',
-                  background: '#334155',
-                  color: '#cbd5e1',
-                  border: 'none',
+                  background: 'var(--glass-bg)',
+                  color: 'var(--text-secondary)',
+                  border: '1px solid var(--glass-border)',
                   fontSize: '12px',
                   cursor: 'pointer'
                 }}
@@ -1132,15 +1132,15 @@ btn.addEventListener('click', () => {
                 marginTop: '14px',
                 padding: '10px 14px',
                 borderRadius: '8px',
-                background: challengeFeedback.type === 'success' ? 'rgba(52, 211, 153, 0.15)' : 'rgba(239, 68, 68, 0.15)',
-                border: `1px solid ${challengeFeedback.type === 'success' ? '#34d399' : '#f87171'}`,
-                color: challengeFeedback.type === 'success' ? '#34d399' : '#f87171',
+                background: challengeFeedback.type === 'success' ? 'rgba(5, 150, 105, 0.15)' : 'rgba(220, 38, 38, 0.15)',
+                border: `1px solid ${challengeFeedback.type === 'success' ? '#059669' : '#dc2626'}`,
+                color: challengeFeedback.type === 'success' ? '#059669' : '#dc2626',
                 fontSize: '13px',
                 fontWeight: 'bold'
               }}>
                 {challengeFeedback.msg}
                 {challengeFeedback.type === 'error' && (
-                  <p style={{ margin: '4px 0 0 0', fontSize: '12px', fontWeight: 'normal', color: '#94a3b8' }}>
+                  <p style={{ margin: '4px 0 0 0', fontSize: '12px', fontWeight: 'normal', color: 'var(--text-secondary)' }}>
                     {challenges[currentIdx].explanation}
                   </p>
                 )}
@@ -1185,16 +1185,16 @@ btn.addEventListener('click', () => {
             }
           ].map((item, idx) => (
             <div key={idx} style={{
-              background: 'rgba(30, 41, 59, 0.8)',
-              border: '1px solid #334155',
+              background: 'var(--glass-bg)',
+              border: '1px solid var(--glass-border)',
               borderRadius: '12px',
               padding: '18px'
             }}>
               <div style={{ fontSize: '24px', marginBottom: '8px' }}>{item.icon}</div>
-              <h3 style={{ margin: '0 0 6px 0', fontSize: '15px', color: '#38bdf8' }}>
+              <h3 style={{ margin: '0 0 6px 0', fontSize: '15px', color: 'var(--accent-primary)' }}>
                 {item.title}
               </h3>
-              <p style={{ margin: 0, fontSize: '13px', color: '#cbd5e1', lineHeight: '1.5' }}>
+              <p style={{ margin: 0, fontSize: '13px', color: 'var(--text-secondary)', lineHeight: '1.5' }}>
                 {item.desc}
               </p>
             </div>

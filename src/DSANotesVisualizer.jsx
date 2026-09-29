@@ -5953,27 +5953,59 @@ const DSANotesVisualizer = ({
       : rawSnippet;
 
     const allmanLines = toAllman(activeText).split('\n');
+    const nextFrame = timeline[currentStep + 1] || null;
+
     return (
-      <div className="code-box" style={{ flex: 1, overflow: 'auto', padding: '1.2rem', borderRadius: '8px', background: 'var(--bg-primary, rgba(0,0,0,0.25))' }}>
+      <div className="code-box" style={{ flex: 1, overflow: 'auto', padding: '1rem', borderRadius: '8px', background: 'var(--bg-secondary)', display: 'flex', flexDirection: 'column' }}>
+        {/* Execution Line Legend */}
+        <div style={{ display: 'flex', alignItems: 'center', gap: '10px', fontSize: '0.74rem', marginBottom: '10px', paddingBottom: '8px', borderBottom: '1px solid rgba(255,255,255,0.06)', flexWrap: 'wrap' }}>
+          <div style={{ display: 'flex', alignItems: 'center', gap: '4px', background: 'rgba(16, 185, 129, 0.15)', border: '1px solid rgba(16, 185, 129, 0.35)', padding: '2px 8px', borderRadius: '6px', color: '#34d399', fontWeight: 600 }}>
+            <span>🟢 ➔</span>
+            <span>Line that just executed</span>
+          </div>
+          <div style={{ display: 'flex', alignItems: 'center', gap: '4px', background: 'rgba(239, 68, 68, 0.15)', border: '1px solid rgba(239, 68, 68, 0.35)', padding: '2px 8px', borderRadius: '6px', color: '#f87171', fontWeight: 600 }}>
+            <span>🔴 ➔</span>
+            <span>Next line to execute</span>
+          </div>
+        </div>
+
         <pre style={{ 
           margin: 0, 
-          color: '#f8fafc', 
+          color: 'var(--text-primary)', 
           fontFamily: "'Fira Code', 'Cascadia Code', monospace", 
           lineHeight: '1.75',
           fontSize: `${localFontSize}px`,
           fontWeight: 500
         }}>
           {allmanLines.map((lineText, idx) => {
-            const isHighlighted = (codeViewMode === 'snippet' && activeFrame.line === idx + 1);
+            const lineNum = idx + 1;
+            const isJustExecuted = (codeViewMode === 'snippet' && activeFrame.line === lineNum);
+            const isNextToExecute = (codeViewMode === 'snippet' && nextFrame?.line === lineNum && nextFrame?.line !== activeFrame.line);
+
+            let rowBg = 'transparent';
+            let rowBorder = '4px solid transparent';
+            let indicator = null;
+
+            if (isJustExecuted) {
+              rowBg = 'rgba(16, 185, 129, 0.22)';
+              rowBorder = '4px solid #10b981';
+              indicator = <span style={{ color: '#10b981', fontWeight: 'bold', fontSize: '0.78rem', marginRight: '6px' }}>🟢 ➔</span>;
+            } else if (isNextToExecute) {
+              rowBg = 'rgba(239, 68, 68, 0.22)';
+              rowBorder = '4px solid #ef4444';
+              indicator = <span style={{ color: '#ef4444', fontWeight: 'bold', fontSize: '0.78rem', marginRight: '6px' }}>🔴 ➔</span>;
+            }
+
             return (
               <div 
                 key={idx} 
                 style={{ 
                   display: 'flex',
-                  background: isHighlighted ? 'rgba(59,130,246,0.24)' : 'transparent',
-                  borderLeft: isHighlighted ? '4px solid var(--accent-primary)' : '4px solid transparent',
+                  alignItems: 'center',
+                  background: rowBg,
+                  borderLeft: rowBorder,
                   padding: '2px 8px',
-                  borderRadius: isHighlighted ? '4px' : '0',
+                  borderRadius: isJustExecuted || isNextToExecute ? '4px' : '0',
                   transition: 'all 0.15s ease'
                 }}
               >
@@ -5982,18 +6014,20 @@ const DSANotesVisualizer = ({
                   userSelect: 'none',
                   textAlign: 'right',
                   paddingRight: '14px',
-                  color: isHighlighted ? '#38bdf8' : '#475569',
+                  color: isJustExecuted ? '#10b981' : isNextToExecute ? '#ef4444' : 'var(--text-secondary)',
                   fontFamily: "'Fira Code', 'Cascadia Code', monospace",
                   fontSize: '0.85em',
-                  flexShrink: 0
+                  flexShrink: 0,
+                  fontWeight: isJustExecuted || isNextToExecute ? 700 : 400
                 }}>
-                  {idx + 1}
+                  {lineNum}
                 </span>
+                {indicator}
                 <span style={{ 
                   whiteSpace: 'pre', 
-                  color: isHighlighted ? '#ffffff' : '#e2e8f0',
+                  color: 'var(--text-primary)',
                   fontFamily: "'Fira Code', 'Cascadia Code', monospace",
-                  fontWeight: isHighlighted ? 700 : 500
+                  fontWeight: isJustExecuted || isNextToExecute ? 700 : 500
                 }}>
                   {lineText || ' '}
                 </span>

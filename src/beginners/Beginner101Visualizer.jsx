@@ -40,12 +40,12 @@ export default function Beginner101Visualizer({ codeLang = 'C', setCodeLang, fon
       
       {/* Main Banner / Title */}
       <div style={{
-        background: 'linear-gradient(135deg, rgba(30, 41, 59, 0.9) 0%, rgba(15, 23, 42, 0.9) 100%)',
+        background: 'var(--glass-bg)',
         borderRadius: '16px',
         padding: '24px',
         marginBottom: '24px',
-        border: '1.5px solid rgba(56, 189, 248, 0.3)',
-        boxShadow: '0 10px 30px rgba(0,0,0,0.5)',
+        border: '1.5px solid var(--glass-border)',
+        boxShadow: '0 10px 30px rgba(0,0,0,0.1)',
         display: 'flex',
         flexDirection: 'column',
         gap: '20px'
@@ -53,12 +53,12 @@ export default function Beginner101Visualizer({ codeLang = 'C', setCodeLang, fon
         {/* Title Header */}
         <div>
           <div style={{ display: 'flex', alignItems: 'center', gap: '8px', marginBottom: '6px' }}>
-            <span style={{ color: '#94a3b8', fontSize: '13px' }}>Start Coding Journey Here!</span>
+            <span style={{ color: 'var(--text-secondary)', fontSize: '13px' }}>Start Coding Journey Here!</span>
           </div>
-          <h1 style={{ margin: 0, fontSize: '24px', fontWeight: '800', color: '#f8fafc' }}>
+          <h1 style={{ margin: 0, fontSize: '24px', fontWeight: '800', color: 'var(--text-primary)' }}>
             🌱 Beginner 101: Hands-On Fundamentals & Career Guide
           </h1>
-          <p style={{ margin: '6px 0 0 0', color: '#cbd5e1', fontSize: '14px' }}>
+          <p style={{ margin: '6px 0 0 0', color: 'var(--text-secondary)', fontSize: '14px' }}>
             Learn variables, arrays, why sorting & DSA matter, language quirks, syntax rules, and discover which programming language to choose for your target career!
           </p>
           
@@ -78,9 +78,9 @@ export default function Beginner101Visualizer({ codeLang = 'C', setCodeLang, fon
                   gap: '8px',
                   padding: '10px 14px',
                   borderRadius: '10px',
-                  border: isActive ? '2px solid #38bdf8' : '1px solid #334155',
-                  background: isActive ? 'rgba(56, 189, 248, 0.15)' : '#0f172a',
-                  color: isActive ? '#38bdf8' : '#94a3b8',
+                  border: isActive ? '2px solid var(--accent-primary)' : '1px solid var(--glass-border)',
+                  background: isActive ? 'rgba(56, 189, 248, 0.15)' : 'var(--bg-secondary)',
+                  color: isActive ? 'var(--accent-primary)' : 'var(--text-primary)',
                   fontSize: '12.5px',
                   fontWeight: '600',
                   cursor: 'pointer',
@@ -101,18 +101,18 @@ export default function Beginner101Visualizer({ codeLang = 'C', setCodeLang, fon
             display: 'flex',
             alignItems: 'center',
             justifyContent: 'space-between',
-            background: 'rgba(15, 23, 42, 0.9)',
+            background: 'var(--glass-bg)',
             padding: '12px 18px',
             borderRadius: '12px',
-            border: '1.5px solid rgba(56, 189, 248, 0.3)',
-            boxShadow: '0 4px 15px rgba(0, 0, 0, 0.3)',
+            border: '1.5px solid var(--glass-border)',
+            boxShadow: '0 4px 15px rgba(0, 0, 0, 0.08)',
             flexWrap: 'wrap',
             gap: '12px'
           }}>
             <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
               <span style={{ fontSize: '18px' }}>🌐</span>
               <span style={{
-                background: '#0284c7',
+                background: 'var(--accent-primary)',
                 color: '#fff',
                 fontSize: '11px',
                 fontWeight: 'bold',
@@ -122,7 +122,7 @@ export default function Beginner101Visualizer({ codeLang = 'C', setCodeLang, fon
               }}>
                 ACTIVE LANGUAGE:
               </span>
-              <span style={{ fontSize: '12px', color: '#94a3b8' }}>
+              <span style={{ fontSize: '12px', color: 'var(--text-secondary)' }}>
                 Applies to Variables, Arrays, Quirks & Syntax Practice!
               </span>
             </div>
@@ -149,9 +149,9 @@ export default function Beginner101Visualizer({ codeLang = 'C', setCodeLang, fon
                       style={{
                         padding: '6px 12px',
                         borderRadius: '8px',
-                        border: isSelected ? '2px solid #38bdf8' : '1px solid #334155',
-                        background: isSelected ? '#0284c7' : '#0f172a',
-                        color: '#fff',
+                        border: isSelected ? '2px solid var(--accent-primary)' : '1px solid var(--glass-border)',
+                        background: isSelected ? 'var(--accent-primary)' : 'var(--bg-secondary)',
+                        color: isSelected ? '#fff' : 'var(--text-primary)',
                         fontWeight: 'bold',
                         fontSize: '12.5px',
                         cursor: 'pointer',
@@ -175,9 +175,9 @@ export default function Beginner101Visualizer({ codeLang = 'C', setCodeLang, fon
                     gap: '6px',
                     padding: '6px 14px',
                     borderRadius: '8px',
-                    border: '1.5px solid #38bdf8',
+                    border: '1.5px solid var(--accent-primary)',
                     background: 'rgba(56, 189, 248, 0.15)',
-                    color: '#38bdf8',
+                    color: 'var(--accent-primary)',
                     fontWeight: 'bold',
                     fontSize: '12px',
                     cursor: 'pointer',

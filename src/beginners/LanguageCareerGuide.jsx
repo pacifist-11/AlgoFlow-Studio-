@@ -595,6 +595,200 @@ func worker(id int, ch chan string) {
 func main() {
     ch := make(chan string)
     for i := 1; i <= 3; i++ {
+    public synchronized void deposit(double amount) {
+        if (amount > 0) {
+            balance += amount;
+            System.out.println("Deposited $" + amount + " | New Balance: $" + balance);
+        }
+    }
+}
+
+public class Main {
+    public static void main(String[] args) {
+        BankAccount acc = new BankAccount("ACC-98214", 500.0);
+        acc.deposit(250.0);
+    }
+}`
+    },
+    {
+      id: 'python',
+      name: 'Python',
+      icon: '🐍',
+      color: '#34d399',
+      accentBg: 'rgba(52, 211, 153, 0.12)',
+      tagline: 'AI, Machine Learning, Data Science & Fast Prototyping',
+      beginnerDifficulty: 'Easiest (Clean syntax that reads like English)',
+      industryDemand: '⭐⭐⭐⭐⭐ (#1 Worldwide for AI & Data Analysis)',
+      fields: [
+        'Artificial Intelligence & Machine Learning (PyTorch, TensorFlow)',
+        'Data Science, Analytics & Big Data (Pandas, NumPy, Matplotlib)',
+        'Generative AI & Large Language Models (LangChain, Hugging Face)',
+        'Web Backends & Rapid APIs (FastAPI, Django, Flask)',
+        'Cybersecurity Scripting, Ethical Hacking & Automation'
+      ],
+      jobTitles: [
+        'AI / Machine Learning Engineer',
+        'Data Scientist / Data Analyst',
+        'Python Web Developer (Backend)',
+        'Automation & QA Scripting Engineer',
+        'Cybersecurity Security Researcher'
+      ],
+      famousApps: ['ChatGPT / OpenAI Backend', 'Instagram Backend (Django)', 'Spotify Recommendation Engine', 'Netflix AI Algorithm', 'Dropbox'],
+      whyLearn: 'Python has the gentlest learning curve and the most vibrant open-source ecosystem in the world. If your goal is AI, Machine Learning, Data Analytics, or rapid web app development, Python is mandatory.',
+      languageInfo: {
+        creator: 'Guido van Rossum (CWI, Netherlands)',
+        yearCreated: 1991,
+        paradigm: 'Multi-paradigm (Imperative, OOP, Functional, Reflective)',
+        typing: 'Dynamic, Strong, Duck-typed',
+        executionModel: 'Interpreted Bytecode via CPython Virtual Machine (with PyPy JIT alternatives)',
+        memoryModel: 'Automatic Reference Counting + Generational Garbage Collector (cyclic detector)',
+        superpowers: [
+          'Unrivaled #1 programming language for Artificial Intelligence, Machine Learning, and LLMs',
+          'Exceptionally clean English-like syntax enabling 3x-5x faster prototyping speed',
+          'Rich ecosystem of C-optimized mathematical libraries (NumPy, SciPy, PyTorch, Pandas)'
+        ],
+        limitations: [
+          'Slower pure CPU execution speed compared to compiled languages like C++, Rust, or Go',
+          'Global Interpreter Lock (GIL) historically constrains multi-threaded CPU bound tasks',
+          'Runtime dynamic type errors unless Type Hints and mypy static checks are used'
+        ],
+        popularFrameworks: ['PyTorch', 'TensorFlow', 'FastAPI', 'Django', 'Pandas', 'NumPy', 'Hugging Face Transformers'],
+        salaryBands: {
+          entry: '$90,000 - $125,000 / yr (₹8 - 18 LPA)',
+          senior: '$155,000 - $250,000+ / yr (₹28 - 65+ LPA)'
+        },
+        keyConcepts: [
+          { term: 'List Comprehensions & Generators', desc: 'Elegant concise syntax for creating collections with lazy iterator memory.' },
+          { term: 'Duck Typing & Dunder Methods', desc: '"If it quacks like a duck" polymorphism with __init__, __str__, __len__ hooks.' },
+          { term: 'Vectorization (NumPy)', desc: 'SIMD hardware accelerated matrix operations without slow Python for-loops.' },
+          { term: 'Decorators (@)', desc: 'Higher-order wrapper functions extending behavior dynamically at runtime.' }
+        ]
+      },
+      fourYearRoadmap: [
+        { year: '1st Year (Freshman)', milestone: 'Python Syntax, Data Structures (Lists, Dicts, Tuples, Sets), File Handling, Basic Git' },
+        { year: '2nd Year (Sophomore)', milestone: 'Data Wrangling with Pandas & NumPy, SQL Databases, Basic DSA in Python, OOPs' },
+        { year: '3rd Year (Junior)', milestone: 'Machine Learning (Scikit-learn), Deep Learning (PyTorch), FastAPI web backend, Kaggle' },
+        { year: '4th Year (Senior)', milestone: 'Generative AI (RAG, LLM fine-tuning), Model Deployment (MLflow, Docker), AI Placements' }
+      ],
+      moocsAndCerts: {
+        moocs: [
+          { name: 'Python for Everybody Specialization', provider: 'University of Michigan (Coursera)', link: 'https://coursera.org' },
+          { name: 'Machine Learning Specialization', provider: 'DeepLearning.AI / Andrew Ng (Coursera)', link: 'https://coursera.org' },
+          { name: 'Joy of Computing using Python', provider: 'NPTEL (IIT Madras)', link: 'https://nptel.ac.in' }
+        ],
+        certifications: [
+          { name: 'PCEP / PCAP Certified Associate Python Programmer', issuer: 'OpenEDG Python Institute' },
+          { name: 'AWS Certified Machine Learning - Specialty', issuer: 'Amazon Web Services' }
+        ],
+        challenges: [
+          { name: 'Kaggle (Competitions, Notebooks & Datasets)', url: 'https://kaggle.com' },
+          { name: 'LeetCode (Python DSA & SQL 50 Study Plan)', url: 'https://leetcode.com' },
+          { name: 'HackerRank Python 5-Star Track', url: 'https://hackerrank.com' }
+        ]
+      },
+      codeSnippet: `# Python: Data Analysis & Statistics with Pandas
+import pandas as pd
+
+data = {
+    'Student': ['Aarav', 'Diya', 'Rohan', 'Sneha', 'Vikram'],
+    'Branch': ['CSE', 'ECE', 'CSE', 'MECH', 'AIDS'],
+    'LeetCode_Solved': [180, 140, 220, 95, 210]
+}
+
+df = pd.DataFrame(data)
+print("--- Average LeetCode Problems Solved by Branch ---")
+print(df.groupby('Branch')['LeetCode_Solved'].mean())`
+    },
+    {
+      id: 'go',
+      name: 'Go (Golang)',
+      icon: '🐹',
+      color: '#22d3ee',
+      accentBg: 'rgba(34, 211, 238, 0.12)',
+      tagline: 'High Concurrency, Cloud Native & Microservices Engine',
+      beginnerDifficulty: 'Moderate (Clean syntax with built-in concurrency)',
+      industryDemand: '⭐⭐⭐⭐ (The Engine of Kubernetes, Docker & DevOps)',
+      fields: [
+        'Cloud-Native Infrastructure & DevOps (Docker, Kubernetes, Terraform)',
+        'High-Scale Backend Microservices (Uber, Twitch, Google Cloud)',
+        'Network Programming & High-Concurrency Web Servers (Goroutines)',
+        'Cybersecurity & Network Tools',
+        'Distributed Storage & Message Brokers'
+      ],
+      jobTitles: [
+        'Cloud Engineer / Platform Developer',
+        'Go Backend Engineer',
+        'DevOps / SRE (Site Reliability Engineer)',
+        'Distributed Systems Architect'
+      ],
+      famousApps: ['Docker', 'Kubernetes', 'Terraform', 'Twitch Video Streaming Backend', 'Cloudflare Proxy'],
+      whyLearn: 'Created by Google, Go is designed for building fast, concurrent network servers and distributed cloud platforms. Its lightweight Goroutines make handling millions of simultaneous user connections incredibly simple.',
+      languageInfo: {
+        creator: 'Robert Griesemer, Rob Pike, Ken Thompson (Google)',
+        yearCreated: 2009,
+        paradigm: 'Concurrent, Imperative, Structured',
+        typing: 'Static, Strong, Inferred',
+        executionModel: 'Statically Compiled directly to single Standalone Native Binaries',
+        memoryModel: 'Automatic Concurrent Mark-and-Sweep Garbage Collector + Stack Escape Analysis',
+        superpowers: [
+          'Goroutines: ultra-lightweight green threads (only ~2 KB initial stack vs 1 MB OS thread)',
+          'Built-in CSP Channels enabling safe lock-free communication between concurrent routines',
+          'Single standalone statically linked binary output with zero external runtime dependencies'
+        ],
+        limitations: [
+          'No classical OOP inheritance (deliberately uses composition and structural interfaces)',
+          'Explicit repetitive error handling checks (if err != nil) throughout codebases',
+          'Younger generics system compared to C++ or Java'
+        ],
+        popularFrameworks: ['Gin Gonic', 'Fiber', 'gRPC-Go', 'Echo', 'Cobra CLI', 'GORM'],
+        salaryBands: {
+          entry: '$95,000 - $130,000 / yr (₹10 - 20 LPA)',
+          senior: '$160,000 - $260,000+ / yr (₹30 - 70+ LPA)'
+        },
+        keyConcepts: [
+          { term: 'Goroutines (go fn())', desc: 'Multiplexed lightweight threads managed entirely by the Go M:N runtime scheduler.' },
+          { term: 'Channels (make(chan T))', desc: 'Thread-safe conduits for synchronizing data between goroutines without explicit mutexes.' },
+          { term: 'Structural Interfaces', desc: 'Implicit interface satisfaction: types implement interfaces simply by defining the methods.' },
+          { term: 'Defer Statement', desc: 'Guarantees execution of cleanup logic (closing files/connections) when enclosing function exits.' }
+        ]
+      },
+      fourYearRoadmap: [
+        { year: '1st Year (Freshman)', milestone: 'Go Syntax, Structs, Pointers, Slices & Basic CLI Applications' },
+        { year: '2nd Year (Sophomore)', milestone: 'Concurrency with Goroutines & Channels, Interfaces, Error Handling, REST APIs' },
+        { year: '3rd Year (Junior)', milestone: 'gRPC Microservices, Docker, PostgreSQL Integration, High-Throughput Web Services' },
+        { year: '4th Year (Senior)', milestone: 'Kubernetes Operators, Distributed Caching, Cloud Native Placements & DevOps' }
+      ],
+      moocsAndCerts: {
+        moocs: [
+          { name: 'Programming with Google Go Specialization', provider: 'UC Irvine (Coursera)', link: 'https://coursera.org' },
+          { name: 'Building Modern Web Applications with Go', provider: 'Udemy', link: 'https://udemy.com' }
+        ],
+        certifications: [
+          { name: 'Certified Kubernetes Application Developer (CKAD)', issuer: 'Cloud Native Computing Foundation (CNCF)' },
+          { name: 'Google Cloud Professional Cloud Architect', issuer: 'Google Cloud' }
+        ],
+        challenges: [
+          { name: 'Exercism Go Track (Mentor Reviewed Exercises)', url: 'https://exercism.org/tracks/go' },
+          { name: 'LeetCode (Go Solutions for Concurrency & Arrays)', url: 'https://leetcode.com' },
+          { name: 'Gophercises (20 Hands-on Go Projects)', url: 'https://gophercises.com' }
+        ]
+      },
+      codeSnippet: `// Go: Ultra-Lightweight Goroutines for Concurrent Execution
+package main
+
+import (
+    "fmt"
+    "time"
+)
+
+func worker(id int, ch chan string) {
+    time.Sleep(100 * time.Millisecond)
+    ch <- fmt.Sprintf("Worker #%d completed task in parallel", id)
+}
+
+func main() {
+    ch := make(chan string)
+    for i := 1; i <= 3; i++ {
         go worker(i, ch) // Spawn 3 concurrent lightweight threads
     }
 
@@ -695,31 +889,31 @@ fn main() {
 
   return (
     <div style={{
-      background: 'rgba(15, 23, 42, 0.85)',
+      background: 'var(--glass-bg)',
       borderRadius: '18px',
-      border: '1px solid rgba(56, 189, 248, 0.25)',
+      border: '1px solid var(--glass-border)',
       padding: '24px',
-      color: '#e2e8f0',
-      boxShadow: '0 20px 40px -10px rgba(0, 0, 0, 0.6)',
+      color: 'var(--text-primary)',
+      boxShadow: '0 20px 40px -10px rgba(0, 0, 0, 0.2)',
       display: 'flex',
       flexDirection: 'column',
       gap: '22px'
     }}>
       {/* Title */}
       <div style={{
-        background: 'linear-gradient(135deg, rgba(30, 41, 59, 0.9) 0%, rgba(15, 23, 42, 0.95) 100%)',
+        background: 'var(--bg-secondary)',
         borderRadius: '14px',
         padding: '20px 24px',
-        border: '1px solid rgba(255, 255, 255, 0.08)',
-        boxShadow: '0 8px 24px rgba(0,0,0,0.3)'
+        border: '1px solid var(--glass-border)',
+        boxShadow: '0 8px 24px rgba(0,0,0,0.1)'
       }}>
         <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
           <span style={{ fontSize: '26px' }}>🎯</span>
           <div>
-            <h2 style={{ margin: 0, fontSize: '21px', fontWeight: '800', color: '#38bdf8' }}>
+            <h2 style={{ margin: 0, fontSize: '21px', fontWeight: '800', color: 'var(--accent-primary)' }}>
               Which Programming Language to Pick? (Language Career Guide & 4-Year Roadmaps)
             </h2>
-            <p style={{ margin: '4px 0 0 0', color: '#94a3b8', fontSize: '13.5px', lineHeight: '1.5' }}>
+            <p style={{ margin: '4px 0 0 0', color: 'var(--text-secondary)', fontSize: '13.5px', lineHeight: '1.5' }}>
               Deep dive into every major language and stack: <strong>C, C++, Frontend Web Dev (HTML, CSS & JS), Java, Python, Go, and Rust</strong>. Explore why learn it, technical specs, 4-year learning roadmaps, target job roles, MOOCs, and coding challenges!
             </p>
             {/* General College / Curriculum Advisory Note */}
@@ -727,15 +921,15 @@ fn main() {
               marginTop: '10px',
               padding: '8px 12px',
               background: 'rgba(56, 189, 248, 0.08)',
-              borderLeft: '3px solid #38bdf8',
+              borderLeft: '3px solid var(--accent-primary)',
               borderRadius: '6px',
               display: 'flex',
               alignItems: 'center',
               gap: '8px'
             }}>
               <span style={{ fontSize: '15px' }}>💡</span>
-              <span style={{ fontSize: '12.5px', color: '#cbd5e1', lineHeight: '1.4' }}>
-                <strong style={{ color: '#38bdf8' }}>Curriculum Note:</strong> Primary programming languages (such as C, C++, Java, or Python) taught in 1st & 2nd year may vary depending on your college or university syllabus and department specializations.
+              <span style={{ fontSize: '12.5px', color: 'var(--text-secondary)', lineHeight: '1.4' }}>
+                <strong style={{ color: 'var(--accent-primary)' }}>Curriculum Note:</strong> Primary programming languages (such as C, C++, Java, or Python) taught in 1st & 2nd year may vary depending on your college or university syllabus and department specializations.
               </span>
             </div>
           </div>
@@ -765,20 +959,20 @@ fn main() {
                   ? `2px solid ${l.color}`
                   : isHovered
                   ? `2px solid ${l.color}`
-                  : '1px solid #334155',
+                  : '1px solid var(--glass-border)',
                 background: isActive
-                  ? `linear-gradient(135deg, ${l.accentBg} 0%, rgba(15, 23, 42, 0.95) 100%)`
+                  ? `linear-gradient(135deg, ${l.accentBg} 0%, var(--bg-secondary) 100%)`
                   : isHovered
-                  ? `linear-gradient(135deg, ${l.accentBg} 0%, rgba(15, 23, 42, 0.9) 100%)`
-                  : '#0f172a',
-                color: isActive || isHovered ? '#f8fafc' : '#cbd5e1',
+                  ? `linear-gradient(135deg, ${l.accentBg} 0%, var(--bg-secondary) 100%)`
+                  : 'var(--bg-secondary)',
+                color: isActive || isHovered ? l.color : 'var(--text-primary)',
                 fontWeight: '700',
                 fontSize: '13px',
                 cursor: 'pointer',
                 transition: 'all 0.25s cubic-bezier(0.16, 1, 0.3, 1)',
                 transform: isHovered ? 'translateY(-3px) scale(1.02)' : isActive ? 'scale(1.01)' : 'translateY(0) scale(1)',
                 boxShadow: isHovered
-                  ? `0 0 28px ${l.color}90, 0 8px 20px rgba(0,0,0,0.5), inset 0 0 16px ${l.color}35`
+                  ? `0 0 28px ${l.color}90, 0 8px 20px rgba(0,0,0,0.2), inset 0 0 16px ${l.color}35`
                   : isActive
                   ? `0 0 18px ${l.color}45, inset 0 0 10px ${l.color}20`
                   : 'none',
@@ -793,7 +987,7 @@ fn main() {
               }}>
                 {l.icon}
               </span>
-              <span style={{ color: isHovered || isActive ? l.color : '#f1f5f9' }}>{l.name}</span>
+              <span style={{ color: isHovered || isActive ? l.color : 'var(--text-primary)' }}>{l.name}</span>
             </button>
           );
         })}
@@ -801,7 +995,7 @@ fn main() {
 
       {/* Main Details Card */}
       <div style={{
-        background: `linear-gradient(135deg, ${current.accentBg} 0%, rgba(30, 41, 59, 0.9) 100%)`,
+        background: 'var(--bg-secondary)',
         borderRadius: '16px',
         padding: '24px',
         border: `1.5px solid ${current.color}`,
@@ -818,7 +1012,7 @@ fn main() {
               <h3 style={{ margin: 0, fontSize: '24px', fontWeight: '800', color: current.color }}>
                 {current.name}
               </h3>
-              <span style={{ fontSize: '13.5px', color: '#cbd5e1', fontWeight: '600' }}>
+              <span style={{ fontSize: '13.5px', color: 'var(--text-secondary)', fontWeight: '600' }}>
                 {current.tagline}
               </span>
             </div>
@@ -848,35 +1042,35 @@ fn main() {
               ℹ️ Language Info
             </button>
             <div style={{
-              background: 'rgba(15, 23, 42, 0.8)',
+              background: 'var(--glass-bg)',
               padding: '6px 12px',
               borderRadius: '8px',
-              border: '1px solid rgba(255,255,255,0.1)',
+              border: '1px solid var(--glass-border)',
               fontSize: '12px',
-              color: '#94a3b8'
+              color: 'var(--text-secondary)'
             }}>
-              Difficulty: <strong style={{ color: '#fff' }}>{current.beginnerDifficulty}</strong>
+              Difficulty: <strong style={{ color: 'var(--text-primary)' }}>{current.beginnerDifficulty}</strong>
             </div>
             <div style={{
-              background: 'rgba(15, 23, 42, 0.8)',
+              background: 'var(--glass-bg)',
               padding: '6px 12px',
               borderRadius: '8px',
-              border: '1px solid rgba(255,255,255,0.1)',
+              border: '1px solid var(--glass-border)',
               fontSize: '12px',
-              color: '#94a3b8'
+              color: 'var(--text-secondary)'
             }}>
-              Industry Demand: <strong style={{ color: '#fbbf24', cursor: 'help' }} title={current.industryDemand}>{current.industryDemand.split(' ')[0]}</strong>
+              Industry Demand: <strong style={{ color: '#d97706', cursor: 'help' }} title={current.industryDemand}>{current.industryDemand.split(' ')[0]}</strong>
             </div>
 
             {/* Line-by-Line Debugger Status - only shown for supported languages */}
             {isLineDebuggerSupported(current.id) && (
               <div style={{
-                background: 'rgba(16, 185, 129, 0.15)',
+                background: 'rgba(5, 150, 105, 0.15)',
                 padding: '6px 12px',
                 borderRadius: '8px',
-                border: '1px solid rgba(16, 185, 129, 0.3)',
+                border: '1px solid rgba(5, 150, 105, 0.35)',
                 fontSize: '12px',
-                color: '#34d399',
+                color: '#059669',
                 display: 'flex',
                 alignItems: 'center',
                 gap: '6px'
@@ -889,7 +1083,7 @@ fn main() {
         </div>
 
         {/* Sub Tabs */}
-        <div style={{ display: 'flex', gap: '8px', borderBottom: '1px solid #334155', paddingBottom: '10px', flexWrap: 'wrap' }}>
+        <div style={{ display: 'flex', gap: '8px', borderBottom: '1px solid var(--glass-border)', paddingBottom: '10px', flexWrap: 'wrap' }}>
           {[
             { id: 'overview', label: '💡 Why Learn & Careers' },
             { id: 'language_info', label: 'ℹ️ Language Info & Specs' },
@@ -905,9 +1099,9 @@ fn main() {
                 style={{
                   padding: '7px 14px',
                   borderRadius: '8px',
-                  border: 'none',
-                  background: isTabActive ? current.color : 'rgba(15, 23, 42, 0.6)',
-                  color: isTabActive ? '#0f172a' : '#cbd5e1',
+                  border: isTabActive ? 'none' : '1px solid var(--glass-border)',
+                  background: isTabActive ? current.color : 'var(--glass-bg)',
+                  color: isTabActive ? '#0f172a' : 'var(--text-secondary)',
                   fontSize: '12.5px',
                   fontWeight: '700',
                   cursor: 'pointer',
@@ -925,15 +1119,16 @@ fn main() {
         {activeTab === 'overview' && (
           <div style={{ display: 'flex', flexDirection: 'column', gap: '16px' }}>
             <div style={{
-              background: 'rgba(15, 23, 42, 0.8)',
+              background: 'var(--glass-bg)',
               padding: '16px 20px',
               borderRadius: '10px',
+              border: '1px solid var(--glass-border)',
               borderLeft: `4px solid ${current.color}`
             }}>
               <h4 style={{ margin: '0 0 6px 0', fontSize: '15px', color: current.color }}>
                 💡 Why Learn {current.name}?
               </h4>
-              <p style={{ margin: 0, fontSize: '13.5px', color: '#e2e8f0', lineHeight: '1.5' }}>
+              <p style={{ margin: 0, fontSize: '13.5px', color: 'var(--text-secondary)', lineHeight: '1.5' }}>
                 {current.whyLearn}
               </p>
             </div>
@@ -944,23 +1139,23 @@ fn main() {
                 gridTemplateColumns: 'repeat(auto-fit, minmax(220px, 1fr))',
                 gap: '12px'
               }}>
-                <div style={{ background: '#0f172a', padding: '14px', borderRadius: '10px', border: '1px solid #ef4444' }}>
-                  <span style={{ color: '#ef4444', fontWeight: 'bold', fontSize: '13px' }}>🧱 1. HTML5 (Structure)</span>
-                  <p style={{ margin: '6px 0 0 0', fontSize: '12px', color: '#cbd5e1', lineHeight: '1.4' }}>
+                <div style={{ background: 'var(--glass-bg)', padding: '14px', borderRadius: '10px', border: '1px solid #dc2626' }}>
+                  <span style={{ color: '#dc2626', fontWeight: 'bold', fontSize: '13px' }}>🧱 1. HTML5 (Structure)</span>
+                  <p style={{ margin: '6px 0 0 0', fontSize: '12px', color: 'var(--text-secondary)', lineHeight: '1.4' }}>
                     Semantic elements (header, main, section), SEO structure, Accessibility (ARIA), and DOM foundation.
                   </p>
                 </div>
 
-                <div style={{ background: '#0f172a', padding: '14px', borderRadius: '10px', border: '1px solid #38bdf8' }}>
-                  <span style={{ color: '#38bdf8', fontWeight: 'bold', fontSize: '13px' }}>🎨 2. CSS3 (Styling)</span>
-                  <p style={{ margin: '6px 0 0 0', fontSize: '12px', color: '#cbd5e1', lineHeight: '1.4' }}>
+                <div style={{ background: 'var(--glass-bg)', padding: '14px', borderRadius: '10px', border: '1px solid var(--accent-primary)' }}>
+                  <span style={{ color: 'var(--accent-primary)', fontWeight: 'bold', fontSize: '13px' }}>🎨 2. CSS3 (Styling)</span>
+                  <p style={{ margin: '6px 0 0 0', fontSize: '12px', color: 'var(--text-secondary)', lineHeight: '1.4' }}>
                     Flexbox, CSS Grid layouts, Tailwind CSS utility styling, smooth animations, and responsive media queries.
                   </p>
                 </div>
 
-                <div style={{ background: '#0f172a', padding: '14px', borderRadius: '10px', border: '1px solid #f59e0b' }}>
-                  <span style={{ color: '#f59e0b', fontWeight: 'bold', fontSize: '13px' }}>⚡ 3. JavaScript / React (Logic)</span>
-                  <p style={{ margin: '6px 0 0 0', fontSize: '12px', color: '#cbd5e1', lineHeight: '1.4' }}>
+                <div style={{ background: 'var(--glass-bg)', padding: '14px', borderRadius: '10px', border: '1px solid #d97706' }}>
+                  <span style={{ color: '#d97706', fontWeight: 'bold', fontSize: '13px' }}>⚡ 3. JavaScript / React (Logic)</span>
+                  <p style={{ margin: '6px 0 0 0', fontSize: '12px', color: 'var(--text-secondary)', lineHeight: '1.4' }}>
                     DOM manipulation, ES6+ arrow functions, asynchronous fetch APIs, and dynamic React components.
                   </p>
                 </div>
@@ -972,31 +1167,31 @@ fn main() {
               gridTemplateColumns: 'repeat(auto-fit, minmax(280px, 1fr))',
               gap: '14px'
             }}>
-              <div style={{ background: '#0f172a', padding: '16px', borderRadius: '10px', border: '1px solid #334155' }}>
+              <div style={{ background: 'var(--glass-bg)', padding: '16px', borderRadius: '10px', border: '1px solid var(--glass-border)' }}>
                 <h4 style={{ margin: '0 0 10px 0', fontSize: '14px', color: current.color }}>
                   🌐 Primary Industry Domains & Applications
                 </h4>
-                <ul style={{ margin: 0, paddingLeft: '18px', fontSize: '12.5px', color: '#cbd5e1', lineHeight: '1.6' }}>
+                <ul style={{ margin: 0, paddingLeft: '18px', fontSize: '12.5px', color: 'var(--text-secondary)', lineHeight: '1.6' }}>
                   {current.fields.map((f, i) => (
                     <li key={i}>{f}</li>
                   ))}
                 </ul>
               </div>
 
-              <div style={{ background: '#0f172a', padding: '16px', borderRadius: '10px', border: '1px solid #334155' }}>
-                <h4 style={{ margin: '0 0 10px 0', fontSize: '14px', color: '#10b981' }}>
+              <div style={{ background: 'var(--glass-bg)', padding: '16px', borderRadius: '10px', border: '1px solid var(--glass-border)' }}>
+                <h4 style={{ margin: '0 0 10px 0', fontSize: '14px', color: '#059669' }}>
                   💼 Target Job Roles & Career Profiles
                 </h4>
-                <ul style={{ margin: 0, paddingLeft: '18px', fontSize: '12.5px', color: '#cbd5e1', lineHeight: '1.6' }}>
+                <ul style={{ margin: 0, paddingLeft: '18px', fontSize: '12.5px', color: 'var(--text-secondary)', lineHeight: '1.6' }}>
                   {current.jobTitles.map((t, i) => (
-                    <li key={i}><strong style={{ color: '#f8fafc' }}>{t}</strong></li>
+                    <li key={i}><strong style={{ color: 'var(--text-primary)' }}>{t}</strong></li>
                   ))}
                 </ul>
               </div>
             </div>
 
-            <div style={{ background: '#0f172a', padding: '14px 18px', borderRadius: '10px', border: '1px solid #334155' }}>
-              <span style={{ fontSize: '13px', color: '#94a3b8', fontWeight: 'bold' }}>
+            <div style={{ background: 'var(--glass-bg)', padding: '14px 18px', borderRadius: '10px', border: '1px solid var(--glass-border)' }}>
+              <span style={{ fontSize: '13px', color: 'var(--text-secondary)', fontWeight: 'bold' }}>
                 🚀 Built with {current.name}:
               </span>
               <div style={{ display: 'flex', gap: '8px', flexWrap: 'wrap', marginTop: '6px' }}>
@@ -1006,8 +1201,8 @@ fn main() {
                     padding: '3px 10px',
                     borderRadius: '6px',
                     fontSize: '12px',
-                    color: '#38bdf8',
-                    border: '1px solid rgba(56, 189, 248, 0.2)'
+                    color: 'var(--accent-primary)',
+                    border: '1px solid var(--glass-border)'
                   }}>
                     {app}
                   </span>
@@ -1029,26 +1224,26 @@ fn main() {
                 gridTemplateColumns: 'repeat(auto-fit, minmax(220px, 1fr))',
                 gap: '12px'
               }}>
-                <div style={{ background: '#0f172a', padding: '14px 16px', borderRadius: '10px', border: '1px solid rgba(255,255,255,0.08)' }}>
-                  <span style={{ fontSize: '11px', color: '#94a3b8', textTransform: 'uppercase', letterSpacing: '0.5px', fontWeight: 'bold' }}>🏛️ Creator & Year</span>
-                  <div style={{ marginTop: '4px', fontSize: '13.5px', fontWeight: '700', color: '#f8fafc' }}>{current.languageInfo.creator}</div>
+                <div style={{ background: 'var(--glass-bg)', padding: '14px 16px', borderRadius: '10px', border: '1px solid var(--glass-border)' }}>
+                  <span style={{ fontSize: '11px', color: 'var(--text-secondary)', textTransform: 'uppercase', letterSpacing: '0.5px', fontWeight: 'bold' }}>🏛️ Creator & Year</span>
+                  <div style={{ marginTop: '4px', fontSize: '13.5px', fontWeight: '700', color: 'var(--text-primary)' }}>{current.languageInfo.creator}</div>
                   <div style={{ fontSize: '11.5px', color: current.color, marginTop: '2px', fontWeight: 'bold' }}>First Released: {current.languageInfo.yearCreated}</div>
                 </div>
-                <div style={{ background: '#0f172a', padding: '14px 16px', borderRadius: '10px', border: '1px solid rgba(255,255,255,0.08)' }}>
-                  <span style={{ fontSize: '11px', color: '#94a3b8', textTransform: 'uppercase', letterSpacing: '0.5px', fontWeight: 'bold' }}>🧠 Programming Paradigm</span>
-                  <div style={{ marginTop: '4px', fontSize: '13.5px', fontWeight: '700', color: '#f8fafc' }}>{current.languageInfo.paradigm}</div>
+                <div style={{ background: 'var(--glass-bg)', padding: '14px 16px', borderRadius: '10px', border: '1px solid var(--glass-border)' }}>
+                  <span style={{ fontSize: '11px', color: 'var(--text-secondary)', textTransform: 'uppercase', letterSpacing: '0.5px', fontWeight: 'bold' }}>🧠 Programming Paradigm</span>
+                  <div style={{ marginTop: '4px', fontSize: '13.5px', fontWeight: '700', color: 'var(--text-primary)' }}>{current.languageInfo.paradigm}</div>
                 </div>
-                <div style={{ background: '#0f172a', padding: '14px 16px', borderRadius: '10px', border: '1px solid rgba(255,255,255,0.08)' }}>
-                  <span style={{ fontSize: '11px', color: '#94a3b8', textTransform: 'uppercase', letterSpacing: '0.5px', fontWeight: 'bold' }}>🔒 Type System</span>
-                  <div style={{ marginTop: '4px', fontSize: '13.5px', fontWeight: '700', color: '#f8fafc' }}>{current.languageInfo.typing}</div>
+                <div style={{ background: 'var(--glass-bg)', padding: '14px 16px', borderRadius: '10px', border: '1px solid var(--glass-border)' }}>
+                  <span style={{ fontSize: '11px', color: 'var(--text-secondary)', textTransform: 'uppercase', letterSpacing: '0.5px', fontWeight: 'bold' }}>🔒 Type System</span>
+                  <div style={{ marginTop: '4px', fontSize: '13.5px', fontWeight: '700', color: 'var(--text-primary)' }}>{current.languageInfo.typing}</div>
                 </div>
-                <div style={{ background: '#0f172a', padding: '14px 16px', borderRadius: '10px', border: '1px solid rgba(255,255,255,0.08)' }}>
-                  <span style={{ fontSize: '11px', color: '#94a3b8', textTransform: 'uppercase', letterSpacing: '0.5px', fontWeight: 'bold' }}>⚙️ Execution Model</span>
-                  <div style={{ marginTop: '4px', fontSize: '13.5px', fontWeight: '700', color: '#f8fafc' }}>{current.languageInfo.executionModel}</div>
+                <div style={{ background: 'var(--glass-bg)', padding: '14px 16px', borderRadius: '10px', border: '1px solid var(--glass-border)' }}>
+                  <span style={{ fontSize: '11px', color: 'var(--text-secondary)', textTransform: 'uppercase', letterSpacing: '0.5px', fontWeight: 'bold' }}>⚙️ Execution Model</span>
+                  <div style={{ marginTop: '4px', fontSize: '13.5px', fontWeight: '700', color: 'var(--text-primary)' }}>{current.languageInfo.executionModel}</div>
                 </div>
-                <div style={{ background: '#0f172a', padding: '14px 16px', borderRadius: '10px', border: '1px solid rgba(255,255,255,0.08)', gridColumn: 'span 2' }}>
-                  <span style={{ fontSize: '11px', color: '#94a3b8', textTransform: 'uppercase', letterSpacing: '0.5px', fontWeight: 'bold' }}>🧹 Memory Management Model</span>
-                  <div style={{ marginTop: '4px', fontSize: '13px', fontWeight: '600', color: '#e2e8f0' }}>{current.languageInfo.memoryModel}</div>
+                <div style={{ background: 'var(--glass-bg)', padding: '14px 16px', borderRadius: '10px', border: '1px solid var(--glass-border)', gridColumn: 'span 2' }}>
+                  <span style={{ fontSize: '11px', color: 'var(--text-secondary)', textTransform: 'uppercase', letterSpacing: '0.5px', fontWeight: 'bold' }}>🧹 Memory Management Model</span>
+                  <div style={{ marginTop: '4px', fontSize: '13px', fontWeight: '600', color: 'var(--text-secondary)' }}>{current.languageInfo.memoryModel}</div>
                 </div>
               </div>
             </div>
@@ -1059,36 +1254,36 @@ fn main() {
               gap: '14px'
             }}>
               <div style={{
-                background: 'rgba(16, 185, 129, 0.06)',
+                background: 'rgba(5, 150, 105, 0.08)',
                 padding: '16px 18px',
                 borderRadius: '12px',
-                border: '1px solid rgba(16, 185, 129, 0.3)',
+                border: '1px solid rgba(5, 150, 105, 0.3)',
                 display: 'flex',
                 flexDirection: 'column',
                 gap: '8px'
               }}>
-                <h4 style={{ margin: 0, fontSize: '14.5px', color: '#34d399', display: 'flex', alignItems: 'center', gap: '6px' }}>
+                <h4 style={{ margin: 0, fontSize: '14.5px', color: '#059669', display: 'flex', alignItems: 'center', gap: '6px' }}>
                   <span>🚀</span> Core Superpowers & Strengths
                 </h4>
-                <ul style={{ margin: '4px 0 0 0', paddingLeft: '18px', fontSize: '12.5px', color: '#cbd5e1', lineHeight: '1.6' }}>
+                <ul style={{ margin: '4px 0 0 0', paddingLeft: '18px', fontSize: '12.5px', color: 'var(--text-secondary)', lineHeight: '1.6' }}>
                   {current.languageInfo.superpowers.map((sp, i) => (
                     <li key={i} style={{ marginBottom: '4px' }}>{sp}</li>
                   ))}
                 </ul>
               </div>
               <div style={{
-                background: 'rgba(245, 158, 11, 0.06)',
+                background: 'rgba(217, 119, 6, 0.08)',
                 padding: '16px 18px',
                 borderRadius: '12px',
-                border: '1px solid rgba(245, 158, 11, 0.3)',
+                border: '1px solid rgba(217, 119, 6, 0.3)',
                 display: 'flex',
                 flexDirection: 'column',
                 gap: '8px'
               }}>
-                <h4 style={{ margin: 0, fontSize: '14.5px', color: '#fbbf24', display: 'flex', alignItems: 'center', gap: '6px' }}>
+                <h4 style={{ margin: 0, fontSize: '14.5px', color: '#d97706', display: 'flex', alignItems: 'center', gap: '6px' }}>
                   <span>⚠️</span> Key Trade-Offs & Watch-Outs
                 </h4>
-                <ul style={{ margin: '4px 0 0 0', paddingLeft: '18px', fontSize: '12.5px', color: '#cbd5e1', lineHeight: '1.6' }}>
+                <ul style={{ margin: '4px 0 0 0', paddingLeft: '18px', fontSize: '12.5px', color: 'var(--text-secondary)', lineHeight: '1.6' }}>
                   {current.languageInfo.limitations.map((lim, i) => (
                     <li key={i} style={{ marginBottom: '4px' }}>{lim}</li>
                   ))}
@@ -1101,45 +1296,45 @@ fn main() {
               gridTemplateColumns: 'repeat(auto-fit, minmax(280px, 1fr))',
               gap: '14px'
             }}>
-              <div style={{ background: '#0f172a', padding: '16px 18px', borderRadius: '12px', border: '1px solid rgba(255,255,255,0.08)' }}>
+              <div style={{ background: 'var(--glass-bg)', padding: '16px 18px', borderRadius: '12px', border: '1px solid var(--glass-border)' }}>
                 <h4 style={{ margin: '0 0 10px 0', fontSize: '14px', color: current.color }}>
                   📦 Top Frameworks, Engines & Tools
                 </h4>
                 <div style={{ display: 'flex', flexWrap: 'wrap', gap: '6px' }}>
                   {current.languageInfo.popularFrameworks.map((fw, i) => (
                     <span key={i} style={{
-                      background: 'rgba(255,255,255,0.06)',
+                      background: 'var(--bg-secondary)',
                       padding: '4px 10px',
                       borderRadius: '6px',
                       fontSize: '12px',
                       fontWeight: '600',
-                      color: '#f1f5f9',
-                      border: '1px solid rgba(255,255,255,0.1)'
+                      color: 'var(--text-primary)',
+                      border: '1px solid var(--glass-border)'
                     }}>
                       {fw}
                     </span>
                   ))}
                 </div>
               </div>
-              <div style={{ background: '#0f172a', padding: '16px 18px', borderRadius: '12px', border: '1px solid rgba(255,255,255,0.08)' }}>
-                <h4 style={{ margin: '0 0 10px 0', fontSize: '14px', color: '#10b981' }}>
+              <div style={{ background: 'var(--glass-bg)', padding: '16px 18px', borderRadius: '12px', border: '1px solid var(--glass-border)' }}>
+                <h4 style={{ margin: '0 0 10px 0', fontSize: '14px', color: '#059669' }}>
                   💰 Average Industry Salary Bands
                 </h4>
                 <div style={{ display: 'flex', flexDirection: 'column', gap: '8px' }}>
                   <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: '12.5px' }}>
-                    <span style={{ color: '#94a3b8' }}>🌱 Entry-Level (0 - 2 yrs):</span>
-                    <strong style={{ color: '#38bdf8' }}>{current.languageInfo.salaryBands.entry}</strong>
+                    <span style={{ color: 'var(--text-secondary)' }}>🌱 Entry-Level (0 - 2 yrs):</span>
+                    <strong style={{ color: 'var(--accent-primary)' }}>{current.languageInfo.salaryBands.entry}</strong>
                   </div>
                   <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: '12.5px' }}>
-                    <span style={{ color: '#94a3b8' }}>🚀 Senior SDE / Lead (5+ yrs):</span>
-                    <strong style={{ color: '#10b981' }}>{current.languageInfo.salaryBands.senior}</strong>
+                    <span style={{ color: 'var(--text-secondary)' }}>🚀 Senior SDE / Lead (5+ yrs):</span>
+                    <strong style={{ color: '#059669' }}>{current.languageInfo.salaryBands.senior}</strong>
                   </div>
                 </div>
               </div>
             </div>
 
             <div>
-              <h4 style={{ margin: '0 0 12px 0', fontSize: '15px', color: '#a78bfa', display: 'flex', alignItems: 'center', gap: '6px' }}>
+              <h4 style={{ margin: '0 0 12px 0', fontSize: '15px', color: '#7c3aed', display: 'flex', alignItems: 'center', gap: '6px' }}>
                 <span>💡</span> Signature Concepts & Mental Models ({current.name})
               </h4>
               <div style={{
@@ -1149,13 +1344,13 @@ fn main() {
               }}>
                 {current.languageInfo.keyConcepts.map((kc, i) => (
                   <div key={i} style={{
-                    background: '#090d16',
+                    background: 'var(--glass-bg)',
                     padding: '14px',
                     borderRadius: '10px',
-                    border: '1px solid rgba(167, 139, 250, 0.2)'
+                    border: '1px solid var(--glass-border)'
                   }}>
-                    <strong style={{ fontSize: '13px', color: '#c4b5fd' }}>{kc.term}</strong>
-                    <p style={{ margin: '4px 0 0 0', fontSize: '12px', color: '#cbd5e1', lineHeight: '1.5' }}>
+                    <strong style={{ fontSize: '13px', color: '#7c3aed' }}>{kc.term}</strong>
+                    <p style={{ margin: '4px 0 0 0', fontSize: '12px', color: 'var(--text-secondary)', lineHeight: '1.5' }}>
                       {kc.desc}
                     </p>
                   </div>
@@ -1178,19 +1373,19 @@ fn main() {
             }}>
               {current.fourYearRoadmap.map((step, idx) => (
                 <div key={idx} style={{
-                  background: '#0f172a',
+                  background: 'var(--glass-bg)',
                   padding: '16px',
                   borderRadius: '12px',
-                  border: '1px solid #334155',
-                  borderTop: `3px solid ${idx === 0 ? '#38bdf8' : idx === 1 ? '#f59e0b' : idx === 2 ? '#10b981' : '#ec4899'}`,
+                  border: '1px solid var(--glass-border)',
+                  borderTop: `3px solid ${idx === 0 ? 'var(--accent-primary)' : idx === 1 ? '#d97706' : idx === 2 ? '#059669' : '#db2777'}`,
                   display: 'flex',
                   flexDirection: 'column',
                   gap: '6px'
                 }}>
-                  <span style={{ fontSize: '13.5px', fontWeight: '800', color: '#f8fafc' }}>
+                  <span style={{ fontSize: '13.5px', fontWeight: '800', color: 'var(--text-primary)' }}>
                     {step.year}
                   </span>
-                  <p style={{ margin: 0, fontSize: '12.5px', color: '#94a3b8', lineHeight: '1.5' }}>
+                  <p style={{ margin: 0, fontSize: '12.5px', color: 'var(--text-secondary)', lineHeight: '1.5' }}>
                     {step.milestone}
                   </p>
                 </div>
@@ -1203,27 +1398,27 @@ fn main() {
         {activeTab === 'moocs_challenges' && (
           <div style={{ display: 'flex', flexDirection: 'column', gap: '18px' }}>
             <div>
-              <h4 style={{ margin: '0 0 10px 0', fontSize: '15px', color: '#38bdf8' }}>
+              <h4 style={{ margin: '0 0 10px 0', fontSize: '15px', color: 'var(--accent-primary)' }}>
                 🎓 Top MOOCs & Courses for {current.name}
               </h4>
               <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(260px, 1fr))', gap: '10px' }}>
                 {current.moocsAndCerts.moocs.map((m, i) => (
-                  <div key={i} style={{ background: '#0f172a', padding: '14px', borderRadius: '8px', border: '1px solid #334155' }}>
-                    <h5 style={{ margin: '0 0 4px 0', fontSize: '13.5px', color: '#f1f5f9' }}>{m.name}</h5>
-                    <span style={{ fontSize: '12px', color: '#94a3b8' }}>{m.provider}</span>
+                  <div key={i} style={{ background: 'var(--glass-bg)', padding: '14px', borderRadius: '8px', border: '1px solid var(--glass-border)' }}>
+                    <h5 style={{ margin: '0 0 4px 0', fontSize: '13.5px', color: 'var(--text-primary)' }}>{m.name}</h5>
+                    <span style={{ fontSize: '12px', color: 'var(--text-secondary)' }}>{m.provider}</span>
                   </div>
                 ))}
               </div>
             </div>
             <div>
-              <h4 style={{ margin: '0 0 10px 0', fontSize: '15px', color: '#10b981' }}>
+              <h4 style={{ margin: '0 0 10px 0', fontSize: '15px', color: '#059669' }}>
                 📜 Industry Recognized Certifications
               </h4>
               <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(240px, 1fr))', gap: '10px' }}>
                 {current.moocsAndCerts.certifications.map((c, i) => (
-                  <div key={i} style={{ background: '#0f172a', padding: '12px 14px', borderRadius: '8px', border: '1px solid #334155' }}>
-                    <strong style={{ fontSize: '13px', color: '#f8fafc' }}>{c.name}</strong>
-                    <p style={{ margin: '4px 0 0 0', fontSize: '12px', color: '#94a3b8' }}>Issuer: {c.issuer}</p>
+                  <div key={i} style={{ background: 'var(--glass-bg)', padding: '12px 14px', borderRadius: '8px', border: '1px solid var(--glass-border)' }}>
+                    <strong style={{ fontSize: '13px', color: 'var(--text-primary)' }}>{c.name}</strong>
+                    <p style={{ margin: '4px 0 0 0', fontSize: '12px', color: 'var(--text-secondary)' }}>Issuer: {c.issuer}</p>
                   </div>
                 ))}
               </div>
@@ -1238,11 +1433,11 @@ fn main() {
               💻 Live Real-World Code Sample in {current.name}
             </h4>
             <pre style={{
-              background: '#090d16',
+              background: 'var(--glass-bg)',
               padding: '16px',
               borderRadius: '10px',
-              border: '1.5px solid #334155',
-              color: '#38bdf8',
+              border: '1.5px solid var(--glass-border)',
+              color: 'var(--accent-primary)',
               fontFamily: 'Consolas, Monaco, "Courier New", monospace',
               fontSize: '13px',
               lineHeight: '1.6',

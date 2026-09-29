@@ -997,7 +997,7 @@ const PatternsVisualizer = ({ onBack, openSettings, onCopyCode, onCodeChange, fo
         <div style={{ display: 'flex', gap: '15px', flex: 1, minHeight: '260px' }}>
           
           {/* 2D Matrix Grid */}
-          <div style={{ flex: 1, background: 'rgba(0,0,0,0.3)', border: '1.5px solid var(--glass-border)', borderRadius: '14px', padding: '15px', display: 'flex', flexDirection: 'column', overflow: 'auto' }}>
+          <div style={{ flex: 1, background: 'var(--bg-secondary)', border: '1.5px solid var(--glass-border)', borderRadius: '14px', padding: '15px', display: 'flex', flexDirection: 'column', overflow: 'auto' }}>
             <h4 style={{ fontSize: '0.85rem', color: 'var(--text-secondary)', marginBottom: '10px', flexShrink: 0 }}>🌐 2D Cell Matrix View</h4>
             <div style={{ flex: 1, display: 'flex', justifyContent: 'center', alignItems: 'center', minHeight: '100%', minWidth: 'min-content' }}>
               <div style={{ display: 'flex', flexDirection: 'column', gap: '6px', padding: '10px' }}>
@@ -1012,10 +1012,10 @@ const PatternsVisualizer = ({ onBack, openSettings, onCopyCode, onCodeChange, fo
                           width: '34px', height: '34px', borderRadius: '8px',
                           display: 'flex', alignItems: 'center', justifyContent: 'center',
                           fontWeight: 'bold', fontSize: '1rem',
-                          background: isActive ? 'rgba(16, 185, 129, 0.3)' : cellChar.trim() !== '' ? 'rgba(59, 130, 246, 0.15)' : 'rgba(255,255,255,0.02)',
-                          border: isActive ? '2px solid #10b981' : cellChar.trim() !== '' ? '1.5px solid #3b82f6' : '1px dashed rgba(255,255,255,0.1)',
-                          color: isActive ? '#34d399' : '#60a5fa',
-                          boxShadow: isActive ? '0 0 12px rgba(16, 185, 129, 0.6)' : 'none',
+                          background: isActive ? 'rgba(16, 185, 129, 0.25)' : cellChar.trim() !== '' ? 'rgba(59, 130, 246, 0.15)' : 'var(--glass-bg)',
+                          border: isActive ? '2px solid #10b981' : cellChar.trim() !== '' ? '1.5px solid var(--accent-primary)' : '1px dashed var(--glass-border)',
+                          color: isActive ? '#059669' : 'var(--accent-primary)',
+                          boxShadow: isActive ? '0 0 12px rgba(16, 185, 129, 0.4)' : 'none',
                           transition: 'all 0.2s ease'
                         }}
                       >
