@@ -711,7 +711,7 @@ export function generateLocalRagResponse(userMessage, activeCode = '', activeLan
   const restrictedMatch = checkRestrictedWords(userMessage);
   if (restrictedMatch) {
     return {
-      text: `### ⚠️ Content Warning: Restricted Language Detected\n\nI cannot generate responses for messages containing offensive, inappropriate, or restricted words (detected: **"${restrictedMatch}"**).\n\nAlgoFlow AI Mentor is dedicated to computer science, coding practice, and engineering education. Please rephrase your question using respectful language, and I'll be glad to help!`,
+      text: `### ⚠️ Content Warning: Inappropriate Language Detected\n\nI cannot generate responses for messages containing offensive, inappropriate, or restricted words.\n\nAlgoFlow AI Mentor is dedicated to computer science, coding practice, and engineering education. Please rephrase your question using respectful language, and I'll be glad to help!`,
       sources: ['Community Guidelines & Ethics Filter']
     };
   }
