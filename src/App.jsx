@@ -1299,6 +1299,7 @@ function App() {
   const [globalDsType,  setGlobalDsType]  = useState('HASH_TABLE');
   const [globalDsVariety, setGlobalDsVariety] = useState('HASH_LINEAR');
   const [globalDsaNotesKey, setGlobalDsaNotesKey] = useState('LESSON_VARIABLES');
+  const [globalBeginnerModule, setGlobalBeginnerModule] = useState('btech_branches');
   const [pendingModule, setPendingModule] = useState(null);
   const [fenwickBitMode, setFenwickBitMode] = useState(false);
   const [fenwickOpTab, setFenwickOpTab] = useState('INSERT'); // 'INSERT' | 'PREFIX_SUM' | 'RANGE_SUM' | 'UPDATE'
@@ -4398,8 +4399,10 @@ function App() {
                 { id: 'MOD5_APPROXIMATION', mode: 'DSA_NOTES_VIS', title: 'Approximation Algorithms & Vertex-Cover 2-Approx', icon: '🎯', desc: 'NP-Completeness & Approximation' },
                 { id: 'MOD6_MILLER_RABIN', mode: 'DSA_NOTES_VIS', title: 'Miller-Rabin Primality Test', icon: '🎲', desc: 'Randomised & Parallel Algorithms' },
                 { id: 'DSA_NOTES_VIS', mode: 'DSA_NOTES_VIS', title: 'DSA Study & Solved Sums Studio (Comprehensive Theory, 6 Advanced Modules & Interactive Sums)', icon: '📚', desc: 'Complete DSA Theory, SVG Stepper & Live Code Demos' },
-                { id: 'BTECH_ROADMAP', mode: 'BEGINNER_101_VIS', title: 'B.Tech Branch Roadmaps & Language Picker', icon: '🎓', desc: 'Which language to pick for CSE, ECE, EEE, Mech, Civil, AI/ML, Cyber Security & more' },
-                { id: 'LANG_CAREER', mode: 'BEGINNER_101_VIS', title: 'Language Career Guide', icon: '🎯', desc: 'Jobs, fields, and applications per programming language' },
+                { id: 'BTECH_ROADMAP', mode: 'BEGINNER_101_VIS', initialSubModule: 'btech_branches', title: 'B.Tech Branch Roadmaps & Language Picker', icon: '🎓', desc: 'Which language to pick for CSE, ECE, EEE, Mech, Civil, AI/ML, Cyber Security & more' },
+                { id: 'LANG_CAREER', mode: 'BEGINNER_101_VIS', initialSubModule: 'career', title: 'Language Career Guide', icon: '🎯', desc: 'Jobs, fields, and applications per programming language' },
+                { id: 'VEHICLE_SPEEDWAY', mode: 'BEGINNER_101_VIS', initialSubModule: 'vehicle_complexity', title: '🏎️ Big-O Complexity Speedway (Why DSA Matters)', icon: '🏎️', desc: 'Interactive vehicle race, demystifying ops, N & log N inside Why DSA Matters' },
+                { id: 'COLLEGE_VS_INDUSTRY', mode: 'BEGINNER_101_VIS', initialSubModule: 'college_vs_industry', title: '🏢 College vs Company Projects (Industry Reality Guide)', icon: '🏢', desc: 'How college teaches coding vs how tech giants build at scale, production architecture & resume level-up' },
                 { id: 'AI_RAG_MENTOR', mode: 'AI_RAG_MENTOR_VIS', title: '✨ AlgoFlow AI RAG Mentor Studio', icon: '✨', desc: 'Ask career roadmaps, branch advice, languages & DSA questions to AI' }
               ].filter(c => c.title.toLowerCase().includes(homeSearchQuery.toLowerCase()) || c.desc.toLowerCase().includes(homeSearchQuery.toLowerCase())).map(card => (
                 <div key={card.id} className="option-card" onClick={() => setPendingModule(card)} onMouseEnter={e => gsap.to(e.currentTarget, { scale: 1.05, duration: 0.2 })} onMouseLeave={e => gsap.to(e.currentTarget, { scale: 1, duration: 0.2 })}>
@@ -4437,7 +4440,9 @@ function App() {
         <Beginner101Visualizer 
           codeLang={codeLang} 
           setCodeLang={setCodeLang} 
+          initialModule={globalBeginnerModule}
           fontSize={editorFontSize} 
+ 
           onOpenDebugger={(code, lang) => {
             if (code) setCustomCode(code);
             if (lang) setCodeLang(lang);
@@ -4461,7 +4466,8 @@ function App() {
             setActiveCodeForChat(code);
             setActiveLangForChat(lang);
           }}
-          fontSize={editorFontSize}
+          fontSize={editorFontSize} 
+
           wordWrap={editorWordWrap}
           onShowUpcomingFeatures={() => setIsUpcomingOpen(true)}
         />
@@ -4479,7 +4485,8 @@ function App() {
             setActiveCodeForChat(code);
             setActiveLangForChat(lang);
           }}
-          fontSize={editorFontSize}
+          fontSize={editorFontSize} 
+
           wordWrap={editorWordWrap}
           onShowUpcomingFeatures={() => setIsUpcomingOpen(true)}
         />
@@ -4496,7 +4503,8 @@ function App() {
             setActiveCodeForChat(code);
             setActiveLangForChat(lang);
           }}
-          fontSize={editorFontSize}
+          fontSize={editorFontSize} 
+
           wordWrap={editorWordWrap}
           onShowUpcomingFeatures={() => setIsUpcomingOpen(true)}
         />
@@ -4513,7 +4521,8 @@ function App() {
             setActiveCodeForChat(code);
             setActiveLangForChat(lang);
           }}
-          fontSize={editorFontSize}
+          fontSize={editorFontSize} 
+
           wordWrap={editorWordWrap}
           onShowUpcomingFeatures={() => setIsUpcomingOpen(true)}
         />
@@ -4529,7 +4538,8 @@ function App() {
             setActiveCodeForChat(code);
             setActiveLangForChat(lang);
           }}
-          fontSize={editorFontSize}
+          fontSize={editorFontSize} 
+
           wordWrap={editorWordWrap}
           onShowUpcomingFeatures={() => setIsUpcomingOpen(true)}
         />
@@ -4540,7 +4550,8 @@ function App() {
         <DSANotesVisualizer 
           onBack={goBack} 
           openSettings={() => setIsSettingsOpen(true)} 
-          fontSize={editorFontSize}
+          fontSize={editorFontSize} 
+
           wordWrap={editorWordWrap}
           onShowUpcomingFeatures={() => setIsUpcomingOpen(true)}
           initialTopicKey={globalDsaNotesKey}
@@ -4628,6 +4639,9 @@ function App() {
                 }
                 if (pendingModule.mode === 'DSA_NOTES_VIS') {
                   setGlobalDsaNotesKey(pendingModule.id);
+                }
+                if (pendingModule.initialSubModule) {
+                  setGlobalBeginnerModule(pendingModule.initialSubModule);
                 }
                 setAppMode(pendingModule.mode);
                 setSetupComplete(true);
@@ -5068,7 +5082,7 @@ function App() {
 
                     <div style={{ display: 'flex', alignItems: 'center', gap: '6px', background: 'var(--glass-bg)', padding: '0.35rem 0.65rem', borderRadius: '8px', border: '1px solid var(--glass-border)' }}>
                       <span style={{ fontSize: '0.78rem', color: 'var(--accent-primary)', fontWeight: 600, whiteSpace: 'nowrap' }}>⚡ Speed ({animationSpeed}ms)</span>
-                      <input type="range" min={80} max={2500} step={50} value={animationSpeed} onChange={e => setAnimationSpeed(Number(e.target.value))} style={{ width: '85px', accentColor: 'var(--accent-primary)', cursor: 'pointer' }} title={`Speed: ${animationSpeed}ms delay`} />
+                      <input type="range" min={80} max={1200} step={50} value={animationSpeed} onChange={e => setAnimationSpeed(Number(e.target.value))} style={{ width: '85px', accentColor: 'var(--accent-primary)', cursor: 'pointer' }} title={`Speed: ${animationSpeed}ms delay`} />
                     </div>
 
                     {(treeType === 'B_TREE' || treeType === 'B_PLUS_TREE') && (
@@ -6366,42 +6380,44 @@ function App() {
         </div>
       )}
 
-      {/* Global Footer with Feedback options */}
-      <div style={{ display: 'flex', justifyContent: 'center', width: '100%', padding: '1.5rem 2rem 2.5rem 2rem', borderTop: '1px solid var(--glass-border)', background: 'var(--bg-primary)', marginTop: !appMode ? '3.5rem' : '1.5rem', position: 'relative', zIndex: 10 }}>
-        <div style={{ width: '100%', maxWidth: '1100px', display: 'flex', justifyContent: 'space-between', alignItems: 'center', color: 'var(--text-secondary)', fontSize: '0.88rem', flexWrap: 'wrap', gap: '1rem' }}>
-          <span>© {new Date().getFullYear()} Algorithm Visualizer Studio. All rights reserved.</span>
-          <div style={{ display: 'flex', gap: '0.75rem', alignItems: 'center' }}>
-            <button 
-              className="btn btn-clear" 
-              style={{ padding: '0.55rem 1.3rem', fontSize: '0.85rem', display: 'flex', alignItems: 'center', gap: '8px', background: 'rgba(255,255,255,0.03)', border: '1px solid var(--glass-border)', borderRadius: '30px', cursor: 'pointer', transition: 'all 0.25s' }}
-              onClick={() => { 
-                setIsFeedbackOpen(true); 
-                setIsFeedbackSubmitted(false); 
-                setRating(0); 
-                setFeedbackText(''); 
-                setFeedbackEmail(activeUser?.email || ''); 
-                setFeedbackName(activeUser?.name || ''); 
-              }}
-              onMouseEnter={e => e.currentTarget.style.transform = 'scale(1.03) translateY(-1px)'}
-              onMouseLeave={e => e.currentTarget.style.transform = 'scale(1) translateY(0)'}
-            >
-              💬 Feel any error or problem? Give Feedback
-            </button>
-            {(new URLSearchParams(window.location.search).get('dev') === 'true' || new URLSearchParams(window.location.search).get('admin') === 'true') && (
+      {/* Global Footer with Feedback options - Only on Home Page to prevent 100vh studio scroll pollution */}
+      {!appMode && (
+        <div style={{ display: 'flex', justifyContent: 'center', width: '100%', padding: '1.5rem 2rem 2.5rem 2rem', borderTop: '1px solid var(--glass-border)', background: 'var(--bg-primary)', marginTop: '3.5rem', position: 'relative', zIndex: 10 }}>
+          <div style={{ width: '100%', maxWidth: '1100px', display: 'flex', justifyContent: 'space-between', alignItems: 'center', color: 'var(--text-secondary)', fontSize: '0.88rem', flexWrap: 'wrap', gap: '1rem' }}>
+            <span>© {new Date().getFullYear()} Algorithm Visualizer Studio. All rights reserved.</span>
+            <div style={{ display: 'flex', gap: '0.75rem', alignItems: 'center' }}>
               <button 
                 className="btn btn-clear" 
-                style={{ padding: '0.55rem 1.3rem', fontSize: '0.85rem', display: 'flex', alignItems: 'center', gap: '8px', background: 'rgba(59,130,246,0.08)', border: '1px solid rgba(59,130,246,0.3)', borderRadius: '30px', cursor: 'pointer', color: 'var(--accent-primary)', transition: 'all 0.25s' }}
-                onClick={() => { setIsAdminFeedbackOpen(true); }}
+                style={{ padding: '0.55rem 1.3rem', fontSize: '0.85rem', display: 'flex', alignItems: 'center', gap: '8px', background: 'rgba(255,255,255,0.03)', border: '1px solid var(--glass-border)', borderRadius: '30px', cursor: 'pointer', transition: 'all 0.25s' }}
+                onClick={() => { 
+                  setIsFeedbackOpen(true); 
+                  setIsFeedbackSubmitted(false); 
+                  setRating(0); 
+                  setFeedbackText(''); 
+                  setFeedbackEmail(activeUser?.email || ''); 
+                  setFeedbackName(activeUser?.name || ''); 
+                }}
                 onMouseEnter={e => e.currentTarget.style.transform = 'scale(1.03) translateY(-1px)'}
                 onMouseLeave={e => e.currentTarget.style.transform = 'scale(1) translateY(0)'}
-                title="View submitted feedback entries to inspect and debug code issues"
               >
-                🛠️ Feedback Console
+                💬 Feel any error or problem? Give Feedback
               </button>
-            )}
+              {(new URLSearchParams(window.location.search).get('dev') === 'true' || new URLSearchParams(window.location.search).get('admin') === 'true') && (
+                <button 
+                  className="btn btn-clear" 
+                  style={{ padding: '0.55rem 1.3rem', fontSize: '0.85rem', display: 'flex', alignItems: 'center', gap: '8px', background: 'rgba(59,130,246,0.08)', border: '1px solid rgba(59,130,246,0.3)', borderRadius: '30px', cursor: 'pointer', color: 'var(--accent-primary)', transition: 'all 0.25s' }}
+                  onClick={() => { setIsAdminFeedbackOpen(true); }}
+                  onMouseEnter={e => e.currentTarget.style.transform = 'scale(1.03) translateY(-1px)'}
+                  onMouseLeave={e => e.currentTarget.style.transform = 'scale(1) translateY(0)'}
+                  title="View submitted feedback entries to inspect and debug code issues"
+                >
+                  🛠️ Feedback Console
+                </button>
+              )}
+            </div>
           </div>
         </div>
-      </div>
+      )}
       <CodeRunnerModal
         isOpen={isRunnerOpen}
         onClose={() => setIsRunnerOpen(false)}

@@ -2868,7 +2868,7 @@ const GraphVisualizer = ({ onBack, openSettings, initialAlgo = 'Dijkstra', onCop
 
             <div style={{ display: 'flex', alignItems: 'center', gap: '8px', width: isMobile ? '100%' : 'auto', justifyContent: 'center' }}>
               <span style={{ color: 'var(--text-secondary)', fontSize: '0.8rem', fontWeight: 'bold', whiteSpace: 'nowrap' }}>Speed ({speed}ms)</span>
-              <input type="range" min={50} max={3500} step={50} value={3550 - speed} onChange={e => setSpeed(3550 - Number(e.target.value))} style={{ width: '120px', accentColor: 'var(--accent-primary)', cursor: 'pointer' }} title={`Delay: ${speed}ms`}/>
+              <input type="range" min={50} max={1500} step={50} value={1550 - speed} onChange={e => setSpeed(1550 - Number(e.target.value))} style={{ width: '120px', accentColor: 'var(--accent-primary)', cursor: 'pointer' }} title={`Delay: ${speed}ms`}/>
             </div>
           </div>
 

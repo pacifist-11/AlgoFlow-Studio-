@@ -41,6 +41,165 @@ const toAllman = code => {
   return out.join('\n');
 };
 
+// ─── Multi-Language Syntax Tokenizer ──────────────────────────────────────────
+const highlightTokens = (line) => {
+  if (!line) return [{ type: 'text', val: ' ' }];
+  const trimmed = line.trimStart();
+
+  // 1. Preprocessor Directives (C/C++ #include <stdio.h>, #define, etc.)
+  if (trimmed.startsWith('#include') || trimmed.startsWith('#define') || trimmed.startsWith('#pragma') || trimmed.startsWith('#ifdef') || trimmed.startsWith('#ifndef') || trimmed.startsWith('#endif')) {
+    const hashIdx = line.indexOf('#');
+    const indent = line.slice(0, hashIdx);
+    const directiveMatch = line.slice(hashIdx).match(/^(#[a-zA-Z_]+)\s*(.*)$/);
+    if (directiveMatch) {
+      const directive = directiveMatch[1];
+      const rest = directiveMatch[2];
+      const res = [];
+      if (indent) res.push({ type: 'text', val: indent });
+      res.push({ type: 'preprocessor', val: directive });
+      if (rest) {
+        res.push({ type: 'text', val: ' ' });
+        const trimmedRest = rest.trim();
+        if (/^<[^>]+>/.test(trimmedRest)) {
+          res.push({ type: 'header', val: trimmedRest });
+        } else if (/^"[^"]+"/.test(trimmedRest)) {
+          res.push({ type: 'string', val: trimmedRest });
+        } else {
+          res.push({ type: 'text', val: rest });
+        }
+      }
+      return res;
+    }
+  }
+
+  // 2. Full-line comments
+  if (trimmed.startsWith('//') || trimmed.startsWith('/*') || trimmed.startsWith('*') || trimmed.startsWith('#')) {
+    return [{ type: 'comment', val: line }];
+  }
+
+  // 3. Separate inline comments (e.g. `score = 150; // Updated` or `score = 15 # Updated`)
+  let codePart = line;
+  let commentPart = null;
+
+  let inDouble = false;
+  let inSingle = false;
+  let inBacktick = false;
+  for (let i = 0; i < line.length - 1; i++) {
+    const char = line[i];
+    const next = line[i + 1];
+    if (char === '"' && !inSingle && !inBacktick && (i === 0 || line[i - 1] !== '\\')) inDouble = !inDouble;
+    else if (char === "'" && !inDouble && !inBacktick && (i === 0 || line[i - 1] !== '\\')) inSingle = !inSingle;
+    else if (char === '`' && !inDouble && !inSingle && (i === 0 || line[i - 1] !== '\\')) inBacktick = !inBacktick;
+    else if (!inDouble && !inSingle && !inBacktick) {
+      if (char === '/' && next === '/') {
+        codePart = line.slice(0, i);
+        commentPart = line.slice(i);
+        break;
+      }
+      if (char === '#' && (i === 0 || /\s/.test(line[i - 1]))) {
+        codePart = line.slice(0, i);
+        commentPart = line.slice(i);
+        break;
+      }
+    }
+  }
+
+  const tokenRegex = /("[^"]*"|'[^']*'|`[^`]*`|\b(?:class|public|private|protected|static|final|void|return|int|float|double|char|boolean|bool|long|short|byte|size_t|for|while|do|if|else|continue|break|switch|case|default|new|def|const|let|var|function|using|namespace|include|vector|sizeof|memset|import|package|struct|from|in|is|as|try|catch|throw|finally)\b|\b(?:String|BitmaskTSPEngine|Main|Arrays|System|Math|vector|Dinic|DinicEngine|EditDistanceEngine|KMPMatcher|RabinKarpEngine|ZAlgorithm|VertexCover2Approx|MillerRabinEngine|BlellochParallelEngine|InfixToPostfix|SieveOfEratosthenes|deque|Infinity|Number|Object|Array)\b|\b\d+(\.\d+)?[fFlLuU]?\b|[a-zA-Z_]\w*(?=\s*\()|<<|>>|&&|\|\||==|!=|<=|>=|[&|~^+\-*\/=<>!%])/g;
+
+  const tokens = [];
+  let lastIndex = 0;
+  let match;
+  while ((match = tokenRegex.exec(codePart)) !== null) {
+    if (match.index > lastIndex) {
+      tokens.push({ type: 'text', val: codePart.slice(lastIndex, match.index) });
+    }
+    const token = match[0];
+    if (token.startsWith('"') || token.startsWith("'") || token.startsWith('`')) {
+      tokens.push({ type: 'string', val: token });
+    } else if (/^\d+(\.\d+)?[fFlLuU]?$/.test(token)) {
+      tokens.push({ type: 'number', val: token });
+    } else if (/^(int|float|double|char|boolean|bool|long|short|byte|size_t|const|void|static|final|auto|unsigned|signed)$/.test(token)) {
+      tokens.push({ type: 'type', val: token });
+    } else if (/^(class|public|private|protected|return|for|while|do|if|else|continue|break|switch|case|default|new|def|let|var|function|using|namespace|include|vector|sizeof|memset|import|package|struct|from|in|is|as|try|catch|throw|finally)$/.test(token)) {
+      tokens.push({ type: 'keyword', val: token });
+    } else if (/^(String|BitmaskTSPEngine|Main|Arrays|System|Math|vector|Dinic|DinicEngine|EditDistanceEngine|KMPMatcher|RabinKarpEngine|ZAlgorithm|VertexCover2Approx|MillerRabinEngine|BlellochParallelEngine|InfixToPostfix|SieveOfEratosthenes|deque|Infinity|Number|Object|Array)$/.test(token)) {
+      tokens.push({ type: 'builtin_class', val: token });
+    } else if (/^(<<|>>|&&|\|\||==|!=|<=|>=|[&|~^+\-*\/=<>!%])$/.test(token)) {
+      tokens.push({ type: 'op', val: token });
+    } else {
+      tokens.push({ type: 'fn', val: token });
+    }
+    lastIndex = tokenRegex.lastIndex;
+  }
+  if (lastIndex < codePart.length) {
+    tokens.push({ type: 'text', val: codePart.slice(lastIndex) });
+  }
+
+  // Append inline comment if present
+  if (commentPart) {
+    tokens.push({ type: 'comment', val: commentPart });
+  }
+
+  return tokens;
+};
+
+// ─── Tokenized Syntax Highlight Renderer Component ─────────────────────────────
+const HighlightedCodeLine = ({ lineText, isWordWrap = false }) => {
+  const tokens = highlightTokens(lineText);
+  return (
+    <span style={{ 
+      whiteSpace: isWordWrap ? 'pre-wrap' : 'pre', 
+      wordBreak: isWordWrap ? 'break-word' : 'normal',
+      flex: 1, 
+      minWidth: 0 
+    }}>
+      {tokens.map((tok, tIdx) => {
+        let color = '#f8fafc'; // Crisp clean white default
+        let fontWeight = 450;
+        let fontStyle = 'normal';
+
+        if (tok.type === 'comment') {
+          color = '#94a3b8'; // Clean italic slate gray
+          fontStyle = 'italic';
+          fontWeight = 400;
+        } else if (tok.type === 'preprocessor') {
+          color = '#38bdf8'; // Vibrant cyan for #include, #define
+          fontWeight = 700;
+        } else if (tok.type === 'header') {
+          color = '#4ade80'; // Emerald green for <stdio.h>, <iostream>
+          fontWeight = 600;
+        } else if (tok.type === 'type') {
+          color = '#60a5fa'; // Crisp sky blue for types (int, float, const)
+          fontWeight = 600;
+        } else if (tok.type === 'keyword') {
+          color = '#c084fc'; // Vibrant purple for keywords (return, for, while)
+          fontWeight = 600;
+        } else if (tok.type === 'builtin_class') {
+          color = '#fbbf24'; // Warm amber for classes (Main, String, Arrays)
+          fontWeight = 600;
+        } else if (tok.type === 'fn') {
+          color = '#34d399'; // Emerald green for functions (printf, solveTSP)
+          fontWeight = 600;
+        } else if (tok.type === 'string') {
+          color = '#a3e635'; // Lime green for strings ("Score: %d\n")
+        } else if (tok.type === 'number') {
+          color = '#fb923c'; // Vibrant orange for numbers (100, 150, 3.14159)
+          fontWeight = 600;
+        } else if (tok.type === 'op') {
+          color = '#22d3ee'; // Bright cyan for operators (=, +, *)
+          fontWeight = 600;
+        }
+
+        return (
+          <span key={tIdx} style={{ color, fontWeight, fontStyle }}>
+            {tok.val}
+          </span>
+        );
+      })}
+    </span>
+  );
+};
+
 // ─── Robust Multi-Language Code Extractor (Prevents empty/missing code) ────
 export const getSafeCode = (codeObj, lang) => {
   if (!codeObj || typeof codeObj !== 'object') return '';
@@ -236,6 +395,8 @@ export const toFullExecutableProgram = (rawSnippet, lang, title = 'Algorithm') =
       mainCall += `    char txt[] = "GEEKS FOR GEEKS";\n    char pat[] = "GEEK";\n    int matches[50];\n    int count = rabinKarp(txt, pat, matches);\n    printf("Matches at: ");\n    for (int i = 0; i < count; i++) printf("%d ", matches[i]);\n    printf("\\n");\n`;
     } else if (codeBody.includes('minDistance')) {
       mainCall += `    char s1[] = "intention", s2[] = "execution";\n    printf("Edit Distance: %d\\n", minDistance(s1, s2));\n`;
+    } else if (codeBody.includes('tspBitmask') || codeBody.includes('solveTSP')) {
+      mainCall += `    int dist[16][16] = {{0, 20, 42, 25}, {20, 0, 30, 34}, {42, 30, 0, 10}, {25, 34, 10, 0}};\n    printf("TSP Min Route Cost: %d\\n", tspBitmask(4, dist));\n`;
     } else if (codeBody.includes('dinicMaxFlow')) {
       mainCall += `    int cap[4][4] = { {0, 10, 5, 0}, {0, 0, 15, 10}, {0, 0, 0, 10}, {0, 0, 0, 0} };\n    printf("Dinic Max Flow (0 -> 3): %d\\n", dinicMaxFlow(4, 0, 3, cap));\n`;
     } else if (codeBody.includes('millerRabin')) {
@@ -398,33 +559,52 @@ const LESSONS = {
     desc: "A variable is a named storage location in a computer's memory that holds a value, which can be modified during program execution. A constant is similar, but its value cannot be changed once assigned.",
     analogy: "Think of a variable as a labeled box where you can store anything (e.g., a number or text). You can replace the contents of the box at any time. A constant is a locked box whose contents are permanent.",
     code: {
-      JS: `// Declaring a variable
+      JS: `// Variables (Mutable)
 let score = 10;
-score = 15; // OK, variable can change
+score = 15; // Updated
 
-// Declaring a constant
-const pi = 3.14159;
-// pi = 3.14; // Error! Constant cannot change`,
-      Python: `# Variables in Python (no explicit constants)
+// Constants (Immutable)
+const PI = 3.14159;
+// PI = 3.14; // Error! Constants cannot be reassigned
+
+console.log("Score:", score);
+console.log("PI:", PI);`,
+      Python: `# Variables (Mutable)
 score = 10
-score = 15 # OK
+score = 15 # Updated
 
-PI = 3.14159 # Convention: Uppercase for constants`,
+# Constants (Convention: Uppercase in Python)
+PI = 3.14159
+
+print(f"Score: {score}")
+print(f"PI: {PI}")`,
       "C++": `#include <iostream>
+
 int main() {
-    int score = 10; // Variable
-    score = 15;     // OK
+    // Variables (Mutable)
+    int score = 10;
+    score = 15; // Updated
     
-    const double PI = 3.14159; // Constant
-    // PI = 3.14; // Error!
+    // Constants (Immutable)
+    const double PI = 3.14159;
+    // PI = 3.14; // Error! Constants cannot be reassigned
+    
+    std::cout << "Score: " << score << std::endl;
+    std::cout << "PI: " << PI << std::endl;
+    return 0;
 }`,
       Java: `public class Main {
     public static void main(String[] args) {
-        int score = 10; // Variable
-        score = 15;     // OK
+        // Variables (Mutable)
+        int score = 10;
+        score = 15; // Updated
         
-        final double PI = 3.14159; // Constant
-        // PI = 3.14; // Error!
+        // Constants (Immutable)
+        final double PI = 3.14159;
+        // PI = 3.14; // Error! Constants cannot be reassigned
+        
+        System.out.println("Score: " + score);
+        System.out.println("PI: " + PI);
     }
 }`,
       C: `#include <stdio.h>
@@ -1988,16 +2168,23 @@ int tspBitmask(const vector<vector<int>>& dist) {
     dp[1][0] = 0;
     for (int mask = 1; mask < (1 << n); mask++) {
         for (int u = 0; u < n; u++) {
-            if (!(mask & (1 << u))) continue;
+            if (!(mask & (1 << u)) || dp[mask][u] >= 1e9) continue;
             for (int v = 0; v < n; v++) {
                 if (mask & (1 << v)) continue;
-                dp[mask | (1 << v)][v] = min(dp[mask | (1 << v)][v], dp[mask][u] + dist[u][v]);
+                int nextMask = mask | (1 << v);
+                dp[nextMask][v] = min(dp[nextMask][v], dp[mask][u] + dist[u][v]);
             }
         }
     }
-    return dp[(1 << n) - 1][0];
+    int ans = 1e9;
+    for (int u = 1; u < n; u++) {
+        if (dp[(1 << n) - 1][u] < 1e9) {
+            ans = min(ans, dp[(1 << n) - 1][u] + dist[u][0]);
+        }
+    }
+    return ans;
 }`,
-      Java: `// Bitmask DP Engine (No java.util.*)
+      Java: `// Bitmask DP Travelling Salesperson Problem (TSP) Engine
 public class BitmaskTSPEngine {
     public static int solveTSP(int[][] dist) {
         int n = dist.length;
@@ -2009,7 +2196,7 @@ public class BitmaskTSPEngine {
         dp[1][0] = 0;
         for (int mask = 1; mask < limit; mask++) {
             for (int u = 0; u < n; u++) {
-                if ((mask & (1 << u)) == 0) continue;
+                if ((mask & (1 << u)) == 0 || dp[mask][u] >= 10000000) continue;
                 for (int v = 0; v < n; v++) {
                     if ((mask & (1 << v)) != 0) continue;
                     int nextMask = mask | (1 << v);
@@ -2018,7 +2205,14 @@ public class BitmaskTSPEngine {
                 }
             }
         }
-        return dp[limit - 1][0];
+        int minCost = 10000000;
+        for (int u = 1; u < n; u++) {
+            if (dp[limit - 1][u] < 10000000) {
+                int tourCost = dp[limit - 1][u] + dist[u][0];
+                if (tourCost < minCost) minCost = tourCost;
+            }
+        }
+        return minCost;
     }
 }`,
       C: `// TSP Bitmask DP in O(2^N * N^2) (C)
@@ -4877,9 +5071,13 @@ const DSANotesVisualizer = ({
       ? 'solved' 
       : 'notes'
   );
-  const [localFontSize, setLocalFontSize] = useState(fontSize || 16);
+  const [localFontSize, setLocalFontSize] = useState(16);
   const [isRunnerOpen, setIsRunnerOpen] = useState(false);
   const [copied, setCopied] = useState(false);
+  const [notesViewMode, setNotesViewMode] = useState('code'); // 'code' | 'concept' | 'both'
+  const [codeHeightMode, setCodeHeightMode] = useState('all'); // 'all' (all lines visible) | 'scroll' (bounded 420px with smooth scrollbar)
+  const [isWordWrap, setIsWordWrap] = useState(false);
+  const [isFocusMode, setIsFocusMode] = useState(false);
 
   useEffect(() => {
     if (initialTopicKey) {
@@ -4903,6 +5101,16 @@ const DSANotesVisualizer = ({
       setSelectedProbKey('FIND_MAX');
     }
   }, [activeTab]);
+
+  useEffect(() => {
+    const handleKeyDown = (e) => {
+      if (e.key === 'Escape' && isFocusMode) {
+        setIsFocusMode(false);
+      }
+    };
+    window.addEventListener('keydown', handleKeyDown);
+    return () => window.removeEventListener('keydown', handleKeyDown);
+  }, [isFocusMode]);
 
   // Animation states
   const [timeline, setTimeline] = useState([]);
@@ -6023,14 +6231,7 @@ const DSANotesVisualizer = ({
                   {lineNum}
                 </span>
                 {indicator}
-                <span style={{ 
-                  whiteSpace: 'pre', 
-                  color: 'var(--text-primary)',
-                  fontFamily: "'Fira Code', 'Cascadia Code', monospace",
-                  fontWeight: isJustExecuted || isNextToExecute ? 700 : 500
-                }}>
-                  {lineText || ' '}
-                </span>
+                <HighlightedCodeLine lineText={lineText} />
               </div>
             );
           })}
@@ -6040,7 +6241,7 @@ const DSANotesVisualizer = ({
   };
 
   return (
-    <div style={{ display: 'flex', flexDirection: 'column', height: '100vh', background: 'var(--bg-primary)', position: 'relative', overflow: 'hidden' }}>
+    <div style={{ display: 'flex', flexDirection: 'column', height: '100dvh', minHeight: '100vh', maxHeight: '100dvh', background: 'var(--bg-primary)', position: 'relative', overflow: 'hidden' }}>
       
       {/* HEADER BAR */}
       <header style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', padding: '10px 20px', background: 'var(--bg-secondary)', borderBottom: '1px solid var(--glass-border)', flexShrink: 0, zIndex: 10 }}>
@@ -6153,179 +6354,38 @@ const DSANotesVisualizer = ({
           );
         };
 
-        if (isLesson) {
-          const lesson = LESSONS[selectedProbKey] || LESSONS['LESSON_VARIABLES'];
-          const rawCode = lesson && lesson.code ? getSafeCode(lesson.code, activeLang) : '';
-          const fullCode = toFullExecutableProgram(rawCode, activeLang, lesson.title);
-          const activeCodeToDisplay = codeViewMode === 'full' ? fullCode : rawCode;
+        const renderNotesCodeCard = (activeCodeToDisplay, itemTitle) => {
+          const displayLines = toAllman(activeCodeToDisplay).split('\n');
 
-          return (
-            <div style={{ flex: 1, padding: '2rem', overflowY: 'auto', display: 'flex', flexDirection: 'column', gap: '1.5rem', maxWidth: '960px', margin: '0 auto', width: '100%' }}>
-              <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', flexWrap: 'wrap', gap: '10px' }}>
-                <h1 className="title-gradient" style={{ margin: 0 }}>{lesson.title}</h1>
-                <select className="styled-select" style={{ minWidth: '240px' }} value={selectedProbKey} onChange={e => setSelectedProbKey(e.target.value)}>
-                  {renderSelectOptions()}
-                </select>
-              </div>
-
-              <div style={{ background: 'var(--glass-bg)', padding: '1.5rem', borderRadius: '16px', border: '1px solid var(--glass-border)' }}>
-                <h3 style={{ color: 'var(--accent-primary)', marginTop: 0 }}>📌 Topic Concept Description</h3>
-                <p style={{ lineHeight: '1.6', color: 'var(--text-primary)', fontSize: '0.95rem' }}>{lesson.desc}</p>
-              </div>
-
-              <div style={{ background: 'var(--glass-bg)', padding: '1.5rem', borderRadius: '16px', border: '1px solid var(--glass-border)' }}>
-                <h3 style={{ color: 'var(--accent-secondary)', marginTop: 0 }}>💡 Everyday Analogy</h3>
-                <p style={{ lineHeight: '1.6', color: 'var(--text-secondary)', fontSize: '0.95rem' }}>{lesson.analogy}</p>
-              </div>
-
-              <div style={{ background: 'var(--bg-secondary)', borderRadius: '16px', border: '1px solid var(--glass-border)', overflow: 'hidden' }}>
-                {/* Language selector row */}
-                <div style={{ padding: '10px 16px', display: 'flex', justifyContent: 'space-between', alignItems: 'center', borderBottom: '1px solid var(--glass-border)', flexWrap: 'wrap', gap: '8px', background: 'var(--bg-secondary)' }}>
-                  <div style={{ display: 'flex', alignItems: 'center', gap: '6px', flexWrap: 'wrap' }}>
-                    <span style={{ fontSize: '0.84rem', fontWeight: 700, color: 'var(--text-secondary)', whiteSpace: 'nowrap' }}>💻 Lang:</span>
-                    {['C++', 'Java', 'Python', 'JS', 'C'].map(lang => (
-                      <button key={lang} onClick={() => setActiveLang(lang)}
-                        style={{
-                          padding: '4px 11px',
-                          fontSize: '0.8rem',
-                          borderRadius: '6px',
-                          border: activeLang === lang ? '1.5px solid var(--accent-primary)' : '1px solid var(--glass-border)',
-                          background: activeLang === lang ? 'var(--accent-primary)' : 'transparent',
-                          color: activeLang === lang ? '#fff' : 'var(--text-secondary)',
-                          cursor: 'pointer',
-                          fontWeight: activeLang === lang ? 700 : 400,
-                          transition: 'all 0.15s'
-                        }}
-                      >{lang === 'JS' ? 'JavaScript' : lang}</button>
-                    ))}
-                    
-                    {/* Full Program vs Snippet Toggle */}
-                    <div style={{ display: 'flex', background: 'rgba(0,0,0,0.3)', borderRadius: '6px', padding: '2px', border: '1px solid var(--glass-border)', marginLeft: '6px' }}>
-                      <button 
-                        onClick={() => setCodeViewMode('full')}
-                        style={{
-                          padding: '2px 8px',
-                          fontSize: '0.74rem',
-                          borderRadius: '4px',
-                          border: 'none',
-                          background: codeViewMode === 'full' ? 'var(--accent-primary)' : 'transparent',
-                          color: codeViewMode === 'full' ? '#fff' : 'var(--text-secondary)',
-                          cursor: 'pointer',
-                          fontWeight: codeViewMode === 'full' ? 700 : 500
-                        }}
-                        title="Display full complete runnable program with imports and main()"
-                      >
-                        📑 Complete Code
-                      </button>
-                      <button 
-                        onClick={() => setCodeViewMode('snippet')}
-                        style={{
-                          padding: '2px 8px',
-                          fontSize: '0.74rem',
-                          borderRadius: '4px',
-                          border: 'none',
-                          background: codeViewMode === 'snippet' ? 'var(--accent-primary)' : 'transparent',
-                          color: codeViewMode === 'snippet' ? '#fff' : 'var(--text-secondary)',
-                          cursor: 'pointer',
-                          fontWeight: codeViewMode === 'snippet' ? 700 : 500
-                        }}
-                        title="Display function snippet only"
-                      >
-                        ⚡ Snippet
-                      </button>
-                    </div>
-
-                    <div style={{ display: 'flex', alignItems: 'center', gap: '4px', marginLeft: '6px' }}>
-                      <button onClick={() => setLocalFontSize(prev => Math.max(12, prev - 2))} style={{ background: 'rgba(255,255,255,0.06)', border: '1px solid var(--glass-border)', borderRadius: '4px', color: 'var(--text-primary)', fontSize: '0.78rem', padding: '2px 8px', cursor: 'pointer' }} title="Decrease font size">A−</button>
-                      <span style={{ fontSize: '0.78rem', color: '#38bdf8', minWidth: '32px', textAlign: 'center', fontWeight: 600 }}>{localFontSize}px</span>
-                      <button onClick={() => setLocalFontSize(prev => Math.min(36, prev + 2))} style={{ background: 'rgba(255,255,255,0.06)', border: '1px solid var(--glass-border)', borderRadius: '4px', color: 'var(--text-primary)', fontSize: '0.78rem', padding: '2px 8px', cursor: 'pointer' }} title="Increase font size">A+</button>
-                    </div>
-                  </div>
-                  <div style={{ display: 'flex', gap: '8px' }}>
-                    <button 
-                      className="btn btn-clear"
-                      style={{ padding: '4px 12px', fontSize: '0.8rem', display: 'flex', alignItems: 'center', gap: '4px' }}
-                      onClick={() => handleCopy(activeCodeToDisplay)}
-                    >
-                      {copied ? '✅ Copied!' : '📋 Copy'}
-                    </button>
-                    <button 
-                      className="btn btn-insert"
-                      style={{ padding: '4px 14px', fontSize: '0.8rem' }}
-                      onClick={() => setIsRunnerOpen(true)}
-                    >
-                      ▶ Run Live
-                    </button>
-                  </div>
-                </div>
-                {/* Code block - Allman style, high visibility */}
-                <pre style={{
-                  margin: 0,
-                  padding: '16px 20px',
-                  background: 'var(--bg-primary, rgba(0,0,0,0.3))',
-                  color: '#f8fafc',
-                  fontFamily: "'Fira Code', 'Cascadia Code', monospace",
-                  fontSize: `${localFontSize}px`,
-                  lineHeight: '1.75',
-                  fontWeight: 500,
-                  overflowX: 'auto'
-                }}>
-                  {toAllman(activeCodeToDisplay).split('\n').map((lineText, idx) => (
-                    <div key={idx} style={{ display: 'flex', padding: '1px 0', fontFamily: "'Fira Code', 'Cascadia Code', monospace" }}>
-                      <span style={{ width: '38px', userSelect: 'none', textAlign: 'right', paddingRight: '14px', color: '#475569', fontSize: '0.85em', flexShrink: 0 }}>
-                        {idx + 1}
-                      </span>
-                      <span style={{ whiteSpace: 'pre', color: '#f8fafc' }}>
-                        {lineText || ' '}
-                      </span>
-                    </div>
-                  ))}
-                </pre>
-              </div>
-            </div>
-          );
-        }
-
-        // Else, it's a solved problem
-        const problem = PROBLEMS[selectedProbKey] || PROBLEMS['FIND_MAX'];
-        const rawCode = getSafeCode(problem.code, activeLang);
-        const fullCode = toFullExecutableProgram(rawCode, activeLang, problem.title);
-        const activeCodeToDisplay = codeViewMode === 'full' ? fullCode : rawCode;
-
-        return (
-          <div style={{ flex: 1, padding: '2rem', overflowY: 'auto', display: 'flex', flexDirection: 'column', gap: '1.5rem', maxWidth: '960px', margin: '0 auto', width: '100%' }}>
-            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', flexWrap: 'wrap', gap: '10px' }}>
-              <h1 className="title-gradient" style={{ margin: 0 }}>{problem.title} Notes</h1>
-              <select className="styled-select" style={{ minWidth: '240px' }} value={selectedProbKey} onChange={e => setSelectedProbKey(e.target.value)}>
-                {renderSelectOptions()}
-              </select>
-            </div>
-            
-            <div style={{ background: 'var(--glass-bg)', padding: '1.5rem', borderRadius: '16px', border: '1px solid var(--glass-border)' }}>
-              <h3 style={{ color: 'var(--accent-primary)', marginTop: 0 }}>📌 Problem Description</h3>
-              <p style={{ lineHeight: '1.6', color: 'var(--text-primary)', fontSize: '0.96rem' }}>{problem.notes.desc}</p>
-            </div>
-
-            <div style={{ background: 'var(--glass-bg)', padding: '1.5rem', borderRadius: '16px', border: '1px solid var(--glass-border)' }}>
-              <h3 style={{ color: 'var(--accent-secondary)', marginTop: 0 }}>💡 Algorithmic Intuition</h3>
-              <p style={{ lineHeight: '1.6', color: 'var(--text-secondary)', fontSize: '0.96rem' }}>{problem.notes.intuition}</p>
-            </div>
-
-            <div style={{ background: 'rgba(16,185,129,0.1)', padding: '1rem 1.5rem', borderRadius: '12px', border: '1px solid rgba(16,185,129,0.25)', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-              <span style={{ fontWeight: 'bold', color: '#34d399' }}>Complexity Analysis:</span>
-              <span style={{ fontFamily: 'monospace', color: '#fff', fontSize: '1.1rem' }}>{problem.notes.complexity}</span>
-            </div>
-
-            {/* Complete Solution Code Block with Language Selector */}
-            <div style={{ background: 'var(--bg-secondary)', borderRadius: '16px', border: '1px solid var(--glass-border)', overflow: 'hidden' }}>
-              <div style={{ padding: '10px 16px', display: 'flex', justifyContent: 'space-between', alignItems: 'center', borderBottom: '1px solid var(--glass-border)', flexWrap: 'wrap', gap: '8px', background: 'var(--bg-secondary)' }}>
+          const codeCardContent = (
+            <div style={{ 
+              background: '#040711', 
+              borderRadius: '16px', 
+              border: '1.5px solid rgba(56, 189, 248, 0.25)', 
+              boxShadow: '0 8px 32px rgba(0,0,0,0.5)', 
+              overflow: 'hidden',
+              display: 'flex',
+              flexDirection: 'column',
+              flex: isFocusMode ? 1 : 'none'
+            }}>
+              {/* Language selector & controls row */}
+              <div style={{ 
+                padding: '10px 16px', 
+                display: 'flex', 
+                justifyContent: 'space-between', 
+                alignItems: 'center', 
+                borderBottom: '1px solid rgba(255, 255, 255, 0.08)', 
+                flexWrap: 'wrap', 
+                gap: '8px', 
+                background: 'rgba(11, 17, 32, 0.95)' 
+              }}>
                 <div style={{ display: 'flex', alignItems: 'center', gap: '6px', flexWrap: 'wrap' }}>
-                  <span style={{ fontSize: '0.84rem', fontWeight: 700, color: 'var(--text-secondary)', whiteSpace: 'nowrap' }}>💻 Code:</span>
+                  <span style={{ fontSize: '0.82rem', fontWeight: 700, color: 'var(--text-secondary)', whiteSpace: 'nowrap' }}>💻 Lang:</span>
                   {['C++', 'Java', 'Python', 'JS', 'C'].map(lang => (
                     <button key={lang} onClick={() => setActiveLang(lang)}
                       style={{
-                        padding: '4px 11px',
-                        fontSize: '0.8rem',
+                        padding: '4px 10px',
+                        fontSize: '0.78rem',
                         borderRadius: '6px',
                         border: activeLang === lang ? '1.5px solid var(--accent-primary)' : '1px solid var(--glass-border)',
                         background: activeLang === lang ? 'var(--accent-primary)' : 'transparent',
@@ -6336,9 +6396,9 @@ const DSANotesVisualizer = ({
                       }}
                     >{lang === 'JS' ? 'JavaScript' : lang}</button>
                   ))}
-
+                  
                   {/* Full Program vs Snippet Toggle */}
-                  <div style={{ display: 'flex', background: 'rgba(0,0,0,0.3)', borderRadius: '6px', padding: '2px', border: '1px solid var(--glass-border)', marginLeft: '6px' }}>
+                  <div style={{ display: 'flex', background: 'rgba(0,0,0,0.3)', borderRadius: '6px', padding: '2px', border: '1px solid var(--glass-border)', marginLeft: '4px' }}>
                     <button 
                       onClick={() => setCodeViewMode('full')}
                       style={{
@@ -6351,7 +6411,7 @@ const DSANotesVisualizer = ({
                         cursor: 'pointer',
                         fontWeight: codeViewMode === 'full' ? 700 : 500
                       }}
-                      title="Display full complete runnable program with imports, class, test driver and main()"
+                      title="Display full complete runnable program with imports and main()"
                     >
                       📑 Complete Code
                     </button>
@@ -6367,25 +6427,101 @@ const DSANotesVisualizer = ({
                         cursor: 'pointer',
                         fontWeight: codeViewMode === 'snippet' ? 700 : 500
                       }}
-                      title="Display function snippet only"
+                      title="Display core snippet only"
                     >
                       ⚡ Snippet
                     </button>
                   </div>
 
-                  <div style={{ display: 'flex', alignItems: 'center', gap: '4px', marginLeft: '6px' }}>
-                    <button onClick={() => setLocalFontSize(prev => Math.max(12, prev - 2))} style={{ background: 'rgba(255,255,255,0.06)', border: '1px solid var(--glass-border)', borderRadius: '4px', color: 'var(--text-primary)', fontSize: '0.78rem', padding: '2px 8px', cursor: 'pointer' }} title="Decrease font size">A−</button>
-                    <span style={{ fontSize: '0.78rem', color: '#38bdf8', minWidth: '32px', textAlign: 'center', fontWeight: 600 }}>{localFontSize}px</span>
-                    <button onClick={() => setLocalFontSize(prev => Math.min(36, prev + 2))} style={{ background: 'rgba(255,255,255,0.06)', border: '1px solid var(--glass-border)', borderRadius: '4px', color: 'var(--text-primary)', fontSize: '0.78rem', padding: '2px 8px', cursor: 'pointer' }} title="Increase font size">A+</button>
+                  {/* Line Count Badge */}
+                  <span style={{ 
+                    display: 'inline-flex', 
+                    alignItems: 'center', 
+                    gap: '4px', 
+                    fontSize: '0.75rem', 
+                    color: '#38bdf8', 
+                    background: 'rgba(56, 189, 248, 0.12)', 
+                    border: '1px solid rgba(56, 189, 248, 0.3)', 
+                    padding: '2px 8px', 
+                    borderRadius: '5px',
+                    fontWeight: 600,
+                    marginLeft: '4px'
+                  }}>
+                    📄 {displayLines.length} lines
+                  </span>
+
+                  {/* Font size */}
+                  <div style={{ display: 'flex', alignItems: 'center', gap: '4px', marginLeft: '4px' }}>
+                    <button onClick={() => setLocalFontSize(prev => Math.max(13, prev - 1))} style={{ background: 'rgba(255,255,255,0.06)', border: '1px solid var(--glass-border)', borderRadius: '4px', color: 'var(--text-primary)', fontSize: '0.74rem', padding: '2px 7px', cursor: 'pointer' }} title="Decrease font size">A−</button>
+                    <span style={{ fontSize: '0.74rem', color: '#38bdf8', minWidth: '28px', textAlign: 'center', fontWeight: 600 }}>{localFontSize}px</span>
+                    <button onClick={() => setLocalFontSize(prev => Math.min(28, prev + 1))} style={{ background: 'rgba(255,255,255,0.06)', border: '1px solid var(--glass-border)', borderRadius: '4px', color: 'var(--text-primary)', fontSize: '0.74rem', padding: '2px 7px', cursor: 'pointer' }} title="Increase font size">A+</button>
                   </div>
+
+                  {/* Word Wrap Toggle */}
+                  <button 
+                    onClick={() => setIsWordWrap(prev => !prev)}
+                    style={{
+                      background: isWordWrap ? 'rgba(56, 189, 248, 0.2)' : 'rgba(255,255,255,0.06)',
+                      border: isWordWrap ? '1px solid #38bdf8' : '1px solid var(--glass-border)',
+                      borderRadius: '4px',
+                      color: isWordWrap ? '#38bdf8' : 'var(--text-secondary)',
+                      fontSize: '0.74rem',
+                      padding: '2px 8px',
+                      cursor: 'pointer',
+                      fontWeight: 600,
+                      marginLeft: '4px'
+                    }}
+                    title="Toggle automatic word wrapping for long lines"
+                  >
+                    Wrap: {isWordWrap ? 'ON' : 'OFF'}
+                  </button>
+
+                  {/* View All Lines / Scrollable toggle */}
+                  <button 
+                    onClick={() => setCodeHeightMode(prev => prev === 'all' ? 'scroll' : 'all')}
+                    style={{
+                      background: codeHeightMode === 'all' ? 'rgba(16, 185, 129, 0.18)' : 'rgba(255,255,255,0.06)',
+                      border: codeHeightMode === 'all' ? '1px solid #10b981' : '1px solid var(--glass-border)',
+                      borderRadius: '4px',
+                      color: codeHeightMode === 'all' ? '#34d399' : 'var(--text-secondary)',
+                      fontSize: '0.74rem',
+                      padding: '2px 8px',
+                      cursor: 'pointer',
+                      fontWeight: 600,
+                      marginLeft: '4px'
+                    }}
+                    title={codeHeightMode === 'all' ? "Click to limit height with scrollbar" : "Click to expand all lines"}
+                  >
+                    {codeHeightMode === 'all' ? '⤢ All Lines Visible' : '⤡ Compact (420px)'}
+                  </button>
+
+                  {/* Focus Mode Toggle */}
+                  <button 
+                    onClick={() => setIsFocusMode(prev => !prev)}
+                    style={{
+                      background: isFocusMode ? 'rgba(239, 68, 68, 0.2)' : 'rgba(56, 189, 248, 0.12)',
+                      border: isFocusMode ? '1px solid #ef4444' : '1px solid rgba(56, 189, 248, 0.4)',
+                      borderRadius: '4px',
+                      color: isFocusMode ? '#f87171' : '#38bdf8',
+                      fontSize: '0.74rem',
+                      padding: '2px 8px',
+                      cursor: 'pointer',
+                      fontWeight: 600,
+                      marginLeft: '4px'
+                    }}
+                    title={isFocusMode ? "Exit fullscreen focus" : "Maximize code editor to full screen"}
+                  >
+                    {isFocusMode ? '✕ Exit Focus' : '🖥️ Focus Mode'}
+                  </button>
                 </div>
+
                 <div style={{ display: 'flex', gap: '8px' }}>
                   <button 
                     className="btn btn-clear"
                     style={{ padding: '4px 12px', fontSize: '0.8rem', display: 'flex', alignItems: 'center', gap: '4px' }}
                     onClick={() => handleCopy(activeCodeToDisplay)}
                   >
-                    {copied ? '✅ Copied!' : '📋 Copy'}
+                    {copied ? `✅ Copied (${displayLines.length}L)` : '📋 Copy'}
                   </button>
                   <button 
                     className="btn btn-insert"
@@ -6396,29 +6532,487 @@ const DSANotesVisualizer = ({
                   </button>
                 </div>
               </div>
+
+              {/* Code block - High-contrast syntax highlighted editor */}
               <pre style={{
                 margin: 0,
                 padding: '16px 20px',
-                background: 'var(--bg-primary, rgba(0,0,0,0.3))',
+                background: '#040711',
                 color: '#f8fafc',
-                fontFamily: "'Fira Code', 'Cascadia Code', monospace",
+                fontFamily: "'JetBrains Mono', 'Fira Code', 'Cascadia Code', 'Source Code Pro', Consolas, Menlo, Monaco, monospace",
                 fontSize: `${localFontSize}px`,
-                lineHeight: '1.75',
-                fontWeight: 500,
-                overflowX: 'auto'
+                lineHeight: '1.65',
+                fontWeight: 450,
+                WebkitFontSmoothing: 'antialiased',
+                MozOsxFontSmoothing: 'grayscale',
+                textRendering: 'optimizeLegibility',
+                overflowX: isWordWrap ? 'hidden' : 'auto',
+                overflowY: isFocusMode ? 'auto' : (codeHeightMode === 'all' ? 'visible' : 'auto'),
+                maxHeight: isFocusMode ? 'none' : (codeHeightMode === 'all' ? 'none' : '420px'),
+                flex: isFocusMode ? 1 : 'none',
+                touchAction: 'pan-y pinch-zoom',
+                overscrollBehavior: 'contain',
+                scrollbarWidth: 'thin',
+                scrollbarColor: '#38bdf8 rgba(15, 23, 42, 0.8)',
+                borderTop: '1px solid rgba(255, 255, 255, 0.08)'
               }}>
-                {toAllman(activeCodeToDisplay).split('\n').map((lineText, idx) => (
-                  <div key={idx} style={{ display: 'flex', padding: '1px 0', fontFamily: "'Fira Code', 'Cascadia Code', monospace" }}>
-                    <span style={{ width: '38px', userSelect: 'none', textAlign: 'right', paddingRight: '14px', color: '#475569', fontSize: '0.85em', flexShrink: 0 }}>
+                {displayLines.map((lineText, idx) => (
+                  <div key={idx} style={{
+                    display: 'flex',
+                    alignItems: 'flex-start',
+                    padding: '2px 0',
+                    fontFamily: "'JetBrains Mono', 'Fira Code', 'Cascadia Code', Consolas, monospace",
+                    borderRadius: '4px',
+                    transition: 'background 0.1s ease'
+                  }}
+                  onMouseEnter={e => e.currentTarget.style.background = 'rgba(255, 255, 255, 0.05)'}
+                  onMouseLeave={e => e.currentTarget.style.background = 'transparent'}
+                  >
+                    <span style={{
+                      width: '46px',
+                      userSelect: 'none',
+                      textAlign: 'right',
+                      paddingRight: '14px',
+                      color: '#94a3b8',
+                      fontSize: '0.88em',
+                      flexShrink: 0,
+                      borderRight: '1.5px solid rgba(56, 189, 248, 0.25)',
+                      marginRight: '14px',
+                      fontWeight: 600,
+                      background: 'rgba(3, 7, 18, 0.6)'
+                    }}>
                       {idx + 1}
                     </span>
-                    <span style={{ whiteSpace: 'pre', color: '#f8fafc' }}>
-                      {lineText || ' '}
-                    </span>
+                    <HighlightedCodeLine lineText={lineText} isWordWrap={isWordWrap} />
                   </div>
                 ))}
               </pre>
+
+              {/* Status Footer */}
+              <div style={{
+                padding: '8px 18px',
+                background: '#080d1a',
+                borderTop: '1px solid rgba(255, 255, 255, 0.08)',
+                display: 'flex',
+                justifyContent: 'space-between',
+                alignItems: 'center',
+                flexWrap: 'wrap',
+                gap: '8px',
+                fontSize: '0.76rem',
+                color: '#94a3b8'
+              }}>
+                <div style={{ display: 'flex', alignItems: 'center', gap: '8px', flexWrap: 'wrap' }}>
+                  <span style={{ color: '#38bdf8', fontWeight: 600 }}>● {displayLines.length} lines total</span>
+                  <span style={{ color: 'rgba(255, 255, 255, 0.2)' }}>|</span>
+                  <span>Language: <strong style={{ color: '#f1f5f9' }}>{activeLang === 'JS' ? 'JavaScript' : activeLang}</strong></span>
+                  <span style={{ color: 'rgba(255, 255, 255, 0.2)' }}>|</span>
+                  <span>Mode: <strong style={{ color: '#f1f5f9' }}>{codeViewMode === 'full' ? 'Complete Runnable Program' : 'Core Snippet'}</strong></span>
+                </div>
+                <div style={{ display: 'flex', alignItems: 'center', gap: '6px', color: '#10b981', fontWeight: 600 }}>
+                  <span>✓</span>
+                  <span>End of Code (Line {displayLines.length})</span>
+                </div>
+              </div>
             </div>
+          );
+
+          if (isFocusMode) {
+            return (
+              <div style={{
+                position: 'fixed',
+                top: 0,
+                left: 0,
+                right: 0,
+                bottom: 0,
+                zIndex: 9999,
+                background: 'rgba(2, 6, 23, 0.98)',
+                backdropFilter: 'blur(16px)',
+                display: 'flex',
+                flexDirection: 'column',
+                padding: '16px',
+                boxSizing: 'border-box'
+              }}>
+                <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '10px' }}>
+                  <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
+                    <span style={{ fontSize: '1.2rem' }}>🖥️</span>
+                    <h3 style={{ margin: 0, color: '#38bdf8', fontSize: '1.1rem' }}>
+                      Focus Mode: {itemTitle} ({activeLang === 'JS' ? 'JavaScript' : activeLang})
+                    </h3>
+                  </div>
+                  <button 
+                    onClick={() => setIsFocusMode(false)}
+                    style={{
+                      background: 'rgba(239, 68, 68, 0.2)',
+                      border: '1px solid #ef4444',
+                      color: '#f87171',
+                      borderRadius: '8px',
+                      padding: '6px 16px',
+                      cursor: 'pointer',
+                      fontWeight: 700,
+                      fontSize: '0.85rem'
+                    }}
+                  >
+                    ✕ Exit Focus Mode (Esc)
+                  </button>
+                </div>
+                {codeCardContent}
+              </div>
+            );
+          }
+
+          return codeCardContent;
+        };
+
+        if (isLesson) {
+          const lesson = LESSONS[selectedProbKey] || LESSONS['LESSON_VARIABLES'];
+          const rawCode = lesson && lesson.code ? getSafeCode(lesson.code, activeLang) : '';
+          const fullCode = toFullExecutableProgram(rawCode, activeLang, lesson.title);
+          const activeCodeToDisplay = codeViewMode === 'full' ? fullCode : rawCode;
+
+          return (
+            <div style={{ flex: 1, minHeight: 0, padding: 'clamp(0.75rem, 1.5vw, 1.5rem)', overflowY: 'auto', WebkitOverflowScrolling: 'touch', display: 'flex', flexDirection: 'column', gap: '0.85rem', maxWidth: '1100px', margin: '0 auto', width: '100%' }}>
+              
+              {/* Sleek Top Navigation Bar: Title/Topic Select & View Switcher */}
+              <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', flexWrap: 'wrap', gap: '10px' }}>
+                <div style={{ display: 'flex', alignItems: 'center', gap: '12px', flexWrap: 'wrap' }}>
+                  <h1 className="title-gradient" style={{ margin: 0, fontSize: 'clamp(1.15rem, 2.5vw, 1.5rem)', fontWeight: 800 }}>{lesson.title}</h1>
+                  <select className="styled-select" style={{ minWidth: '200px', padding: '5px 12px', fontSize: '0.82rem' }} value={selectedProbKey} onChange={e => setSelectedProbKey(e.target.value)}>
+                    {renderSelectOptions()}
+                  </select>
+                </div>
+
+                {/* View Switcher Tabs: Code First (Default) | Concept & Analogy | Combined */}
+                <div style={{ display: 'flex', gap: '4px', background: 'rgba(15, 23, 42, 0.7)', padding: '3px', borderRadius: '10px', border: '1px solid var(--glass-border)' }}>
+                  <button 
+                    onClick={() => setNotesViewMode('code')}
+                    style={{
+                      padding: '5px 12px',
+                      fontSize: '0.8rem',
+                      borderRadius: '7px',
+                      border: 'none',
+                      background: notesViewMode === 'code' ? 'var(--accent-primary)' : 'transparent',
+                      color: notesViewMode === 'code' ? '#fff' : 'var(--text-secondary)',
+                      cursor: 'pointer',
+                      fontWeight: notesViewMode === 'code' ? 700 : 500,
+                      display: 'flex',
+                      alignItems: 'center',
+                      gap: '5px'
+                    }}
+                  >
+                    <span>💻</span>
+                    <span>Code & Implementation</span>
+                  </button>
+                  <button 
+                    onClick={() => setNotesViewMode('concept')}
+                    style={{
+                      padding: '5px 12px',
+                      fontSize: '0.8rem',
+                      borderRadius: '7px',
+                      border: 'none',
+                      background: notesViewMode === 'concept' ? 'var(--accent-primary)' : 'transparent',
+                      color: notesViewMode === 'concept' ? '#fff' : 'var(--text-secondary)',
+                      cursor: 'pointer',
+                      fontWeight: notesViewMode === 'concept' ? 700 : 500,
+                      display: 'flex',
+                      alignItems: 'center',
+                      gap: '5px'
+                    }}
+                  >
+                    <span>📖</span>
+                    <span>Concept & Analogy</span>
+                  </button>
+                  <button 
+                    onClick={() => setNotesViewMode('both')}
+                    style={{
+                      padding: '5px 12px',
+                      fontSize: '0.8rem',
+                      borderRadius: '7px',
+                      border: 'none',
+                      background: notesViewMode === 'both' ? 'var(--accent-primary)' : 'transparent',
+                      color: notesViewMode === 'both' ? '#fff' : 'var(--text-secondary)',
+                      cursor: 'pointer',
+                      fontWeight: notesViewMode === 'both' ? 700 : 500,
+                      display: 'flex',
+                      alignItems: 'center',
+                      gap: '5px'
+                    }}
+                  >
+                    <span>📑</span>
+                    <span>Combined View</span>
+                  </button>
+                </div>
+              </div>
+
+              {/* View Mode: CODE ONLY (Default) */}
+              {notesViewMode === 'code' && (
+                <>
+                  <div style={{
+                    background: 'rgba(56, 189, 248, 0.05)',
+                    border: '1px solid rgba(56, 189, 248, 0.2)',
+                    borderRadius: '10px',
+                    padding: '6px 14px',
+                    display: 'flex',
+                    justifyContent: 'space-between',
+                    alignItems: 'center',
+                    flexWrap: 'wrap',
+                    gap: '8px',
+                    fontSize: '0.82rem'
+                  }}>
+                    <span style={{ color: '#cbd5e1' }}>
+                      <strong style={{ color: '#38bdf8' }}>💡 Quick Intuition: </strong>
+                      {lesson.desc.length > 110 ? lesson.desc.slice(0, 110) + '...' : lesson.desc}
+                    </span>
+                    <button 
+                      onClick={() => setNotesViewMode('concept')}
+                      style={{
+                        background: 'transparent',
+                        border: 'none',
+                        color: '#38bdf8',
+                        cursor: 'pointer',
+                        fontSize: '0.78rem',
+                        fontWeight: 600,
+                        padding: 0
+                      }}
+                    >
+                      Read Full Theory & Analogy →
+                    </button>
+                  </div>
+
+                  {renderNotesCodeCard(activeCodeToDisplay, lesson.title)}
+                </>
+              )}
+
+              {/* View Mode: CONCEPT ONLY */}
+              {notesViewMode === 'concept' && (
+                <>
+                  <div style={{ background: 'var(--glass-bg)', padding: '1.25rem 1.5rem', borderRadius: '16px', border: '1px solid var(--glass-border)' }}>
+                    <h3 style={{ color: 'var(--accent-primary)', marginTop: 0, marginBottom: '8px', fontSize: '1rem' }}>
+                      📌 Topic Concept Description
+                    </h3>
+                    <p style={{ lineHeight: '1.6', color: 'var(--text-primary)', fontSize: '0.94rem', margin: 0 }}>{lesson.desc}</p>
+                  </div>
+
+                  <div style={{ background: 'var(--glass-bg)', padding: '1.25rem 1.5rem', borderRadius: '16px', border: '1px solid var(--glass-border)' }}>
+                    <h3 style={{ color: 'var(--accent-secondary)', marginTop: 0, marginBottom: '8px', fontSize: '1rem' }}>
+                      💡 Everyday Analogy
+                    </h3>
+                    <p style={{ lineHeight: '1.6', color: 'var(--text-secondary)', fontSize: '0.94rem', margin: 0 }}>{lesson.analogy}</p>
+                  </div>
+
+                  <div style={{ display: 'flex', justifyContent: 'center', marginTop: '8px' }}>
+                    <button 
+                      className="btn btn-insert"
+                      onClick={() => setNotesViewMode('code')}
+                      style={{ padding: '8px 20px', fontSize: '0.9rem', display: 'flex', alignItems: 'center', gap: '8px' }}
+                    >
+                      <span>💻</span> View Multi-Language Code Implementation →
+                    </button>
+                  </div>
+                </>
+              )}
+
+              {/* View Mode: COMBINED */}
+              {notesViewMode === 'both' && (
+                <>
+                  <div style={{ background: 'var(--glass-bg)', padding: '1.25rem 1.5rem', borderRadius: '16px', border: '1px solid var(--glass-border)' }}>
+                    <h3 style={{ color: 'var(--accent-primary)', marginTop: 0, marginBottom: '8px', fontSize: '1rem' }}>
+                      📌 Topic Concept Description
+                    </h3>
+                    <p style={{ lineHeight: '1.6', color: 'var(--text-primary)', fontSize: '0.94rem', margin: 0 }}>{lesson.desc}</p>
+                  </div>
+
+                  <div style={{ background: 'var(--glass-bg)', padding: '1.25rem 1.5rem', borderRadius: '16px', border: '1px solid var(--glass-border)' }}>
+                    <h3 style={{ color: 'var(--accent-secondary)', marginTop: 0, marginBottom: '8px', fontSize: '1rem' }}>
+                      💡 Everyday Analogy
+                    </h3>
+                    <p style={{ lineHeight: '1.6', color: 'var(--text-secondary)', fontSize: '0.94rem', margin: 0 }}>{lesson.analogy}</p>
+                  </div>
+
+                  {renderNotesCodeCard(activeCodeToDisplay, lesson.title)}
+                </>
+              )}
+            </div>
+          );
+        }
+
+        // Else, it's a solved problem
+        const problem = PROBLEMS[selectedProbKey] || PROBLEMS['FIND_MAX'];
+        const rawCode = getSafeCode(problem.code, activeLang);
+        const fullCode = toFullExecutableProgram(rawCode, activeLang, problem.title);
+        const activeCodeToDisplay = codeViewMode === 'full' ? fullCode : rawCode;
+
+        return (
+          <div style={{ flex: 1, minHeight: 0, padding: 'clamp(0.75rem, 1.5vw, 1.5rem)', overflowY: 'auto', WebkitOverflowScrolling: 'touch', display: 'flex', flexDirection: 'column', gap: '0.85rem', maxWidth: '1100px', margin: '0 auto', width: '100%' }}>
+            
+            {/* Sleek Top Navigation Bar: Title/Problem Select & View Switcher */}
+            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', flexWrap: 'wrap', gap: '10px' }}>
+              <div style={{ display: 'flex', alignItems: 'center', gap: '12px', flexWrap: 'wrap' }}>
+                <h1 className="title-gradient" style={{ margin: 0, fontSize: 'clamp(1.15rem, 2.5vw, 1.5rem)', fontWeight: 800 }}>{problem.title}</h1>
+                <select className="styled-select" style={{ minWidth: '200px', padding: '5px 12px', fontSize: '0.82rem' }} value={selectedProbKey} onChange={e => setSelectedProbKey(e.target.value)}>
+                  {renderSelectOptions()}
+                </select>
+              </div>
+
+              {/* View Switcher Tabs: Code First (Default) | Concept & Analogy | Combined */}
+              <div style={{ display: 'flex', gap: '4px', background: 'rgba(15, 23, 42, 0.7)', padding: '3px', borderRadius: '10px', border: '1px solid var(--glass-border)' }}>
+                <button 
+                  onClick={() => setNotesViewMode('code')}
+                  style={{
+                    padding: '5px 12px',
+                    fontSize: '0.8rem',
+                    borderRadius: '7px',
+                    border: 'none',
+                    background: notesViewMode === 'code' ? 'var(--accent-primary)' : 'transparent',
+                    color: notesViewMode === 'code' ? '#fff' : 'var(--text-secondary)',
+                    cursor: 'pointer',
+                    fontWeight: notesViewMode === 'code' ? 700 : 500,
+                    display: 'flex',
+                    alignItems: 'center',
+                    gap: '5px'
+                  }}
+                >
+                  <span>💻</span>
+                  <span>Code & Implementation</span>
+                </button>
+                <button 
+                  onClick={() => setNotesViewMode('concept')}
+                  style={{
+                    padding: '5px 12px',
+                    fontSize: '0.8rem',
+                    borderRadius: '7px',
+                    border: 'none',
+                    background: notesViewMode === 'concept' ? 'var(--accent-primary)' : 'transparent',
+                    color: notesViewMode === 'concept' ? '#fff' : 'var(--text-secondary)',
+                    cursor: 'pointer',
+                    fontWeight: notesViewMode === 'concept' ? 700 : 500,
+                    display: 'flex',
+                    alignItems: 'center',
+                    gap: '5px'
+                  }}
+                >
+                  <span>📖</span>
+                  <span>Description & Intuition</span>
+                </button>
+                <button 
+                  onClick={() => setNotesViewMode('both')}
+                  style={{
+                    padding: '5px 12px',
+                    fontSize: '0.8rem',
+                    borderRadius: '7px',
+                    border: 'none',
+                    background: notesViewMode === 'both' ? 'var(--accent-primary)' : 'transparent',
+                    color: notesViewMode === 'both' ? '#fff' : 'var(--text-secondary)',
+                    cursor: 'pointer',
+                    fontWeight: notesViewMode === 'both' ? 700 : 500,
+                    display: 'flex',
+                    alignItems: 'center',
+                    gap: '5px'
+                  }}
+                >
+                  <span>📑</span>
+                  <span>Combined View</span>
+                </button>
+              </div>
+            </div>
+            
+            {/* View Mode: CODE ONLY (Default) */}
+            {notesViewMode === 'code' && (
+              <>
+                <div style={{
+                  background: 'rgba(56, 189, 248, 0.05)',
+                  border: '1px solid rgba(56, 189, 248, 0.2)',
+                  borderRadius: '10px',
+                  padding: '6px 14px',
+                  display: 'flex',
+                  justifyContent: 'space-between',
+                  alignItems: 'center',
+                  flexWrap: 'wrap',
+                  gap: '8px',
+                  fontSize: '0.82rem'
+                }}>
+                  <span style={{ color: '#cbd5e1' }}>
+                    <strong style={{ color: '#38bdf8' }}>💡 Problem Summary: </strong>
+                    {problem.notes.desc.length > 110 ? problem.notes.desc.slice(0, 110) + '...' : problem.notes.desc}
+                  </span>
+                  <button 
+                    onClick={() => setNotesViewMode('concept')}
+                    style={{
+                      background: 'transparent',
+                      border: 'none',
+                      color: '#38bdf8',
+                      cursor: 'pointer',
+                      fontSize: '0.78rem',
+                      fontWeight: 600,
+                      padding: 0
+                    }}
+                  >
+                    Read Analysis & Complexity →
+                  </button>
+                </div>
+
+                {renderNotesCodeCard(activeCodeToDisplay, problem.title)}
+              </>
+            )}
+
+            {/* View Mode: CONCEPT ONLY */}
+            {notesViewMode === 'concept' && (
+              <>
+                <div style={{ background: 'var(--glass-bg)', padding: '1.25rem 1.5rem', borderRadius: '16px', border: '1px solid var(--glass-border)' }}>
+                  <h3 style={{ color: 'var(--accent-primary)', marginTop: 0, marginBottom: '8px', fontSize: '1rem' }}>
+                    📌 Problem Description
+                  </h3>
+                  <p style={{ lineHeight: '1.6', color: 'var(--text-primary)', fontSize: '0.94rem', margin: 0 }}>{problem.notes.desc}</p>
+                </div>
+
+                <div style={{ background: 'var(--glass-bg)', padding: '1.25rem 1.5rem', borderRadius: '16px', border: '1px solid var(--glass-border)' }}>
+                  <h3 style={{ color: 'var(--accent-secondary)', marginTop: 0, marginBottom: '8px', fontSize: '1rem' }}>
+                    💡 Algorithmic Intuition
+                  </h3>
+                  <p style={{ lineHeight: '1.6', color: 'var(--text-secondary)', fontSize: '0.94rem', margin: 0 }}>{problem.notes.intuition}</p>
+                </div>
+
+                <div style={{ background: 'rgba(16,185,129,0.1)', padding: '0.85rem 1.25rem', borderRadius: '12px', border: '1px solid rgba(16,185,129,0.25)', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                  <span style={{ fontWeight: 'bold', color: '#34d399', fontSize: '0.9rem' }}>Complexity Analysis:</span>
+                  <span style={{ fontFamily: 'monospace', color: '#fff', fontSize: '1rem' }}>{problem.notes.complexity}</span>
+                </div>
+
+                <div style={{ display: 'flex', justifyContent: 'center', marginTop: '8px' }}>
+                  <button 
+                    className="btn btn-insert"
+                    onClick={() => setNotesViewMode('code')}
+                    style={{ padding: '8px 20px', fontSize: '0.9rem', display: 'flex', alignItems: 'center', gap: '8px' }}
+                  >
+                    <span>💻</span> View Complete Solution Code →
+                  </button>
+                </div>
+              </>
+            )}
+
+            {/* View Mode: COMBINED */}
+            {notesViewMode === 'both' && (
+              <>
+                <div style={{ background: 'var(--glass-bg)', padding: '1.25rem 1.5rem', borderRadius: '16px', border: '1px solid var(--glass-border)' }}>
+                  <h3 style={{ color: 'var(--accent-primary)', marginTop: 0, marginBottom: '8px', fontSize: '1rem' }}>
+                    📌 Problem Description
+                  </h3>
+                  <p style={{ lineHeight: '1.6', color: 'var(--text-primary)', fontSize: '0.94rem', margin: 0 }}>{problem.notes.desc}</p>
+                </div>
+
+                <div style={{ background: 'var(--glass-bg)', padding: '1.25rem 1.5rem', borderRadius: '16px', border: '1px solid var(--glass-border)' }}>
+                  <h3 style={{ color: 'var(--accent-secondary)', marginTop: 0, marginBottom: '8px', fontSize: '1rem' }}>
+                    💡 Algorithmic Intuition
+                  </h3>
+                  <p style={{ lineHeight: '1.6', color: 'var(--text-secondary)', fontSize: '0.94rem', margin: 0 }}>{problem.notes.intuition}</p>
+                </div>
+
+                <div style={{ background: 'rgba(16,185,129,0.1)', padding: '0.85rem 1.25rem', borderRadius: '12px', border: '1px solid rgba(16,185,129,0.25)', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                  <span style={{ fontWeight: 'bold', color: '#34d399', fontSize: '0.9rem' }}>Complexity Analysis:</span>
+                  <span style={{ fontFamily: 'monospace', color: '#fff', fontSize: '1rem' }}>{problem.notes.complexity}</span>
+                </div>
+
+                {renderNotesCodeCard(activeCodeToDisplay, problem.title)}
+              </>
+            )}
           </div>
         );
       })()}
@@ -6467,7 +7061,7 @@ const DSANotesVisualizer = ({
               {/* Speed Slider */}
               <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
                 <span style={{ color: 'var(--text-secondary)', fontSize: '0.8rem', fontWeight: 'bold', whiteSpace: 'nowrap' }}>Speed ({speed}ms)</span>
-                <input type="range" min={200} max={2500} step={100} value={2700 - speed} onChange={e => setSpeed(2700 - Number(e.target.value))} style={{ width: '100px', accentColor: 'var(--accent-primary)', cursor: 'pointer' }} />
+                <input type="range" min={100} max={1500} step={50} value={1600 - speed} onChange={e => setSpeed(1600 - Number(e.target.value))} style={{ width: '100px', accentColor: 'var(--accent-primary)', cursor: 'pointer' }} />
               </div>
             </div>
 
@@ -6565,9 +7159,9 @@ const DSANotesVisualizer = ({
                 </div>
 
                 <div style={{ display: 'flex', alignItems: 'center', gap: '4px', marginLeft: 'auto' }}>
-                  <button onClick={() => setLocalFontSize(prev => Math.max(12, prev - 2))} style={{ background: 'rgba(255,255,255,0.06)', border: '1px solid var(--glass-border)', borderRadius: '4px', color: 'var(--text-primary)', fontSize: '0.75rem', padding: '2px 7px', cursor: 'pointer' }}>A−</button>
+                  <button onClick={() => setLocalFontSize(prev => Math.max(13, prev - 1))} style={{ background: 'rgba(255,255,255,0.06)', border: '1px solid var(--glass-border)', borderRadius: '4px', color: 'var(--text-primary)', fontSize: '0.75rem', padding: '2px 7px', cursor: 'pointer' }}>A−</button>
                   <span style={{ fontSize: '0.75rem', color: '#38bdf8', minWidth: '32px', textAlign: 'center', fontWeight: 600 }}>{localFontSize}px</span>
-                  <button onClick={() => setLocalFontSize(prev => Math.min(36, prev + 2))} style={{ background: 'rgba(255,255,255,0.06)', border: '1px solid var(--glass-border)', borderRadius: '4px', color: 'var(--text-primary)', fontSize: '0.75rem', padding: '2px 7px', cursor: 'pointer' }}>A+</button>
+                  <button onClick={() => setLocalFontSize(prev => Math.min(32, prev + 1))} style={{ background: 'rgba(255,255,255,0.06)', border: '1px solid var(--glass-border)', borderRadius: '4px', color: 'var(--text-primary)', fontSize: '0.75rem', padding: '2px 7px', cursor: 'pointer' }}>A+</button>
                 </div>
               </div>
             </div>

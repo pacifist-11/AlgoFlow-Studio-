@@ -905,9 +905,9 @@ const DSASumsVisualizer = ({ onBack, onOpenDebugger }) => {
                   <span style={{ fontSize: '0.75rem', color: '#60a5fa', fontWeight: 600 }}>⚡ {(speed / 1000).toFixed(1)}s</span>
                   <input 
                     type="range" 
-                    min={200} 
-                    max={2500} 
-                    step={100} 
+                    min={100} 
+                    max={1200} 
+                    step={50} 
                     value={speed} 
                     onChange={e => setSpeed(Number(e.target.value))} 
                     style={{ width: '70px', accentColor: '#3b82f6', cursor: 'pointer' }}

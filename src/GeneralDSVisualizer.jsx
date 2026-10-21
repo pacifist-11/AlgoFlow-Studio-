@@ -2465,7 +2465,7 @@ const GeneralDSVisualizer = ({ onBack, openSettings, initialType = 'HASH_TABLE',
 
             <div style={{ display: 'flex', alignItems: 'center', gap: '8px', width: isMobile ? '100%' : 'auto', justifyContent: 'center' }}>
               <span style={{ color: 'var(--text-secondary)', fontWeight: 600, fontSize: '0.85rem', whiteSpace: 'nowrap' }}>Speed ({speed}ms)</span>
-              <input type="range" min={50} max={3500} step={50} value={3550 - speed} onChange={e => setSpeed(3550 - Number(e.target.value))} style={{ width: isMobile ? '100%' : '160px', accentColor: 'var(--accent-primary)', cursor: 'pointer' }} title={`Delay: ${speed}ms`}/>
+              <input type="range" min={50} max={1500} step={50} value={1550 - speed} onChange={e => setSpeed(1550 - Number(e.target.value))} style={{ width: isMobile ? '100%' : '160px', accentColor: 'var(--accent-primary)', cursor: 'pointer' }} title={`Delay: ${speed}ms`}/>
             </div>
           </div>
         </div>

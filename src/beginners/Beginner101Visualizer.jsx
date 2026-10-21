@@ -7,11 +7,15 @@ import LanguageQuirksExceptions from './LanguageQuirksExceptions.jsx';
 import HandsOnSyntaxPractice from './HandsOnSyntaxPractice.jsx';
 import LanguageCareerGuide from './LanguageCareerGuide.jsx';
 import BTechBranchLanguageGuide from './BTechBranchLanguageGuide.jsx';
+import VehicleComplexitySpeedway from './VehicleComplexitySpeedway.jsx';
+import CollegeVsIndustryGuide from './CollegeVsIndustryGuide.jsx';
 import AiRagMentorStudio from '../airag/AiRagMentorStudio.jsx';
-import { isLineDebuggerSupported } from '../languageUtils.js';
 
-export default function Beginner101Visualizer({ codeLang = 'C', setCodeLang, fontSize = 14, onOpenDebugger }) {
-  const [activeModule, setActiveModule] = useState('btech_branches'); // btech_branches, career, ai_mentor, variables, arrays, quirks, syntax, why_sort, why_dsa
+export default function Beginner101Visualizer({ codeLang = 'C', setCodeLang, fontSize = 14, onOpenDebugger, initialModule = 'btech_branches' }) {
+  const [activeModule, setActiveModule] = useState(initialModule || 'btech_branches');
+  React.useEffect(() => {
+    if (initialModule) setActiveModule(initialModule);
+  }, [initialModule]);
   const [localLang, setLocalLang] = useState(codeLang || 'C');
 
   const currentLang = setCodeLang ? codeLang : localLang;
@@ -32,17 +36,18 @@ export default function Beginner101Visualizer({ codeLang = 'C', setCodeLang, fon
     { id: 'quirks', icon: '⚠️', title: '6. Quirks & Exceptions', desc: 'Java pointers, Python syntax, etc.' },
     { id: 'syntax', icon: '✍️', title: '7. Syntax & Practice', desc: 'Fix syntax errors & sandbox' },
     { id: 'why_sort', icon: '⚡', title: '8. Why Sorting Matters', desc: 'Interactive search game' },
-    { id: 'why_dsa', icon: '🧠', title: '9. Why DSA Matters', desc: 'Scalability, Big-O & quiz' }
+    { id: 'why_dsa', icon: '🏎️', title: '9. Why DSA Matters & Speedway', desc: '🏎️ Vehicle Grand Prix, N & log N, Big-O, Scalability & quiz' },
+    { id: 'college_vs_industry', icon: '🏢', title: '10. College vs Company Projects', desc: 'Real software engineering vs college coding' }
   ];
 
   return (
-    <div style={{ padding: '20px', maxWidth: '1200px', margin: '0 auto' }}>
+    <div style={{ padding: 'clamp(10px, 2.5vw, 20px)', maxWidth: '1200px', margin: '0 auto' }}>
       
       {/* Main Banner / Title */}
       <div style={{
         background: 'var(--glass-bg)',
         borderRadius: '16px',
-        padding: '24px',
+        padding: 'clamp(14px, 3vw, 24px)',
         marginBottom: '24px',
         border: '1.5px solid var(--glass-border)',
         boxShadow: '0 10px 30px rgba(0,0,0,0.1)',
@@ -164,32 +169,6 @@ export default function Beginner101Visualizer({ codeLang = 'C', setCodeLang, fon
                   );
                 })}
               </div>
-
-              {/* Only show Line Debugger button if the active language is supported; for Frontend/HTML/CSS or unsupported languages, do not show */}
-              {onOpenDebugger && isLineDebuggerSupported(currentLang) && (
-                <button
-                  onClick={() => onOpenDebugger('', currentLang)}
-                  style={{
-                    display: 'flex',
-                    alignItems: 'center',
-                    gap: '6px',
-                    padding: '6px 14px',
-                    borderRadius: '8px',
-                    border: '1.5px solid var(--accent-primary)',
-                    background: 'rgba(56, 189, 248, 0.15)',
-                    color: 'var(--accent-primary)',
-                    fontWeight: 'bold',
-                    fontSize: '12px',
-                    cursor: 'pointer',
-                    transition: 'all 0.2s',
-                    boxShadow: '0 0 10px rgba(56, 189, 248, 0.2)'
-                  }}
-                  title={`Open Line-by-Line Debugger for ${currentLang}`}
-                >
-                  <span>🐞</span>
-                  <span>Line Debugger ({currentLang})</span>
-                </button>
-              )}
             </div>
           </div>
         )}
@@ -202,9 +181,11 @@ export default function Beginner101Visualizer({ codeLang = 'C', setCodeLang, fon
       {activeModule === 'variables' && <HandsOnVariables selectedLang={currentLang} />}
       {activeModule === 'arrays' && <HandsOnArrays selectedLang={currentLang} />}
       {activeModule === 'why_sort' && <WhySortingMattersChallenge selectedLang={currentLang} />}
-      {activeModule === 'why_dsa' && <WhyDSAMattersGuide />}
+      {activeModule === 'why_dsa' && <WhyDSAMattersGuide initialTab="speedway" />}
       {activeModule === 'quirks' && <LanguageQuirksExceptions selectedLang={currentLang} />}
       {activeModule === 'syntax' && <HandsOnSyntaxPractice selectedLang={currentLang} />}
+      {activeModule === 'vehicle_complexity' && <WhyDSAMattersGuide initialTab="speedway" />}
+      {activeModule === 'college_vs_industry' && <CollegeVsIndustryGuide />}
     </div>
   );
 }

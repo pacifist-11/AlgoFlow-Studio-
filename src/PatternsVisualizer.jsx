@@ -1325,8 +1325,8 @@ const PatternsVisualizer = ({ onBack, openSettings, onCopyCode, onCodeChange, fo
               <div style={{ display: 'flex', alignItems: 'center', gap: '8px', marginLeft: '10px' }}>
                 <span style={{ fontSize: '0.82rem', color: 'var(--text-secondary)', whiteSpace: 'nowrap' }}>Speed ({speed}ms)</span>
                 <input 
-                  type="range" min={50} max={3500} step={50} 
-                  value={3550 - speed} onChange={e => setSpeed(3550 - Number(e.target.value))} 
+                  type="range" min={50} max={1500} step={50} 
+                  value={1550 - speed} onChange={e => setSpeed(1550 - Number(e.target.value))} 
                   style={{ width: '120px', accentColor: 'var(--accent-primary)', cursor: 'pointer' }} 
                   title={`Delay: ${speed}ms`}
                 />

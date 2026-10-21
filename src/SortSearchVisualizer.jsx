@@ -1536,8 +1536,8 @@ const SortSearchVisualizer = ({ onBack, openSettings, initialTab = 'Sort', initi
 
           {/* Visualizer Style Toggle */}
           <select className="styled-select" value={visualizerStyle} onChange={e => setVisualizerStyle(e.target.value)} disabled={isPlaying}>
-            <option value="classic">Classic Bars</option>
-            <option value="crane">3D Crane (Beta)</option>
+            <option value="classic">📊 Classic 2D Bars</option>
+            <option value="crane">🏗️ 3D Industrial Crane</option>
           </select>
 
           {activeTab === 'Sort' ? (
@@ -1613,93 +1613,182 @@ const SortSearchVisualizer = ({ onBack, openSettings, initialTab = 'Sort', initi
           </div>
 
           {visualizerStyle === 'crane' ? (() => {
-            const craneIdx = frame.i !== -1 ? frame.i : (frame.j !== -1 ? frame.j : 0);
-            const craneLeft = `calc(${(craneIdx + 0.5) * (100 / Math.max(1, frame.arr?.length || 1))}% - 20px)`;
+            const totalItems = Math.max(1, frame.arr?.length || 1);
+            const isSearch = activeTab === 'Search';
+
+            // Active indices tracking
+            const craneAIdx = frame.i !== -1 ? frame.i : (frame.j !== -1 ? frame.j : 0);
+            const craneBActive = !isSearch && frame.j !== -1 && frame.j !== frame.i;
+            const craneBIdx = craneBActive ? frame.j : null;
+
+            // Mathematical exact centers aligned with column slots
+            const craneALeft = `calc(${(craneAIdx + 0.5) * (100 / totalItems)}% - 22px)`;
+            const craneBLeft = craneBActive ? `calc(${(craneBIdx + 0.5) * (100 / totalItems)}% - 22px)` : null;
+
+            // Search range bounds for Binary Search
+            const searchLow = isSearch ? (frame.j !== -1 ? frame.j : 0) : 0;
+            const searchHigh = isSearch ? (frame.k !== -1 ? frame.k : totalItems - 1) : totalItems - 1;
+
             return (
               <div style={{ 
                 flex: 1, 
                 display: 'flex', 
-                alignItems: 'flex-end', 
-                justifyContent: 'center', 
-                background: 'var(--glass-bg, rgba(15, 23, 42, 0.45))', 
-                borderRadius: '14px', 
-                border: '1px solid var(--glass-border, rgba(255,255,255,0.08))', 
-                padding: isMobile ? '20px 10px' : '30px 2rem', 
+                flexDirection: 'column',
+                justifyContent: 'flex-end', 
+                background: 'radial-gradient(ellipse at 50% 100%, rgba(30, 41, 59, 0.7), rgba(10, 15, 30, 0.95))', 
+                borderRadius: '16px', 
+                border: '1.5px solid rgba(56, 189, 248, 0.2)', 
+                padding: isMobile ? '12px 8px 16px 8px' : '16px 20px 24px 20px', 
                 overflow: 'hidden',
-                position: 'relative'
+                position: 'relative',
+                boxShadow: 'inset 0 0 40px rgba(0,0,0,0.6), 0 10px 30px rgba(0,0,0,0.4)'
               }}>
-                {/* Centered Blocks & Crane Assembly Wrapper */}
+                {/* Industrial HUD Telemetry Status Bar */}
+                <div style={{
+                  position: 'absolute',
+                  top: '10px',
+                  left: '16px',
+                  right: '16px',
+                  display: 'flex',
+                  alignItems: 'center',
+                  justifyContent: 'space-between',
+                  padding: '6px 14px',
+                  background: 'rgba(15, 23, 42, 0.85)',
+                  border: '1px solid rgba(255, 255, 255, 0.1)',
+                  borderRadius: '10px',
+                  zIndex: 20,
+                  fontSize: isMobile ? '10.5px' : '12px',
+                  backdropFilter: 'blur(8px)'
+                }}>
+                  <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+                    <span style={{ fontSize: '14px' }}>🏗️</span>
+                    <span style={{ fontWeight: 'bold', color: '#f8fafc' }}>
+                      3D Industrial Gantry Crane System
+                    </span>
+                    <span style={{
+                      background: '#0284c7',
+                      color: '#fff',
+                      fontSize: '9.5px',
+                      fontWeight: 'bold',
+                      padding: '1px 6px',
+                      borderRadius: '4px'
+                    }}>
+                      ALIGNED 1:1
+                    </span>
+                  </div>
+
+                  <div style={{ display: 'flex', alignItems: 'center', gap: '12px', fontFamily: 'monospace' }}>
+                    <span style={{ color: '#fbbf24', display: 'flex', alignItems: 'center', gap: '4px' }}>
+                      <span style={{ width: '8px', height: '8px', borderRadius: '50%', background: '#fbbf24', display: 'inline-block' }} />
+                      Crane A ({isSearch ? 'Target' : 'PTR i'}): [{craneAIdx}] = {frame.arr[craneAIdx] !== undefined ? frame.arr[craneAIdx] : '-'}
+                    </span>
+                    {craneBActive && (
+                      <span style={{ color: '#00e5ff', display: 'flex', alignItems: 'center', gap: '4px' }}>
+                        <span style={{ width: '8px', height: '8px', borderRadius: '50%', background: '#00e5ff', display: 'inline-block' }} />
+                        Crane B (PTR j): [{craneBIdx}] = {frame.arr[craneBIdx]}
+                      </span>
+                    )}
+                    {isSearch && selectedSearch === 'Binary Search' && (
+                      <span style={{ color: '#10b981' }}>
+                        Window: [{searchLow} ➔ {searchHigh}]
+                      </span>
+                    )}
+                  </div>
+                </div>
+
+                {/* Centered Industrial Assembly (Tracks + 3D Blocks share EXACT container) */}
                 <div style={{
                   position: 'relative',
-                  display: 'flex',
-                  alignItems: 'flex-end',
-                  justifyContent: 'center',
-                  gap: isMobile ? '8px' : '16px',
-                  height: '100%',
                   width: '100%',
-                  paddingTop: isMobile ? '60px' : '80px'
+                  maxWidth: `${Math.min(totalItems * 80, 1100)}px`,
+                  height: '100%',
+                  display: 'flex',
+                  flexDirection: 'column',
+                  justifyContent: 'flex-end',
+                  margin: '0 auto',
+                  paddingTop: isMobile ? '65px' : '85px'
                 }}>
-                  {/* Overhead Track aligned directly over the block assembly */}
+                  {/* Overhead Heavy Gantry Truss */}
                   <div style={{
                     position: 'absolute',
-                    top: isMobile ? '8px' : '16px',
+                    top: isMobile ? '8px' : '14px',
                     left: 0,
                     right: 0,
-                    height: '8px',
-                    background: '#1e293b',
-                    border: '1px solid rgba(255,255,255,0.1)',
-                    borderRadius: '4px',
+                    height: '18px',
+                    background: 'linear-gradient(180deg, #334155 0%, #1e293b 100%)',
+                    border: '1.5px solid #475569',
+                    borderRadius: '6px',
+                    boxShadow: '0 6px 18px rgba(0,0,0,0.5)',
                     zIndex: 10
                   }}>
-                    {/* Carriage/Trolley */}
+                    {/* Caution Stripes on Top of Girder */}
                     <div style={{
                       position: 'absolute',
-                      left: craneLeft,
-                      top: '-6px',
-                      width: '40px',
-                      height: '20px',
-                      background: 'linear-gradient(135deg, #64748b, #475569)',
-                      border: '1.5px solid #94a3b8',
-                      borderRadius: '4px',
+                      top: 0,
+                      left: 0,
+                      right: 0,
+                      height: '4px',
+                      background: 'repeating-linear-gradient(45deg, #fbbf24 0px, #fbbf24 8px, #0f172a 8px, #0f172a 16px)',
+                      borderRadius: '4px 4px 0 0'
+                    }} />
+
+                    {/* Support Girders at extremes */}
+                    <div style={{ position: 'absolute', left: '-8px', top: '-4px', bottom: '-10px', width: '12px', background: '#475569', borderRadius: '3px', border: '1px solid #64748b' }} />
+                    <div style={{ position: 'absolute', right: '-8px', top: '-4px', bottom: '-10px', width: '12px', background: '#475569', borderRadius: '3px', border: '1px solid #64748b' }} />
+
+                    {/* Crane A Trolley (Amber / Gold) */}
+                    <div style={{
+                      position: 'absolute',
+                      left: craneALeft,
+                      top: '-8px',
+                      width: '44px',
+                      height: '24px',
+                      background: 'linear-gradient(135deg, #78350f, #d97706)',
+                      border: '2px solid #fbbf24',
+                      borderRadius: '5px',
                       display: 'flex',
                       alignItems: 'center',
                       justifyContent: 'center',
-                      transition: 'left 0.4s cubic-bezier(0.25, 0.8, 0.25, 1)',
-                      boxShadow: '0 4px 8px rgba(0,0,0,0.3)',
-                      zIndex: 12
+                      transition: 'left 0.35s cubic-bezier(0.25, 0.8, 0.25, 1)',
+                      boxShadow: '0 6px 14px rgba(251, 191, 36, 0.4)',
+                      zIndex: 13
                     }}>
-                      {/* Wheel accents */}
-                      <div style={{ width: '6px', height: '6px', borderRadius: '50%', background: '#0f172a', position: 'absolute', left: '4px', top: '10px' }} />
-                      <div style={{ width: '6px', height: '6px', borderRadius: '50%', background: '#0f172a', position: 'absolute', right: '4px', top: '10px' }} />
+                      <span style={{ fontSize: '9px', fontWeight: '900', color: '#fff', letterSpacing: '0.5px' }}>
+                        {isSearch ? 'SCAN' : 'CR-A'}
+                      </span>
+                      {/* Heavy Steel Wheel Accents */}
+                      <div style={{ width: '6px', height: '6px', borderRadius: '50%', background: '#0f172a', border: '1px solid #fbbf24', position: 'absolute', left: '3px', top: '12px' }} />
+                      <div style={{ width: '6px', height: '6px', borderRadius: '50%', background: '#0f172a', border: '1px solid #fbbf24', position: 'absolute', right: '3px', top: '12px' }} />
                     </div>
 
-                    {/* Gripper Rope & Claw */}
+                    {/* Crane A Cable, Gripper Claw & Laser Beam */}
                     <div style={{
                       position: 'absolute',
-                      left: craneLeft,
-                      top: '12px',
-                      width: '40px',
+                      left: craneALeft,
+                      top: '16px',
+                      width: '44px',
                       display: 'flex',
                       flexDirection: 'column',
                       alignItems: 'center',
-                      transition: 'left 0.4s cubic-bezier(0.25, 0.8, 0.25, 1)',
-                      zIndex: 11
+                      transition: 'left 0.35s cubic-bezier(0.25, 0.8, 0.25, 1)',
+                      zIndex: 12,
+                      pointerEvents: 'none'
                     }}>
-                      {/* Cable Line */}
+                      {/* Pulley Cable */}
                       <div style={{
-                        width: '2px',
-                        height: (frame.i !== -1 || frame.j !== -1) ? '35px' : '12px',
-                        background: '#94a3b8',
-                        transition: 'height 0.3s ease'
+                        width: '2.5px',
+                        height: (frame.i !== -1 || frame.j !== -1) ? '32px' : '14px',
+                        background: 'linear-gradient(to bottom, #cbd5e1, #94a3b8)',
+                        transition: 'height 0.25s ease'
                       }} />
 
-                      {/* Gripper Head */}
+                      {/* Claw Head */}
                       <div style={{
-                        width: '20px',
-                        height: '10px',
+                        width: '24px',
+                        height: '11px',
                         background: '#fbbf24',
-                        borderRadius: '2px 2px 0 0',
-                        border: '1px solid #d97706',
+                        borderRadius: '3px 3px 0 0',
+                        border: '1.5px solid #b45309',
                         position: 'relative'
                       }}>
                         {/* Left claw finger */}
@@ -1708,11 +1797,11 @@ const SortSearchVisualizer = ({ onBack, openSettings, initialTab = 'Sort', initi
                           left: '-3px',
                           bottom: '-10px',
                           width: '5px',
-                          height: '12px',
+                          height: '13px',
                           borderLeft: '2.5px solid #fbbf24',
                           borderBottom: '2.5px solid #fbbf24',
                           borderRadius: '0 0 0 3px',
-                          transform: (frame.i !== -1 || frame.j !== -1) ? 'rotate(-12deg)' : 'rotate(-25deg)',
+                          transform: (frame.i !== -1 || frame.j !== -1) ? 'rotate(-10deg)' : 'rotate(-25deg)',
                           transformOrigin: 'top right',
                           transition: 'transform 0.2s'
                         }} />
@@ -1722,156 +1811,306 @@ const SortSearchVisualizer = ({ onBack, openSettings, initialTab = 'Sort', initi
                           right: '-3px',
                           bottom: '-10px',
                           width: '5px',
-                          height: '12px',
+                          height: '13px',
                           borderRight: '2.5px solid #fbbf24',
                           borderBottom: '2.5px solid #fbbf24',
                           borderRadius: '0 0 3px 0',
-                          transform: (frame.i !== -1 || frame.j !== -1) ? 'rotate(12deg)' : 'rotate(25deg)',
+                          transform: (frame.i !== -1 || frame.j !== -1) ? 'rotate(10deg)' : 'rotate(25deg)',
                           transformOrigin: 'top left',
                           transition: 'transform 0.2s'
                         }} />
                       </div>
 
-                      {/* Gripper Box showing active target/comparison value */}
-                      {(frame.i !== -1 || (activeTab === 'Sort' && frame.j !== -1)) && (
+                      {/* Targeted Value Payload Box */}
+                      <div style={{
+                        marginTop: '6px',
+                        padding: '2px 8px',
+                        background: 'linear-gradient(135deg, #d97706, #fbbf24)',
+                        border: '1.5px solid #fff',
+                        borderRadius: '6px',
+                        color: '#000',
+                        fontWeight: '900',
+                        fontSize: '0.8rem',
+                        boxShadow: '0 4px 12px rgba(251, 191, 36, 0.5)'
+                      }}>
+                        {isSearch ? (searchValue || '?') : (frame.arr[craneAIdx] !== undefined ? frame.arr[craneAIdx] : '-')}
+                      </div>
+
+                      {/* Vertical Laser Targeting Beam extending down to block */}
+                      <div style={{
+                        width: '2px',
+                        height: '140px',
+                        background: 'linear-gradient(180deg, rgba(251, 191, 36, 0.8) 0%, rgba(251, 191, 36, 0.1) 100%)',
+                        boxShadow: '0 0 8px rgba(251, 191, 36, 0.6)'
+                      }} />
+                    </div>
+
+                    {/* Crane B Trolley (Cyan / Emerald - Dual Crane for j) */}
+                    {craneBActive && (
+                      <>
                         <div style={{
-                          marginTop: '6px',
-                          width: '28px',
-                          height: '28px',
-                          background: 'linear-gradient(to top, #d97706, #fbbf24)',
-                          border: '1px solid #b45309',
-                          borderRadius: '4px',
+                          position: 'absolute',
+                          left: craneBLeft,
+                          top: '-8px',
+                          width: '44px',
+                          height: '24px',
+                          background: 'linear-gradient(135deg, #0369a1, #0284c7)',
+                          border: '2px solid #00e5ff',
+                          borderRadius: '5px',
                           display: 'flex',
                           alignItems: 'center',
                           justifyContent: 'center',
-                          color: 'white',
-                          fontWeight: 'bold',
-                          fontSize: '0.8rem',
-                          boxShadow: '0 4px 8px rgba(0,0,0,0.3)'
+                          transition: 'left 0.35s cubic-bezier(0.25, 0.8, 0.25, 1)',
+                          boxShadow: '0 6px 14px rgba(0, 229, 255, 0.4)',
+                          zIndex: 14
                         }}>
-                          {activeTab === 'Search' ? (searchValue || '?') : (frame.i !== -1 ? frame.arr[frame.i] : frame.arr[frame.j])}
+                          <span style={{ fontSize: '9px', fontWeight: '900', color: '#fff', letterSpacing: '0.5px' }}>
+                            CR-B
+                          </span>
+                          <div style={{ width: '6px', height: '6px', borderRadius: '50%', background: '#0f172a', border: '1px solid #00e5ff', position: 'absolute', left: '3px', top: '12px' }} />
+                          <div style={{ width: '6px', height: '6px', borderRadius: '50%', background: '#0f172a', border: '1px solid #00e5ff', position: 'absolute', right: '3px', top: '12px' }} />
                         </div>
-                      )}
-                    </div>
+
+                        {/* Crane B Cable, Claw & Cyan Laser */}
+                        <div style={{
+                          position: 'absolute',
+                          left: craneBLeft,
+                          top: '16px',
+                          width: '44px',
+                          display: 'flex',
+                          flexDirection: 'column',
+                          alignItems: 'center',
+                          transition: 'left 0.35s cubic-bezier(0.25, 0.8, 0.25, 1)',
+                          zIndex: 13,
+                          pointerEvents: 'none'
+                        }}>
+                          <div style={{
+                            width: '2.5px',
+                            height: '32px',
+                            background: 'linear-gradient(to bottom, #cbd5e1, #94a3b8)',
+                            transition: 'height 0.25s ease'
+                          }} />
+                          <div style={{
+                            width: '24px',
+                            height: '11px',
+                            background: '#00e5ff',
+                            borderRadius: '3px 3px 0 0',
+                            border: '1.5px solid #0284c7',
+                            position: 'relative'
+                          }}>
+                            <div style={{
+                              position: 'absolute',
+                              left: '-3px',
+                              bottom: '-10px',
+                              width: '5px',
+                              height: '13px',
+                              borderLeft: '2.5px solid #00e5ff',
+                              borderBottom: '2.5px solid #00e5ff',
+                              borderRadius: '0 0 0 3px',
+                              transform: 'rotate(-10deg)',
+                              transformOrigin: 'top right'
+                            }} />
+                            <div style={{
+                              position: 'absolute',
+                              right: '-3px',
+                              bottom: '-10px',
+                              width: '5px',
+                              height: '13px',
+                              borderRight: '2.5px solid #00e5ff',
+                              borderBottom: '2.5px solid #00e5ff',
+                              borderRadius: '0 0 3px 0',
+                              transform: 'rotate(10deg)',
+                              transformOrigin: 'top left'
+                            }} />
+                          </div>
+                          <div style={{
+                            marginTop: '6px',
+                            padding: '2px 8px',
+                            background: 'linear-gradient(135deg, #0284c7, #00e5ff)',
+                            border: '1.5px solid #fff',
+                            borderRadius: '6px',
+                            color: '#000',
+                            fontWeight: '900',
+                            fontSize: '0.8rem',
+                            boxShadow: '0 4px 12px rgba(0, 229, 255, 0.5)'
+                          }}>
+                            {frame.arr[craneBIdx]}
+                          </div>
+                          <div style={{
+                            width: '2px',
+                            height: '140px',
+                            background: 'linear-gradient(180deg, rgba(0, 229, 255, 0.8) 0%, rgba(0, 229, 255, 0.1) 100%)',
+                            boxShadow: '0 0 8px rgba(0, 229, 255, 0.6)'
+                          }} />
+                        </div>
+                      </>
+                    )}
                   </div>
 
-                  {/* 3D Blocks */}
-                  {frame.arr.map((val, idx) => {
-                    const isSearch = activeTab === 'Search';
-                    let colorType = 'primary'; // 'primary', 'active', 'inactive', 'highlight'
+                  {/* 3D BLOCKS GRID CONTAINER (Exact 1:1 Match with Gantry Overhead Rail) */}
+                  <div style={{
+                    display: 'grid',
+                    gridTemplateColumns: `repeat(${totalItems}, minmax(0, 1fr))`,
+                    width: '100%',
+                    height: '100%',
+                    alignItems: 'flex-end',
+                    gap: isMobile ? '3px' : '6px',
+                    position: 'relative',
+                    zIndex: 2
+                  }}>
+                    {frame.arr.map((val, idx) => {
+                      let colorType = 'primary'; // 'primary', 'active', 'inactive', 'highlight_a', 'highlight_b'
 
-                    if (isSearch) {
-                      const low = frame.j !== -1 ? frame.j : 0;
-                      const high = frame.k !== -1 ? frame.k : frame.arr.length - 1;
-                      const mid = frame.i;
+                      if (isSearch) {
+                        const low = frame.j !== -1 ? frame.j : 0;
+                        const high = frame.k !== -1 ? frame.k : totalItems - 1;
+                        const mid = frame.i;
 
-                      if (idx >= low && idx <= high) {
-                        if (idx === mid) {
-                          colorType = 'highlight'; // Current checked element
+                        if (idx >= low && idx <= high) {
+                          if (idx === mid) {
+                            colorType = 'highlight_a'; // Laser focused midpoint
+                          } else {
+                            colorType = 'active'; // Inside active search window
+                          }
                         } else {
-                          colorType = 'active'; // In active search range (green)
+                          colorType = 'inactive'; // Excluded region
                         }
                       } else {
-                        colorType = 'inactive'; // Excluded search space (dark)
+                        // Sort colors
+                        if (idx === frame.i) {
+                          colorType = 'highlight_a';
+                        } else if (idx === frame.j) {
+                          colorType = 'highlight_b';
+                        } else if (idx === frame.k) {
+                          colorType = 'active';
+                        } else {
+                          colorType = 'primary';
+                        }
                       }
-                    } else {
-                      // Sort colors
-                      if (idx === frame.i || idx === frame.j) {
-                        colorType = 'highlight';
-                      } else if (idx === frame.k) {
-                        colorType = 'active';
+
+                      const maxVal = Math.max(...frame.arr, 1);
+                      const heightPercent = Math.max((val / maxVal) * 72, 12);
+
+                      let frontBg, topBg, rightBg, borderStyle, glowEffect;
+                      if (colorType === 'highlight_a') {
+                        frontBg = 'linear-gradient(to top, #b45309, #f59e0b)';
+                        topBg = '#fbbf24';
+                        rightBg = '#78350f';
+                        borderStyle = '1.5px solid #fbbf24';
+                        glowEffect = '0 0 16px rgba(251, 191, 36, 0.6)';
+                      } else if (colorType === 'highlight_b') {
+                        frontBg = 'linear-gradient(to top, #0369a1, #00e5ff)';
+                        topBg = '#38bdf8';
+                        rightBg = '#0c4a6e';
+                        borderStyle = '1.5px solid #00e5ff';
+                        glowEffect = '0 0 16px rgba(0, 229, 255, 0.6)';
+                      } else if (colorType === 'active') {
+                        frontBg = 'linear-gradient(to top, #047857, #10b981)';
+                        topBg = '#34d399';
+                        rightBg = '#065f46';
+                        borderStyle = '1px solid #10b981';
+                        glowEffect = '0 0 10px rgba(16, 185, 129, 0.4)';
+                      } else if (colorType === 'inactive') {
+                        frontBg = 'linear-gradient(to top, #0f172a, #1e293b)';
+                        topBg = '#334155';
+                        rightBg = '#020617';
+                        borderStyle = '1px solid rgba(255,255,255,0.04)';
+                        glowEffect = 'none';
                       } else {
-                        colorType = 'primary';
+                        frontBg = 'linear-gradient(to top, #3730a3, #6366f1)';
+                        topBg = '#818cf8';
+                        rightBg = '#1e1b4b';
+                        borderStyle = '1px solid rgba(255,255,255,0.1)';
+                        glowEffect = 'none';
                       }
-                    }
 
-                    const maxVal = Math.max(...frame.arr, 1);
-                    const heightPercent = Math.max((val / maxVal) * 75, 12);
+                      const blockWidth = isMobile ? 'clamp(14px, 85%, 26px)' : 'clamp(20px, 80%, 46px)';
 
-                    let frontBg, topBg, rightBg;
-                    if (colorType === 'active') {
-                      frontBg = 'linear-gradient(to top, #047857, #10b981)';
-                      topBg = '#34d399';
-                      rightBg = '#065f46';
-                    } else if (colorType === 'highlight') {
-                      frontBg = 'linear-gradient(to top, #d97706, #fbbf24)';
-                      topBg = '#fcd34d';
-                      rightBg = '#92400e';
-                    } else if (colorType === 'inactive') {
-                      frontBg = 'linear-gradient(to top, #1e293b, #334155)';
-                      topBg = '#475569';
-                      rightBg = '#0f172a';
-                    } else {
-                      frontBg = 'linear-gradient(to top, #4f46e5, #6366f1)';
-                      topBg = '#818cf8';
-                      rightBg = '#3730a3';
-                    }
-
-                    return (
-                      <div key={idx} style={{
-                        position: 'relative',
-                        height: `${heightPercent}%`,
-                        width: isMobile ? '20px' : '45px',
-                        display: 'flex',
-                        flexDirection: 'column',
-                        justifyContent: 'flex-end',
-                        transition: 'all 0.3s ease'
-                      }}>
-                        <div style={{ position: 'relative', width: '100%', height: '100%' }}>
-                          {/* Top Face */}
+                      return (
+                        <div key={idx} style={{
+                          height: '100%',
+                          display: 'flex',
+                          flexDirection: 'column',
+                          alignItems: 'center',
+                          justifyContent: 'flex-end',
+                          position: 'relative'
+                        }}>
+                          {/* 3D Isometric Block Pillar */}
                           <div style={{
-                            position: 'absolute',
-                            top: '-8px',
-                            left: '4px',
-                            width: '100%',
-                            height: '8px',
-                            background: topBg,
-                            transform: 'skewX(-45deg)',
-                            transformOrigin: 'bottom left',
-                            transition: 'all 0.3s ease'
-                          }} />
-                          {/* Right Face */}
-                          <div style={{
-                            position: 'absolute',
-                            top: '-4px',
-                            right: '-8px',
-                            width: '8px',
-                            height: '100%',
-                            background: rightBg,
-                            transform: 'skewY(-45deg)',
-                            transformOrigin: 'top left',
-                            transition: 'all 0.3s ease'
-                          }} />
-                          {/* Front Face */}
-                          <div style={{
-                            position: 'absolute',
-                            top: 0,
-                            left: 0,
-                            width: '100%',
-                            height: '100%',
-                            background: frontBg,
-                            border: '1px solid rgba(255,255,255,0.08)',
-                            borderRadius: '3px',
+                            position: 'relative',
+                            height: `${heightPercent}%`,
+                            width: blockWidth,
                             display: 'flex',
                             flexDirection: 'column',
-                            alignItems: 'center',
-                            justifyContent: 'flex-start',
-                            paddingTop: '8px',
-                            color: 'white',
-                            fontWeight: 'bold',
-                            fontSize: isMobile ? '0.7rem' : '1rem',
-                            boxShadow: '0 8px 16px rgba(0,0,0,0.3)',
-                            transition: 'all 0.3s ease'
+                            justifyContent: 'flex-end',
+                            transition: 'all 0.3s cubic-bezier(0.25, 0.8, 0.25, 1)'
                           }}>
-                            {val}
-                            <span style={{ fontSize: '0.65rem', opacity: 0.5, marginTop: '2px', fontFamily: 'monospace' }}>
-                              {idx}
-                            </span>
+                            {/* Top Face */}
+                            <div style={{
+                              position: 'absolute',
+                              top: '-8px',
+                              left: '4px',
+                              width: '100%',
+                              height: '8px',
+                              background: topBg,
+                              transform: 'skewX(-45deg)',
+                              transformOrigin: 'bottom left',
+                              transition: 'all 0.3s ease',
+                              borderTop: borderStyle
+                            }} />
+
+                            {/* Right Face */}
+                            <div style={{
+                              position: 'absolute',
+                              top: '-4px',
+                              right: '-8px',
+                              width: '8px',
+                              height: '100%',
+                              background: rightBg,
+                              transform: 'skewY(-45deg)',
+                              transformOrigin: 'top left',
+                              transition: 'all 0.3s ease',
+                              borderRight: borderStyle
+                            }} />
+
+                            {/* Front Face */}
+                            <div style={{
+                              position: 'absolute',
+                              top: 0,
+                              left: 0,
+                              width: '100%',
+                              height: '100%',
+                              background: frontBg,
+                              border: borderStyle,
+                              borderRadius: '3px',
+                              display: 'flex',
+                              flexDirection: 'column',
+                              alignItems: 'center',
+                              justifyContent: 'space-between',
+                              padding: '6px 2px',
+                              color: 'white',
+                              fontWeight: 'bold',
+                              fontSize: isMobile ? '0.7rem' : '0.95rem',
+                              boxShadow: glowEffect,
+                              transition: 'all 0.3s ease'
+                            }}>
+                              <span>{val}</span>
+                              <span style={{
+                                fontSize: '0.62rem',
+                                opacity: 0.75,
+                                fontFamily: 'monospace',
+                                background: 'rgba(0,0,0,0.3)',
+                                padding: '1px 4px',
+                                borderRadius: '3px'
+                              }}>
+                                {idx}
+                              </span>
+                            </div>
                           </div>
                         </div>
-                      </div>
-                    );
-                  })}
+                      );
+                    })}
+                  </div>
                 </div>
               </div>
             );
@@ -2023,7 +2262,7 @@ const SortSearchVisualizer = ({ onBack, openSettings, initialTab = 'Sort', initi
 
             <div style={{ display: 'flex', alignItems: 'center', gap: '8px', width: isMobile ? '100%' : 'auto', justifyContent: 'center' }}>
               <span style={{ color: 'var(--text-secondary)', fontWeight: 600, fontSize: '0.82rem', whiteSpace: 'nowrap' }}>Speed ({speed}ms)</span>
-              <input type="range" min={50} max={3500} step={50} value={3550 - speed} onChange={e => setSpeed(3550 - Number(e.target.value))} style={{ width: isMobile ? '100%' : '160px', accentColor: 'var(--accent-primary)', cursor: 'pointer' }} title={`Delay: ${speed}ms`} />
+              <input type="range" min={50} max={1500} step={50} value={1550 - speed} onChange={e => setSpeed(1550 - Number(e.target.value))} style={{ width: isMobile ? '100%' : '160px', accentColor: 'var(--accent-primary)', cursor: 'pointer' }} title={`Delay: ${speed}ms`} />
             </div>
           </div>
 

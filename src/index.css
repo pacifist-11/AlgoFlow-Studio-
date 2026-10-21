@@ -388,6 +388,15 @@ body {
   .home-grid {
     gap: 1rem !important;
   }
+  .beginner-101-container {
+    padding: 10px 8px !important;
+  }
+  pre, code {
+    -webkit-overflow-scrolling: touch;
+  }
+  input[type="range"] {
+    touch-action: pan-y;
+  }
 }
 
 /* ── Bicycle Preloader ── */

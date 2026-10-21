@@ -1,4 +1,5 @@
 import React, { useState, useEffect } from 'react';
+import VehicleComplexitySpeedway from './VehicleComplexitySpeedway.jsx';
 
 // Comprehensive DSA Question Pool across all core algorithmic disciplines
 const ALL_DSA_QUIZ_QUESTIONS = [
@@ -369,9 +370,9 @@ const ALL_DSA_QUIZ_QUESTIONS = [
   }
 ];
 
-export default function WhyDSAMattersGuide() {
+export default function WhyDSAMattersGuide({ initialTab = 'speedway' }) {
   const [dataSize, setDataSize] = useState(10000); // Default N = 10,000
-  const [activeTab, setActiveTab] = useState('simulator'); // 'simulator', 'realworld', 'quiz'
+  const [activeTab, setActiveTab] = useState(initialTab || 'speedway');
   
   // Interactive Randomized Quiz State
   const [selectedCategory, setSelectedCategory] = useState('all');
@@ -480,7 +481,7 @@ export default function WhyDSAMattersGuide() {
       background: 'var(--glass-bg)',
       borderRadius: '16px',
       border: '1px solid var(--glass-border)',
-      padding: '24px',
+      padding: 'clamp(12px, 3vw, 24px)',
       color: 'var(--text-primary)',
       boxShadow: '0 20px 25px -5px rgba(0, 0, 0, 0.08)'
     }}>
@@ -490,21 +491,30 @@ export default function WhyDSAMattersGuide() {
           <span style={{ fontSize: '28px' }}>🧠</span>
           <div>
             <h2 style={{ margin: 0, fontSize: '22px', fontWeight: '800', color: 'var(--accent-primary)' }}>
-              Module 7: "Why Do Data Structures & Algorithms (DSA) Matter?"
+              Module 9: "Why Do Data Structures & Algorithms (DSA) Matter?"
             </h2>
             <p style={{ margin: '4px 0 0 0', color: 'var(--text-secondary)', fontSize: '14px', lineHeight: '1.5' }}>
-              Learn why choosing the right data structures and algorithms is the difference between a lightning-fast app and a frozen system!
+              Featuring the <strong>🏎️ Vehicle Complexity Speedway</strong>, interactive <strong>N</strong> and <strong>log N</strong> visualizers, scalability simulators, and real-world software engineering benchmarks!
             </p>
           </div>
         </div>
       </div>
 
       {/* Navigation Tabs */}
-      <div style={{ display: 'flex', gap: '10px', marginBottom: '20px', flexWrap: 'wrap' }}>
+      <div style={{
+        display: 'flex',
+        gap: '10px',
+        marginBottom: '20px',
+        flexWrap: 'wrap',
+        overflowX: 'auto',
+        WebkitOverflowScrolling: 'touch',
+        paddingBottom: '4px'
+      }}>
         {[
-          { id: 'simulator', icon: '📊', label: '1. Speed & Scalability Simulator' },
-          { id: 'realworld', icon: '🌍', label: '2. Real-World Tech Impact' },
-          { id: 'quiz', icon: '🎯', label: '3. Interactive DSA Quiz (Randomized)' }
+          { id: 'speedway', icon: '🏎️', label: '1. 🏎️ Complexity Speedway (Grand Prix)' },
+          { id: 'simulator', icon: '📊', label: '2. Speed & Scalability Simulator' },
+          { id: 'realworld', icon: '🌍', label: '3. Real-World Tech Impact' },
+          { id: 'quiz', icon: '🎯', label: '4. Interactive DSA Quiz (Randomized)' }
         ].map(t => (
           <button
             key={t.id}
@@ -526,7 +536,12 @@ export default function WhyDSAMattersGuide() {
         ))}
       </div>
 
-      {/* TAB 1: COMPLEXITY SIMULATOR */}
+      {/* TAB 1: VEHICLE COMPLEXITY SPEEDWAY */}
+      {activeTab === 'speedway' && (
+        <VehicleComplexitySpeedway />
+      )}
+
+      {/* TAB 2: COMPLEXITY SIMULATOR */}
       {activeTab === 'simulator' && (
         <div style={{ background: 'var(--bg-secondary)', borderRadius: '14px', padding: '20px', border: '1px solid var(--glass-border)' }}>
           <h3 style={{ margin: '0 0 12px 0', fontSize: '17px', color: '#d97706', display: 'flex', alignItems: 'center', gap: '8px' }}>

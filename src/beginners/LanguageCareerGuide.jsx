@@ -1,5 +1,4 @@
 import React, { useState } from 'react';
-import { isLineDebuggerSupported } from '../languageUtils.js';
 
 export default function LanguageCareerGuide() {
   const [selectedLang, setSelectedLang] = useState('c');
@@ -1061,24 +1060,6 @@ fn main() {
             }}>
               Industry Demand: <strong style={{ color: '#d97706', cursor: 'help' }} title={current.industryDemand}>{current.industryDemand.split(' ')[0]}</strong>
             </div>
-
-            {/* Line-by-Line Debugger Status - only shown for supported languages */}
-            {isLineDebuggerSupported(current.id) && (
-              <div style={{
-                background: 'rgba(5, 150, 105, 0.15)',
-                padding: '6px 12px',
-                borderRadius: '8px',
-                border: '1px solid rgba(5, 150, 105, 0.35)',
-                fontSize: '12px',
-                color: '#059669',
-                display: 'flex',
-                alignItems: 'center',
-                gap: '6px'
-              }}>
-                <span>🐞</span>
-                <span>Line Debugger: <strong>Supported</strong></span>
-              </div>
-            )}
           </div>
         </div>
 
