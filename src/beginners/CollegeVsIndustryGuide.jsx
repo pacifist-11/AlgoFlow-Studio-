@@ -1,4 +1,5 @@
 import React, { useState } from 'react';
+import NumberedCodeViewer from '../NumberedCodeViewer.jsx';
 
 // --- COMPARISON DATA ACROSS CORE ENGINEERING DIMENSIONS ---
 const COMPARISON_DIMENSIONS = [
@@ -855,17 +856,14 @@ export default function CollegeVsIndustryGuide() {
                     Fragile • Security Risk
                   </span>
                 </div>
-                <pre style={{
-                  margin: 0,
-                  padding: '16px',
-                  fontFamily: 'Consolas, monospace',
-                  fontSize: '12px',
-                  color: '#fca5a5',
-                  overflowX: 'auto', WebkitOverflowScrolling: 'touch',
-                  lineHeight: '1.6'
-                }}>
-                  <code>{CODE_INSPECTIONS[activeSnippetIdx].collegeCode}</code>
-                </pre>
+                <NumberedCodeViewer
+                  code={CODE_INSPECTIONS[activeSnippetIdx].collegeCode}
+                  fontSize={12}
+                  lineHeight={1.6}
+                  accentColor="#ef4444"
+                  bg="#090d16"
+                  style={{ maxHeight: '350px' }}
+                />
               </div>
             )}
 
@@ -892,17 +890,14 @@ export default function CollegeVsIndustryGuide() {
                     Resilient • Scalable • Auditable
                   </span>
                 </div>
-                <pre style={{
-                  margin: 0,
-                  padding: '16px',
-                  fontFamily: 'Consolas, monospace',
-                  fontSize: '12px',
-                  color: '#86efac',
-                  overflowX: 'auto', WebkitOverflowScrolling: 'touch',
-                  lineHeight: '1.6'
-                }}>
-                  <code>{CODE_INSPECTIONS[activeSnippetIdx].industryCode}</code>
-                </pre>
+                <NumberedCodeViewer
+                  code={CODE_INSPECTIONS[activeSnippetIdx].industryCode}
+                  fontSize={12}
+                  lineHeight={1.6}
+                  accentColor="emerald"
+                  bg="#090d16"
+                  style={{ maxHeight: '350px' }}
+                />
               </div>
             )}
           </div>

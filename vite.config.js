@@ -53,16 +53,40 @@ function apiDevServerPlugin() {
     name: 'api-dev-server',
     configureServer(server) {
       server.middlewares.use(async (req, res, next) => {
-        if (!req.url.startsWith('/api/auth/')) {
-          return next();
-        }
-
         res.status = (code) => { res.statusCode = code; return res; };
         res.json = (data) => {
           res.setHeader('Content-Type', 'application/json');
           res.end(JSON.stringify(data));
           return res;
         };
+
+        if (req.url.startsWith('/api/execute')) {
+          const run = async (bodyObj = {}) => {
+            req.body = bodyObj;
+            const mod = await import('./api/execute.js');
+            return mod.default(req, res);
+          };
+
+          if (req.method === 'GET' || req.method === 'OPTIONS') {
+            return run({});
+          }
+
+          let body = '';
+          req.on('data', chunk => { body += chunk; });
+          req.on('end', async () => {
+            try {
+              const parsed = body ? JSON.parse(body) : {};
+              await run(parsed);
+            } catch (e) {
+              return res.status(500).json({ error: e.message });
+            }
+          });
+          return;
+        }
+
+        if (!req.url.startsWith('/api/auth/')) {
+          return next();
+        }
 
         if (req.url.startsWith('/api/auth/config')) {
           try {

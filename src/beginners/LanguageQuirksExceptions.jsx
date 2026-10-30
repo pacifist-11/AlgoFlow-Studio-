@@ -1,4 +1,5 @@
 import React, { useState, useEffect } from 'react';
+import NumberedCodeViewer from '../NumberedCodeViewer.jsx';
 
 export default function LanguageQuirksExceptions({ selectedLang = 'C' }) {
   const getMappedLang = (l) => {
@@ -233,19 +234,21 @@ export default function LanguageQuirksExceptions({ selectedLang = 'C' }) {
                 ❌ Common Beginner Trap / Exception:
               </span>
             </div>
-            <pre style={{
-              margin: 0,
-              padding: '12px',
+            <div style={{
               background: 'var(--bg-secondary)',
               border: '1px solid var(--glass-border)',
               borderRadius: '8px',
-              color: '#dc2626',
-              fontSize: '12.5px',
-              fontFamily: 'monospace',
-              overflowX: 'auto'
+              overflow: 'hidden'
             }}>
-              {currentQuirk.codeTrap}
-            </pre>
+              <NumberedCodeViewer
+                code={currentQuirk.codeTrap}
+                fontSize={12.5}
+                lineHeight={1.55}
+                accentColor="#dc2626"
+                bg="var(--bg-secondary)"
+                style={{ maxHeight: '250px' }}
+              />
+            </div>
           </div>
 
           {/* Fix Box */}
@@ -260,19 +263,21 @@ export default function LanguageQuirksExceptions({ selectedLang = 'C' }) {
                 ✅ Correct Solution & Best Practice:
               </span>
             </div>
-            <pre style={{
-              margin: 0,
-              padding: '12px',
+            <div style={{
               background: 'var(--bg-secondary)',
               border: '1px solid var(--glass-border)',
               borderRadius: '8px',
-              color: '#059669',
-              fontSize: '12.5px',
-              fontFamily: 'monospace',
-              overflowX: 'auto'
+              overflow: 'hidden'
             }}>
-              {currentQuirk.codeFix}
-            </pre>
+              <NumberedCodeViewer
+                code={currentQuirk.codeFix}
+                fontSize={12.5}
+                lineHeight={1.55}
+                accentColor="#059669"
+                bg="var(--bg-secondary)"
+                style={{ maxHeight: '250px' }}
+              />
+            </div>
           </div>
         </div>
 

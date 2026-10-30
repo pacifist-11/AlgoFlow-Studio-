@@ -1,4 +1,5 @@
 import React, { useState } from 'react';
+import NumberedCodeViewer from '../NumberedCodeViewer.jsx';
 
 export default function BTechBranchLanguageGuide() {
   const [selectedBranch, setSelectedBranch] = useState('cse');
@@ -1910,20 +1911,22 @@ print(f"Theoretical Density of Copper (FCC): {cu_density:.2f} g/cm^3")`
               }}>
                 Source Code ({currentBranch.codeSample.language})
               </div>
-              <pre style={{
+              <div style={{
                 background: 'var(--glass-bg)',
-                padding: '20px',
                 borderRadius: '12px',
                 border: '1.5px solid var(--glass-border)',
-                color: 'var(--accent-primary)',
-                fontFamily: 'Consolas, Monaco, "Courier New", monospace',
-                fontSize: '13px',
-                lineHeight: '1.6',
-                overflowX: 'auto',
+                overflow: 'hidden',
                 margin: 0
               }}>
-                <code>{currentBranch.codeSample.code}</code>
-              </pre>
+                <NumberedCodeViewer
+                  code={currentBranch.codeSample.code}
+                  fontSize={13}
+                  lineHeight={1.6}
+                  accentColor="var(--accent-primary)"
+                  bg="var(--glass-bg)"
+                  style={{ maxHeight: '380px' }}
+                />
+              </div>
             </div>
 
             {/* Output Terminal Preview */}

@@ -1,6 +1,7 @@
 /* eslint-disable */
 import React, { useState, useEffect, useRef } from 'react';
 import CodeRunnerModal from './CodeRunnerModal.jsx';
+import NumberedCodeViewer from './NumberedCodeViewer.jsx';
 import TopicInfoModal from './TopicInfoModal.jsx';
 import { getPatternCodeTemplate } from './codeTemplatesPatterns.js';
 
@@ -1380,43 +1381,23 @@ const PatternsVisualizer = ({ onBack, openSettings, onCopyCode, onCodeChange, fo
               </div>
             </div>
 
-            {/* Code Box displaying the template */}
-            <div className="code-box" style={{ flex: 1, borderRadius: 0, border: 'none', margin: 0, overflow: 'auto', padding: '1rem' }}>
-              <pre style={{ 
-                margin: 0, 
-                color: 'var(--text-primary)', 
-                fontFamily: "'Fira Code', monospace", 
-                lineHeight: '1.6',
-                fontSize: `${localFontSize}px`
-              }}>
-                {(() => {
-                  const codeLines = toAllman(currentCode).split('\n');
-                  const lineType = getLineTypeForFrame(currentFrame, selectedPattern);
-                  const highlightLineIdx = getLineIndexToHighlight(codeLines, lineType, currentFrame, selectedLanguage);
-                  return codeLines.map((lineText, idx) => {
-                    const isHighlighted = (highlightLineIdx === idx);
-                    return (
-                      <div 
-                        key={idx} 
-                        style={{ 
-                          background: isHighlighted ? 'rgba(59,130,246,0.16)' : 'transparent',
-                          borderLeft: isHighlighted ? '3px solid var(--accent-primary)' : '3px solid transparent',
-                          padding: '1px 12px',
-                          transition: 'all 0.15s ease'
-                        }}
-                      >
-                        <span style={{ 
-                          whiteSpace: wordWrap === 'on' ? 'pre-wrap' : 'pre',
-                          color: isHighlighted ? '#ffffff' : 'var(--text-primary)',
-                          fontFamily: "'Fira Code', monospace"
-                        }}>
-                          {lineText || ' '}
-                        </span>
-                      </div>
-                    );
-                  });
-                })()}
-              </pre>
+            {/* Code Box displaying the template with sticky line numbers */}
+            <div className="code-box" style={{ flex: 1, borderRadius: 0, border: 'none', margin: 0, overflow: 'hidden', padding: 0, display: 'flex', flexDirection: 'column' }}>
+              {(() => {
+                const codeLines = toAllman(currentCode).split('\n');
+                const lineType = getLineTypeForFrame(currentFrame, selectedPattern);
+                const highlightLineIdx = getLineIndexToHighlight(codeLines, lineType, currentFrame, selectedLanguage);
+                return (
+                  <NumberedCodeViewer
+                    code={toAllman(currentCode)}
+                    fontSize={localFontSize}
+                    wordWrap={wordWrap}
+                    accentColor="var(--accent-primary)"
+                    activeLineIndex={highlightLineIdx}
+                    bg="transparent"
+                  />
+                );
+              })()}
             </div>
 
             {/* Drag column resize */}

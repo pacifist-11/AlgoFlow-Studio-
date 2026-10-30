@@ -158,7 +158,9 @@ Ask any custom question, or pick a preset topic on the left to start!`,
     setStudioOpacity(val);
     try {
       localStorage.setItem('algoflow_studio_opacity', val.toString());
-    } catch {}
+    } catch {
+      // LocalStorage access denied or quota exceeded
+    }
   };
 
   return (

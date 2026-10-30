@@ -167,6 +167,18 @@ function checkRestrictedWords(text) {
  * Direct feedback submission — no auth, no OTP, no login required.
  * Saves normal feedbacks or restricted attempts straight to Neon feedbacks table.
  */
+let columnsChecked = false;
+async function ensureFeedbackColumns() {
+  if (columnsChecked) return;
+  try {
+    await sql`ALTER TABLE feedbacks ADD COLUMN IF NOT EXISTS restricted_word VARCHAR(255)`;
+    await sql`ALTER TABLE feedbacks ADD COLUMN IF NOT EXISTS restricted_field VARCHAR(100)`;
+    columnsChecked = true;
+  } catch (e) {
+    console.warn("Alter table check failed (might already have columns):", e.message);
+  }
+}
+
 export default async function handler(req, res) {
   cors(res);
   if (req.method === 'OPTIONS') return res.status(200).end();
@@ -197,13 +209,8 @@ export default async function handler(req, res) {
 
   const feedbackCategory = category || 'General';
 
-  // Ensure DB columns exist
-  try {
-    await sql`ALTER TABLE feedbacks ADD COLUMN IF NOT EXISTS restricted_word VARCHAR(255)`;
-    await sql`ALTER TABLE feedbacks ADD COLUMN IF NOT EXISTS restricted_field VARCHAR(100)`;
-  } catch (e) {
-    console.warn("Alter table check failed (might already have columns):", e.message);
-  }
+  // Ensure DB columns exist (cached per container)
+  await ensureFeedbackColumns();
 
   // Server-side check for restricted words
   const serverRestrictedName = checkRestrictedWords(cleanName);

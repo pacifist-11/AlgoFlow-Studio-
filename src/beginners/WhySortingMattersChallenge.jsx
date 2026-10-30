@@ -1,4 +1,5 @@
 import React, { useState } from 'react';
+import NumberedCodeViewer from '../NumberedCodeViewer.jsx';
 
 const GRID_SIZE = 36; // 6x6 grid (36 blocks)
 
@@ -403,31 +404,39 @@ function binarySearch(arr, target) {
             }}>
               <div>
                 <h4 style={{ margin: '0 0 8px 0', fontSize: '13px', color: '#dc2626' }}>Linear Search (O(N)) - Used on Unsorted Cards</h4>
-                <pre style={{
-                  margin: 0,
-                  padding: '12px',
+                <div style={{
                   background: 'var(--glass-bg)',
-                  color: 'var(--text-primary)',
                   borderRadius: '8px',
-                  fontSize: '12.5px',
-                  fontFamily: 'Consolas, Monaco, monospace',
-                  overflowX: 'auto',
-                  border: '1px solid var(--glass-border)'
-                }}>{codeSnippets[activeLangKey].linear}</pre>
+                  border: '1px solid var(--glass-border)',
+                  overflow: 'hidden'
+                }}>
+                  <NumberedCodeViewer
+                    code={codeSnippets[activeLangKey].linear}
+                    fontSize={12}
+                    lineHeight={1.55}
+                    accentColor="#dc2626"
+                    bg="var(--glass-bg)"
+                    style={{ maxHeight: '260px' }}
+                  />
+                </div>
               </div>
               <div>
                 <h4 style={{ margin: '0 0 8px 0', fontSize: '13px', color: 'var(--accent-primary)' }}>Binary Search (O(log N)) - Used on Sorted Cards</h4>
-                <pre style={{
-                  margin: 0,
-                  padding: '12px',
+                <div style={{
                   background: 'var(--glass-bg)',
-                  color: 'var(--text-primary)',
                   borderRadius: '8px',
-                  fontSize: '12.5px',
-                  fontFamily: 'Consolas, Monaco, monospace',
-                  overflowX: 'auto',
-                  border: '1px solid var(--glass-border)'
-                }}>{codeSnippets[activeLangKey].binary}</pre>
+                  border: '1px solid var(--glass-border)',
+                  overflow: 'hidden'
+                }}>
+                  <NumberedCodeViewer
+                    code={codeSnippets[activeLangKey].binary}
+                    fontSize={12}
+                    lineHeight={1.55}
+                    accentColor="var(--accent-primary)"
+                    bg="var(--glass-bg)"
+                    style={{ maxHeight: '260px' }}
+                  />
+                </div>
               </div>
             </div>
           </div>

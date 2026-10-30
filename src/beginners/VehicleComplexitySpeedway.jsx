@@ -259,6 +259,7 @@ export default function VehicleComplexitySpeedway() {
 
   // Race state
   const [isRacing, setIsRacing] = useState(false);
+  const [isPaused, setIsPaused] = useState(false);
   const [raceFinished, setRaceFinished] = useState(false);
   const [raceTime, setRaceTime] = useState(0);
   const [selectedVehicles, setSelectedVehicles] = useState(COMPLEXITY_VEHICLES.map(v => v.id));
@@ -282,6 +283,18 @@ export default function VehicleComplexitySpeedway() {
   const vehicleRefs = useRef({});
   const progressRefs = useRef({});
   const trackContainerRef = useRef(null);
+  const activeTweensRef = useRef([]);
+
+  // Cleanup animations on unmount
+  useEffect(() => {
+    return () => {
+      if (activeTweensRef.current) {
+        activeTweensRef.current.forEach(t => {
+          if (t && typeof t.kill === 'function') t.kill();
+        });
+      }
+    };
+  }, []);
 
   // Sync custom input
   const handleSetN = (val) => {
@@ -354,7 +367,9 @@ export default function VehicleComplexitySpeedway() {
     setRaceTime(0);
 
     if (activeTweensRef.current) {
-      activeTweensRef.current.forEach(t => t.kill());
+      activeTweensRef.current.forEach(t => {
+        if (t && typeof t.kill === 'function') t.kill();
+      });
       activeTweensRef.current = [];
     }
 
@@ -374,14 +389,22 @@ export default function VehicleComplexitySpeedway() {
   // Pause Race
   const pauseRace = () => {
     if (!isRacing || isPaused) return;
-    activeTweensRef.current.forEach(t => t.pause());
+    if (activeTweensRef.current) {
+      activeTweensRef.current.forEach(t => {
+        if (t && typeof t.pause === 'function') t.pause();
+      });
+    }
     setIsPaused(true);
   };
 
   // Resume Race
   const resumeRace = () => {
     if (!isRacing || !isPaused) return;
-    activeTweensRef.current.forEach(t => t.resume());
+    if (activeTweensRef.current) {
+      activeTweensRef.current.forEach(t => {
+        if (t && typeof t.resume === 'function') t.resume();
+      });
+    }
     setIsPaused(false);
   };
 
@@ -403,13 +426,10 @@ export default function VehicleComplexitySpeedway() {
     setIsPaused(false);
     setRaceFinished(false);
 
-    const trackWidth = trackContainerRef.current 
-      ? trackContainerRef.current.offsetWidth - 130 
-      : 600;
-
     const participating = COMPLEXITY_VEHICLES.filter(v => selectedVehicles.includes(v.id));
     const validCount = participating.filter(v => getVehicleDuration(v.id, nValue) < 900).length;
     let completedCount = 0;
+    let stalledCount = 0;
     activeTweensRef.current = [];
 
     participating.forEach(veh => {
@@ -418,9 +438,15 @@ export default function VehicleComplexitySpeedway() {
 
       const duration = getVehicleDuration(veh.id, nValue);
       const isStalled = duration >= 900;
+      
+      const laneEl = el.parentElement;
+      const laneWidth = laneEl ? laneEl.offsetWidth : (trackContainerRef.current ? trackContainerRef.current.offsetWidth - 64 : 600);
+      const podWidth = el.offsetWidth || 140;
+      // Finish line is 38px wide on right, pod starts at left 8px
+      const maxTargetX = Math.max(120, laneWidth - podWidth - 46);
       const targetX = isStalled 
-        ? (veh.id === 'o_nfact' ? trackWidth * 0.08 : trackWidth * 0.22)
-        : trackWidth;
+        ? (veh.id === 'o_nfact' ? maxTargetX * 0.12 : maxTargetX * 0.28)
+        : maxTargetX;
 
       // GSAP Tween
       const tween = gsap.to(el, {
@@ -432,21 +458,27 @@ export default function VehicleComplexitySpeedway() {
         onUpdate: function() {
           const prog = progressRefs.current[veh.id];
           if (prog) {
-            const currentPct = Math.round((this.progress() * (targetX / trackWidth)) * 100);
+            const currentPct = Math.min(100, Math.round((this.progress() * (targetX / maxTargetX)) * 100));
             prog.innerText = `${currentPct}%`;
           }
         },
         onComplete: () => {
           if (isStalled) {
+            stalledCount++;
             // Smoke / shake animation
             const shake = gsap.to(el, {
-              x: '+=4',
+              x: '+=6',
               repeat: 8,
               yoyo: true,
               duration: 0.08,
               ease: 'rough'
             });
             activeTweensRef.current.push(shake);
+            if (completedCount + stalledCount >= participating.length) {
+              setIsRacing(false);
+              setIsPaused(false);
+              setRaceFinished(true);
+            }
           } else {
             completedCount++;
             if (completedCount >= validCount) {
@@ -656,9 +688,9 @@ export default function VehicleComplexitySpeedway() {
                 style={{
                   display: 'flex',
                   alignItems: 'center',
-                  gap: '8px',
-                  padding: '10px 20px',
-                  borderRadius: '10px',
+                  gap: '10px',
+                  padding: '12px 24px',
+                  borderRadius: '12px',
                   border: 'none',
                   background: !isRacing
                     ? 'linear-gradient(135deg, #10b981, #059669)'
@@ -666,38 +698,47 @@ export default function VehicleComplexitySpeedway() {
                         ? 'linear-gradient(135deg, #0ea5e9, #0284c7)'
                         : 'linear-gradient(135deg, #f59e0b, #d97706)'),
                   color: '#fff',
-                  fontWeight: 'bold',
-                  fontSize: '14px',
+                  fontWeight: '800',
+                  fontSize: '15px',
                   cursor: 'pointer',
                   boxShadow: !isRacing
-                    ? '0 4px 15px rgba(16, 185, 129, 0.35)'
+                    ? '0 6px 20px rgba(16, 185, 129, 0.45)'
                     : (isPaused
-                        ? '0 4px 15px rgba(14, 165, 233, 0.35)'
-                        : '0 4px 15px rgba(245, 158, 11, 0.35)'),
-                  transition: 'all 0.2s ease'
+                        ? '0 6px 20px rgba(14, 165, 233, 0.45)'
+                        : '0 6px 20px rgba(245, 158, 11, 0.45)'),
+                  transition: 'all 0.2s ease',
+                  letterSpacing: '0.3px'
                 }}
               >
+                <span style={{ fontSize: '18px', lineHeight: 1 }}>
+                  {!isRacing ? '🏁' : (isPaused ? '▶️' : '⏸️')}
+                </span>
                 <span>
                   {!isRacing
-                    ? '🏁 Start Grand Prix!'
-                    : (isPaused ? '▶️ Resume Race' : '⏸️ Pause Race')}
+                    ? (raceFinished ? 'Start Grand Prix Again!' : 'Start Grand Prix!')
+                    : (isPaused ? 'Resume Race' : 'Pause Race')}
                 </span>
               </button>
 
               <button
                 onClick={resetRace}
                 style={{
-                  padding: '10px 16px',
-                  borderRadius: '10px',
+                  display: 'flex',
+                  alignItems: 'center',
+                  gap: '6px',
+                  padding: '12px 18px',
+                  borderRadius: '12px',
                   border: '1px solid var(--glass-border)',
                   background: 'rgba(255,255,255,0.06)',
                   color: 'var(--text-primary)',
                   fontWeight: 'bold',
-                  fontSize: '13px',
-                  cursor: 'pointer'
+                  fontSize: '13.5px',
+                  cursor: 'pointer',
+                  transition: 'all 0.2s ease'
                 }}
               >
-                🔄 Reset Track
+                <span>🔄</span>
+                <span>Reset Track</span>
               </button>
 
               {/* Speed Multiplier */}
@@ -747,11 +788,12 @@ export default function VehicleComplexitySpeedway() {
           {/* Vehicle Selection Chips */}
           <div style={{
             display: 'flex',
-            gap: '8px',
+            gap: '10px',
             flexWrap: 'wrap',
-            marginBottom: '16px'
+            alignItems: 'center',
+            marginBottom: '18px'
           }}>
-            <span style={{ fontSize: '12px', color: 'var(--text-secondary)', alignSelf: 'center', marginRight: '4px' }}>
+            <span style={{ fontSize: '13px', fontWeight: 'bold', color: 'var(--text-secondary)', marginRight: '4px' }}>
               Active Racers:
             </span>
             {COMPLEXITY_VEHICLES.map(v => {
@@ -763,21 +805,22 @@ export default function VehicleComplexitySpeedway() {
                   style={{
                     display: 'flex',
                     alignItems: 'center',
-                    gap: '6px',
-                    padding: '5px 10px',
-                    borderRadius: '20px',
-                    border: `1px solid ${active ? v.badgeColor : 'rgba(255,255,255,0.1)'}`,
-                    background: active ? `${v.badgeColor}22` : 'rgba(0,0,0,0.2)',
+                    gap: '8px',
+                    padding: '7px 15px',
+                    borderRadius: '24px',
+                    border: `1.5px solid ${active ? v.badgeColor : 'rgba(255,255,255,0.1)'}`,
+                    background: active ? `${v.badgeColor}25` : 'rgba(0,0,0,0.3)',
                     color: active ? '#fff' : 'var(--text-secondary)',
-                    fontSize: '11.5px',
+                    fontSize: '13px',
                     fontWeight: active ? 'bold' : 'normal',
                     cursor: 'pointer',
+                    boxShadow: active ? `0 2px 10px ${v.badgeColor}33` : 'none',
                     transition: 'all 0.15s ease'
                   }}
                 >
-                  <span>{v.emoji}</span>
-                  <span>{v.notation}</span>
-                  <span style={{ opacity: 0.6, fontSize: '10px' }}>({v.name.split(' ')[0]})</span>
+                  <span style={{ fontSize: '22px', lineHeight: 1 }}>{v.emoji}</span>
+                  <span style={{ fontWeight: '800' }}>{v.notation}</span>
+                  <span style={{ opacity: 0.8, fontSize: '11.5px' }}>({v.vehicleName})</span>
                 </button>
               );
             })}
@@ -886,24 +929,27 @@ export default function VehicleComplexitySpeedway() {
                       display: 'flex',
                       justifyContent: 'space-between',
                       alignItems: 'center',
-                      marginBottom: '6px'
+                      marginBottom: '8px'
                     }}>
-                      <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+                      <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
+                        <span style={{ fontSize: '28px', lineHeight: 1, filter: 'drop-shadow(0 2px 4px rgba(0,0,0,0.5))' }} title={v.vehicleName}>
+                          {v.emoji}
+                        </span>
                         <span style={{
                           background: v.badgeColor,
                           color: '#fff',
                           fontWeight: '800',
-                          fontSize: '11px',
-                          padding: '2px 7px',
+                          fontSize: '12px',
+                          padding: '3px 8px',
                           borderRadius: '6px',
                           fontFamily: 'monospace'
                         }}>
                           {v.notation}
                         </span>
-                        <span style={{ fontWeight: 'bold', fontSize: '13px', color: '#f8fafc' }}>
+                        <span style={{ fontWeight: 'bold', fontSize: '14.5px', color: '#f8fafc' }}>
                           {v.vehicleName}
                         </span>
-                        <span style={{ fontSize: '11px', color: 'var(--text-secondary)' }}>
+                        <span style={{ fontSize: '12px', color: 'var(--text-secondary)' }}>
                           • {v.name}
                         </span>
                       </div>
@@ -911,7 +957,7 @@ export default function VehicleComplexitySpeedway() {
                       {/* Right side live status & Ops count */}
                       <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
                         <span style={{
-                          fontSize: '11px',
+                          fontSize: '12px',
                           fontWeight: '600',
                           color: status.color
                         }}>
@@ -919,10 +965,10 @@ export default function VehicleComplexitySpeedway() {
                         </span>
                         <div style={{
                           background: 'rgba(0,0,0,0.5)',
-                          padding: '3px 8px',
+                          padding: '4px 10px',
                           borderRadius: '6px',
                           border: '1px solid rgba(255,255,255,0.1)',
-                          fontSize: '11px',
+                          fontSize: '12px',
                           fontFamily: 'monospace',
                           color: v.accent
                         }}>
@@ -934,10 +980,10 @@ export default function VehicleComplexitySpeedway() {
                     {/* Asphalt Lane Track */}
                     <div style={{
                       position: 'relative',
-                      height: '52px',
+                      height: '76px',
                       background: 'linear-gradient(90deg, #1e293b 0%, #0f172a 100%)',
-                      borderRadius: '8px',
-                      border: '1px solid rgba(255,255,255,0.06)',
+                      borderRadius: '10px',
+                      border: '1px solid rgba(255,255,255,0.08)',
                       display: 'flex',
                       alignItems: 'center',
                       overflow: 'hidden'
@@ -948,8 +994,8 @@ export default function VehicleComplexitySpeedway() {
                         top: '50%',
                         left: '0',
                         right: '70px',
-                        height: '2px',
-                        background: 'repeating-linear-gradient(90deg, rgba(255,255,255,0.15) 0px, rgba(255,255,255,0.15) 20px, transparent 20px, transparent 35px)',
+                        height: '3px',
+                        background: 'repeating-linear-gradient(90deg, rgba(255,255,255,0.18) 0px, rgba(255,255,255,0.18) 24px, transparent 24px, transparent 42px)',
                         transform: 'translateY(-50%)'
                       }} />
 
@@ -959,44 +1005,45 @@ export default function VehicleComplexitySpeedway() {
                         right: '0',
                         top: '0',
                         bottom: '0',
-                        width: '36px',
+                        width: '38px',
                         background: 'repeating-conic-gradient(#fff 0% 25%, #000 0% 50%) 50% / 12px 12px',
-                        opacity: 0.85,
-                        borderLeft: '2px solid #f59e0b'
+                        opacity: 0.9,
+                        borderLeft: '3px solid #f59e0b'
                       }} />
 
-                      {/* Animated Vehicle Pod (Sleek Dark Carbon Chassis - Zero Glaring Glow) */}
+                      {/* Animated Vehicle Pod (Sleek Dark Carbon Chassis - Prominent Sized-Up Racer) */}
                       <div
                         ref={el => vehicleRefs.current[v.id] = el}
                         style={{
                           position: 'absolute',
-                          left: '6px',
+                          left: '8px',
                           display: 'flex',
                           alignItems: 'center',
-                          gap: '8px',
-                          background: '#090d16', // Solid dark carbon chassis without glaring lights
-                          border: `1.5px solid ${v.badgeColor}`,
-                          borderRadius: '8px',
-                          padding: '4px 10px',
+                          gap: '12px',
+                          background: '#090d16',
+                          border: `2px solid ${v.badgeColor}`,
+                          borderRadius: '12px',
+                          padding: '8px 18px',
                           color: '#fff',
-                          boxShadow: '0 4px 10px rgba(0, 0, 0, 0.7)', // Clean crisp drop shadow, no blinding aura
+                          boxShadow: `0 6px 18px rgba(0, 0, 0, 0.8), 0 0 14px ${v.badgeColor}40`,
                           zIndex: 5,
                           cursor: 'pointer',
-                          userSelect: 'none'
+                          userSelect: 'none',
+                          willChange: 'transform'
                         }}
                       >
                         <span style={{ 
-                          fontSize: '22px', 
+                          fontSize: '44px', 
                           lineHeight: 1, 
                           display: 'inline-block',
-                          transform: getEmojiTransform(v.id), // Forward-facing towards the finish line
-                          filter: 'drop-shadow(0 2px 4px rgba(0,0,0,0.6))'
+                          transform: getEmojiTransform(v.id), // Forward-facing towards finish line
+                          filter: 'drop-shadow(0 4px 8px rgba(0,0,0,0.8))'
                         }}>
                           {v.emoji}
                         </span>
-                        <div style={{ display: 'flex', flexDirection: 'column', gap: '1px' }}>
+                        <div style={{ display: 'flex', flexDirection: 'column', gap: '2px', minWidth: '46px' }}>
                           <span style={{ 
-                            fontSize: '11px', 
+                            fontSize: '13px', 
                             fontWeight: '900', 
                             color: v.badgeColor,
                             lineHeight: 1.1,
@@ -1007,9 +1054,9 @@ export default function VehicleComplexitySpeedway() {
                           <span
                             ref={el => progressRefs.current[v.id] = el}
                             style={{ 
-                              fontSize: '9.5px', 
-                              color: '#94a3b8', 
-                              fontWeight: '600',
+                              fontSize: '11.5px', 
+                              color: '#cbd5e1', 
+                              fontWeight: '700',
                               fontFamily: 'monospace' 
                             }}
                           >
@@ -1111,9 +1158,9 @@ export default function VehicleComplexitySpeedway() {
 
                     return (
                       <tr key={v.id} style={{ borderBottom: '1px solid rgba(255,255,255,0.05)' }}>
-                        <td style={{ padding: '8px', fontWeight: 'bold' }}>
-                          <span style={{ marginRight: '6px' }}>{v.emoji}</span>
-                          {v.vehicleName}
+                        <td style={{ padding: '10px 8px', fontWeight: 'bold' }}>
+                          <span style={{ fontSize: '26px', marginRight: '10px', verticalAlign: 'middle', display: 'inline-block' }}>{v.emoji}</span>
+                          <span style={{ fontSize: '14px' }}>{v.vehicleName}</span>
                         </td>
                         <td style={{ padding: '8px' }}>
                           <span style={{
@@ -1262,9 +1309,10 @@ export default function VehicleComplexitySpeedway() {
 
                 return (
                   <div key={v.id} style={{ display: 'flex', flexDirection: 'column', gap: '4px' }}>
-                    <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: '12px' }}>
-                      <span style={{ fontWeight: 'bold' }}>
-                        {v.emoji} {v.notation} — {v.vehicleName}
+                    <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', fontSize: '13px' }}>
+                      <span style={{ fontWeight: 'bold', display: 'flex', alignItems: 'center', gap: '8px' }}>
+                        <span style={{ fontSize: '24px' }}>{v.emoji}</span>
+                        <span>{v.notation} — {v.vehicleName}</span>
                       </span>
                       <span style={{ fontFamily: 'monospace', color: v.accent, fontWeight: 'bold' }}>
                         {formatOps(ops)} steps
@@ -1653,7 +1701,7 @@ export default function VehicleComplexitySpeedway() {
                       title={`RAM Slot ${idx}`}
                     >
                       {isOccupied ? (
-                        <span>{carEmoji}</span>
+                        <span style={{ fontSize: '22px' }}>{carEmoji}</span>
                       ) : (
                         <span style={{ fontSize: '9px', opacity: 0.2, fontFamily: 'monospace' }}>
                           P{idx}

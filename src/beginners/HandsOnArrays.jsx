@@ -1,4 +1,5 @@
 import React, { useState } from 'react';
+import NumberedCodeViewer from '../NumberedCodeViewer.jsx';
 
 export default function HandsOnArrays({ selectedLang: propLang }) {
   const normLang = (l) => {
@@ -273,20 +274,21 @@ export default function HandsOnArrays({ selectedLang: propLang }) {
           </span>
         </div>
 
-        <pre style={{
-          margin: 0,
-          padding: '12px',
+        <div style={{
           background: 'var(--glass-bg)',
           border: '1px solid var(--glass-border)',
           borderRadius: '8px',
-          color: 'var(--text-primary)',
-          fontFamily: 'Consolas, Monaco, monospace',
-          fontSize: '13px',
-          lineHeight: '1.6',
-          overflowX: 'auto'
+          overflow: 'hidden',
+          margin: 0
         }}>
-          {getCodeSnippet()}
-        </pre>
+          <NumberedCodeViewer
+            code={getCodeSnippet()}
+            fontSize={13}
+            lineHeight={1.6}
+            bg="var(--glass-bg)"
+            style={{ maxHeight: '250px' }}
+          />
+        </div>
       </div>
     </div>
   );

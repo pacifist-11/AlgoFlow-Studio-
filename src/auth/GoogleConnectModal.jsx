@@ -4,7 +4,10 @@ import {
   continueAsGuest, 
   setOnboardingSeen,
   getActiveUser,
-  getSavedAccounts
+  getSavedAccounts,
+  launchRealGoogleOAuth,
+  saveSavedAccount,
+  setActiveUser
 } from './userAuthService.js';
 import { lookupAccount, sendOtpPin, verifyOtpPin } from './otpAuthService.js';
 
@@ -108,10 +111,14 @@ export default function GoogleConnectModal({ isOpen, onClose, onUserConnected, c
   const [isVerifying, setIsVerifying] = useState(false);
   const [resendCooldown, setResendCooldown] = useState(0);
   const [customNameInput, setCustomNameInput] = useState('');
-  const [googleNotice, setGoogleNotice] = useState(false);
   const [selectedTheme, setSelectedTheme] = useState(() => {
     return currentTheme || (typeof window !== 'undefined' ? localStorage.getItem('algoflow_theme') : null) || 'Neon Cyberpunk';
   });
+
+  // Google OAuth States
+  const [isGoogleLoading, setIsGoogleLoading] = useState(false);
+  const [googleError, setGoogleError] = useState('');
+  const [googleSuccess, setGoogleSuccess] = useState('');
 
   const digitInputRefs = [useRef(null), useRef(null), useRef(null), useRef(null)];
   const lookupTimeoutRef = useRef(null);
@@ -122,9 +129,12 @@ export default function GoogleConnectModal({ isOpen, onClose, onUserConnected, c
     if (isOpen && !prevIsOpenRef.current) {
       const user = getActiveUser();
       setActiveUserState(user);
+      setSavedAccounts(getSavedAccounts());
       setOtpError('');
       setOtpSuccess('');
-      setGoogleNotice(false);
+      setGoogleError('');
+      setGoogleSuccess('');
+      setIsGoogleLoading(false);
       setOtpStep('input');
       setTargetInput('');
       setRecognizedName('');
@@ -138,6 +148,48 @@ export default function GoogleConnectModal({ isOpen, onClose, onUserConnected, c
     }
     prevIsOpenRef.current = isOpen;
   }, [isOpen]);
+
+  const handleGoogleSignIn = () => {
+    setIsGoogleLoading(true);
+    setGoogleError('');
+    setGoogleSuccess('');
+
+    launchRealGoogleOAuth({
+      clientId: getGoogleClientId(),
+      onUserSuccess: async (profile) => {
+        setIsGoogleLoading(false);
+        setActiveUserState(profile);
+        setSavedAccounts(getSavedAccounts());
+        setGoogleSuccess(`Successfully connected as ${profile.name}!`);
+
+        const isKnown = (savedAccounts || []).some(a => a.email.toLowerCase() === profile.email.toLowerCase());
+        if (!isKnown) {
+          setPendingUser(profile);
+          setOtpStep('theme_select');
+        } else {
+          setOnboardingSeen();
+          if (onUserConnected) onUserConnected(profile);
+          setTimeout(() => {
+            if (onClose) onClose();
+          }, 500);
+        }
+      },
+      onError: (err) => {
+        setIsGoogleLoading(false);
+        const errStr = typeof err === 'string' ? err : (err?.message || 'Google OAuth failed.');
+        if (errStr.includes('popup_closed_by_user')) {
+          setGoogleError('Sign-in cancelled: The Google sign-in popup was closed.');
+        } else if (errStr.includes('origin_mismatch') || errStr.includes('400')) {
+          const currentOrigin = typeof window !== 'undefined' ? window.location.origin : 'http://localhost:5173';
+          setGoogleError(`Origin Mismatch (Error 400): Please add "${currentOrigin}" to Authorized JavaScript origins in your Google Cloud Console.`);
+        } else if (errStr.includes('access_denied')) {
+          setGoogleError('Access was not granted in the Google account prompt.');
+        } else {
+          setGoogleError(errStr);
+        }
+      }
+    });
+  };
 
   // Sync selectedTheme when currentTheme prop changes, without resetting modal steps
   useEffect(() => {
@@ -413,24 +465,34 @@ export default function GoogleConnectModal({ isOpen, onClose, onUserConnected, c
           <button
             onClick={() => {
               setActiveTab('google');
-              setGoogleNotice(true);
+              setGoogleError('');
+              setGoogleSuccess('');
             }}
             style={{
-              padding: '9px 14px',
+              flex: 1,
+              padding: '9px 12px',
               borderRadius: '10px',
               border: 'none',
-              background: activeTab === 'google' ? 'rgba(255, 255, 255, 0.1)' : 'transparent',
-              color: activeTab === 'google' ? '#f59e0b' : '#64748b',
-              fontWeight: '600',
-              fontSize: '0.84rem',
+              background: activeTab === 'google' ? 'linear-gradient(135deg, #ea4335, #4285f4)' : 'transparent',
+              color: activeTab === 'google' ? '#ffffff' : '#94a3b8',
+              fontWeight: activeTab === 'google' ? '700' : '500',
+              fontSize: '0.86rem',
               cursor: 'pointer',
               display: 'flex',
               alignItems: 'center',
-              gap: '6px'
+              justifyContent: 'center',
+              gap: '6px',
+              transition: 'all 0.2s ease',
+              boxShadow: activeTab === 'google' ? '0 2px 10px rgba(66, 133, 244, 0.4)' : 'none'
             }}
           >
-            <span>⚠️</span>
-            <span>Google Auth <small style={{ opacity: 0.8, fontSize: '0.75rem' }}>(Under Progress)</small></span>
+            <svg width="15" height="15" viewBox="0 0 24 24">
+              <path fill="#4285F4" d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92c-.26 1.37-1.04 2.53-2.21 3.31v2.77h3.57c2.08-1.92 3.28-4.74 3.28-8.09z"/>
+              <path fill="#34A853" d="M12 23c2.97 0 5.46-.98 7.28-2.66l-3.57-2.77c-.98.66-2.23 1.06-3.71 1.06-2.86 0-5.29-1.93-6.16-4.53H2.18v2.84C3.99 20.53 7.7 23 12 23z"/>
+              <path fill="#FBBC05" d="M5.84 14.09c-.22-.66-.35-1.36-.35-2.09s.13-1.43.35-2.09V7.06H2.18C1.43 8.55 1 10.22 1 12s.43 3.45 1.18 4.94l2.85-2.22.81-.63z"/>
+              <path fill="#EA4335" d="M12 5.38c1.62 0 3.06.56 4.21 1.64l3.15-3.15C17.45 2.09 14.97 1 12 1 7.7 1 3.99 3.47 2.18 7.06l3.66 2.84c.87-2.6 3.3-4.52 6.16-4.52z"/>
+            </svg>
+            <span>Google Sign-In</span>
           </button>
         </div>
 
@@ -1030,46 +1092,195 @@ export default function GoogleConnectModal({ isOpen, onClose, onUserConnected, c
           </div>
         )}
 
-        {/* ── TAB 2: GOOGLE AUTH UNDER PROGRESS NOTICE ── */}
+        {/* ── TAB 2: REAL GOOGLE OAUTH 2.0 FLOW ── */}
         {activeTab === 'google' && (
-          <div style={{
-            padding: '24px',
-            borderRadius: '16px',
-            background: 'rgba(245, 158, 11, 0.08)',
-            border: '1.5px solid rgba(245, 158, 11, 0.35)',
-            textAlign: 'center'
-          }}>
-            <div style={{ fontSize: '32px', marginBottom: '10px' }}>⚠️</div>
-            <h3 style={{ margin: '0 0 8px 0', color: '#fbbf24', fontSize: '1.15rem' }}>
-              Google OAuth 2.0 is Under Progress
-            </h3>
-            <p style={{ margin: '0 0 16px 0', color: '#e2e8f0', fontSize: '0.88rem', lineHeight: '1.5' }}>
-              Google Identity OAuth verification is currently in development and undergoing verification in Google Cloud Console.
-            </p>
-            <div style={{
-              background: 'rgba(0, 0, 0, 0.3)',
-              padding: '12px',
-              borderRadius: '10px',
-              fontSize: '0.82rem',
-              color: '#94a3b8',
-              marginBottom: '16px'
-            }}>
-              💡 Please use our <strong>⚡ 4-Digit PIN OTP</strong> method. It gives you instant access to all features, AI mentoring, and automatically saves your session forever!
+          <div style={{ display: 'flex', flexDirection: 'column', gap: '18px' }}>
+            {/* Header info */}
+            <div style={{ textAlign: 'center' }}>
+              <div style={{
+                width: '52px',
+                height: '52px',
+                borderRadius: '50%',
+                background: 'rgba(255, 255, 255, 0.06)',
+                border: '1.5px solid rgba(255, 255, 255, 0.15)',
+                display: 'inline-flex',
+                alignItems: 'center',
+                justifyContent: 'center',
+                marginBottom: '10px',
+                boxShadow: '0 4px 16px rgba(0, 0, 0, 0.3)'
+              }}>
+                <svg width="26" height="26" viewBox="0 0 24 24">
+                  <path fill="#4285F4" d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92c-.26 1.37-1.04 2.53-2.21 3.31v2.77h3.57c2.08-1.92 3.28-4.74 3.28-8.09z"/>
+                  <path fill="#34A853" d="M12 23c2.97 0 5.46-.98 7.28-2.66l-3.57-2.77c-.98.66-2.23 1.06-3.71 1.06-2.86 0-5.29-1.93-6.16-4.53H2.18v2.84C3.99 20.53 7.7 23 12 23z"/>
+                  <path fill="#FBBC05" d="M5.84 14.09c-.22-.66-.35-1.36-.35-2.09s.13-1.43.35-2.09V7.06H2.18C1.43 8.55 1 10.22 1 12s.43 3.45 1.18 4.94l2.85-2.22.81-.63z"/>
+                  <path fill="#EA4335" d="M12 5.38c1.62 0 3.06.56 4.21 1.64l3.15-3.15C17.45 2.09 14.97 1 12 1 7.7 1 3.99 3.47 2.18 7.06l3.66 2.84c.87-2.6 3.3-4.52 6.16-4.52z"/>
+                </svg>
+              </div>
+              <h3 style={{ margin: '0 0 6px 0', fontSize: '1.25rem', color: '#f8fafc', fontWeight: '800' }}>
+                Sign in with Google
+              </h3>
+              <p style={{ margin: 0, fontSize: '0.86rem', color: '#94a3b8' }}>
+                Secure 1-click authentication linked to your verified Google account
+              </p>
             </div>
-            <button
-              onClick={() => setActiveTab('otp')}
-              style={{
-                padding: '10px 20px',
+
+            {/* Error Message */}
+            {googleError && (
+              <div style={{
+                padding: '12px 14px',
                 borderRadius: '12px',
-                background: 'linear-gradient(135deg, #0284c7, #2563eb)',
-                border: 'none',
-                color: '#ffffff',
-                fontWeight: '700',
-                cursor: 'pointer'
-              }}
-            >
-              Switch to 4-Digit PIN OTP (Recommended) →
-            </button>
+                background: 'rgba(239, 68, 68, 0.12)',
+                border: '1.5px solid rgba(239, 68, 68, 0.4)',
+                color: '#fca5a5',
+                fontSize: '0.84rem',
+                lineHeight: '1.5'
+              }}>
+                <div style={{ display: 'flex', alignItems: 'flex-start', gap: '8px' }}>
+                  <span style={{ fontSize: '16px', flexShrink: 0 }}>⚠️</span>
+                  <div>
+                    <strong>Google Sign-In Notice:</strong>
+                    <div style={{ marginTop: '3px' }}>{googleError}</div>
+                  </div>
+                </div>
+              </div>
+            )}
+
+            {/* Success Message */}
+            {googleSuccess && (
+              <div style={{
+                padding: '12px 14px',
+                borderRadius: '12px',
+                background: 'rgba(16, 185, 129, 0.12)',
+                border: '1.5px solid rgba(16, 185, 129, 0.4)',
+                color: '#6ee7b7',
+                fontSize: '0.86rem',
+                textAlign: 'center'
+              }}>
+                ✓ {googleSuccess}
+              </div>
+            )}
+
+            {/* Primary Action Button */}
+            <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: '14px', margin: '4px 0' }}>
+              <button
+                type="button"
+                onClick={handleGoogleSignIn}
+                disabled={isGoogleLoading}
+                style={{
+                  width: '100%',
+                  maxWidth: '340px',
+                  padding: '12px 20px',
+                  borderRadius: '12px',
+                  background: isGoogleLoading ? '#f1f5f9' : '#ffffff',
+                  color: '#1f2937',
+                  border: '1px solid rgba(255, 255, 255, 0.3)',
+                  boxShadow: '0 4px 18px rgba(0, 0, 0, 0.25), 0 0 1px rgba(0,0,0,0.4)',
+                  fontWeight: '700',
+                  fontSize: '0.96rem',
+                  display: 'flex',
+                  alignItems: 'center',
+                  justifyContent: 'center',
+                  gap: '12px',
+                  cursor: isGoogleLoading ? 'not-allowed' : 'pointer',
+                  transition: 'all 0.2s cubic-bezier(0.4, 0, 0.2, 1)',
+                  opacity: isGoogleLoading ? 0.8 : 1
+                }}
+                onMouseEnter={e => {
+                  if (!isGoogleLoading) {
+                    e.currentTarget.style.transform = 'translateY(-1px)';
+                    e.currentTarget.style.boxShadow = '0 6px 22px rgba(66, 133, 244, 0.35)';
+                  }
+                }}
+                onMouseLeave={e => {
+                  e.currentTarget.style.transform = 'translateY(0)';
+                  e.currentTarget.style.boxShadow = '0 4px 18px rgba(0, 0, 0, 0.25), 0 0 1px rgba(0,0,0,0.4)';
+                }}
+              >
+                {isGoogleLoading ? (
+                  <>
+                    <span style={{ animation: 'spin 1s infinite linear', fontSize: '18px' }}>⚡</span>
+                    <span>Connecting with Google...</span>
+                  </>
+                ) : (
+                  <>
+                    <svg width="20" height="20" viewBox="0 0 24 24">
+                      <path fill="#4285F4" d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92c-.26 1.37-1.04 2.53-2.21 3.31v2.77h3.57c2.08-1.92 3.28-4.74 3.28-8.09z"/>
+                      <path fill="#34A853" d="M12 23c2.97 0 5.46-.98 7.28-2.66l-3.57-2.77c-.98.66-2.23 1.06-3.71 1.06-2.86 0-5.29-1.93-6.16-4.53H2.18v2.84C3.99 20.53 7.7 23 12 23z"/>
+                      <path fill="#FBBC05" d="M5.84 14.09c-.22-.66-.35-1.36-.35-2.09s.13-1.43.35-2.09V7.06H2.18C1.43 8.55 1 10.22 1 12s.43 3.45 1.18 4.94l2.85-2.22.81-.63z"/>
+                      <path fill="#EA4335" d="M12 5.38c1.62 0 3.06.56 4.21 1.64l3.15-3.15C17.45 2.09 14.97 1 12 1 7.7 1 3.99 3.47 2.18 7.06l3.66 2.84c.87-2.6 3.3-4.52 6.16-4.52z"/>
+                    </svg>
+                    <span>Continue with Google</span>
+                  </>
+                )}
+              </button>
+            </div>
+
+            {/* Previously connected Google accounts on this browser */}
+            {savedAccounts && savedAccounts.filter(a => a.authProvider === 'google').length > 0 && (
+              <div style={{
+                background: 'rgba(15, 23, 42, 0.6)',
+                borderRadius: '14px',
+                border: '1px solid rgba(255, 255, 255, 0.08)',
+                padding: '12px 14px'
+              }}>
+                <div style={{ fontSize: '0.78rem', color: '#94a3b8', fontWeight: '700', marginBottom: '8px' }}>
+                  Previously Connected on this Device:
+                </div>
+                <div style={{ display: 'flex', flexDirection: 'column', gap: '6px' }}>
+                  {savedAccounts.filter(a => a.authProvider === 'google').map((acc, aIdx) => (
+                    <div
+                      key={aIdx}
+                      onClick={() => {
+                        setActiveUserState(acc);
+                        setActiveUser(acc);
+                        setOnboardingSeen();
+                        if (onUserConnected) onUserConnected(acc);
+                        if (onClose) onClose();
+                      }}
+                      style={{
+                        display: 'flex',
+                        alignItems: 'center',
+                        justifyContent: 'space-between',
+                        padding: '8px 12px',
+                        borderRadius: '10px',
+                        background: 'rgba(30, 41, 59, 0.65)',
+                        border: '1px solid rgba(56, 189, 248, 0.2)',
+                        cursor: 'pointer',
+                        transition: 'all 0.15s ease'
+                      }}
+                      onMouseEnter={e => e.currentTarget.style.borderColor = '#38bdf8'}
+                      onMouseLeave={e => e.currentTarget.style.borderColor = 'rgba(56, 189, 248, 0.2)'}
+                    >
+                      <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
+                        {acc.picture ? (
+                          <img src={acc.picture} alt="" style={{ width: '28px', height: '28px', borderRadius: '50%' }} />
+                        ) : (
+                          <div style={{
+                            width: '28px',
+                            height: '28px',
+                            borderRadius: '50%',
+                            background: getAvatarBgColor(acc.email),
+                            color: '#fff',
+                            fontWeight: '700',
+                            fontSize: '12px',
+                            display: 'flex',
+                            alignItems: 'center',
+                            justifyContent: 'center'
+                          }}>
+                            {acc.initial || acc.name?.[0] || 'G'}
+                          </div>
+                        )}
+                        <div style={{ textAlign: 'left' }}>
+                          <div style={{ fontSize: '0.86rem', fontWeight: '700', color: '#f8fafc' }}>{acc.name}</div>
+                          <div style={{ fontSize: '0.75rem', color: '#94a3b8' }}>{acc.email}</div>
+                        </div>
+                      </div>
+                      <span style={{ fontSize: '0.78rem', color: '#38bdf8', fontWeight: '700' }}>Select →</span>
+                    </div>
+                  ))}
+                </div>
+              </div>
+            )}
           </div>
         )}
 

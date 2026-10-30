@@ -13,6 +13,15 @@ export default async function handler(req, res) {
     return res.status(403).json({ error: 'Unauthorized. Access denied.' });
   }
 
+  let body = req.body || {};
+  if (typeof body === 'string') {
+    try { body = JSON.parse(body); } catch { body = {}; }
+  }
+
+  if (body.confirm !== 'PERMANENTLY_DELETE_FEEDBACKS') {
+    return res.status(400).json({ error: 'Confirmation required. Pass { confirm: "PERMANENTLY_DELETE_FEEDBACKS" } in request body.' });
+  }
+
   try {
     await sql`TRUNCATE TABLE feedbacks RESTART IDENTITY`;
     console.log('🗑️ Neon feedbacks table truncated.');

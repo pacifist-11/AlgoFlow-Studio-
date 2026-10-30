@@ -6210,6 +6210,8 @@ const DSANotesVisualizer = ({
                 style={{ 
                   display: 'flex',
                   alignItems: 'center',
+                  minWidth: 'max-content',
+                  width: '100%',
                   background: rowBg,
                   borderLeft: rowBorder,
                   padding: '2px 8px',
@@ -6218,11 +6220,17 @@ const DSANotesVisualizer = ({
                 }}
               >
                 <span style={{
+                  position: 'sticky',
+                  left: 0,
+                  zIndex: 3,
                   width: '38px',
                   userSelect: 'none',
                   textAlign: 'right',
                   paddingRight: '14px',
                   color: isJustExecuted ? '#10b981' : isNextToExecute ? '#ef4444' : 'var(--text-secondary)',
+                  background: isJustExecuted ? 'rgba(6, 40, 25, 0.98)' : isNextToExecute ? 'rgba(40, 10, 15, 0.98)' : 'var(--bg-secondary)',
+                  borderRight: '1px solid rgba(255, 255, 255, 0.08)',
+                  marginRight: '8px',
                   fontFamily: "'Fira Code', 'Cascadia Code', monospace",
                   fontSize: '0.85em',
                   flexShrink: 0,
@@ -6560,6 +6568,8 @@ const DSANotesVisualizer = ({
                   <div key={idx} style={{
                     display: 'flex',
                     alignItems: 'flex-start',
+                    minWidth: 'max-content',
+                    width: '100%',
                     padding: '2px 0',
                     fontFamily: "'JetBrains Mono', 'Fira Code', 'Cascadia Code', Consolas, monospace",
                     borderRadius: '4px',
@@ -6569,6 +6579,9 @@ const DSANotesVisualizer = ({
                   onMouseLeave={e => e.currentTarget.style.background = 'transparent'}
                   >
                     <span style={{
+                      position: 'sticky',
+                      left: 0,
+                      zIndex: 3,
                       width: '46px',
                       userSelect: 'none',
                       textAlign: 'right',
@@ -6579,7 +6592,7 @@ const DSANotesVisualizer = ({
                       borderRight: '1.5px solid rgba(56, 189, 248, 0.25)',
                       marginRight: '14px',
                       fontWeight: 600,
-                      background: 'rgba(3, 7, 18, 0.6)'
+                      background: '#040711'
                     }}>
                       {idx + 1}
                     </span>

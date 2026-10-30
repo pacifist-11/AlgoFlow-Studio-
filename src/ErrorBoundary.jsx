@@ -1,5 +1,6 @@
 /* eslint-disable */
 import React from 'react';
+import { recordScreenError } from './screenContext.js';
 
 class ErrorBoundary extends React.Component {
   constructor(props) {
@@ -13,6 +14,7 @@ class ErrorBoundary extends React.Component {
 
   componentDidCatch(error, errorInfo) {
     console.error("AlgoFlow React ErrorBoundary caught an error:", error, errorInfo);
+    recordScreenError(`React UI Crash: ${error?.message || 'Component failed to render'}`);
   }
 
   render() {

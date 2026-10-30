@@ -5,6 +5,7 @@
 import { checkRestrictedWords } from './restrictedWords.js';
 import { TOPIC_INFO } from '../topicInfoData.js';
 import { CURRICULUM_KNOWLEDGE_BASE, findCurriculumDirectResponse } from './curriculumKnowledgeData.js';
+import { getScreenContext } from '../screenContext.js';
 
 export const ALGOFLOW_KNOWLEDGE_BASE = [
   // ─── 1. ALGOFLOW STUDIO PROJECT FEATURES & VISUALIZERS ───────────────────────
@@ -713,6 +714,71 @@ export function generateLocalRagResponse(userMessage, activeCode = '', activeLan
     return {
       text: `### ⚠️ Content Warning: Inappropriate Language Detected\n\nI cannot generate responses for messages containing offensive, inappropriate, or restricted words.\n\nAlgoFlow AI Mentor is dedicated to computer science, coding practice, and engineering education. Please rephrase your question using respectful language, and I'll be glad to help!`,
       sources: ['Community Guidelines & Ethics Filter']
+    };
+  }
+
+  // ── 0-SCREEN. REAL-TIME SCREEN AWARENESS & PROBLEM DIAGNOSIS ──────────
+  const isScreenQuery = 
+    lower.includes('screen') || lower.includes('on my screen') || lower.includes("what's happening") ||
+    lower.includes('what happened') || lower.includes('what is happening') || lower.includes('what did happen') ||
+    lower.includes('diagnose') || lower.includes('why did it fail') || lower.includes('why failed') ||
+    lower.includes('error on screen') || lower.includes('problem on screen') || lower.includes('fix screen issue') ||
+    lower.includes('current step') || lower.includes('current visualizer') || lower.includes('what step');
+
+  if (isScreenQuery) {
+    const screen = getScreenContext();
+    const hasError = screen.lastErrorOrIssue || (screen.runtimeErrors && screen.runtimeErrors.length > 0);
+    const activeErr = screen.lastErrorOrIssue || (screen.runtimeErrors ? screen.runtimeErrors[0] : null);
+
+    let answer = `### 👁️ Live Screen Telemetry & Status Report\n\n`;
+    answer += `I am actively monitoring your screen in real time. Here is what is currently on your display:\n\n`;
+    answer += `* 🖥️ **Active Visualizer / Studio:** ${screen.screenTitle || 'AlgoFlow Dashboard'}\n`;
+    answer += `* ⚙️ **Active Algorithm:** ${screen.activeAlgo || 'None'}\n`;
+    if (screen.totalSteps > 0) {
+      answer += `* ⏱️ **Current Simulation Step:** Step ${screen.currentStep} of ${screen.totalSteps}\n`;
+    }
+    if (screen.currentStepMessage) {
+      answer += `* 📝 **Live Step Action:** "${screen.currentStepMessage}"\n`;
+    }
+    if (screen.screenDataSummary) {
+      answer += `* 📊 **Canvas / Data Summary:** ${screen.screenDataSummary}\n`;
+    }
+
+    if (hasError) {
+      answer += `\n---\n\n### ⚠️ Detected Screen Problem / Issue\n\n`;
+      answer += `**Alert:** \`${activeErr}\`\n\n`;
+      
+      const errStr = String(activeErr);
+      if (errStr.includes('401') || errStr.includes('Piston') || errStr.includes('Execution service')) {
+        answer += `**Root Cause & Immediate Solution:**\n`;
+        answer += `• **Why it happened:** The legacy public Piston compilation server (emkc.org) is now restricted (HTTP 401).\n`;
+        answer += `• **Solution 1 (Instant Local):** Switch the language dropdown to **JavaScript** or **Python**. Both run 100% locally in your browser with WebAssembly (Pyodide / V8) with zero network dependency.\n`;
+        answer += `• **Solution 2 (Local Docker):** Click **⚙️ Settings** in the code runner and enter your local Piston container URL (e.g., \`http://localhost:2000/api/v2/execute\`).\n`;
+      } else if (errStr.includes('Negative') || errStr.includes('cycle')) {
+        answer += `**Root Cause & Explanation:**\n`;
+        answer += `• A directed cycle with a net negative sum was detected during relaxation. In negative cycles, shortest paths become infinitely negative (-∞), making standard shortest path undefined.\n`;
+        answer += `• **How to fix:** Increase the edge weights in the graph so the total sum around any cycle is ≥ 0, or switch to an algorithm that detects negative cycles (e.g., Bellman-Ford).\n`;
+      } else if (errStr.includes('same') || errStr.includes('Source and Sink') || errStr.includes('Self-loops')) {
+        answer += `**Root Cause & Fix:**\n`;
+        answer += `• Node selections cannot be identical for this operation. Please choose distinct start and target nodes.\n`;
+      } else {
+        answer += `**Recommended Action:**\n`;
+        answer += `Review the log panel above or reset the animation. If this is a syntax error in your custom code, check line numbers and missing semicolons or brackets.\n`;
+      }
+    } else {
+      answer += `\n---\n\n✅ **System Health:** No errors or crashes are currently detected on your screen. Everything is running smoothly!\n`;
+    }
+
+    if (screen.recentLogs && screen.recentLogs.length > 0) {
+      answer += `\n**Recent Activity Log:**\n`;
+      screen.recentLogs.slice(-3).forEach(l => {
+        answer += `• ${l}\n`;
+      });
+    }
+
+    return {
+      text: answer,
+      sources: ['Live Browser Screen Telemetry', 'AlgoFlow Diagnostics Engine']
     };
   }
 

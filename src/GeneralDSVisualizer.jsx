@@ -3,6 +3,7 @@ import React, { useState, useEffect, useRef } from 'react';
 import gsap from 'gsap';
 import { getGeneralCodeTemplate } from './codeTemplatesGeneral';
 import CodeRunnerModal from './CodeRunnerModal.jsx';
+import NumberedCodeViewer from './NumberedCodeViewer.jsx';
 
 // Allman brace formatter
 const toAllman = code => {
@@ -325,9 +326,23 @@ const GeneralDSVisualizer = ({ onBack, openSettings, initialType = 'HASH_TABLE',
     return () => window.removeEventListener('resize', handleResize);
   }, []);
 
+  // Dynamic free-space finder: places log panel in bottom-right corner away from the active data structure
+  const getFreeLogPosition = () => {
+    if (typeof window === 'undefined') return { x: 500, y: 350 };
+    const winW = window.innerWidth;
+    const winH = window.innerHeight;
+    const panelW = 520;
+    const panelH = 280;
+    return {
+      x: Math.max(30, winW - panelW - 40),
+      y: Math.max(80, winH - panelH - 100)
+    };
+  };
+
   // Draggable execution log states
   const [showLogPanel, setShowLogPanel] = useState(true);
-  const [logPosition, setLogPosition] = useState({ x: 50, y: 150 });
+  const [logPosition, setLogPosition] = useState(() => getFreeLogPosition());
+  const hasUserMovedLog = useRef(false);
   const [logSize, setLogSize] = useState({ width: 520, height: 280 });
   const [isDraggingLog, setIsDraggingLog] = useState(false);
   const dragStart = useRef({ x: 0, y: 0 });
@@ -357,6 +372,7 @@ const GeneralDSVisualizer = ({ onBack, openSettings, initialType = 'HASH_TABLE',
       const dx = clientX - dragStart.current.x;
       const dy = clientY - dragStart.current.y;
       
+      hasUserMovedLog.current = true;
       setLogPosition({
         x: Math.max(-logSize.width + 40, Math.min(window.innerWidth - 40, panelStart.current.x + dx)),
         y: Math.max(0, Math.min(window.innerHeight - 40, panelStart.current.y + dy))
@@ -543,13 +559,13 @@ const GeneralDSVisualizer = ({ onBack, openSettings, initialType = 'HASH_TABLE',
     else if (dsType === 'HASH_TABLE' && !initialVariety.startsWith('HASH_')) initialVariety = 'HASH_LINEAR';
     
     if (initialVariety !== dsVariety) {
-        setDsVariety(initialVariety);
-    } else {
-        handleClear(dsVariety, tableSize);
+      setDsVariety(initialVariety);
     }
-  }, [dsType, tableSize]);
+  }, [dsType]);
 
-  useEffect(() => { handleClear(dsVariety, tableSize); }, [dsVariety, tableSize]);
+  useEffect(() => { 
+    handleClear(dsVariety, tableSize); 
+  }, [dsVariety, tableSize]);
 
   // GSAP Collision & Active Animation Trigger
   useEffect(() => {
@@ -2100,11 +2116,38 @@ const GeneralDSVisualizer = ({ onBack, openSettings, initialType = 'HASH_TABLE',
 
       <div style={{ flex: 1, display: 'flex', flexDirection: isMobile ? 'column' : 'row', overflow: 'hidden' }}>
         <div style={{ display: (isMobile && mobileTab !== 'vis') ? 'none' : 'flex', flex: 1, flexDirection: 'column', padding: isMobile ? '0.35rem' : '1.5rem', overflow: 'hidden' }}>
-          <div style={{ textAlign: 'center', marginBottom: '1.2rem', height: '40px', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
-            <span style={{ fontSize: '1.4rem', color: 'var(--text-primary)', fontWeight: 'bold', background: 'rgba(255,255,255,0.05)', padding: '6px 20px', borderRadius: '20px', border: '1px solid var(--glass-border)', boxShadow: '0 4px 15px rgba(0,0,0,0.2)' }}>
-              {frame.msg || 'Select an operation to begin...'}
-            </span>
-          </div>
+          {(() => {
+            const isCompleted = timeline.length > 0 && currentStep === timeline.length - 1;
+            const comp = getComplexityInfo(dsType, dsVariety);
+            const count = dsType === 'HASH_TABLE' ? getHTElementCount(frame.ht || hashTable, dsVariety === 'HASH_CHAINING') : (frame.arr ? frame.arr.length : elements.length);
+            
+            // Try to match the last operation complexity
+            let matchedOp = null;
+            if (comp && comp.operations) {
+              const msgLower = (frame.msg || '').toLowerCase();
+              matchedOp = comp.operations.find(o => msgLower.includes(o.op.toLowerCase())) || comp.operations[0];
+            }
+
+            return (
+              <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', marginBottom: '1.2rem', gap: '8px', flexShrink: 0 }}>
+                <div style={{ height: '40px', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+                  <span style={{
+                    fontSize: isMobile ? '1.02rem' : '1.35rem',
+                    color: isCompleted ? '#34d399' : 'var(--text-primary)',
+                    fontWeight: 'bold',
+                    background: isCompleted ? 'rgba(52, 211, 153, 0.12)' : 'rgba(255,255,255,0.05)',
+                    padding: '6px 20px',
+                    borderRadius: '20px',
+                    border: isCompleted ? '1.5px solid rgba(52, 211, 153, 0.45)' : '1px solid var(--glass-border)',
+                    boxShadow: isCompleted ? '0 0 20px rgba(52, 211, 153, 0.25)' : '0 4px 15px rgba(0,0,0,0.2)',
+                    transition: 'all 0.3s ease'
+                  }}>
+                    {frame.msg || 'Select an operation to begin...'}
+                  </span>
+                </div>
+              </div>
+            );
+          })()}
           <div style={{ flex: 1, display: 'flex', flexDirection: 'column', gap: '1.5rem', overflow: 'hidden', width: '100%' }}>
             <div style={{ flex: 1, display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', background: 'var(--glass-bg)', borderRadius: '16px', border: '1px solid var(--glass-border)', overflow: 'auto', position: 'relative', boxShadow: 'inset 0 0 40px rgba(0,0,0,0.2)', width: '100%', height: '100%' }}>
             
@@ -2228,21 +2271,47 @@ const GeneralDSVisualizer = ({ onBack, openSettings, initialType = 'HASH_TABLE',
                 <span style={{ fontWeight: 600, fontSize: '0.8rem', color: 'var(--text-primary)', display: 'flex', alignItems: 'center', gap: '6px' }}>
                   📋 Execution Log & Active State
                 </span>
-                <button
-                  onClick={() => setShowLogPanel(false)}
-                  style={{
-                    background: 'transparent',
-                    border: 'none',
-                    color: 'var(--text-secondary)',
-                    cursor: 'pointer',
-                    fontSize: '1rem',
-                    padding: '0 4px',
-                    lineHeight: 1
-                  }}
-                  title="Hide Log"
-                >
-                  ×
-                </button>
+                <div style={{ display: 'flex', alignItems: 'center', gap: '6px' }}>
+                  <button
+                    onClick={() => {
+                      hasUserMovedLog.current = false;
+                      setLogPosition(getFreeLogPosition());
+                    }}
+                    style={{
+                      background: 'rgba(255,255,255,0.06)',
+                      border: '1px solid rgba(255,255,255,0.12)',
+                      borderRadius: '5px',
+                      color: 'var(--text-secondary)',
+                      cursor: 'pointer',
+                      fontSize: '0.72rem',
+                      padding: '2px 7px',
+                      display: 'flex',
+                      alignItems: 'center',
+                      gap: '4px',
+                      transition: 'all 0.2s ease'
+                    }}
+                    onMouseEnter={e => { e.currentTarget.style.color = 'var(--text-primary)'; e.currentTarget.style.borderColor = 'rgba(255,255,255,0.25)'; }}
+                    onMouseLeave={e => { e.currentTarget.style.color = 'var(--text-secondary)'; e.currentTarget.style.borderColor = 'rgba(255,255,255,0.12)'; }}
+                    title="Snap log to free unoccupied canvas space (avoids core animation)"
+                  >
+                    <span>🧭</span> Free Space
+                  </button>
+                  <button
+                    onClick={() => setShowLogPanel(false)}
+                    style={{
+                      background: 'transparent',
+                      border: 'none',
+                      color: 'var(--text-secondary)',
+                      cursor: 'pointer',
+                      fontSize: '1rem',
+                      padding: '0 4px',
+                      lineHeight: 1
+                    }}
+                    title="Hide Log"
+                  >
+                    ×
+                  </button>
+                </div>
               </div>
 
               {/* Content Body */}
@@ -2679,7 +2748,7 @@ const GeneralDSVisualizer = ({ onBack, openSettings, initialType = 'HASH_TABLE',
                 <button onClick={() => setLocalFontSize(prev => Math.max(10, prev - 2))} style={{ background: 'transparent', border: '1px solid var(--glass-border)', borderRadius: '4px', color: 'var(--text-secondary)', fontSize: '0.73rem', padding: '1px 6px', cursor: 'pointer' }}>A−</button>
                 <button onClick={() => setLocalFontSize(prev => Math.min(40, prev + 2))} style={{ background: 'transparent', border: '1px solid var(--glass-border)', borderRadius: '4px', color: 'var(--text-secondary)', fontSize: '0.73rem', padding: '1px 6px', cursor: 'pointer' }}>A+</button>
                 <button 
-                  onClick={() => onShowUpcomingFeatures ? onShowUpcomingFeatures() : setIsRunnerOpen(true)}
+                  onClick={() => setIsRunnerOpen(true)}
                   style={{ padding: '2px 8px', fontSize: '0.74rem', whiteSpace: 'nowrap', display: 'inline-flex', alignItems: 'center', background: 'rgba(16,185,129,0.15)', color: '#34d399', border: '1px solid rgba(16,185,129,0.3)', borderRadius: '5px', cursor: 'pointer' }}
                 >▶ Run</button>
                 <button onClick={handleCopyCode} style={{ padding: '2px 8px', fontSize: '0.74rem', background: 'transparent', border: '1px solid var(--glass-border)', borderRadius: '5px', color: 'var(--text-secondary)', cursor: 'pointer' }}>
@@ -2687,31 +2756,14 @@ const GeneralDSVisualizer = ({ onBack, openSettings, initialType = 'HASH_TABLE',
                 </button>
               </div>
             </div>
-            <div style={{ flex: 1, padding: '1rem 0', overflow: 'auto', background: 'var(--bg-secondary)' }}>
-              <pre style={{ 
-                margin: 0, 
-                color: 'var(--text-primary)', 
-                fontFamily: "'Fira Code', monospace", 
-                fontSize: `${localFontSize}px`, 
-                lineHeight: '1.6' 
-              }}>
-                <code>
-                  {toAllman(currentCode).split('\n').map((line, i) => {
-                    const isMatch = frame.activeLineText && line.includes(frame.activeLineText) && !line.trim().startsWith('//');
-                    return (
-                      <div key={i} style={{ 
-                          background: isMatch ? 'rgba(16, 185, 129, 0.15)' : 'transparent',
-                          borderLeft: isMatch ? '3px solid #10b981' : '3px solid transparent',
-                          padding: '1px 12px',
-                          transition: 'all 0.2s'
-                      }}>
-                          <span style={{ whiteSpace: wordWrap === 'on' ? 'pre-wrap' : 'pre', fontFamily: "'Fira Code', monospace", color: isMatch ? '#ffffff' : 'var(--text-primary)' }}>{line || ' '}</span>
-                      </div>
-                    );
-                  })}
-                </code>
-              </pre>
-            </div>
+            <NumberedCodeViewer
+              code={toAllman(currentCode)}
+              fontSize={localFontSize}
+              wordWrap={wordWrap}
+              accentColor="emerald"
+              isHighlighted={(line) => frame.activeLineText && line.includes(frame.activeLineText) && !line.trim().startsWith('//')}
+              bg="var(--bg-secondary)"
+            />
           </div>
         </>
         )}

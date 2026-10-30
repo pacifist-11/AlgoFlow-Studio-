@@ -12,9 +12,11 @@ import PatternsVisualizer from './PatternsVisualizer.jsx';
 import DSANotesVisualizer from './DSANotesVisualizer.jsx';
 import DSAStudyVisualizer from './DSAStudyVisualizer.jsx';
 import DSASumsVisualizer from './DSASumsVisualizer.jsx';
+import NumberedCodeViewer from './NumberedCodeViewer.jsx';
 import Beginner101Visualizer from './beginners/Beginner101Visualizer.jsx';
 import FloatingAiBot from './airag/FloatingAiBot.jsx';
 import AiRagMentorStudio from './airag/AiRagMentorStudio.jsx';
+import { setScreenContext } from './screenContext.js';
 import { checkRestrictedWords } from './airag/restrictedWords.js';
 import { isLineDebuggerSupported } from './languageUtils.js';
 import GoogleConnectModal from './auth/GoogleConnectModal.jsx';
@@ -1282,6 +1284,15 @@ function App() {
   const [isPageLoading, setIsPageLoading] = useState(false);
 
   useEffect(() => {
+    // Dismiss HTML cycle preloader on initial cold start paint
+    requestAnimationFrame(() => {
+      if (typeof window !== 'undefined' && typeof window.hideAlgoFlowPreloader === 'function') {
+        window.hideAlgoFlowPreloader();
+      }
+    });
+  }, []);
+
+  useEffect(() => {
     if (isPageLoading) {
       const timer = setTimeout(() => setIsPageLoading(false), 250);
       return () => clearTimeout(timer);
@@ -1939,8 +1950,10 @@ function App() {
 
   // Submit feedback directly
   const submitDirectFeedback = async () => {
-    const nameTrimmed = feedbackName.trim();
-    const emailTrimmed = feedbackEmail.trim();
+    // Strictly enforce verified Google user details if logged in
+    const isGoogleUser = activeUser && activeUser.email && !activeUser.isGuest;
+    const nameTrimmed = (isGoogleUser ? activeUser.name : feedbackName).trim();
+    const emailTrimmed = (isGoogleUser ? activeUser.email : feedbackEmail).trim().toLowerCase();
     const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
     
     if (rating === 0) {
@@ -2167,6 +2180,53 @@ function App() {
       setActiveLangForChat(codeLang);
     }
   }, [appMode, codeLang, treeType, showDeletionsInCode, operationsLog, insertedValues, customCode]);
+
+  // Synchronize Live Screen State to Centralized Telemetry Bridge
+  useEffect(() => {
+    let title = 'AlgoFlow Studio';
+    let algo = 'General';
+    let dataSum = '';
+
+    if (appMode === 'GRAPH_VIS') {
+      title = 'Graph Visualizer';
+      algo = globalGraphAlgo || 'Graph';
+      dataSum = 'Graph algorithms studio active.';
+    } else if (appMode === 'SORT_SEARCH_VIS') {
+      title = `${globalSortSearchTab || 'Sorting'} Visualizer`;
+      algo = globalSortSearchTab === 'Search' ? (globalSearch || 'Binary Search') : (globalSort || 'Quick Sort');
+      dataSum = `Sort/Search studio active in ${globalSortSearchTab} mode.`;
+    } else if (appMode === 'MAIN_VIS') {
+      title = `${treeType || 'BST'} Tree Visualizer`;
+      algo = treeType || 'BST';
+      dataSum = `Tree visualizer with ${insertedValues.length} inserted nodes.`;
+    } else if (appMode === 'GENERAL_DSA_VIS') {
+      title = `${globalDsType || 'Data Structure'} Visualizer`;
+      algo = globalDsVariety || globalDsType;
+      dataSum = `General Data Structures visualizer (${globalDsType}).`;
+    } else if (appMode === 'DP_GREEDY_VIS') {
+      title = 'Dynamic Programming & Greedy Visualizer';
+      algo = globalDpTab || 'DP/Greedy';
+      dataSum = `DP/Greedy studio active with tab ${globalDpTab}.`;
+    } else if (appMode === 'LINE_BY_LINE_VIS' || appMode === 'CODE_VAL_VIS') {
+      title = 'Code Debugger & Runtime Stack Inspector';
+      algo = `${codeLang} Code Execution`;
+      dataSum = `Active code runner inspector in ${codeLang}.`;
+    } else if (appMode === 'BEGINNER_101_VIS') {
+      title = 'Beginner 101 Interactive Hub';
+      algo = 'B.Tech CS Foundations';
+      dataSum = 'Beginner fundamentals and engineering curriculum.';
+    } else if (appMode === 'DSA_NOTES_VIS' || appMode === 'DSA_STUDY_VIS' || appMode === 'DSA_SUMS_VIS') {
+      title = 'DSA Notes & Interview Problems';
+      algo = 'Interview Preparation';
+      dataSum = 'Solved problems and conceptual notes.';
+    }
+
+    setScreenContext({
+      screenTitle: title,
+      activeAlgo: algo,
+      screenDataSummary: dataSum
+    });
+  }, [appMode, treeType, globalDsType, globalDsVariety, globalSort, globalSearch, globalSortSearchTab, globalGraphAlgo, globalDpTab, insertedValues.length, codeLang]);
 
   // Apply theme
   useEffect(() => {
@@ -2409,6 +2469,7 @@ function App() {
 
 
   const enterMode = mode => {
+    setIsPageLoading(true);
     window.location.hash = mode;
     setAppMode(mode);
     if (mode === 'LINE_BY_LINE_VIS') {
@@ -2417,11 +2478,14 @@ function App() {
       const isStandalone = ['BEGINNER_101_VIS', 'GENERAL_DSA_VIS', 'SORT_SEARCH_VIS', 'GRAPH_VIS', 'DP_GREEDY_VIS', 'JAVA_OOP_VIS', 'DSA_NOTES_VIS', 'DSA_STUDY_VIS', 'DSA_SUMS_VIS'].includes(mode);
       setSetupComplete(isStandalone);
     }
+    setTimeout(() => setIsPageLoading(false), 220);
   };
   const goBack    = () => {
+    setIsPageLoading(true);
     window.location.hash = '';
     setAppMode(null);
     setSetupComplete(false);
+    setTimeout(() => setIsPageLoading(false), 180);
   };
 
   useEffect(() => {
@@ -4370,6 +4434,7 @@ function App() {
                 { id: 'BELLMAN_GRAPH', mode: 'GRAPH_VIS', title: 'Bellman-Ford Algorithm', icon: '📉', desc: 'Graph Visualizer', algo: 'Bellman-Ford' },
                 { id: 'FLOYD_GRAPH', mode: 'GRAPH_VIS', title: 'Floyd-Warshall Algorithm', icon: '🕸️', desc: 'Graph Visualizer', algo: 'Floyd-Warshall' },
                 { id: 'KAHN_GRAPH', mode: 'GRAPH_VIS', title: "Kahn's Algorithm (Topological Sort)", icon: '📐', desc: 'Graph Visualizer', algo: 'Kahn' },
+                { id: 'EDMONDS_KARP_GRAPH', mode: 'GRAPH_VIS', title: 'Edmonds-Karp Max-Flow & Min-Cut (CO4)', icon: '🌊', desc: 'Network Flow & Capacity Visualizer', algo: 'Edmonds-Karp' },
                 { id: 'BUBBLE_SORT', mode: 'SORT_SEARCH_VIS', title: 'Bubble Sort', icon: '🫧', desc: 'Sort & Search Visualizer', tab: 'Sort', algo: 'Bubble Sort' },
                 { id: 'SELECTION_SORT', mode: 'SORT_SEARCH_VIS', title: 'Selection Sort', icon: '🎯', desc: 'Sort & Search Visualizer', tab: 'Sort', algo: 'Selection Sort' },
                 { id: 'INSERTION_SORT', mode: 'SORT_SEARCH_VIS', title: 'Insertion Sort', icon: '📥', desc: 'Sort & Search Visualizer', tab: 'Sort', algo: 'Insertion Sort' },
@@ -5740,17 +5805,13 @@ function App() {
                   </div>
                     </div>
                     
-                    <div className="code-box" style={{ flex: 1, overflowY: 'auto' }}>
-                      <pre style={{ 
-                        margin: 0, 
-                        color: 'var(--text-primary)', 
-                        fontFamily: "'Fira Code', monospace", 
-                        lineHeight: '1.5',
-                        fontSize: '11px',
-                        whiteSpace: 'pre'
-                      }}>
-                        {toAllman(getFullCodeTemplate(codeLang, treeType, showDeletionsInCode ? operationsLog : insertedValues.map(v => ({ op: 'insert', val: v }))))}
-                      </pre>
+                    <div className="code-box" style={{ flex: 1, overflow: 'hidden', padding: 0, display: 'flex', flexDirection: 'column' }}>
+                      <NumberedCodeViewer
+                        code={toAllman(getFullCodeTemplate(codeLang, treeType, showDeletionsInCode ? operationsLog : insertedValues.map(v => ({ op: 'insert', val: v }))))}
+                        fontSize={11.5}
+                        lineHeight={1.55}
+                        bg="transparent"
+                      />
                     </div>
                   </div>
                 </>
@@ -5880,15 +5941,16 @@ function App() {
           left: 0,
           width: '100vw',
           height: '100vh',
-          background: 'var(--bg-primary)',
+          background: 'hsl(223, 90%, 10%)',
           display: 'flex',
           flexDirection: 'column',
           alignItems: 'center',
           justifyContent: 'center',
-          zIndex: 9999,
-          animation: 'fadeIn 0.2s ease-out'
+          zIndex: 999999,
+          animation: 'fadeIn 0.2s ease-out',
+          userSelect: 'none'
         }}>
-          <svg className="bike" viewBox="0 0 48 30" width="80px" height="50px" style={{ color: 'var(--accent-primary)' }}>
+          <svg className="bike" viewBox="0 0 48 30" width="48px" height="30px" style={{ width: '14.5em', maxWidth: '55vw', height: 'auto', color: 'hsl(223, 90%, 90%)' }}>
             <g fill="none" stroke="currentColor" strokeLinecap="round" strokeLinejoin="round" strokeWidth="1">
               <g transform="translate(9.5,19)">
                 <circle className="bike__tire" r="9" strokeDasharray="56.549 56.549" />
@@ -5916,7 +5978,16 @@ function App() {
               <polyline className="bike__front" points="32.5 2,38.5 19" strokeDasharray="19 19" />
             </g>
           </svg>
-          <h3 style={{ color: 'var(--text-primary)', marginTop: '1.5rem', fontFamily: 'inherit', letterSpacing: '1px' }}>Loading Studio...</h3>
+          <p style={{
+            marginTop: '1.5rem',
+            fontFamily: "'Segoe UI', Arial, sans-serif",
+            fontSize: '1.2rem',
+            fontWeight: 600,
+            color: 'hsl(223, 90%, 90%)',
+            letterSpacing: '0.05em'
+          }}>
+            Loading AlgoFlow Studio...
+          </p>
         </div>
       )}
 
@@ -6001,37 +6072,33 @@ function App() {
                   {/* Name & Email (Auto-filled if Google Connected) */}
                   {activeUser && activeUser.email ? (
                     <div style={{
-                      padding: '8px 12px',
+                      padding: '10px 14px',
                       background: 'rgba(56, 189, 248, 0.08)',
                       border: '1.5px solid rgba(56, 189, 248, 0.35)',
-                      borderRadius: '10px',
+                      borderRadius: '12px',
                       display: 'flex',
                       alignItems: 'center',
                       justifyContent: 'space-between',
                       marginBottom: isMobile ? '0.75rem' : '1.2rem'
                     }}>
-                      <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+                      <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
                         {activeUser.picture ? (
-                          <img src={activeUser.picture} alt="" style={{ width: '28px', height: '28px', borderRadius: '50%' }} onError={e => e.target.style.display = 'none'} />
+                          <img src={activeUser.picture} alt="" style={{ width: '32px', height: '32px', borderRadius: '50%' }} onError={e => e.target.style.display = 'none'} />
                         ) : (
-                          <div style={{ width: '28px', height: '28px', borderRadius: '50%', background: '#0284c7', color: '#fff', display: 'flex', alignItems: 'center', justifyContent: 'center', fontWeight: 'bold', fontSize: '0.85rem' }}>
+                          <div style={{ width: '32px', height: '32px', borderRadius: '50%', background: '#0284c7', color: '#fff', display: 'flex', alignItems: 'center', justifyContent: 'center', fontWeight: 'bold', fontSize: '0.88rem' }}>
                             {activeUser.initial || 'U'}
                           </div>
                         )}
                         <div>
-                          <div style={{ fontSize: '0.88rem', fontWeight: '700', color: 'var(--text-primary)' }}>{activeUser.name}</div>
-                          <div style={{ fontSize: '0.75rem', color: '#0284c7', display: 'flex', alignItems: 'center', gap: '4px' }}>
+                          <div style={{ fontSize: '0.92rem', fontWeight: '700', color: 'var(--text-primary)' }}>{activeUser.name}</div>
+                          <div style={{ fontSize: '0.78rem', color: '#0284c7', display: 'flex', alignItems: 'center', gap: '4px' }}>
                             <span>✓ Google Verified:</span> <strong>{activeUser.email}</strong>
                           </div>
                         </div>
                       </div>
-                      <button
-                        type="button"
-                        onClick={() => setIsConnectModalOpen(true)}
-                        style={{ background: 'transparent', border: 'none', color: 'var(--text-secondary)', fontSize: '0.75rem', cursor: 'pointer', textDecoration: 'underline' }}
-                      >
-                        Change
-                      </button>
+                      <span style={{ fontSize: '0.72rem', background: 'rgba(34, 197, 94, 0.15)', color: '#4ade80', border: '1px solid rgba(34, 197, 94, 0.3)', padding: '3px 8px', borderRadius: '8px', fontWeight: 'bold' }}>
+                        ✓ Verified
+                      </span>
                     </div>
                   ) : (
                     <>

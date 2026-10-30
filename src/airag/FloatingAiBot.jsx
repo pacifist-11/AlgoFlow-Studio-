@@ -2,7 +2,15 @@ import React, { useState, useEffect, useRef } from 'react';
 import { generateLocalRagResponse } from './aiRagEngine.js';
 import { ChatMessageRenderer } from './ChatMessageRenderer.jsx';
 import { askAlgoFlowAiMentor, getActiveGeminiApiKey, getActiveGeminiModel } from './geminiService.js';
-import { clearUserChatMessages, trackUserHabit, getTopUserHabits } from '../auth/userAuthService.js';
+import { 
+  clearUserChatMessages, 
+  trackUserHabit, 
+  getTopUserHabits,
+  loadUserChatSessions,
+  saveUserChatSessions,
+  generateSessionTitle
+} from '../auth/userAuthService.js';
+import { subscribeScreenContext, clearScreenError, getScreenContext } from '../screenContext.js';
 
 // ─── Super Calm, Gentle & Aesthetic Zen AI Avatar ───────────────────────────
 export const CalmAiAvatar = ({ size = 32 }) => (
@@ -95,19 +103,144 @@ export default function FloatingAiBot({
   const [isLoading, setIsLoading] = useState(false);
   const [showSettings, setShowSettings] = useState(false);
   const [isMaximized, setIsMaximized] = useState(false);
+
+  // ── Problem Pic / Image Upload & Vision State ─────────────────────────────
+  const [attachedImage, setAttachedImage] = useState(null);
+  const [isDragOverChat, setIsDragOverChat] = useState(false);
+  const [previewModalImage, setPreviewModalImage] = useState(null);
+  const fileInputRef = useRef(null);
+
+  const processImageFile = (file) => {
+    if (!file || !file.type || !file.type.startsWith('image/')) return;
+    if (typeof window === 'undefined') return;
+    const FileReaderClass = window.FileReader;
+    const ImageClass = window.Image;
+    if (!FileReaderClass || !ImageClass) return;
+
+    const reader = new FileReaderClass();
+    reader.onload = (e) => {
+      const rawDataUrl = e.target.result;
+      const img = new ImageClass();
+      img.onload = () => {
+        // Downscale to max 1280px on longest edge so textbook/handwritten math remains crisp, but base64 is light (~150-250KB)
+        const maxDim = 1280;
+        let w = img.width;
+        let h = img.height;
+        if (w > maxDim || h > maxDim) {
+          if (w > h) {
+            h = Math.round((h * maxDim) / w);
+            w = maxDim;
+          } else {
+            w = Math.round((w * maxDim) / h);
+            h = maxDim;
+          }
+        }
+        const canvas = document.createElement('canvas');
+        canvas.width = w;
+        canvas.height = h;
+        const ctx = canvas.getContext('2d');
+        ctx.drawImage(img, 0, 0, w, h);
+        const mime = file.type === 'image/png' ? 'image/png' : 'image/jpeg';
+        const compressedDataUrl = canvas.toDataURL(mime, 0.85);
+        const base64Data = compressedDataUrl.replace(/^data:[^;]+;base64,/, '');
+
+        setAttachedImage({
+          dataUrl: compressedDataUrl,
+          mimeType: mime,
+          base64: base64Data,
+          name: file.name || 'problem-photo.jpg',
+          size: Math.round(base64Data.length * 0.75)
+        });
+      };
+      img.src = rawDataUrl;
+    };
+    reader.readAsDataURL(file);
+  };
+
+  const handleFileSelect = (e) => {
+    const file = e.target.files?.[0];
+    if (file) {
+      processImageFile(file);
+    }
+    if (e.target) e.target.value = '';
+  };
+
+  const handleInputPaste = (e) => {
+    const items = e.clipboardData?.items;
+    if (!items) return;
+    for (let i = 0; i < items.length; i++) {
+      if (items[i].type && items[i].type.startsWith('image/')) {
+        const file = items[i].getAsFile();
+        if (file) {
+          processImageFile(file);
+          e.preventDefault();
+          return;
+        }
+      }
+    }
+  };
+
+  // ── ChatGPT / Copilot / Gemini Smooth Streaming & Typewriter Controller ─────
+  const [isGenerating, setIsGenerating] = useState(false);
+  const abortControllerRef = useRef(null);
+  const streamIntervalRef = useRef(null);
+  const fullTextTargetRef = useRef('');
+  const displayedTextRef = useRef('');
+  const isStreamCompleteRef = useRef(false);
+  const activeSourcesRef = useRef([]);
+  const activeNoticeRef = useRef('');
+
+  useEffect(() => {
+    return () => {
+      if (streamIntervalRef.current) clearInterval(streamIntervalRef.current);
+      if (abortControllerRef.current) abortControllerRef.current.abort();
+    };
+  }, []);
+
+  // ── Real-Time Live Screen Telemetry & Diagnostics ───────────────────────────
+  const [liveScreen, setLiveScreen] = useState(() => getScreenContext());
+
+  useEffect(() => {
+    const unsub = subscribeScreenContext((st) => {
+      setLiveScreen({ ...st });
+    });
+    return unsub;
+  }, []);
   
-  // ── Absolute Window Dimensions (Resizable) ──────────────────────────────────
+  // ── Absolute Window Dimensions (Spacious, Responsive & Persisted) ───────────
   const [windowDimensions, setWindowDimensions] = useState(() => {
-    const defaultW = Math.min(window.innerWidth - 30, 420);
-    const defaultH = Math.min(window.innerHeight - 100, 580);
+    try {
+      const saved = localStorage.getItem('algoflow_chat_dimensions');
+      if (saved) {
+        const parsed = JSON.parse(saved);
+        if (parsed.width >= 380 && parsed.height >= 480) {
+          return {
+            width: Math.min(window.innerWidth - 30, parsed.width),
+            height: Math.min(window.innerHeight - 40, parsed.height)
+          };
+        }
+      }
+    } catch {}
+    // Spacious, modern default: 570px × 700px on desktop
+    const defaultW = Math.min(window.innerWidth - 30, Math.max(460, Math.min(Math.round(window.innerWidth * 0.40), 570)));
+    const defaultH = Math.min(window.innerHeight - 40, Math.max(540, Math.min(Math.round(window.innerHeight * 0.78), 700)));
     return { width: defaultW, height: defaultH };
   });
 
   // ── Absolute Window Position (Draggable) ────────────────────────────────────
   const [windowPos, setWindowPos] = useState(() => {
-    const left = Math.max(10, window.innerWidth - 450);
-    const top = Math.max(10, window.innerHeight - 670);
-    return { x: left, y: top };
+    try {
+      const saved = localStorage.getItem('algoflow_chat_dimensions');
+      const w = saved ? JSON.parse(saved).width : Math.min(window.innerWidth - 30, Math.max(460, Math.min(Math.round(window.innerWidth * 0.40), 570)));
+      const h = saved ? JSON.parse(saved).height : Math.min(window.innerHeight - 40, Math.max(540, Math.min(Math.round(window.innerHeight * 0.78), 700)));
+      const left = Math.max(15, window.innerWidth - w - 24);
+      const top = Math.max(15, window.innerHeight - h - 24);
+      return { x: left, y: top };
+    } catch {
+      const left = Math.max(15, window.innerWidth - 590);
+      const top = Math.max(15, window.innerHeight - 730);
+      return { x: left, y: top };
+    }
   });
 
   // ── Floating Button Position (Draggable Orb) ────────────────────────────────
@@ -142,29 +275,79 @@ export default function FloatingAiBot({
   });
 
   const messagesEndRef = useRef(null);
+  const chatContainerRef = useRef(null);
+  const userScrolledUpRef = useRef(false);
+  const [showScrollBottomBtn, setShowScrollBottomBtn] = useState(false);
 
-  // Initialize welcome message if empty
+  // ── Multi-Session Past Chats & Conversations State ─────────────────────────
+  const [sessions, setSessions] = useState(() => {
+    return loadUserChatSessions(activeUser?.email);
+  });
+  const [activeSessionId, setActiveSessionId] = useState(() => {
+    const list = loadUserChatSessions(activeUser?.email);
+    return (list && list.length > 0) ? list[0].id : null;
+  });
+  const [isSidebarOpen, setIsSidebarOpen] = useState(false);
+  const [chatSearchQuery, setChatSearchQuery] = useState('');
+  const [infoModalSession, setInfoModalSession] = useState(null);
+
+  // Sync sessions when activeUser changes or on first mount
   useEffect(() => {
-    if (!chatMessages || chatMessages.length === 0) {
-      if (setChatMessages) {
-        setChatMessages([
+    const loaded = loadUserChatSessions(activeUser?.email);
+    if (loaded && loaded.length > 0) {
+      setSessions(loaded);
+      if (!activeSessionId || !loaded.some(s => s.id === activeSessionId)) {
+        setActiveSessionId(loaded[0].id);
+        if (setChatMessages && loaded[0].messages) {
+          setChatMessages(loaded[0].messages);
+        }
+      }
+    } else {
+      const defaultSession = {
+        id: `session_${Date.now()}`,
+        title: 'New Chat',
+        createdAt: Date.now(),
+        updatedAt: Date.now(),
+        searchedQueries: [],
+        messages: chatMessages && chatMessages.length > 0 ? chatMessages : [
           {
             role: 'assistant',
             text: `✨ **Hello! I'm your AlgoFlow AI Mentor & Companion.**
 I'm right here with you to explain concepts, guide your branch roadmaps, and help you understand whatever visualizer or code you're currently exploring.
 
 How are you doing today? Ask me any question or pick a prompt below!`,
-            sources: ['AlgoFlow Universal Knowledge Base'],
             timestamp: new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })
           }
-        ]);
-      }
+        ]
+      };
+      setSessions([defaultSession]);
+      setActiveSessionId(defaultSession.id);
+      saveUserChatSessions(activeUser?.email, [defaultSession]);
+      if (setChatMessages) setChatMessages(defaultSession.messages);
     }
-  }, []);
+  }, [activeUser?.email]);
 
-  useEffect(() => {
+  const handleChatScroll = () => {
+    if (!chatContainerRef.current) return;
+    const { scrollTop, scrollHeight, clientHeight } = chatContainerRef.current;
+    // When distance from bottom is greater than 65px, user has deliberately scrolled up
+    const isUp = (scrollHeight - scrollTop - clientHeight) > 65;
+    userScrolledUpRef.current = isUp;
+    setShowScrollBottomBtn(isUp);
+  };
+
+  const scrollToBottom = (behavior = 'smooth') => {
+    userScrolledUpRef.current = false;
+    setShowScrollBottomBtn(false);
     if (messagesEndRef.current) {
-      messagesEndRef.current.scrollIntoView({ behavior: 'smooth' });
+      messagesEndRef.current.scrollIntoView({ behavior });
+    }
+  };
+
+  // Auto-scroll only if user has NOT scrolled up
+  useEffect(() => {
+    if (messagesEndRef.current && !userScrolledUpRef.current) {
+      messagesEndRef.current.scrollIntoView({ behavior: isGenerating ? 'auto' : 'smooth' });
     }
   }, [chatMessages, isChatOpen]);
 
@@ -306,7 +489,15 @@ How are you doing today? Ask me any question or pick a prompt below!`,
 
     const onPointerUp = () => {
       if (isDraggingWindow) setIsDraggingWindow(false);
-      if (resizeDirection) setResizeDirection(null);
+      if (resizeDirection) {
+        setResizeDirection(null);
+        try {
+          localStorage.setItem('algoflow_chat_dimensions', JSON.stringify({
+            width: windowDimensions.width,
+            height: windowDimensions.height
+          }));
+        } catch {}
+      }
       if (isDraggingOrb) setIsDraggingOrb(false);
     };
 
@@ -623,66 +814,307 @@ How are you doing today? Ask me any question or pick a prompt below!`,
   };
 
   const contextInfo = getContextInfo();
-  const quickPrompts = contextInfo.prompts;
+  const rawPrompts = contextInfo.prompts;
+  const quickPrompts = [
+    ...(liveScreen?.screenTitle ? [`🔍 What's happening on my screen?`] : []),
+    ...(liveScreen?.lastErrorOrIssue ? [`🐞 Fix screen issue`] : []),
+    ...rawPrompts
+  ];
+
+  const updateActiveSessionMessages = (msgs, queryToAdd = null) => {
+    setSessions(prev => {
+      const currentList = prev && prev.length > 0 ? [...prev] : [];
+      let idx = currentList.findIndex(s => s.id === activeSessionId);
+      if (idx === -1) {
+        const newS = {
+          id: activeSessionId || `session_${Date.now()}`,
+          title: queryToAdd ? generateSessionTitle(queryToAdd) : 'New Chat',
+          createdAt: Date.now(),
+          updatedAt: Date.now(),
+          searchedQueries: queryToAdd ? [queryToAdd.trim()] : [],
+          messages: msgs
+        };
+        currentList.unshift(newS);
+        saveUserChatSessions(activeUser?.email, currentList);
+        return currentList;
+      }
+      const existing = { ...currentList[idx] };
+      existing.messages = msgs;
+      existing.updatedAt = Date.now();
+      if (queryToAdd) {
+        if (!existing.title || existing.title === 'New Chat' || existing.title === 'Previous Chat' || existing.title === 'New Conversation') {
+          existing.title = generateSessionTitle(queryToAdd);
+        }
+        const queries = Array.isArray(existing.searchedQueries) ? [...existing.searchedQueries] : [];
+        if (!queries.includes(queryToAdd.trim())) {
+          queries.unshift(queryToAdd.trim());
+          existing.searchedQueries = queries.slice(0, 30);
+        }
+      }
+      currentList[idx] = existing;
+      currentList.sort((a, b) => (b.updatedAt || 0) - (a.updatedAt || 0));
+      saveUserChatSessions(activeUser?.email, currentList);
+      return currentList;
+    });
+  };
+
+  const handleStartNewChat = () => {
+    const newSessionId = `session_${Date.now()}`;
+    const initialMsg = [
+      {
+        role: 'assistant',
+        text: `✨ **Hello! I'm your AlgoFlow AI Mentor & Companion.**\nReady for your next coding exploration or algorithm challenge! What would you like to ask or build today?`,
+        timestamp: new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })
+      }
+    ];
+    const newSession = {
+      id: newSessionId,
+      title: 'New Chat',
+      createdAt: Date.now(),
+      updatedAt: Date.now(),
+      searchedQueries: [],
+      messages: initialMsg
+    };
+
+    const updated = [newSession, ...(sessions || [])];
+    setSessions(updated);
+    setActiveSessionId(newSessionId);
+    if (setChatMessages) setChatMessages(initialMsg);
+    saveUserChatSessions(activeUser?.email, updated);
+    setIsSidebarOpen(false);
+    userScrolledUpRef.current = false;
+    setShowScrollBottomBtn(false);
+  };
+
+  const handleSelectSession = (session) => {
+    if (!session) return;
+    setActiveSessionId(session.id);
+    if (setChatMessages && session.messages) {
+      setChatMessages(session.messages);
+    }
+    setIsSidebarOpen(false);
+    userScrolledUpRef.current = false;
+    setShowScrollBottomBtn(false);
+  };
+
+  const handleDeleteSession = (e, sessionId) => {
+    e.stopPropagation();
+    const remaining = (sessions || []).filter(s => s.id !== sessionId);
+    setSessions(remaining);
+    saveUserChatSessions(activeUser?.email, remaining);
+
+    if (activeSessionId === sessionId) {
+      if (remaining.length > 0) {
+        setActiveSessionId(remaining[0].id);
+        if (setChatMessages) setChatMessages(remaining[0].messages || []);
+      } else {
+        handleStartNewChat();
+      }
+    }
+  };
+
+  const handleStopGenerating = () => {
+    if (streamIntervalRef.current) {
+      clearInterval(streamIntervalRef.current);
+      streamIntervalRef.current = null;
+    }
+    if (abortControllerRef.current) {
+      abortControllerRef.current.abort();
+      abortControllerRef.current = null;
+    }
+
+    const currentText = displayedTextRef.current || fullTextTargetRef.current || '';
+    setChatMessages(prev => {
+      if (!prev || prev.length === 0) return prev;
+      const copy = [...prev];
+      const last = copy[copy.length - 1];
+      if (last && last.role === 'assistant') {
+        copy[copy.length - 1] = {
+          ...last,
+          text: currentText,
+          isStreaming: false,
+          sources: activeSourcesRef.current && activeSourcesRef.current.length > 0 ? activeSourcesRef.current : (last.sources || []),
+          offlineNotice: activeNoticeRef.current || last.offlineNotice
+        };
+      }
+      updateActiveSessionMessages(copy);
+      return copy;
+    });
+
+    setIsGenerating(false);
+    setIsLoading(false);
+  };
 
   const handleSendMessage = async (msgText) => {
-    const textToSend = msgText || inputMessage;
-    if (!textToSend || textToSend.trim() === '') return;
+    if (isGenerating) return;
+    const currentAttached = attachedImage;
+    let textToSend = typeof msgText === 'string' ? msgText : inputMessage;
+
+    if ((!textToSend || textToSend.trim() === '') && !currentAttached) return;
+
+    if ((!textToSend || textToSend.trim() === '') && currentAttached) {
+      textToSend = "Please inspect this uploaded problem/sum, solve it step-by-step with clear calculations, explain the concept, and provide the final answer and any relevant code.";
+    }
+
+    if (textToSend === "🔍 What's happening on my screen?") {
+      textToSend = "Can you analyze what is currently happening on my screen, what algorithm is active, what step I am on, and explain the current visualization or status?";
+    } else if (textToSend === "🐞 Fix screen issue") {
+      textToSend = `I encountered an issue on my screen: "${liveScreen?.lastErrorOrIssue || 'a problem occurred'}". Can you explain why it happened and provide the exact fix or alternative?`;
+    }
 
     const userMsg = {
       role: 'user',
       text: textToSend.trim(),
+      image: currentAttached ? currentAttached.dataUrl : null,
       timestamp: new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })
     };
 
-    const newMessages = [...(chatMessages || []), userMsg];
-    if (setChatMessages) setChatMessages(newMessages);
+    const streamingBotMsg = {
+      role: 'assistant',
+      text: '',
+      isStreaming: true,
+      sources: [],
+      timestamp: new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })
+    };
+
+    const updatedMessages = [...(chatMessages || []), userMsg, streamingBotMsg];
+    if (setChatMessages) setChatMessages(updatedMessages);
+    updateActiveSessionMessages(updatedMessages, textToSend);
+
     setInputMessage('');
+    setAttachedImage(null);
     if (textareaRef.current) {
       textareaRef.current.style.height = '38px';
     }
+    setIsGenerating(true);
     setIsLoading(true);
+    userScrolledUpRef.current = false;
+    setShowScrollBottomBtn(false);
+
+    fullTextTargetRef.current = '';
+    displayedTextRef.current = '';
+    isStreamCompleteRef.current = false;
+    activeSourcesRef.current = [];
+    activeNoticeRef.current = '';
+
+    if (streamIntervalRef.current) clearInterval(streamIntervalRef.current);
+    if (abortControllerRef.current) abortControllerRef.current.abort();
+
+    const abortController = new AbortController();
+    abortControllerRef.current = abortController;
+
+    // Smooth progressive typewriter that outputs word-by-word and line-by-line
+    streamIntervalRef.current = setInterval(() => {
+      const target = fullTextTargetRef.current;
+      const current = displayedTextRef.current;
+
+      if (current.length < target.length) {
+        // Once first characters stream in, dismiss loading skeleton
+        setIsLoading(false);
+
+        const diff = target.length - current.length;
+        let step = 2;
+        if (diff > 450) step = 16;
+        else if (diff > 180) step = 8;
+        else if (diff > 60) step = 4;
+        else if (diff > 15) step = 2;
+        else step = 1;
+
+        const nextSlice = target.slice(0, current.length + step);
+        displayedTextRef.current = nextSlice;
+
+        setChatMessages(prev => {
+          if (!prev || prev.length === 0) return prev;
+          const copy = [...prev];
+          const last = copy[copy.length - 1];
+          if (last && last.role === 'assistant' && last.isStreaming) {
+            copy[copy.length - 1] = {
+              ...last,
+              text: nextSlice
+            };
+          }
+          return copy;
+        });
+
+        if (messagesEndRef.current && !userScrolledUpRef.current) {
+          messagesEndRef.current.scrollIntoView({ behavior: 'auto' });
+        }
+      } else if (isStreamCompleteRef.current) {
+        clearInterval(streamIntervalRef.current);
+        streamIntervalRef.current = null;
+        setIsGenerating(false);
+        setIsLoading(false);
+
+        setChatMessages(prev => {
+          if (!prev || prev.length === 0) return prev;
+          const copy = [...prev];
+          const last = copy[copy.length - 1];
+          if (last && last.role === 'assistant') {
+            copy[copy.length - 1] = {
+              ...last,
+              text: target,
+              isStreaming: false,
+              sources: activeSourcesRef.current && activeSourcesRef.current.length > 0 ? activeSourcesRef.current : (last.sources || []),
+              offlineNotice: activeNoticeRef.current || last.offlineNotice
+            };
+          }
+          updateActiveSessionMessages(copy);
+          return copy;
+        });
+
+        if (messagesEndRef.current && !userScrolledUpRef.current) {
+          messagesEndRef.current.scrollIntoView({ behavior: 'smooth' });
+        }
+      }
+    }, 22);
 
     try {
       const activeKey = apiKey || getActiveGeminiApiKey();
       const activeModel = model || 'gemini-3.6-flash';
       const userHabits = activeUser?.email ? getTopUserHabits(activeUser.email, 4) : [];
-      
+
       const result = await askAlgoFlowAiMentor({
         query: textToSend,
+        image: currentAttached ? { mimeType: currentAttached.mimeType, base64: currentAttached.base64 } : null,
         customCode,
         codeLang,
         currentContext,
         apiKey: activeKey,
         model: activeModel,
         userProfile: activeUser ? { ...activeUser, habits: userHabits } : null,
-        chatHistory: newMessages.slice(-6)
+        chatHistory: updatedMessages.slice(-6),
+        signal: abortController.signal,
+        onStreamChunk: (accumulated) => {
+          fullTextTargetRef.current = accumulated;
+        }
       });
+
+      fullTextTargetRef.current = result.text || fullTextTargetRef.current;
+      activeSourcesRef.current = result.sources || [];
+      activeNoticeRef.current = result.offlineNotice || '';
+      isStreamCompleteRef.current = true;
 
       if (activeUser?.email) {
         const topic = currentContext?.treeType || currentContext?.globalSort || currentContext?.globalDsType || currentContext?.appMode || 'General';
         trackUserHabit(activeUser.email, topic);
       }
-
-      const botMsg = {
-        role: 'assistant',
-        text: result.text,
-        sources: result.sources,
-        timestamp: new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })
-      };
-      if (setChatMessages) setChatMessages([...newMessages, botMsg]);
     } catch (err) {
+      if (err.name === 'AbortError') {
+        return; // Stopped by user
+      }
       console.warn('AI Mentor response error, using fallback:', err);
-      const fallbackResult = generateLocalRagResponse(textToSend, customCode, codeLang, currentContext);
-      const fallbackMsg = {
-        role: 'assistant',
-        text: fallbackResult.text,
-        sources: fallbackResult.sources,
-        timestamp: new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })
-      };
-      if (setChatMessages) setChatMessages([...newMessages, fallbackMsg]);
-    } finally {
-      setIsLoading(false);
+      if (currentAttached) {
+        fullTextTargetRef.current = `### 📷 Image Received for Problem Solving\n\nAlgoFlow received your problem photo! To analyze handwritten math, formulas, and visual problem statements, the live **Google Gemini Vision** engine is required.\n\n* **Tips to enable:** Ensure your internet connection is active, or configure a Google Gemini API Key in chat settings (⚙️ icon in top bar).`;
+        activeSourcesRef.current = ['AlgoFlow Vision Assistant'];
+        activeNoticeRef.current = '💡 Vision requires online Gemini';
+        isStreamCompleteRef.current = true;
+      } else {
+        const fallbackResult = generateLocalRagResponse(textToSend, customCode, codeLang, currentContext);
+        fullTextTargetRef.current = fallbackResult.text;
+        activeSourcesRef.current = fallbackResult.sources || [];
+        activeNoticeRef.current = '💡 Offline Mode';
+        isStreamCompleteRef.current = true;
+      }
     }
   };
 
@@ -698,7 +1130,9 @@ How are you doing today? Ask me any question or pick a prompt below!`,
   const handleInputKeyDown = (e) => {
     if (e.key === 'Enter' && !e.shiftKey) {
       e.preventDefault();
-      handleSendMessage();
+      if (!isGenerating) {
+        handleSendMessage();
+      }
     }
   };
 
@@ -719,12 +1153,39 @@ How are you doing today? Ask me any question or pick a prompt below!`,
   const curHeight = isMaximized ? Math.min(window.innerHeight - 40, 840) : windowDimensions.height;
   const curLeft = isMaximized ? Math.max(10, (window.innerWidth - curWidth) / 2) : windowPos.x;
   const curTop = isMaximized ? Math.max(10, (window.innerHeight - curHeight) / 2) : windowPos.y;
+  const isCompact = curWidth <= 530;
+
+  const filteredSessions = (sessions || []).filter(session => {
+    if (!chatSearchQuery.trim()) return true;
+    const q = chatSearchQuery.toLowerCase();
+    const titleMatch = session.title?.toLowerCase().includes(q);
+    const queryMatch = session.searchedQueries?.some(sq => sq.toLowerCase().includes(q));
+    const msgMatch = session.messages?.some(m => m.text?.toLowerCase().includes(q));
+    return titleMatch || queryMatch || msgMatch;
+  });
 
   return (
     <>
       {/* ── Chat Window Modal (Fully Draggable & Edge-Resizable) ── */}
       {isChatOpen && (
         <div 
+          onDragOver={(e) => {
+            e.preventDefault();
+            if (!isDragOverChat) setIsDragOverChat(true);
+          }}
+          onDragLeave={(e) => {
+            if (!e.currentTarget.contains(e.relatedTarget)) {
+              setIsDragOverChat(false);
+            }
+          }}
+          onDrop={(e) => {
+            e.preventDefault();
+            setIsDragOverChat(false);
+            const file = e.dataTransfer?.files?.[0];
+            if (file && file.type?.startsWith('image/')) {
+              processImageFile(file);
+            }
+          }}
           style={{
             position: 'fixed',
             left: `${curLeft}px`,
@@ -746,6 +1207,519 @@ How are you doing today? Ask me any question or pick a prompt below!`,
             userSelect: (isDraggingWindow || resizeDirection) ? 'none' : 'auto'
           }}
         >
+          {/* Visual Dropzone Indicator when dragging an image over chat */}
+          {isDragOverChat && (
+            <div style={{
+              position: 'absolute',
+              inset: 0,
+              zIndex: 100018,
+              background: 'rgba(2, 132, 199, 0.65)',
+              backdropFilter: 'blur(6px)',
+              border: '3px dashed #38bdf8',
+              borderRadius: '18px',
+              display: 'flex',
+              flexDirection: 'column',
+              alignItems: 'center',
+              justifyContent: 'center',
+              gap: '12px',
+              color: '#ffffff',
+              pointerEvents: 'none',
+              animation: 'fadeIn 0.15s ease'
+            }}>
+              <span style={{ fontSize: '42px' }}>📷</span>
+              <span style={{ fontSize: '18px', fontWeight: '800', letterSpacing: '0.3px' }}>
+                Drop your problem photo or sum here!
+              </span>
+              <span style={{ fontSize: '13px', color: '#e0f2fe', maxWidth: '80%', textAlign: 'center' }}>
+                AlgoFlow AI Vision will inspect the question, equations & diagrams to solve step-by-step
+              </span>
+            </div>
+          )}
+          {/* ── Slide-Out Past Chats Sidebar Drawer ── */}
+          {isSidebarOpen && (
+            <>
+              {/* Click-away backdrop overlay */}
+              <div
+                onClick={() => setIsSidebarOpen(false)}
+                style={{
+                  position: 'absolute',
+                  inset: 0,
+                  zIndex: 10009,
+                  background: 'rgba(0, 0, 0, 0.45)',
+                  backdropFilter: 'blur(3px)',
+                  animation: 'fadeIn 0.15s ease'
+                }}
+              />
+              <div style={{
+                position: 'absolute',
+                top: 0,
+                left: 0,
+                bottom: 0,
+                width: isCompact ? '100%' : Math.min(330, curWidth - 35),
+                zIndex: 10010,
+                background: 'linear-gradient(180deg, #0b1120 0%, #0f172a 100%)',
+                borderRight: '1.5px solid rgba(56, 189, 248, 0.45)',
+                boxShadow: '10px 0 35px rgba(0, 0, 0, 0.75), 0 0 20px rgba(56, 189, 248, 0.2)',
+                display: 'flex',
+                flexDirection: 'column',
+                backdropFilter: 'blur(20px)',
+                animation: 'fadeIn 0.18s ease'
+              }}>
+              {/* Sidebar Header */}
+              <div style={{
+                padding: '12px 14px',
+                borderBottom: '1px solid rgba(255, 255, 255, 0.12)',
+                display: 'flex',
+                alignItems: 'center',
+                justifyContent: 'space-between',
+                background: 'rgba(30, 41, 59, 0.75)'
+              }}>
+                <button
+                  onClick={() => setIsSidebarOpen(false)}
+                  style={{
+                    background: 'rgba(56, 189, 248, 0.18)',
+                    border: '1px solid rgba(56, 189, 248, 0.4)',
+                    color: '#38bdf8',
+                    cursor: 'pointer',
+                    padding: '4px 9px',
+                    borderRadius: '6px',
+                    fontSize: '11.5px',
+                    fontWeight: '700',
+                    display: 'flex',
+                    alignItems: 'center',
+                    gap: '5px'
+                  }}
+                  title="Return to active conversation"
+                >
+                  ← Back to Chat
+                </button>
+                <div style={{ display: 'flex', alignItems: 'center', gap: '6px' }}>
+                  <span style={{ fontSize: '14px' }}>💬</span>
+                  <span style={{ fontWeight: '700', fontSize: '13px', color: '#f8fafc' }}>
+                    {isCompact ? 'Past Chats' : 'Past Conversations'}
+                  </span>
+                  <span style={{
+                    background: 'rgba(56, 189, 248, 0.25)',
+                    color: '#38bdf8',
+                    padding: '1px 7px',
+                    borderRadius: '10px',
+                    fontSize: '10.5px',
+                    fontWeight: '800'
+                  }}>
+                    {sessions.length}
+                  </span>
+                </div>
+                <button
+                  onClick={() => {
+                    handleStartNewChat();
+                    setIsSidebarOpen(false);
+                  }}
+                  title="Start a new chat session"
+                  style={{
+                    background: 'linear-gradient(135deg, #0284c7, #6366f1)',
+                    border: 'none',
+                    color: '#fff',
+                    cursor: 'pointer',
+                    padding: '4px 10px',
+                    borderRadius: '6px',
+                    fontSize: '11.5px',
+                    fontWeight: '700',
+                    display: 'flex',
+                    alignItems: 'center',
+                    gap: '4px'
+                  }}
+                >
+                  ➕ New
+                </button>
+              </div>
+
+              {/* Start New Chat Button */}
+              <div style={{ padding: '10px 12px 6px 12px' }}>
+                <button
+                  onClick={handleStartNewChat}
+                  style={{
+                    width: '100%',
+                    padding: '8px 12px',
+                    borderRadius: '10px',
+                    background: 'linear-gradient(135deg, #0284c7 0%, #6366f1 100%)',
+                    border: '1px solid rgba(255, 255, 255, 0.25)',
+                    color: '#ffffff',
+                    fontWeight: '700',
+                    fontSize: '12px',
+                    display: 'flex',
+                    alignItems: 'center',
+                    justifyContent: 'center',
+                    gap: '8px',
+                    cursor: 'pointer',
+                    boxShadow: '0 3px 12px rgba(2, 132, 199, 0.35)',
+                    transition: 'all 0.15s ease'
+                  }}
+                >
+                  <span style={{ fontSize: '14px' }}>➕</span>
+                  <span>Start New Chat</span>
+                </button>
+              </div>
+
+              {/* Search Past Chats Input */}
+              <div style={{ padding: '6px 12px 8px 12px', position: 'relative' }}>
+                <div style={{
+                  display: 'flex',
+                  alignItems: 'center',
+                  background: 'rgba(30, 41, 59, 0.75)',
+                  border: '1px solid rgba(56, 189, 248, 0.3)',
+                  borderRadius: '8px',
+                  padding: '0 8px',
+                  height: '32px'
+                }}>
+                  <span style={{ fontSize: '12px', color: '#94a3b8', marginRight: '6px' }}>🔍</span>
+                  <input
+                    type="text"
+                    placeholder="Search chats & questions..."
+                    value={chatSearchQuery}
+                    onChange={e => setChatSearchQuery(e.target.value)}
+                    style={{
+                      flex: 1,
+                      background: 'transparent',
+                      border: 'none',
+                      color: '#f8fafc',
+                      fontSize: '11.5px',
+                      outline: 'none'
+                    }}
+                  />
+                  {chatSearchQuery && (
+                    <button
+                      onClick={() => setChatSearchQuery('')}
+                      style={{
+                        background: 'none',
+                        border: 'none',
+                        color: '#94a3b8',
+                        cursor: 'pointer',
+                        fontSize: '11px',
+                        padding: '0 2px'
+                      }}
+                    >
+                      ✕
+                    </button>
+                  )}
+                </div>
+              </div>
+
+              {/* Past Chats List */}
+              <div style={{
+                flex: 1,
+                overflowY: 'auto',
+                padding: '4px 10px 12px 10px',
+                display: 'flex',
+                flexDirection: 'column',
+                gap: '6px'
+              }}>
+                {filteredSessions.length === 0 ? (
+                  <div style={{ textAlign: 'center', padding: '24px 10px', color: '#94a3b8', fontSize: '12px' }}>
+                    {chatSearchQuery ? 'No conversations matching your search.' : 'No saved conversations yet.'}
+                  </div>
+                ) : (
+                  filteredSessions.map((session) => {
+                    const isActive = session.id === activeSessionId;
+                    const queryCount = session.searchedQueries?.length || 0;
+                    return (
+                      <div
+                        key={session.id}
+                        onClick={() => handleSelectSession(session)}
+                        style={{
+                          padding: '9px 10px',
+                          borderRadius: '8px',
+                          background: isActive 
+                            ? 'rgba(56, 189, 248, 0.18)' 
+                            : 'rgba(30, 41, 59, 0.45)',
+                          borderLeft: isActive 
+                            ? '3px solid #38bdf8' 
+                            : '3px solid transparent',
+                          borderTop: '1px solid rgba(255, 255, 255, 0.05)',
+                          borderRight: '1px solid rgba(255, 255, 255, 0.05)',
+                          borderBottom: '1px solid rgba(255, 255, 255, 0.05)',
+                          cursor: 'pointer',
+                          display: 'flex',
+                          alignItems: 'center',
+                          justifyContent: 'space-between',
+                          gap: '8px',
+                          transition: 'all 0.15s ease'
+                        }}
+                        onMouseEnter={e => {
+                          if (!isActive) e.currentTarget.style.background = 'rgba(56, 189, 248, 0.09)';
+                        }}
+                        onMouseLeave={e => {
+                          if (!isActive) e.currentTarget.style.background = 'rgba(30, 41, 59, 0.45)';
+                        }}
+                      >
+                        <div style={{ display: 'flex', flexDirection: 'column', overflow: 'hidden', flex: 1, minWidth: 0 }}>
+                          <span style={{
+                            fontSize: '12px',
+                            fontWeight: isActive ? '700' : '600',
+                            color: isActive ? '#38bdf8' : '#f1f5f9',
+                            whiteSpace: 'nowrap',
+                            overflow: 'hidden',
+                            textOverflow: 'ellipsis'
+                          }}>
+                            {session.title || 'Conversation'}
+                          </span>
+                          <div style={{ display: 'flex', alignItems: 'center', gap: '6px', marginTop: '2px', overflow: 'hidden', whiteSpace: 'nowrap' }}>
+                            <span style={{ fontSize: '10px', color: '#94a3b8', flexShrink: 0 }}>
+                              {session.updatedAt ? new Date(session.updatedAt).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }) : ''}
+                            </span>
+                            {queryCount > 0 && (
+                              <span style={{
+                                fontSize: '9.5px',
+                                color: '#67e8f9',
+                                background: 'rgba(6, 182, 212, 0.18)',
+                                padding: '0 4px',
+                                borderRadius: '4px',
+                                flexShrink: 0
+                              }}>
+                                {queryCount} {queryCount === 1 ? 'query' : 'queries'}
+                              </span>
+                            )}
+                          </div>
+                        </div>
+
+                        {/* Action Buttons: Info (ℹ️) and Delete (✕) */}
+                        <div style={{ display: 'flex', alignItems: 'center', gap: '5px', flexShrink: 0 }}>
+                          {/* ℹ️ Info Symbol Button */}
+                          <button
+                            type="button"
+                            onClick={(e) => {
+                              e.stopPropagation();
+                              setInfoModalSession(session);
+                            }}
+                            title="View all search queries & questions in this chat"
+                            style={{
+                              background: 'rgba(56, 189, 248, 0.15)',
+                              border: '1px solid rgba(56, 189, 248, 0.4)',
+                              color: '#38bdf8',
+                              cursor: 'pointer',
+                              width: '24px',
+                              height: '24px',
+                              borderRadius: '50%',
+                              fontSize: '12px',
+                              display: 'flex',
+                              alignItems: 'center',
+                              justifyContent: 'center',
+                              transition: 'all 0.15s ease'
+                            }}
+                            onMouseEnter={e => {
+                              e.currentTarget.style.background = 'rgba(56, 189, 248, 0.35)';
+                              e.currentTarget.style.color = '#ffffff';
+                            }}
+                            onMouseLeave={e => {
+                              e.currentTarget.style.background = 'rgba(56, 189, 248, 0.15)';
+                              e.currentTarget.style.color = '#38bdf8';
+                            }}
+                          >
+                            ℹ️
+                          </button>
+
+                          {/* 🗑️ Delete Button */}
+                          <button
+                            type="button"
+                            onClick={(e) => handleDeleteSession(e, session.id)}
+                            title="Delete chat"
+                            style={{
+                              background: 'transparent',
+                              border: 'none',
+                              color: '#64748b',
+                              cursor: 'pointer',
+                              width: '20px',
+                              height: '20px',
+                              borderRadius: '4px',
+                              fontSize: '11px',
+                              display: 'flex',
+                              alignItems: 'center',
+                              justifyContent: 'center'
+                            }}
+                            onMouseEnter={e => e.currentTarget.style.color = '#ef4444'}
+                            onMouseLeave={e => e.currentTarget.style.color = '#64748b'}
+                          >
+                            ✕
+                          </button>
+                        </div>
+                      </div>
+                    );
+                  })
+                )}
+              </div>
+            </div>
+          </>
+        )}
+
+          {/* ── ℹ️ Info Modal Popover (Chat Details & Searched Queries) ── */}
+          {infoModalSession && (
+            <div style={{
+              position: 'absolute',
+              inset: 0,
+              zIndex: 10020,
+              background: 'rgba(0, 0, 0, 0.65)',
+              backdropFilter: 'blur(8px)',
+              display: 'flex',
+              alignItems: 'center',
+              justifyContent: 'center',
+              padding: '16px'
+            }}>
+              <div style={{
+                width: '100%',
+                maxWidth: '380px',
+                maxHeight: '85%',
+                background: 'linear-gradient(145deg, #0f172a 0%, #1e293b 100%)',
+                border: '1.5px solid rgba(56, 189, 248, 0.45)',
+                borderRadius: '16px',
+                boxShadow: '0 12px 36px rgba(0, 0, 0, 0.7), 0 0 20px rgba(56, 189, 248, 0.25)',
+                display: 'flex',
+                flexDirection: 'column',
+                overflow: 'hidden'
+              }}>
+                {/* Modal Header */}
+                <div style={{
+                  padding: '12px 16px',
+                  borderBottom: '1px solid rgba(56, 189, 248, 0.3)',
+                  display: 'flex',
+                  alignItems: 'center',
+                  justifyContent: 'space-between',
+                  background: 'rgba(15, 23, 42, 0.8)'
+                }}>
+                  <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+                    <span style={{ fontSize: '15px' }}>ℹ️</span>
+                    <span style={{ fontWeight: '700', fontSize: '13px', color: '#f8fafc' }}>
+                      Chat Details & Search History
+                    </span>
+                  </div>
+                  <button
+                    onClick={() => setInfoModalSession(null)}
+                    title="Close details"
+                    style={{
+                      background: 'rgba(255, 255, 255, 0.1)',
+                      border: 'none',
+                      color: '#94a3b8',
+                      cursor: 'pointer',
+                      width: '24px',
+                      height: '24px',
+                      borderRadius: '50%',
+                      fontSize: '13px',
+                      display: 'flex',
+                      alignItems: 'center',
+                      justifyContent: 'center'
+                    }}
+                  >
+                    ✕
+                  </button>
+                </div>
+
+                {/* Modal Content */}
+                <div style={{
+                  padding: '14px 16px',
+                  overflowY: 'auto',
+                  display: 'flex',
+                  flexDirection: 'column',
+                  gap: '12px'
+                }}>
+                  <div>
+                    <span style={{ fontSize: '10.5px', textTransform: 'uppercase', letterSpacing: '0.5px', color: '#38bdf8', fontWeight: '800' }}>
+                      Topic Title
+                    </span>
+                    <div style={{ fontSize: '14px', fontWeight: '700', color: '#ffffff', marginTop: '2px' }}>
+                      {infoModalSession.title}
+                    </div>
+                  </div>
+
+                  <div style={{ display: 'flex', gap: '14px', fontSize: '11px', color: '#94a3b8', borderBottom: '1px solid rgba(255, 255, 255, 0.08)', paddingBottom: '10px' }}>
+                    <div>
+                      <span style={{ color: '#cbd5e1' }}>Messages:</span> {infoModalSession.messages?.length || 0}
+                    </div>
+                    <div>
+                      <span style={{ color: '#cbd5e1' }}>Updated:</span> {infoModalSession.updatedAt ? new Date(infoModalSession.updatedAt).toLocaleString([], { dateStyle: 'short', timeStyle: 'short' }) : 'Recently'}
+                    </div>
+                  </div>
+
+                  {/* User Searched Questions */}
+                  <div>
+                    <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: '8px' }}>
+                      <span style={{ fontSize: '11.5px', fontWeight: '700', color: '#fcd34d', display: 'flex', alignItems: 'center', gap: '5px' }}>
+                        <span>🔍</span>
+                        <span>Questions Asked in this Chat ({infoModalSession.searchedQueries?.length || 0})</span>
+                      </span>
+                    </div>
+
+                    <div style={{ display: 'flex', flexDirection: 'column', gap: '6px' }}>
+                      {!infoModalSession.searchedQueries || infoModalSession.searchedQueries.length === 0 ? (
+                        <div style={{ fontSize: '11.5px', color: '#94a3b8', fontStyle: 'italic', padding: '6px 0' }}>
+                          No search questions recorded in this chat yet.
+                        </div>
+                      ) : (
+                        infoModalSession.searchedQueries.map((query, qIdx) => (
+                          <div
+                            key={qIdx}
+                            style={{
+                              padding: '8px 10px',
+                              borderRadius: '8px',
+                              background: 'rgba(30, 41, 59, 0.65)',
+                              border: '1px solid rgba(56, 189, 248, 0.25)',
+                              display: 'flex',
+                              alignItems: 'flex-start',
+                              justifyContent: 'space-between',
+                              gap: '8px'
+                            }}
+                          >
+                            <div style={{ display: 'flex', gap: '8px', flex: 1, overflow: 'hidden' }}>
+                              <span style={{
+                                color: '#38bdf8',
+                                fontWeight: '800',
+                                fontSize: '11px',
+                                background: 'rgba(56, 189, 248, 0.15)',
+                                padding: '1px 5px',
+                                borderRadius: '4px',
+                                height: 'fit-content'
+                              }}>
+                                #{qIdx + 1}
+                              </span>
+                              <span style={{ fontSize: '12px', color: '#f1f5f9', wordBreak: 'break-word', lineHeight: '1.4' }}>
+                                {query}
+                              </span>
+                            </div>
+                            <button
+                              onClick={() => {
+                                setInputMessage(query);
+                                setInfoModalSession(null);
+                                setIsSidebarOpen(false);
+                                if (activeSessionId !== infoModalSession.id) {
+                                  handleSelectSession(infoModalSession);
+                                }
+                                if (textareaRef.current) textareaRef.current.focus();
+                              }}
+                              title="Ask this question again"
+                              style={{
+                                background: 'linear-gradient(135deg, #0284c7, #6366f1)',
+                                border: 'none',
+                                borderRadius: '5px',
+                                color: '#ffffff',
+                                fontSize: '10px',
+                                fontWeight: '700',
+                                padding: '3px 7px',
+                                cursor: 'pointer',
+                                flexShrink: 0,
+                                display: 'flex',
+                                alignItems: 'center',
+                                gap: '3px'
+                              }}
+                            >
+                              <span>Use</span>
+                              <span>↗</span>
+                            </button>
+                          </div>
+                        ))
+                      )}
+                    </div>
+                  </div>
+                </div>
+              </div>
+            </div>
+          )}
           {/* ── 8-Direction Interactive Resize Edge/Corner Hitboxes ── */}
           {!isMaximized && (
             <>
@@ -822,97 +1796,181 @@ How are you doing today? Ask me any question or pick a prompt below!`,
             }}
             title="Grab & drag anywhere to move window around screen"
           >
-            <div style={{ display: 'flex', alignItems: 'center', gap: '10px', pointerEvents: 'none' }}>
-              <CalmAiAvatar size={30} />
-              <div>
+            <div style={{ display: 'flex', alignItems: 'center', gap: '8px', minWidth: 0, flex: '1 1 auto', overflow: 'hidden', pointerEvents: 'none' }}>
+              <CalmAiAvatar size={isCompact ? 26 : 30} />
+              <div style={{ minWidth: 0, overflow: 'hidden' }}>
                 <div style={{ display: 'flex', alignItems: 'center', gap: '6px' }}>
-                  <strong style={{ fontSize: '13.5px', display: 'block', textShadow: '0 1px 3px rgba(0,0,0,0.8)' }}>
-                    AlgoFlow AI Companion
-                  </strong>
-                  <span style={{
-                    fontSize: '9.5px',
-                    fontWeight: '800',
-                    textTransform: 'uppercase',
-                    letterSpacing: '0.6px',
-                    padding: '1.5px 6px',
-                    borderRadius: '4px',
-                    background: 'linear-gradient(135deg, rgba(245, 158, 11, 0.35) 0%, rgba(217, 119, 6, 0.35) 100%)',
-                    border: '1px solid rgba(251, 191, 36, 0.7)',
-                    color: '#fef08a',
-                    boxShadow: '0 1px 4px rgba(245, 158, 11, 0.3)',
-                    textShadow: '0 1px 2px rgba(0,0,0,0.8)'
+                  <strong style={{
+                    fontSize: isCompact ? '12.5px' : '13.5px',
+                    whiteSpace: 'nowrap',
+                    overflow: 'hidden',
+                    textOverflow: 'ellipsis',
+                    display: 'block',
+                    textShadow: '0 1px 3px rgba(0,0,0,0.8)'
                   }}>
-                    Beta Version
-                  </span>
+                    {isCompact ? 'AlgoFlow AI' : 'AlgoFlow AI Companion'}
+                  </strong>
+                  {!isCompact && (
+                    <span style={{
+                      fontSize: '9.5px',
+                      fontWeight: '800',
+                      textTransform: 'uppercase',
+                      letterSpacing: '0.6px',
+                      padding: '1.5px 5px',
+                      borderRadius: '4px',
+                      background: 'linear-gradient(135deg, rgba(245, 158, 11, 0.35) 0%, rgba(217, 119, 6, 0.35) 100%)',
+                      border: '1px solid rgba(251, 191, 36, 0.7)',
+                      color: '#fef08a',
+                      boxShadow: '0 1px 4px rgba(245, 158, 11, 0.3)',
+                      textShadow: '0 1px 2px rgba(0,0,0,0.8)',
+                      whiteSpace: 'nowrap'
+                    }}>
+                      Beta
+                    </span>
+                  )}
                 </div>
-                <span style={{ fontSize: '10.5px', opacity: 0.95, display: 'flex', alignItems: 'center', gap: '4px', textShadow: '0 1px 2px rgba(0,0,0,0.8)' }}>
-                  <span style={{ width: '6px', height: '6px', borderRadius: '50%', background: '#4ade80' }} />
-                  Edge-Resizable & Movable
+                <span style={{ fontSize: '10px', opacity: 0.95, display: 'flex', alignItems: 'center', gap: '4px', textShadow: '0 1px 2px rgba(0,0,0,0.8)', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>
+                  <span style={{ width: '5px', height: '5px', borderRadius: '50%', background: liveScreen?.lastErrorOrIssue ? '#ef4444' : '#4ade80', flexShrink: 0 }} />
+                  <span style={{ overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
+                    {isCompact 
+                      ? (liveScreen?.activeAlgo && liveScreen.activeAlgo !== 'None' ? `👁️ ${liveScreen.activeAlgo}` : (liveScreen?.screenTitle ? `👁️ ${liveScreen.screenTitle}` : '👁️ Live')) 
+                      : (liveScreen?.screenTitle 
+                          ? `👁️ Screen: ${liveScreen.screenTitle}${liveScreen.activeAlgo && liveScreen.activeAlgo !== 'None' ? ` (${liveScreen.activeAlgo})` : ''}` 
+                          : '👁️ Live Screen Telemetry Active')}
+                  </span>
                 </span>
               </div>
             </div>
 
-            <div style={{ display: 'flex', alignItems: 'center', gap: '5px' }}>
-              {/* Quick Size Presets */}
+            <div style={{ display: 'flex', alignItems: 'center', gap: isCompact ? '4px' : '5px', flexShrink: 0 }}>
+              {/* Quick Size Presets Segmented Pill */}
+              <div style={{
+                display: 'flex',
+                alignItems: 'center',
+                background: 'rgba(0, 0, 0, 0.28)',
+                padding: '2px',
+                borderRadius: '6px',
+                border: '1px solid rgba(255, 255, 255, 0.18)',
+                marginRight: '2px'
+              }}>
+                <button
+                  onClick={() => {
+                    setIsMaximized(false);
+                    const newW = Math.min(500, typeof window !== 'undefined' ? window.innerWidth - 16 : 500);
+                    const newH = Math.min(640, typeof window !== 'undefined' ? window.innerHeight - 30 : 640);
+                    const newDims = { width: newW, height: newH };
+                    setWindowDimensions(newDims);
+                    try { localStorage.setItem('algoflow_chat_dimensions', JSON.stringify(newDims)); } catch {}
+                  }}
+                  title="Compact View (500x640)"
+                  style={{
+                    background: windowDimensions.width <= 530 && !isMaximized ? 'rgba(56, 189, 248, 0.45)' : 'transparent',
+                    border: 'none',
+                    color: windowDimensions.width <= 530 && !isMaximized ? '#ffffff' : '#cbd5e1',
+                    cursor: 'pointer',
+                    padding: '2px 6px',
+                    borderRadius: '4px',
+                    fontSize: '10.5px',
+                    fontWeight: 'bold',
+                    transition: 'all 0.15s ease'
+                  }}
+                >
+                  S
+                </button>
+                <button
+                  onClick={() => {
+                    setIsMaximized(false);
+                    const newW = Math.min(620, typeof window !== 'undefined' ? window.innerWidth - 16 : 620);
+                    const newH = Math.min(730, typeof window !== 'undefined' ? window.innerHeight - 30 : 730);
+                    const newDims = { width: newW, height: newH };
+                    setWindowDimensions(newDims);
+                    try { localStorage.setItem('algoflow_chat_dimensions', JSON.stringify(newDims)); } catch {}
+                  }}
+                  title="Balanced View (620x730)"
+                  style={{
+                    background: windowDimensions.width > 530 && windowDimensions.width <= 680 && !isMaximized ? 'rgba(56, 189, 248, 0.45)' : 'transparent',
+                    border: 'none',
+                    color: windowDimensions.width > 530 && windowDimensions.width <= 680 && !isMaximized ? '#ffffff' : '#cbd5e1',
+                    cursor: 'pointer',
+                    padding: '2px 6px',
+                    borderRadius: '4px',
+                    fontSize: '10.5px',
+                    fontWeight: 'bold',
+                    transition: 'all 0.15s ease'
+                  }}
+                >
+                  M
+                </button>
+                <button
+                  onClick={() => {
+                    setIsMaximized(false);
+                    const newW = Math.min(780, typeof window !== 'undefined' ? window.innerWidth - 16 : 780);
+                    const newH = Math.min(820, typeof window !== 'undefined' ? window.innerHeight - 30 : 820);
+                    const newDims = { width: newW, height: newH };
+                    setWindowDimensions(newDims);
+                    try { localStorage.setItem('algoflow_chat_dimensions', JSON.stringify(newDims)); } catch {}
+                  }}
+                  title="Wide View (780x820)"
+                  style={{
+                    background: windowDimensions.width > 680 && !isMaximized ? 'rgba(56, 189, 248, 0.45)' : 'transparent',
+                    border: 'none',
+                    color: windowDimensions.width > 680 && !isMaximized ? '#ffffff' : '#cbd5e1',
+                    cursor: 'pointer',
+                    padding: '2px 6px',
+                    borderRadius: '4px',
+                    fontSize: '10.5px',
+                    fontWeight: 'bold',
+                    transition: 'all 0.15s ease'
+                  }}
+                >
+                  L
+                </button>
+              </div>
+
+              {/* Sidebar Past Chats Toggle Button */}
               <button
-                onClick={() => {
-                  setIsMaximized(false);
-                  setWindowDimensions({ width: 340, height: 460 });
-                }}
-                title="Compact Size (S)"
+                onClick={() => setIsSidebarOpen(prev => !prev)}
+                title={isSidebarOpen ? "Close Past Chats" : "Open Past Chats (Conversations History)"}
                 style={{
-                  background: 'rgba(255, 255, 255, 0.18)',
-                  border: '1px solid rgba(255, 255, 255, 0.25)',
+                  background: isSidebarOpen ? 'rgba(56, 189, 248, 0.4)' : 'rgba(255, 255, 255, 0.18)',
+                  border: isSidebarOpen ? '1px solid #38bdf8' : '1px solid rgba(255, 255, 255, 0.28)',
                   color: '#fff',
                   cursor: 'pointer',
-                  padding: '3px 6px',
-                  borderRadius: '4px',
-                  fontSize: '10px',
-                  fontWeight: 'bold'
+                  padding: '3px 8px',
+                  borderRadius: '6px',
+                  fontSize: '11px',
+                  display: 'flex',
+                  alignItems: 'center',
+                  gap: '4px',
+                  fontWeight: 'bold',
+                  boxShadow: isSidebarOpen ? '0 0 10px rgba(56, 189, 248, 0.4)' : 'none',
+                  transition: 'all 0.15s ease'
                 }}
               >
-                S
-              </button>
-              <button
-                onClick={() => {
-                  setIsMaximized(false);
-                  setWindowDimensions({ width: 440, height: 600 });
-                }}
-                title="Medium Size (M)"
-                style={{
-                  background: 'rgba(255, 255, 255, 0.18)',
-                  border: '1px solid rgba(255, 255, 255, 0.25)',
-                  color: '#fff',
-                  cursor: 'pointer',
-                  padding: '3px 6px',
-                  borderRadius: '4px',
-                  fontSize: '10px',
-                  fontWeight: 'bold'
-                }}
-              >
-                M
+                <span>💬</span>
+                <span>Chats</span>
+                <span style={{
+                  background: '#0284c7',
+                  color: '#ffffff',
+                  borderRadius: '10px',
+                  padding: '0 5px',
+                  fontSize: '9.5px',
+                  fontWeight: '800'
+                }}>
+                  {sessions.length}
+                </span>
               </button>
 
-              {/* Clear / New Chat Button */}
+              {/* Start New Chat Button */}
               <button
-                onClick={() => {
-                  const initialMsg = [
-                    {
-                      role: 'assistant',
-                      sender: 'bot',
-                      text: `👋 Hi ${activeUser?.name ? activeUser.name.split(' ')[0] : ''}! I'm your AI coding assistant powered by Gemini.\n\nAsk me anything:\n• "Explain binary search"\n• "Fix my code"\n• "Write a bubble sort in Python"\n• "What is AVL tree rotation?"\n\nI'm here to help!`
-                    }
-                  ];
-                  if (setChatMessages) setChatMessages(initialMsg);
-                  clearUserChatMessages(activeUser?.email);
-                }}
-                title="Start New Chat & Clear History"
+                onClick={handleStartNewChat}
+                title="Start a new chat session"
                 style={{
-                  background: 'rgba(255, 255, 255, 0.15)',
-                  border: '1px solid rgba(255, 255, 255, 0.25)',
-                  color: '#fff',
+                  background: 'linear-gradient(135deg, rgba(2, 132, 199, 0.55) 0%, rgba(99, 102, 241, 0.55) 100%)',
+                  border: '1px solid rgba(56, 189, 248, 0.6)',
+                  color: '#e0f2fe',
                   cursor: 'pointer',
-                  padding: '3px 7px',
+                  padding: isCompact ? '3px 6px' : '3px 7px',
                   borderRadius: '6px',
                   fontSize: '11px',
                   display: 'flex',
@@ -921,19 +1979,20 @@ How are you doing today? Ask me any question or pick a prompt below!`,
                   fontWeight: 'bold'
                 }}
               >
-                🧹 New
+                <span>➕</span>
+                {!isCompact && <span>New</span>}
               </button>
 
               {/* Opacity Button */}
               <button
                 onClick={() => setShowSettings(!showSettings)}
-                title="Adjust Window Opacity / Transparency"
+                title={`Adjust Window Opacity (currently ${Math.round(chatOpacity * 100)}%)`}
                 style={{
                   background: showSettings ? 'rgba(255, 255, 255, 0.35)' : 'rgba(255, 255, 255, 0.2)',
                   border: '1px solid rgba(255, 255, 255, 0.3)',
                   color: '#fff',
                   cursor: 'pointer',
-                  padding: '3px 7px',
+                  padding: isCompact ? '3px 6px' : '3px 7px',
                   borderRadius: '6px',
                   fontSize: '11px',
                   display: 'flex',
@@ -942,7 +2001,8 @@ How are you doing today? Ask me any question or pick a prompt below!`,
                   fontWeight: 'bold'
                 }}
               >
-                💧 {Math.round(chatOpacity * 100)}%
+                <span>💧</span>
+                {!isCompact && <span>{Math.round(chatOpacity * 100)}%</span>}
               </button>
 
               {/* Maximize / Restore Button */}
@@ -971,7 +2031,19 @@ How are you doing today? Ask me any question or pick a prompt below!`,
               <button
                 onClick={() => setIsChatOpen(false)}
                 title="Close"
-                style={{ background: 'rgba(255, 255, 255, 0.2)', border: 'none', color: '#fff', cursor: 'pointer', width: '26px', height: '26px', borderRadius: '50%', fontSize: '14px', display: 'flex', alignItems: 'center', justifyContent: 'center' }}
+                style={{
+                  background: 'rgba(255, 255, 255, 0.2)',
+                  border: 'none',
+                  color: '#fff',
+                  cursor: 'pointer',
+                  width: '26px',
+                  height: '26px',
+                  borderRadius: '50%',
+                  fontSize: '14px',
+                  display: 'flex',
+                  alignItems: 'center',
+                  justifyContent: 'center'
+                }}
               >
                 ×
               </button>
@@ -1058,93 +2130,273 @@ How are you doing today? Ask me any question or pick a prompt below!`,
           )}
 
           {/* Chat Messages List */}
-          <div style={{
-            flex: 1,
-            overflowY: 'auto',
-            padding: '14px',
-            display: 'flex',
-            flexDirection: 'column',
-            gap: '12px'
-          }}>
-            {(chatMessages || []).map((msg, i) => {
-              const isUser = msg.role === 'user';
-              return (
-                <div
-                  key={i}
-                  style={{
-                    alignSelf: isUser ? 'flex-end' : 'flex-start',
-                    maxWidth: isMaximized ? '75%' : '88%',
-                    display: 'flex',
-                    flexDirection: 'column',
-                    alignItems: isUser ? 'flex-end' : 'flex-start'
-                  }}
-                >
-                  <div style={{ display: 'flex', gap: '8px', alignItems: 'flex-start', flexDirection: isUser ? 'row-reverse' : 'row' }}>
-                    {!isUser && <CalmAiAvatar size={24} />}
-                    <div style={{
-                      padding: '12px 16px',
-                      borderRadius: isUser ? '14px 14px 2px 14px' : '14px 14px 14px 2px',
-                      background: isUser 
-                        ? `linear-gradient(135deg, rgba(2, 132, 199, ${Math.max(chatOpacity * 0.9, 0.75)}), rgba(99, 102, 241, ${Math.max(chatOpacity * 0.9, 0.75)}))` 
-                        : `rgba(15, 23, 42, ${Math.max(bubbleAlpha, 0.75)})`,
-                      color: '#ffffff',
-                      fontSize: '12.5px',
-                      lineHeight: '1.55',
-                      border: isUser ? '1px solid #38bdf8' : `1.5px solid rgba(56, 189, 248, ${Math.max(chatOpacity * 0.5, 0.35)})`,
-                      boxShadow: '0 4px 16px rgba(0,0,0,0.5)',
-                      wordBreak: 'break-word',
-                      backdropFilter: 'blur(8px)'
-                    }}>
-                      <ChatMessageRenderer text={msg.text} isUser={isUser} onSelectPrompt={handleSendMessage} />
-                    </div>
-                  </div>
-
-                  {!isUser && (msg.offlineNotice || (msg.sources && msg.sources.some(s => s.toLowerCase().includes('offline')))) && (
-                    <div style={{
-                      marginTop: '6px',
-                      marginLeft: '32px',
-                      padding: '4px 10px',
-                      borderRadius: '8px',
-                      background: 'rgba(245, 158, 11, 0.12)',
-                      border: '1px solid rgba(245, 158, 11, 0.35)',
-                      color: '#fcd34d',
-                      fontSize: '10px',
-                      display: 'flex',
-                      alignItems: 'center',
-                      gap: '5px'
-                    }}>
-                      <span>📡</span>
-                      <span>Offline Mode • For live real-time answers and broad knowledge, connect to the internet.</span>
-                    </div>
-                  )}
-
-                  {!isUser && msg.sources && msg.sources.length > 0 && (
-                    <div style={{ display: 'flex', gap: '4px', flexWrap: 'wrap', marginTop: '4px', marginLeft: '32px' }}>
-                      <span style={{ fontSize: '9.5px', color: '#cbd5e1', textShadow: '0 1px 2px rgba(0,0,0,0.8)' }}>Sources:</span>
-                      {msg.sources.slice(0, 2).map((s, idx) => (
-                        <span key={idx} style={{ fontSize: '9.5px', color: '#38bdf8', background: 'rgba(56,189,248,0.2)', padding: '1px 5px', borderRadius: '4px', textShadow: '0 1px 2px rgba(0,0,0,0.8)' }}>
-                          {s}
-                        </span>
-                      ))}
-                    </div>
-                  )}
-
-                  <span style={{ fontSize: '9.5px', color: '#94a3b8', marginTop: '2px', marginLeft: isUser ? '0' : '32px', textShadow: '0 1px 2px rgba(0,0,0,0.8)' }}>
-                    {msg.timestamp}
-                  </span>
+          <div 
+            ref={chatContainerRef}
+            onScroll={handleChatScroll}
+            style={{
+              flex: '1 1 0%',
+              minHeight: 0,
+              overflowY: 'auto',
+              padding: isCompact ? '10px 10px 16px 10px' : '16px 18px 24px 18px',
+              display: 'flex',
+              flexDirection: 'column',
+              gap: isCompact ? '10px' : '14px',
+              position: 'relative'
+            }}
+          >
+            {(!chatMessages || chatMessages.length === 0 || (!chatMessages.some(m => m.role === 'user') && chatMessages.length <= 1)) ? (
+              <div style={{
+                display: 'flex',
+                flexDirection: 'column',
+                alignItems: 'center',
+                justifyContent: 'center',
+                textAlign: 'center',
+                padding: isCompact ? '12px 6px 10px 6px' : '24px 14px 18px 14px',
+                margin: 'auto 0',
+                gap: isCompact ? '10px' : '16px'
+              }}>
+                {/* Glowing Zen Avatar Ambient Hub */}
+                <div style={{
+                  position: 'relative',
+                  display: 'inline-flex',
+                  alignItems: 'center',
+                  justifyContent: 'center',
+                  marginBottom: '2px'
+                }}>
+                  <div style={{
+                    position: 'absolute',
+                    width: isCompact ? '56px' : '76px',
+                    height: isCompact ? '56px' : '76px',
+                    borderRadius: '50%',
+                    background: 'radial-gradient(circle, rgba(56, 189, 248, 0.4) 0%, rgba(99, 102, 241, 0.2) 65%, transparent 100%)',
+                    filter: 'blur(12px)',
+                    animation: 'pulse 2.8s ease-in-out infinite'
+                  }} />
+                  <CalmAiAvatar size={isCompact ? 40 : 50} />
                 </div>
-              );
-            })}
+
+                <div>
+                  <h3 style={{
+                    fontSize: isCompact ? '16px' : '18px',
+                    fontWeight: '800',
+                    margin: '0 0 4px 0',
+                    letterSpacing: '-0.3px',
+                    background: 'linear-gradient(135deg, #ffffff 40%, #38bdf8 100%)',
+                    WebkitBackgroundClip: 'text',
+                    WebkitTextFillColor: 'transparent',
+                    textShadow: '0 2px 10px rgba(0, 0, 0, 0.5)'
+                  }}>
+                    AlgoFlow AI Mentor Studio
+                  </h3>
+                  <p style={{
+                    fontSize: isCompact ? '12px' : '13px',
+                    color: '#94a3b8',
+                    margin: 0,
+                    maxWidth: '440px',
+                    lineHeight: '1.5'
+                  }}>
+                    Your live interactive companion for algorithmic reasoning, code optimizations, real-time screen diagnostics, and career roadmaps.
+                  </p>
+                </div>
+
+                {/* Live Screen Telemetry Active Pill */}
+                {liveScreen?.screenTitle && (
+                  <div style={{
+                    display: 'inline-flex',
+                    alignItems: 'center',
+                    gap: '6px',
+                    padding: '3px 12px',
+                    borderRadius: '20px',
+                    background: 'rgba(56, 189, 248, 0.12)',
+                    border: '1px solid rgba(56, 189, 248, 0.35)',
+                    fontSize: isCompact ? '11px' : '11.5px',
+                    color: '#38bdf8',
+                    fontWeight: '600'
+                  }}>
+                    <span style={{ width: '6px', height: '6px', borderRadius: '50%', background: '#4ade80', boxShadow: '0 0 8px #4ade80' }} />
+                    <span>Connected to Screen: <strong>{liveScreen.screenTitle}</strong>{liveScreen.activeAlgo && liveScreen.activeAlgo !== 'None' ? ` (${liveScreen.activeAlgo})` : ''}</span>
+                  </div>
+                )}
+
+                {/* 4 Interactive Starter Cards */}
+                <div style={{
+                  display: 'grid',
+                  gridTemplateColumns: 'repeat(2, minmax(0, 1fr))',
+                  gap: isCompact ? '6px' : '10px',
+                  width: '100%',
+                  maxWidth: '520px',
+                  marginTop: '4px'
+                }}>
+                  {[
+                    {
+                      icon: '👁️',
+                      title: 'Explain My Screen',
+                      desc: isCompact ? 'Analyze algorithm & steps' : 'Analyze active algorithm, steps & operations',
+                      prompt: "Can you analyze what is currently happening on my screen, what algorithm is active, what step I am on, and explain the current visualization or status?"
+                    },
+                    {
+                      icon: '🌲',
+                      title: 'Tree & Graph Logic',
+                      desc: isCompact ? 'Rotations, BFS & Dijkstra' : 'AVL rotations, Dijkstra, BFS vs DFS & MST',
+                      prompt: 'Explain AVL Tree rotations and balancing step-by-step with simple intuitive examples.'
+                    },
+                    {
+                      icon: '⚡',
+                      title: 'Big-O & Complexity',
+                      desc: isCompact ? 'Time & space bounds' : 'Time and space bounds (Best vs Worst case)',
+                      prompt: 'Explain Big-O time and space complexity with real-world examples and asymptotic notation.'
+                    },
+                    {
+                      icon: '🎓',
+                      title: 'Branch Roadmaps',
+                      desc: isCompact ? 'B.Tech milestone paths' : 'B.Tech milestone paths & language careers',
+                      prompt: 'Guide me through engineering branch roadmaps, language career options, and beginner CS foundations!'
+                    }
+                  ].map((card, cIdx) => (
+                    <button
+                      key={cIdx}
+                      onClick={() => handleSendMessage(card.prompt)}
+                      style={{
+                        background: 'rgba(30, 41, 59, 0.55)',
+                        border: '1px solid rgba(56, 189, 248, 0.28)',
+                        borderRadius: '10px',
+                        padding: isCompact ? '8px 10px' : '12px 14px',
+                        textAlign: 'left',
+                        cursor: 'pointer',
+                        display: 'flex',
+                        flexDirection: 'column',
+                        gap: '2px',
+                        transition: 'all 0.18s ease',
+                        backdropFilter: 'blur(8px)',
+                        boxShadow: '0 3px 10px rgba(0, 0, 0, 0.25)'
+                      }}
+                      onMouseEnter={e => {
+                        e.currentTarget.style.background = 'rgba(56, 189, 248, 0.14)';
+                        e.currentTarget.style.borderColor = '#38bdf8';
+                        e.currentTarget.style.transform = 'translateY(-2px)';
+                        e.currentTarget.style.boxShadow = '0 6px 18px rgba(56, 189, 248, 0.25)';
+                      }}
+                      onMouseLeave={e => {
+                        e.currentTarget.style.background = 'rgba(30, 41, 59, 0.55)';
+                        e.currentTarget.style.borderColor = 'rgba(56, 189, 248, 0.28)';
+                        e.currentTarget.style.transform = 'translateY(0)';
+                        e.currentTarget.style.boxShadow = '0 3px 10px rgba(0, 0, 0, 0.25)';
+                      }}
+                    >
+                      <div style={{ display: 'flex', alignItems: 'center', gap: '6px' }}>
+                        <span style={{ fontSize: isCompact ? '13px' : '15px' }}>{card.icon}</span>
+                        <span style={{ fontSize: isCompact ? '11.5px' : '12.5px', fontWeight: '700', color: '#f1f5f9' }}>{card.title}</span>
+                      </div>
+                      <span style={{ fontSize: isCompact ? '10px' : '11px', color: '#94a3b8', lineHeight: '1.3' }}>{card.desc}</span>
+                    </button>
+                  ))}
+                </div>
+              </div>
+            ) : (
+              (chatMessages || []).map((msg, i) => {
+                const isUser = msg.role === 'user';
+                if (!isUser && msg.isStreaming && (!msg.text || msg.text.length === 0)) {
+                  return null;
+                }
+                return (
+                  <div
+                    key={i}
+                    style={{
+                      alignSelf: isUser ? 'flex-end' : 'flex-start',
+                      maxWidth: isCompact ? '96%' : (isMaximized ? '82%' : '90%'),
+                      display: 'flex',
+                      flexDirection: 'column',
+                      alignItems: isUser ? 'flex-end' : 'flex-start'
+                    }}
+                  >
+                    <div style={{ display: 'flex', gap: isCompact ? '6px' : '10px', alignItems: 'flex-start', flexDirection: isUser ? 'row-reverse' : 'row', width: '100%' }}>
+                      {!isUser && <CalmAiAvatar size={isCompact ? 22 : 26} />}
+                      <div style={{
+                        padding: isCompact ? '10px 12px' : '14px 18px',
+                        borderRadius: isUser ? '14px 14px 4px 14px' : '14px 14px 14px 4px',
+                        background: isUser 
+                          ? `linear-gradient(135deg, rgba(2, 132, 199, ${Math.max(chatOpacity * 0.92, 0.8)}), rgba(99, 102, 241, ${Math.max(chatOpacity * 0.92, 0.8)}))` 
+                          : `rgba(11, 18, 33, ${Math.max(bubbleAlpha, 0.92)})`,
+                        color: '#f8fafc',
+                        fontSize: isCompact ? '13px' : '14px',
+                        lineHeight: isCompact ? '1.55' : '1.7',
+                        border: isUser ? '1px solid rgba(56, 189, 248, 0.55)' : `1.5px solid rgba(56, 189, 248, ${Math.max(chatOpacity * 0.45, 0.3)})`,
+                        boxShadow: '0 4px 16px rgba(0,0,0,0.4)',
+                        overflowWrap: 'break-word',
+                        wordBreak: 'normal',
+                        backdropFilter: 'blur(12px)',
+                        flex: 1,
+                        minWidth: 0
+                      }}>
+                        {msg.image && (
+                          <div style={{ marginBottom: msg.text ? '8px' : '0' }}>
+                            <img 
+                              src={msg.image} 
+                              alt="Uploaded problem photo" 
+                              onClick={() => setPreviewModalImage(msg.image)}
+                              title="Click photo to view full size"
+                              style={{
+                                maxWidth: '100%',
+                                maxHeight: isCompact ? '180px' : '260px',
+                                borderRadius: '8px',
+                                objectFit: 'contain',
+                                border: '1px solid rgba(56, 189, 248, 0.45)',
+                                background: 'rgba(0, 0, 0, 0.4)',
+                                cursor: 'zoom-in',
+                                display: 'block'
+                              }} 
+                            />
+                            <div style={{ fontSize: '9.5px', color: 'rgba(255, 255, 255, 0.75)', marginTop: '3px', display: 'flex', alignItems: 'center', gap: '3px' }}>
+                              <span>🔍</span>
+                              <span>Click photo to enlarge</span>
+                            </div>
+                          </div>
+                        )}
+                        <ChatMessageRenderer 
+                          text={msg.text} 
+                          isUser={isUser} 
+                          onSelectPrompt={isGenerating ? null : handleSendMessage} 
+                          isStreaming={!isUser && msg.isStreaming} 
+                        />
+                      </div>
+                    </div>
+
+                    {!isUser && !msg.isStreaming && (msg.offlineNotice || (msg.sources && msg.sources.some(s => s.toLowerCase().includes('offline')))) && (
+                      <div style={{
+                        marginTop: '6px',
+                        marginLeft: '36px',
+                        padding: '4px 10px',
+                        borderRadius: '8px',
+                        background: 'rgba(245, 158, 11, 0.12)',
+                        border: '1px solid rgba(245, 158, 11, 0.35)',
+                        color: '#fcd34d',
+                        fontSize: '10.5px',
+                        display: 'flex',
+                        alignItems: 'center',
+                        gap: '5px'
+                      }}>
+                        <span>📡</span>
+                        <span>Offline Mode • Live real-time answers active on internet reconnect.</span>
+                      </div>
+                    )}
+
+                    <span style={{ fontSize: '10px', color: '#94a3b8', marginTop: '3px', marginLeft: isUser ? '0' : '36px', textShadow: '0 1px 2px rgba(0,0,0,0.8)' }}>
+                      {msg.timestamp}
+                    </span>
+                  </div>
+                );
+              })
+            )}
 
             {isLoading && (
-              <div style={{ alignSelf: 'flex-start', display: 'flex', gap: '8px', alignItems: 'flex-start' }}>
+              <div style={{ alignSelf: 'flex-start', display: 'flex', gap: '10px', alignItems: 'flex-start' }}>
                 <CalmAiAvatar size={26} />
                 <div style={{
                   background: 'linear-gradient(135deg, rgba(15, 23, 42, 0.95) 0%, rgba(30, 41, 59, 0.92) 100%)',
-                  padding: '12px 18px',
-                  borderRadius: '16px 16px 16px 3px',
+                  padding: '14px 20px',
+                  borderRadius: '16px 16px 16px 4px',
                   color: '#e2e8f0',
-                  fontSize: '12px',
+                  fontSize: '12.5px',
                   display: 'flex',
                   flexDirection: 'column',
                   gap: '8px',
@@ -1152,7 +2404,7 @@ How are you doing today? Ask me any question or pick a prompt below!`,
                   backdropFilter: 'blur(12px)',
                   boxShadow: '0 8px 24px rgba(0, 0, 0, 0.5)'
                 }}>
-                  <div style={{ display: 'flex', alignItems: 'center', gap: '8px', color: '#38bdf8', fontWeight: 'bold', fontSize: '11.5px' }}>
+                  <div style={{ display: 'flex', alignItems: 'center', gap: '8px', color: '#38bdf8', fontWeight: 'bold', fontSize: '12px' }}>
                     <span style={{ animation: 'spin 1.2s linear infinite' }}>⚡</span>
                     <span>Analyzing & Synthesizing Answer...</span>
                   </div>
@@ -1170,8 +2422,105 @@ How are you doing today? Ask me any question or pick a prompt below!`,
                 </div>
               </div>
             )}
+
+            {showScrollBottomBtn && (
+              <button
+                type="button"
+                onClick={() => scrollToBottom('smooth')}
+                title="Scroll down to latest response"
+                style={{
+                  position: 'sticky',
+                  bottom: '10px',
+                  alignSelf: 'center',
+                  zIndex: 35,
+                  padding: '7px 16px',
+                  borderRadius: '24px',
+                  background: 'linear-gradient(135deg, rgba(2, 132, 199, 0.96), rgba(99, 102, 241, 0.96))',
+                  border: '1.5px solid rgba(255, 255, 255, 0.75)',
+                  color: '#ffffff',
+                  fontSize: '11.5px',
+                  fontWeight: '700',
+                  cursor: 'pointer',
+                  boxShadow: '0 6px 20px rgba(0, 0, 0, 0.55), 0 0 16px rgba(56, 189, 248, 0.6)',
+                  display: 'flex',
+                  alignItems: 'center',
+                  gap: '6px',
+                  backdropFilter: 'blur(10px)',
+                  transition: 'all 0.15s ease'
+                }}
+                onMouseEnter={e => e.currentTarget.style.transform = 'scale(1.04)'}
+                onMouseLeave={e => e.currentTarget.style.transform = 'scale(1.0)'}
+              >
+                <span style={{ fontSize: '13px' }}>↓</span>
+                <span>Jump to latest</span>
+              </button>
+            )}
+
+            <div style={{ height: '14px', flexShrink: 0 }} />
             <div ref={messagesEndRef} />
           </div>
+
+          {/* Active Screen Issue Detection Alert Banner */}
+          {liveScreen?.lastErrorOrIssue && (
+            <div style={{
+              margin: '6px 12px 4px 12px',
+              padding: '8px 12px',
+              background: 'rgba(239, 68, 68, 0.16)',
+              border: '1px solid rgba(239, 68, 68, 0.45)',
+              borderRadius: '10px',
+              display: 'flex',
+              alignItems: 'center',
+              justifyContent: 'space-between',
+              gap: '10px',
+              backdropFilter: 'blur(8px)',
+              boxShadow: '0 4px 12px rgba(239, 68, 68, 0.25)'
+            }}>
+              <div style={{ display: 'flex', alignItems: 'center', gap: '8px', overflow: 'hidden' }}>
+                <span style={{ fontSize: '1.05rem', flexShrink: 0 }}>⚠️</span>
+                <div style={{ display: 'flex', flexDirection: 'column', overflow: 'hidden' }}>
+                  <span style={{ fontSize: '10px', fontWeight: '800', color: '#f87171', textTransform: 'uppercase', letterSpacing: '0.5px' }}>
+                    Screen Issue Detected
+                  </span>
+                  <span style={{ fontSize: '11.5px', color: '#fecaca', textOverflow: 'ellipsis', overflow: 'hidden', whiteSpace: 'nowrap' }} title={liveScreen.lastErrorOrIssue}>
+                    {liveScreen.lastErrorOrIssue}
+                  </span>
+                </div>
+              </div>
+              <div style={{ display: 'flex', alignItems: 'center', gap: '6px', flexShrink: 0 }}>
+                <button
+                  onClick={() => handleSendMessage(`I encountered this problem on my screen: "${liveScreen.lastErrorOrIssue}". Can you explain why it happened and how I can solve or fix it?`)}
+                  style={{
+                    padding: '4px 10px',
+                    background: 'linear-gradient(135deg, #ef4444, #dc2626)',
+                    border: 'none',
+                    borderRadius: '6px',
+                    color: '#ffffff',
+                    fontSize: '11px',
+                    fontWeight: 'bold',
+                    cursor: 'pointer',
+                    boxShadow: '0 2px 6px rgba(239, 68, 68, 0.4)'
+                  }}
+                >
+                  Fix with AI ✨
+                </button>
+                <button
+                  onClick={clearScreenError}
+                  title="Dismiss alert"
+                  style={{
+                    background: 'transparent',
+                    border: 'none',
+                    color: '#94a3b8',
+                    fontSize: '15px',
+                    cursor: 'pointer',
+                    padding: '2px 4px',
+                    lineHeight: 1
+                  }}
+                >
+                  ×
+                </button>
+              </div>
+            </div>
+          )}
 
           {/* Quick Prompts Chips */}
           <div style={{
@@ -1210,14 +2559,14 @@ How are you doing today? Ask me any question or pick a prompt below!`,
 
           {/* ── Edge-Cutting Multi-Line Input Box ── */}
           <div style={{
-            padding: '10px 14px 12px 14px',
+            padding: isCompact ? '8px 10px 10px 10px' : '10px 14px 12px 14px',
             background: `rgba(9, 14, 26, ${Math.max(chatOpacity * 0.95, 0.45)})`,
             borderTop: `1px solid rgba(255, 255, 255, ${Math.max(chatOpacity * 0.18, 0.08)})`,
             backdropFilter: 'blur(16px)',
             position: 'relative'
           }}>
             <div style={{
-              borderRadius: '16px',
+              borderRadius: isCompact ? '12px' : '16px',
               background: `rgba(18, 26, 47, ${Math.max(chatOpacity * 0.9, 0.65)})`,
               border: isInputFocused 
                 ? '1.5px solid #38bdf8' 
@@ -1228,30 +2577,87 @@ How are you doing today? Ask me any question or pick a prompt below!`,
               transition: 'border-color 0.2s ease, box-shadow 0.2s ease',
               display: 'flex',
               flexDirection: 'column',
-              padding: '8px 12px',
-              gap: '6px'
+              padding: isCompact ? '6px 10px' : '8px 12px',
+              gap: '4px'
             }}>
+              {/* Attached Problem Image Preview Card */}
+              {attachedImage && (
+                <div style={{
+                  display: 'flex',
+                  alignItems: 'center',
+                  gap: '8px',
+                  padding: '5px 8px',
+                  borderRadius: '8px',
+                  background: 'rgba(56, 189, 248, 0.14)',
+                  border: '1px solid rgba(56, 189, 248, 0.4)',
+                  marginBottom: '4px',
+                  animation: 'fadeIn 0.15s ease'
+                }}>
+                  <img 
+                    src={attachedImage.dataUrl} 
+                    alt="Thumbnail" 
+                    onClick={() => setPreviewModalImage(attachedImage.dataUrl)}
+                    title="Click to zoom problem image"
+                    style={{
+                      width: '36px',
+                      height: '36px',
+                      borderRadius: '6px',
+                      objectFit: 'cover',
+                      cursor: 'zoom-in',
+                      border: '1px solid rgba(56, 189, 248, 0.5)'
+                    }} 
+                  />
+                  <div style={{ flex: 1, overflow: 'hidden', display: 'flex', flexDirection: 'column' }}>
+                    <span style={{ fontSize: '11px', color: '#f8fafc', fontWeight: '700', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>
+                      📷 {attachedImage.name || 'Problem Photo'}
+                    </span>
+                    <span style={{ fontSize: '9.5px', color: '#38bdf8' }}>
+                      {attachedImage.size ? `${(attachedImage.size / 1024).toFixed(0)} KB • Ready to solve sums` : 'Ready to solve sums'}
+                    </span>
+                  </div>
+                  <button
+                    type="button"
+                    onClick={() => setAttachedImage(null)}
+                    title="Remove attached photo"
+                    style={{
+                      background: 'rgba(239, 68, 68, 0.2)',
+                      border: '1px solid rgba(239, 68, 68, 0.4)',
+                      borderRadius: '5px',
+                      color: '#f87171',
+                      cursor: 'pointer',
+                      fontSize: '11px',
+                      padding: '2px 6px',
+                      fontWeight: 'bold',
+                      transition: 'all 0.15s ease'
+                    }}
+                  >
+                    ✕
+                  </button>
+                </div>
+              )}
+
               <textarea
                 ref={textareaRef}
                 rows={1}
-                placeholder="Ask AlgoFlow AI... (Shift+Enter for next line, Enter to send)"
+                placeholder={attachedImage ? "Add an optional prompt or press Enter / Ask to solve this sum..." : "Ask AlgoFlow AI or upload a problem pic... (Shift+Enter for next line)"}
                 value={inputMessage}
                 onChange={handleInputChange}
                 onKeyDown={handleInputKeyDown}
+                onPaste={handleInputPaste}
                 onFocus={() => setIsInputFocused(true)}
                 onBlur={() => setIsInputFocused(false)}
                 style={{
                   width: '100%',
-                  minHeight: '38px',
+                  minHeight: isCompact ? '34px' : '38px',
                   maxHeight: '140px',
                   resize: 'none',
                   border: 'none',
                   outline: 'none',
                   background: 'transparent',
                   color: '#f8fafc',
-                  fontSize: '12.5px',
+                  fontSize: isCompact ? '13px' : '13.5px',
                   lineHeight: '1.5',
-                  fontFamily: '-apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif',
+                  fontFamily: 'Inter, -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif',
                   padding: '2px 0',
                   wordBreak: 'break-word',
                   whiteSpace: 'pre-wrap',
@@ -1266,12 +2672,49 @@ How are you doing today? Ask me any question or pick a prompt below!`,
                 paddingTop: '4px',
                 borderTop: '1px solid rgba(255, 255, 255, 0.06)'
               }}>
-                <div style={{ display: 'flex', alignItems: 'center', gap: '5px' }}>
+                <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+                  {/* Photo / Problem Image Upload Button */}
+                  <input 
+                    type="file" 
+                    ref={fileInputRef} 
+                    accept="image/*" 
+                    style={{ display: 'none' }} 
+                    onChange={handleFileSelect} 
+                  />
+                  <button
+                    type="button"
+                    onClick={() => fileInputRef.current?.click()}
+                    title="Upload a photo of a math sum, algorithm problem, or code question (or paste with Ctrl+V)"
+                    style={{
+                      background: attachedImage ? 'rgba(56, 189, 248, 0.28)' : 'rgba(255, 255, 255, 0.08)',
+                      border: attachedImage ? '1px solid #38bdf8' : '1px solid rgba(255, 255, 255, 0.16)',
+                      borderRadius: '7px',
+                      color: attachedImage ? '#38bdf8' : '#e2e8f0',
+                      cursor: 'pointer',
+                      padding: '3px 8px',
+                      fontSize: '11px',
+                      display: 'inline-flex',
+                      alignItems: 'center',
+                      gap: '4px',
+                      fontWeight: '700',
+                      transition: 'all 0.15s ease'
+                    }}
+                    onMouseEnter={e => {
+                      if (!attachedImage) e.currentTarget.style.background = 'rgba(56, 189, 248, 0.16)';
+                    }}
+                    onMouseLeave={e => {
+                      if (!attachedImage) e.currentTarget.style.background = 'rgba(255, 255, 255, 0.08)';
+                    }}
+                  >
+                    <span>📷</span>
+                    <span>{attachedImage ? 'Pic Attached' : (isCompact ? 'Pic' : 'Add Pic')}</span>
+                  </button>
+
                   <span style={{
                     fontSize: '10px',
                     color: '#64748b',
                     letterSpacing: '0.2px',
-                    display: 'flex',
+                    display: isCompact ? 'none' : 'flex',
                     alignItems: 'center',
                     gap: '3px'
                   }}>
@@ -1282,7 +2725,7 @@ How are you doing today? Ask me any question or pick a prompt below!`,
                       padding: '1px 4px',
                       fontSize: '9.5px',
                       color: '#94a3b8'
-                    }}>↵ Enter</kbd> send
+                    }}>↵</kbd> send
                     <span style={{ margin: '0 2px' }}>•</span>
                     <kbd style={{
                       background: 'rgba(255, 255, 255, 0.08)',
@@ -1291,49 +2734,133 @@ How are you doing today? Ask me any question or pick a prompt below!`,
                       padding: '1px 4px',
                       fontSize: '9.5px',
                       color: '#94a3b8'
-                    }}>Shift+↵</kbd> next line
+                    }}>Ctrl+V</kbd> paste pic
                   </span>
                 </div>
 
-                <button
-                  type="button"
-                  onClick={() => handleSendMessage()}
-                  disabled={isLoading || !inputMessage.trim()}
-                  style={{
-                    padding: '6px 14px',
-                    borderRadius: '10px',
-                    background: inputMessage.trim() 
-                      ? 'linear-gradient(135deg, #0284c7 0%, #6366f1 100%)' 
-                      : 'rgba(51, 65, 85, 0.5)',
-                    color: inputMessage.trim() ? '#ffffff' : '#94a3b8',
-                    fontWeight: '600',
-                    border: 'none',
-                    cursor: inputMessage.trim() ? 'pointer' : 'default',
-                    fontSize: '12px',
-                    display: 'inline-flex',
-                    alignItems: 'center',
-                    gap: '5px',
-                    transition: 'all 0.2s ease',
-                    boxShadow: inputMessage.trim() ? '0 2px 10px rgba(56, 189, 248, 0.35)' : 'none'
-                  }}
-                  onMouseEnter={e => {
-                    if (inputMessage.trim()) {
-                      e.currentTarget.style.transform = 'translateY(-1px)';
-                      e.currentTarget.style.boxShadow = '0 4px 14px rgba(56, 189, 248, 0.5)';
-                    }
-                  }}
-                  onMouseLeave={e => {
-                    e.currentTarget.style.transform = 'translateY(0)';
-                    if (inputMessage.trim()) {
-                      e.currentTarget.style.boxShadow = '0 2px 10px rgba(56, 189, 248, 0.35)';
-                    }
-                  }}
-                >
-                  <span>Ask</span>
-                  <span style={{ fontSize: '11px', transform: 'rotate(-45deg)', display: 'inline-block' }}>➤</span>
-                </button>
+                {isGenerating ? (
+                  <button
+                    type="button"
+                    onClick={handleStopGenerating}
+                    style={{
+                      padding: '6px 14px',
+                      borderRadius: '10px',
+                      background: 'linear-gradient(135deg, #ef4444 0%, #b91c1c 100%)',
+                      color: '#ffffff',
+                      fontWeight: '700',
+                      border: 'none',
+                      cursor: 'pointer',
+                      fontSize: '11.5px',
+                      display: 'inline-flex',
+                      alignItems: 'center',
+                      gap: '5px',
+                      boxShadow: '0 2px 10px rgba(239, 68, 68, 0.45)',
+                      transition: 'all 0.2s ease'
+                    }}
+                    title="Stop Generating"
+                  >
+                    <span style={{ fontSize: '10px' }}>⏹</span>
+                    <span>Stop</span>
+                  </button>
+                ) : (
+                  <button
+                    type="button"
+                    onClick={() => handleSendMessage()}
+                    disabled={isLoading || (!inputMessage.trim() && !attachedImage)}
+                    style={{
+                      padding: '6px 14px',
+                      borderRadius: '10px',
+                      background: (inputMessage.trim() || attachedImage)
+                        ? 'linear-gradient(135deg, #0284c7 0%, #6366f1 100%)' 
+                        : 'rgba(51, 65, 85, 0.5)',
+                      color: (inputMessage.trim() || attachedImage) ? '#ffffff' : '#94a3b8',
+                      fontWeight: '600',
+                      border: 'none',
+                      cursor: (inputMessage.trim() || attachedImage) ? 'pointer' : 'default',
+                      fontSize: '12px',
+                      display: 'inline-flex',
+                      alignItems: 'center',
+                      gap: '5px',
+                      transition: 'all 0.2s ease',
+                      boxShadow: (inputMessage.trim() || attachedImage) ? '0 2px 10px rgba(56, 189, 248, 0.35)' : 'none'
+                    }}
+                    onMouseEnter={e => {
+                      if (inputMessage.trim() || attachedImage) {
+                        e.currentTarget.style.transform = 'translateY(-1px)';
+                        e.currentTarget.style.boxShadow = '0 4px 14px rgba(56, 189, 248, 0.5)';
+                      }
+                    }}
+                    onMouseLeave={e => {
+                      e.currentTarget.style.transform = 'translateY(0)';
+                      if (inputMessage.trim() || attachedImage) {
+                        e.currentTarget.style.boxShadow = '0 2px 10px rgba(56, 189, 248, 0.35)';
+                      }
+                    }}
+                  >
+                    <span>{attachedImage && !inputMessage.trim() ? 'Solve' : 'Ask'}</span>
+                    <span style={{ fontSize: '11px', transform: 'rotate(-45deg)', display: 'inline-block' }}>➤</span>
+                  </button>
+                )}
               </div>
             </div>
+          </div>
+        </div>
+      )}
+
+      {/* ── Problem Photo Lightbox / Zoom Modal ── */}
+      {previewModalImage && (
+        <div 
+          onClick={() => setPreviewModalImage(null)}
+          style={{
+            position: 'fixed',
+            inset: 0,
+            zIndex: 100025,
+            background: 'rgba(0, 0, 0, 0.88)',
+            backdropFilter: 'blur(8px)',
+            display: 'flex',
+            alignItems: 'center',
+            justifyContent: 'center',
+            padding: '24px',
+            animation: 'fadeIn 0.18s ease'
+          }}
+        >
+          <div style={{ position: 'relative', maxWidth: '92vw', maxHeight: '90vh' }} onClick={e => e.stopPropagation()}>
+            <img 
+              src={previewModalImage} 
+              alt="Enlarged Problem View" 
+              style={{
+                maxWidth: '100%',
+                maxHeight: '86vh',
+                borderRadius: '12px',
+                boxShadow: '0 25px 70px rgba(0,0,0,0.85), 0 0 35px rgba(56,189,248,0.35)',
+                border: '1.5px solid rgba(56, 189, 248, 0.55)',
+                display: 'block'
+              }} 
+            />
+            <button
+              onClick={() => setPreviewModalImage(null)}
+              style={{
+                position: 'absolute',
+                top: '-14px',
+                right: '-14px',
+                background: '#ef4444',
+                border: '2px solid #ffffff',
+                borderRadius: '50%',
+                width: '32px',
+                height: '32px',
+                color: '#ffffff',
+                fontWeight: 'bold',
+                cursor: 'pointer',
+                display: 'flex',
+                alignItems: 'center',
+                justifyContent: 'center',
+                fontSize: '13px',
+                boxShadow: '0 4px 14px rgba(0,0,0,0.6)'
+              }}
+              title="Close image preview"
+            >
+              ✕
+            </button>
           </div>
         </div>
       )}

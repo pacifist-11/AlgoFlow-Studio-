@@ -998,8 +998,8 @@ const DSAStudyVisualizer = ({ onBack, onOpenDebugger }) => {
               overflowX: 'auto'
             }}>
               {toAllman(activeCodeToDisplay).split('\n').map((line, idx) => (
-                <div key={idx} style={{ display: 'flex', alignItems: 'center', padding: '1px 8px' }}>
-                  <span style={{ width: '36px', userSelect: 'none', textAlign: 'right', paddingRight: '12px', color: 'var(--text-secondary)', fontSize: '0.82em', flexShrink: 0 }}>
+                <div key={idx} style={{ display: 'flex', alignItems: 'center', minWidth: 'max-content', width: '100%', padding: '1px 8px' }}>
+                  <span style={{ position: 'sticky', left: 0, zIndex: 3, width: '36px', userSelect: 'none', textAlign: 'right', paddingRight: '12px', color: 'var(--text-secondary)', background: 'var(--bg-secondary)', borderRight: '1px solid rgba(255, 255, 255, 0.08)', marginRight: '10px', fontSize: '0.82em', flexShrink: 0 }}>
                     {idx + 1}
                   </span>
                   <span style={{ whiteSpace: 'pre', color: 'var(--text-primary)' }}>

@@ -2,7 +2,9 @@
 import React, { useState, useEffect, useRef } from 'react';
 import gsap from 'gsap';
 import CodeRunnerModal from './CodeRunnerModal.jsx';
+import NumberedCodeViewer from './NumberedCodeViewer.jsx';
 import TopicInfoModal from './TopicInfoModal.jsx';
+import { setScreenContext, recordScreenError } from './screenContext.js';
 
 // Allman brace formatter
 const toAllman = code => {
@@ -429,6 +431,77 @@ public:
         }
     }
 };`;
+    if (algo === 'Edmonds-Karp') return `#include <iostream>
+#include <vector>
+#include <queue>
+#include <algorithm>
+using namespace std;
+
+class EdmondsKarp {
+    int V;
+    vector<vector<int>> capacity;
+    vector<vector<int>> adj;
+public:
+    EdmondsKarp(int V) : V(V), capacity(V, vector<int>(V, 0)), adj(V) {}
+
+    void addEdge(int u, int v, int cap) {
+        capacity[u][v] += cap;
+        adj[u].push_back(v);
+        adj[v].push_back(u);
+    }
+
+    int bfs(int s, int t, vector<int>& parent) {
+        fill(parent.begin(), parent.end(), -1);
+        parent[s] = -2;
+        queue<pair<int, int>> q;
+        q.push({s, 1e9});
+
+        while (!q.empty()) {
+            int cur = q.front().first;
+            int flow = q.front().second;
+            q.pop();
+
+            for (int next : adj[cur]) {
+                if (parent[next] == -1 && capacity[cur][next] > 0) {
+                    parent[next] = cur;
+                    int new_flow = min(flow, capacity[cur][next]);
+                    if (next == t) return new_flow;
+                    q.push({next, new_flow});
+                }
+            }
+        }
+        return 0;
+    }
+
+    int maxFlow(int s, int t) {
+        int flow = 0;
+        vector<int> parent(V);
+        int new_flow;
+
+        while ((new_flow = bfs(s, t, parent))) {
+            flow += new_flow;
+            int cur = t;
+            while (cur != s) {
+                int prev = parent[cur];
+                capacity[prev][cur] -= new_flow;
+                capacity[cur][prev] += new_flow;
+                cur = prev;
+            }
+        }
+        return flow;
+    }
+};
+
+int main() {
+    EdmondsKarp ek(6);
+    ek.addEdge(0, 1, 16); ek.addEdge(0, 2, 13);
+    ek.addEdge(1, 2, 10); ek.addEdge(1, 3, 12);
+    ek.addEdge(2, 1, 4);  ek.addEdge(2, 4, 14);
+    ek.addEdge(3, 2, 9);  ek.addEdge(3, 5, 20);
+    ek.addEdge(4, 3, 7);  ek.addEdge(4, 5, 4);
+    cout << "Max Flow from " << ${startNode} << " to " << ${endNode} << ": " << ek.maxFlow(${startNode}, ${endNode}) << endl;
+    return 0;
+}`;
   }
 
   if (lang === 'Java') {
@@ -741,6 +814,72 @@ class Graph {
             }
         }
     }
+}
+`;
+    if (algo === 'Edmonds-Karp') return `import java.util.*;
+
+class EdmondsKarp {
+    static boolean bfs(int[][] rGraph, int s, int t, int[] parent, int V) {
+        boolean[] visited = new boolean[V];
+        Queue<Integer> q = new LinkedList<>();
+        q.add(s);
+        visited[s] = true;
+        parent[s] = -1;
+
+        while (!q.isEmpty()) {
+            int u = q.poll();
+            for (int v = 0; v < V; v++) {
+                if (!visited[v] && rGraph[u][v] > 0) {
+                    if (v == t) {
+                        parent[v] = u;
+                        return true;
+                    }
+                    q.add(v);
+                    parent[v] = u;
+                    visited[v] = true;
+                }
+            }
+        }
+        return false;
+    }
+
+    public static int maxFlow(int[][] graph, int s, int t) {
+        int V = graph.length;
+        int[][] rGraph = new int[V][V];
+        for (int u = 0; u < V; u++)
+            for (int v = 0; v < V; v++)
+                rGraph[u][v] = graph[u][v];
+
+        int[] parent = new int[V];
+        int maxFlow = 0;
+
+        while (bfs(rGraph, s, t, parent, V)) {
+            int pathFlow = Integer.MAX_VALUE;
+            for (int v = t; v != s; v = parent[v]) {
+                int u = parent[v];
+                pathFlow = Math.min(pathFlow, rGraph[u][v]);
+            }
+            for (int v = t; v != s; v = parent[v]) {
+                int u = parent[v];
+                rGraph[u][v] -= pathFlow;
+                rGraph[v][u] += pathFlow;
+            }
+            maxFlow += pathFlow;
+        }
+        return maxFlow;
+    }
+
+    public static void main(String[] args) {
+        int[][] graph = {
+            {0, 16, 13, 0, 0, 0},
+            {0, 0, 10, 12, 0, 0},
+            {0, 4, 0, 0, 14, 0},
+            {0, 0, 9, 0, 0, 20},
+            {0, 0, 0, 7, 0, 4},
+            {0, 0, 0, 0, 0, 0}
+        };
+        System.out.println("Maximum Flow: " + maxFlow(graph, ${startNode}, ${endNode}));
+    }
 }`;
   }
 
@@ -941,6 +1080,57 @@ class Graph:
             print("There exists a cycle in the graph!")
             return
         print(*top_order)`;
+    if (algo === 'Edmonds-Karp') return `from collections import deque
+
+def edmonds_karp(capacity, s, t):
+    n = len(capacity)
+    flow = [[0] * n for _ in range(n)]
+    max_flow = 0
+
+    def bfs(parent):
+        visited = [False] * n
+        q = deque([s])
+        visited[s] = True
+        while q:
+            u = q.popleft()
+            for v in range(n):
+                if not visited[v] and capacity[u][v] - flow[u][v] > 0:
+                    visited[v] = True
+                    parent[v] = u
+                    if v == t:
+                        return True
+                    q.append(v)
+        return False
+
+    parent = [-1] * n
+    while bfs(parent):
+        path_flow = float('inf')
+        v = t
+        while v != s:
+            u = parent[v]
+            path_flow = min(path_flow, capacity[u][v] - flow[u][v])
+            v = u
+
+        v = t
+        while v != s:
+            u = parent[v]
+            flow[u][v] += path_flow
+            flow[v][u] -= path_flow
+            v = u
+
+        max_flow += path_flow
+
+    return max_flow
+
+capacity = [
+    [0, 16, 13, 0, 0, 0],
+    [0, 0, 10, 12, 0, 0],
+    [0, 4, 0, 0, 14, 0],
+    [0, 0, 9, 0, 0, 20],
+    [0, 0, 0, 7, 0, 4],
+    [0, 0, 0, 0, 0, 0]
+]
+print("Max Flow:", edmonds_karp(capacity, ${startNode}, ${endNode}))`;
     // Greedy
     return `import heapq
 
@@ -1213,6 +1403,58 @@ g.kruskalMST();`;
   }
 }`;
 
+  if (algo === 'Edmonds-Karp') return `function edmondsKarp(capacity, s, t) {
+  const n = capacity.length;
+  const flow = Array.from({ length: n }, () => new Array(n).fill(0));
+  let maxFlow = 0;
+
+  function bfs(parent) {
+    const visited = new Array(n).fill(false);
+    const q = [s];
+    visited[s] = true;
+    parent[s] = -1;
+
+    while (q.length > 0) {
+      const u = q.shift();
+      for (let v = 0; v < n; v++) {
+        if (!visited[v] && capacity[u][v] - flow[u][v] > 0) {
+          visited[v] = true;
+          parent[v] = u;
+          if (v === t) return true;
+          q.push(v);
+        }
+      }
+    }
+    return false;
+  }
+
+  const parent = new Array(n);
+  while (bfs(parent)) {
+    let pathFlow = Infinity;
+    for (let v = t; v !== s; v = parent[v]) {
+      const u = parent[v];
+      pathFlow = Math.min(pathFlow, capacity[u][v] - flow[u][v]);
+    }
+    for (let v = t; v !== s; v = parent[v]) {
+      const u = parent[v];
+      flow[u][v] += pathFlow;
+      flow[v][u] -= pathFlow;
+    }
+    maxFlow += pathFlow;
+  }
+  return maxFlow;
+}
+
+const cap = [
+  [0, 16, 13, 0, 0, 0],
+  [0, 0, 10, 12, 0, 0],
+  [0, 4, 0, 0, 14, 0],
+  [0, 0, 9, 0, 0, 20],
+  [0, 0, 0, 7, 0, 4],
+  [0, 0, 0, 0, 0, 0]
+];
+console.log("Max Flow: " + edmondsKarp(cap, ${startNode}, ${endNode}));`;
+
   return `class Graph {
   constructor(V) {
     this.adj = Array.from({ length: V }, () => []);
@@ -1307,7 +1549,7 @@ const highlightLogText = (text) => {
     return (
       <span style={{ color: '#f87171', fontWeight: 'bold' }}>
         {parts.map((p, i) => 
-          regex.test(p) ? <span key={i} style={{ color: '#fbbf24', textShadow: '0 0 8px rgba(251,191,36,0.3)' }}>{p}</span> : p
+          regex.test(p) ? <span key={i} style={{ color: '#fde68a', fontWeight: 'bold' }}>{p}</span> : p
         )}
       </span>
     );
@@ -1331,7 +1573,7 @@ const highlightLogText = (text) => {
     return (
       <span style={{ color: '#34d399', fontWeight: 'bold' }}>
         {parts.map((p, i) => 
-          regex.test(p) ? <span key={i} style={{ color: '#fbbf24' }}>{p}</span> : p
+          regex.test(p) ? <span key={i} style={{ color: '#6ee7b7', fontWeight: 'bold' }}>{p}</span> : p
         )}
       </span>
     );
@@ -1356,7 +1598,7 @@ const highlightLogText = (text) => {
     return (
       <span style={{ color: '#fb923c', fontWeight: 600 }}>
         {parts.map((p, i) => 
-          regex.test(p) ? <span key={i} style={{ color: '#fbbf24', fontWeight: 'bold' }}>{p}</span> : p
+          regex.test(p) ? <span key={i} style={{ color: '#fde68a', fontWeight: 'bold' }}>{p}</span> : p
         )}
       </span>
     );
@@ -1365,7 +1607,7 @@ const highlightLogText = (text) => {
   const regex = /(\b\d+(?:\.\d+)?\b)/g;
   const parts = str.split(regex);
   return parts.map((p, i) => 
-    /^\d+(?:\.\d+)?$/.test(p) ? <strong key={i} style={{ color: '#fbbf24' }}>{p}</strong> : p
+    /^\d+(?:\.\d+)?$/.test(p) ? <strong key={i} style={{ color: '#f8fafc' }}>{p}</strong> : p
   );
 };
 
@@ -1413,9 +1655,64 @@ const GraphVisualizer = ({ onBack, openSettings, initialAlgo = 'Dijkstra', onCop
     return () => window.removeEventListener('resize', handleResize);
   }, []);
 
+  // Dynamic free-space finder: places log panel away from active graph nodes and core simulation
+  const getFreeLogPosition = () => {
+    if (typeof window === 'undefined') return { x: 500, y: 350 };
+    const winW = window.innerWidth;
+    const winH = window.innerHeight;
+    const panelW = 520;
+    const panelH = 280;
+
+    // Check where active graph nodes are concentrated to place the panel in unoccupied space
+    if (nodes && nodes.length > 0) {
+      const minX = Math.min(...nodes.map(n => n.x));
+      const maxX = Math.max(...nodes.map(n => n.x));
+      const minY = Math.min(...nodes.map(n => n.y));
+      const maxY = Math.max(...nodes.map(n => n.y));
+
+      // Candidate 1: Bottom Right (default nodes 0..4 are on left x: 120..440, y: 120..320)
+      const candBottomRight = {
+        x: Math.max(30, winW - panelW - 50),
+        y: Math.max(80, winH - panelH - 120)
+      };
+
+      // Candidate 2: Top Right
+      const candTopRight = {
+        x: Math.max(30, winW - panelW - 50),
+        y: 110
+      };
+
+      // Candidate 3: Bottom Left
+      const candBottomLeft = {
+        x: 30,
+        y: Math.max(80, winH - panelH - 120)
+      };
+
+      const overlaps = (pos) => {
+        return (
+          pos.x < maxX + 35 &&
+          pos.x + panelW > minX - 35 &&
+          pos.y < maxY + 35 &&
+          pos.y + panelH > minY - 35
+        );
+      };
+
+      if (!overlaps(candBottomRight)) return candBottomRight;
+      if (!overlaps(candTopRight)) return candTopRight;
+      if (!overlaps(candBottomLeft)) return candBottomLeft;
+      return candBottomRight;
+    }
+
+    return {
+      x: Math.max(30, winW - panelW - 50),
+      y: Math.max(80, winH - panelH - 120)
+    };
+  };
+
   // Draggable execution log states
   const [showLogPanel, setShowLogPanel] = useState(true);
-  const [logPosition, setLogPosition] = useState({ x: 50, y: 150 });
+  const [logPosition, setLogPosition] = useState(() => getFreeLogPosition());
+  const hasUserMovedLog = useRef(false);
   const [logSize, setLogSize] = useState({ width: 520, height: 280 });
   const [isDraggingLog, setIsDraggingLog] = useState(false);
   const dragStart = useRef({ x: 0, y: 0 });
@@ -1445,6 +1742,7 @@ const GraphVisualizer = ({ onBack, openSettings, initialAlgo = 'Dijkstra', onCop
       const dx = clientX - dragStart.current.x;
       const dy = clientY - dragStart.current.y;
       
+      hasUserMovedLog.current = true;
       setLogPosition({
         x: Math.max(-logSize.width + 40, Math.min(window.innerWidth - 40, panelStart.current.x + dx)),
         y: Math.max(0, Math.min(window.innerHeight - 40, panelStart.current.y + dy))
@@ -1552,6 +1850,34 @@ const GraphVisualizer = ({ onBack, openSettings, initialAlgo = 'Dijkstra', onCop
       logContainerRef.current.scrollTop = logContainerRef.current.scrollHeight;
     }
   }, [currentStep, showLogPanel, timeline]);
+
+  // Synchronize Live Screen Telemetry & Problem Diagnostics for AI ChatBot
+  useEffect(() => {
+    const stepData = timeline && timeline[currentStep] ? timeline[currentStep] : null;
+    const recentMsgs = timeline ? timeline.slice(Math.max(0, currentStep - 4), currentStep + 1).map(s => s.msg) : [];
+    const screenSummary = `${nodes.length} nodes, ${edges.length} edges (${isDirected ? 'Directed' : 'Undirected'}). Algo: ${algoMode}. Start/Source: ${startNode}, Target/Sink: ${targetNode}.`;
+
+    let problem = null;
+    if (stepData?.msg) {
+      const m = stepData.msg.toLowerCase();
+      if (m.includes('negative') && m.includes('cycle')) {
+        problem = stepData.msg;
+      } else if (m.includes('cannot be the same') || m.includes('loop') || m.includes('cycle detected') || m.includes('unreachable')) {
+        problem = stepData.msg;
+      }
+    }
+
+    setScreenContext({
+      screenTitle: 'Graph Visualizer',
+      activeAlgo: algoMode,
+      currentStep,
+      totalSteps: timeline ? timeline.length : 0,
+      currentStepMessage: stepData?.msg || (timeline?.length > 0 ? 'Algorithm in progress...' : 'Graph ready. Select an algorithm and click Start.'),
+      recentLogs: recentMsgs,
+      screenDataSummary: screenSummary,
+      lastErrorOrIssue: problem
+    });
+  }, [algoMode, currentStep, timeline, nodes, edges, isDirected, startNode, targetNode]);
   const [speed, setSpeed] = useState(400);
 
   // Side-by-side Code
@@ -1647,11 +1973,17 @@ const GraphVisualizer = ({ onBack, openSettings, initialAlgo = 'Dijkstra', onCop
   };
 
   const handleAddEdge = () => {
-    if (edgeFrom === '' || edgeTo === '' || edgeFrom === edgeTo) return;
+    if (edgeFrom === '' || edgeTo === '') return;
+    if (edgeFrom === edgeTo) {
+      recordScreenError('Self-loops are not allowed: source node and target node are the same.');
+      alert('Self-loops are not allowed: source node and target node are the same.');
+      return;
+    }
     const fId = parseInt(edgeFrom);
     const tId = parseInt(edgeTo);
     const edgeId = `${fId}-${tId}`;
     if (edges.some(e => e.id === edgeId || (!isDirected && e.id === `${tId}-${fId}`))) {
+      recordScreenError(`Edge already exists between Node ${nodes.find(n => n.id === fId)?.label || fId} and Node ${nodes.find(n => n.id === tId)?.label || tId}!`);
       alert('Edge already exists!');
       return;
     }
@@ -1877,7 +2209,7 @@ const GraphVisualizer = ({ onBack, openSettings, initialAlgo = 'Dijkstra', onCop
           dist: { ...dist },
           active: targetNode,
           pathHighlight: pathEdges,
-          msg: `Finished! Glowing gold highlights the optimal path.`,
+          msg: `Finished! Emerald green highlights the optimal path.`,
           activeLine: 'cout << dist[target]'
         });
       }
@@ -2377,6 +2709,164 @@ const GraphVisualizer = ({ onBack, openSettings, initialAlgo = 'Dijkstra', onCop
         msg: `Kruskal's MST completed successfully! Total edges in MST: ${pathHighlight.length}`,
         activeLine: 'printMST()'
       });
+    } else if (algoMode === 'Edmonds-Karp') {
+      const s = startNode;
+      const t = targetNode;
+      if (s === t) {
+        frames.push({
+          active: s,
+          msg: 'Source and Sink cannot be the same node! Please select different nodes.',
+          activeLine: '// source == sink'
+        });
+        setTimeline(frames);
+        setCurrentStep(0);
+        setIsPlaying(true);
+        return;
+      }
+
+      // Build residual capacity matrix & track individual edge flows
+      const cap = {};
+      const flows = {};
+
+      nodes.forEach(u => {
+        cap[u.id] = {};
+        nodes.forEach(v => { cap[u.id][v.id] = 0; });
+      });
+
+      edges.forEach(e => {
+        const capacityVal = Math.max(1, Number(e.weight) || 10);
+        cap[e.from][e.to] = (cap[e.from][e.to] || 0) + capacityVal;
+        flows[e.id] = 0;
+        if (!isDirected) {
+          cap[e.to][e.from] = (cap[e.to][e.from] || 0) + capacityVal;
+        }
+      });
+
+      let totalFlow = 0;
+      let iteration = 1;
+
+      frames.push({
+        active: s,
+        flows: { ...flows },
+        msg: `Initialize Edmonds-Karp Max-Flow: Source = ${nodes.find(n => n.id === s)?.label || s}, Sink = ${nodes.find(n => n.id === t)?.label || t}. Initial Total Flow = 0.`,
+        activeLine: 'int totalFlow = 0;'
+      });
+
+      while (true) {
+        // BFS to find shortest augmenting path in residual graph
+        const parent = {};
+        const q = [s];
+        const visited = { [s]: true };
+
+        while (q.length > 0) {
+          const u = q.shift();
+          if (u === t) break;
+
+          for (const vNode of nodes) {
+            const v = vNode.id;
+            const res = cap[u][v] || 0;
+            if (!visited[v] && res > 0) {
+              visited[v] = true;
+              parent[v] = u;
+              q.push(v);
+            }
+          }
+        }
+
+        // If sink t is not reached, no augmenting path exists!
+        if (!visited[t]) {
+          break;
+        }
+
+        // Reconstruct path
+        const pathNodes = [];
+        const pathEdges = [];
+        let curr = t;
+        let bottleneck = Infinity;
+
+        while (curr !== s) {
+          const p = parent[curr];
+          pathNodes.unshift(curr);
+          bottleneck = Math.min(bottleneck, cap[p][curr]);
+          pathEdges.unshift(`${p}-${curr}`);
+          curr = p;
+        }
+        pathNodes.unshift(s);
+
+        frames.push({
+          active: t,
+          pathHighlight: [...pathEdges],
+          flows: { ...flows },
+          msg: `Iteration ${iteration}: Found augmenting path [${pathNodes.map(id => nodes.find(n => n.id === id)?.label || id).join(' ➔ ')}] with bottleneck capacity Δ = ${bottleneck}.`,
+          activeLine: 'while (bfs(s, t, parent))'
+        });
+
+        // Augment flow along the path
+        for (let i = 0; i < pathNodes.length - 1; i++) {
+          const u = pathNodes[i];
+          const v = pathNodes[i + 1];
+
+          cap[u][v] -= bottleneck;
+          cap[v][u] = (cap[v][u] || 0) + bottleneck; // reverse residual edge
+
+          const fwdEdge = edges.find(e => e.from === u && e.to === v);
+          const revEdge = edges.find(e => e.from === v && e.to === u);
+
+          if (fwdEdge) {
+            flows[fwdEdge.id] = (flows[fwdEdge.id] || 0) + bottleneck;
+          } else if (revEdge) {
+            flows[revEdge.id] = (flows[revEdge.id] || 0) - bottleneck;
+          }
+        }
+
+        totalFlow += bottleneck;
+
+        frames.push({
+          active: s,
+          pathHighlight: [...pathEdges],
+          flows: { ...flows },
+          msg: `Pushed Δ = ${bottleneck} flow. Current Total Max-Flow = ${totalFlow}.`,
+          activeLine: 'flow += bottleneck;'
+        });
+
+        iteration++;
+      }
+
+      // Compute Min-Cut S-T partition via BFS in residual graph from s
+      const cutVisited = { [s]: true };
+      const cutQ = [s];
+      while (cutQ.length > 0) {
+        const u = cutQ.shift();
+        for (const vNode of nodes) {
+          const v = vNode.id;
+          if (!cutVisited[v] && (cap[u][v] || 0) > 0) {
+            cutVisited[v] = true;
+            cutQ.push(v);
+          }
+        }
+      }
+
+      const S = nodes.filter(n => cutVisited[n.id]).map(n => n.id);
+      const T = nodes.filter(n => !cutVisited[n.id]).map(n => n.id);
+
+      // Saturated cut edges from S to T
+      const minCutEdges = [];
+      edges.forEach(e => {
+        if (cutVisited[e.from] && !cutVisited[e.to]) {
+          minCutEdges.push(e.id);
+          minCutEdges.push(`${e.from}-${e.to}`);
+        }
+      });
+
+      frames.push({
+        active: -1,
+        pathHighlight: minCutEdges,
+        flows: { ...flows },
+        minCut: { S, T },
+        isFinished: true,
+        msg: `Max-Flow Min-Cut Theorem Achieved! Maximum Flow = ${totalFlow}. S-T Min-Cut capacity = ${totalFlow}. Partition S = {${S.map(id => nodes.find(n => n.id === id)?.label || id).join(', ')}}, T = {${T.map(id => nodes.find(n => n.id === id)?.label || id).join(', ')}}.`,
+        activeLine: '// Max-Flow Min-Cut Theorem'
+      });
     }
 
     setTimeline(frames);
@@ -2553,7 +3043,18 @@ const GraphVisualizer = ({ onBack, openSettings, initialAlgo = 'Dijkstra', onCop
         <div style={{ display: 'flex', gap: '15px', alignItems: 'center', background: 'rgba(255,255,255,0.03)', padding: '6px 14px', borderRadius: '10px', border: '1px solid var(--glass-border)', fontSize: '0.82rem' }}>
           <span style={{ fontWeight: 'bold', color: 'var(--text-secondary)' }}>View:</span>
           <label style={{ display: 'flex', alignItems: 'center', gap: '6px', cursor: 'pointer', color: 'var(--text-primary)', userSelect: 'none' }}>
-            <input type="checkbox" checked={showLogPanel} onChange={e => setShowLogPanel(e.target.checked)} style={{ accentColor: 'var(--accent-primary)', cursor: 'pointer' }} />
+            <input 
+              type="checkbox" 
+              checked={showLogPanel} 
+              onChange={e => {
+                const val = e.target.checked;
+                if (val && !hasUserMovedLog.current) {
+                  setLogPosition(getFreeLogPosition());
+                }
+                setShowLogPanel(val);
+              }} 
+              style={{ accentColor: 'var(--accent-primary)', cursor: 'pointer' }} 
+            />
             <span>Log</span>
           </label>
           <label style={{ display: 'flex', alignItems: 'center', gap: '6px', cursor: 'pointer', color: 'var(--text-primary)', userSelect: 'none' }}>
@@ -2620,39 +3121,63 @@ const GraphVisualizer = ({ onBack, openSettings, initialAlgo = 'Dijkstra', onCop
         {/* Left Side: Visualizer and Animation Controls */}
         <div style={{ display: (isMobile && mobileTab !== 'vis') ? 'none' : 'flex', flex: 1, flexDirection: 'column', padding: isMobile ? '0.35rem' : '1.2rem', overflow: 'hidden' }}>
 
-          {/* Active step message bar */}
-          <div style={{ textAlign: 'center', marginBottom: '1rem', height: '38px', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
-            <span style={{
-              fontSize: '1.2rem',
-              color: 'var(--text-primary)',
-              fontWeight: 'bold',
-              background: 'rgba(255,255,255,0.04)',
-              padding: '5px 22px',
-              borderRadius: '20px',
-              border: '1px solid var(--glass-border)',
-              boxShadow: '0 4px 15px rgba(0,0,0,0.15)'
-            }}>
-              {currentFrame.msg}
-              {currentFrame.queue && currentFrame.queue.length > 0 && (
-                <span style={{ color: '#fbbf24', marginLeft: '10px', fontSize: '0.95rem' }}>
-                  | Queue: [{currentFrame.queue.map(id => {
-                    // Extract node label or id if node has id format
-                    const parsedId = typeof id === 'object' ? id.id : id;
-                    const node = nodes.find(n => n.id === parsedId);
-                    return node ? node.label : parsedId;
-                  }).join(', ')}]
-                </span>
-              )}
-              {currentFrame.stack && currentFrame.stack.length > 0 && (
-                <span style={{ color: '#ec4899', marginLeft: '10px', fontSize: '0.95rem' }}>
-                  | Stack: [{currentFrame.stack.map(id => {
-                    const node = nodes.find(n => n.id === id);
-                    return node ? node.label : id;
-                  }).join(', ')}]
-                </span>
-              )}
-            </span>
-          </div>
+          {/* Active step message bar and Completed Complexity Highlight Banner */}
+          {(() => {
+            const isCompleted = timeline.length > 0 && currentStep === timeline.length - 1;
+            const graphComplexityMap = {
+              'BFS': { time: 'O(V + E)', space: 'O(V)', desc: 'Breadth-First Search (Queue)' },
+              'DFS': { time: 'O(V + E)', space: 'O(V)', desc: 'Depth-First Search (Call Stack)' },
+              'Dijkstra': { time: 'O((V + E) log V)', space: 'O(V)', desc: 'Shortest Path (Min-Heap Priority Queue)' },
+              'Bellman-Ford': { time: 'O(V · E)', space: 'O(V)', desc: 'Negative Edge Weight Paths (Edge Relaxation)' },
+              'Floyd-Warshall': { time: 'O(V³)', space: 'O(V²)', desc: 'All-Pairs Shortest Path (Dynamic Programming)' },
+              'Prim': { time: 'O(E log V)', space: 'O(V)', desc: 'Minimum Spanning Tree (Greedy Cut)' },
+              'Kruskal': { time: 'O(E log E)', space: 'O(V)', desc: 'Minimum Spanning Tree (Disjoint Set Union)' },
+              'Topological': { time: 'O(V + E)', space: 'O(V)', desc: "Kahn's In-Degree Topological Sort" },
+              'Tarjan': { time: 'O(V + E)', space: 'O(V)', desc: 'Strongly Connected Components (DFS low-link)' },
+              'Kosaraju': { time: 'O(V + E)', space: 'O(V)', desc: 'Strongly Connected Components (Transpose DFS)' },
+              'A*': { time: 'O(E)', space: 'O(V)', desc: 'Heuristic Best-First Search' }
+            };
+            const comp = graphComplexityMap[algoMode] || { time: 'O(V + E)', space: 'O(V)', desc: 'Graph Traversal' };
+            const vCount = nodes.length;
+            const eCount = edges.length;
+
+            return (
+              <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', marginBottom: '1rem', gap: '8px', flexShrink: 0 }}>
+                <div style={{ height: '38px', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+                  <span style={{
+                    fontSize: isMobile ? '1rem' : '1.2rem',
+                    color: isCompleted ? '#34d399' : 'var(--text-primary)',
+                    fontWeight: 'bold',
+                    background: isCompleted ? 'rgba(52, 211, 153, 0.12)' : 'rgba(255,255,255,0.04)',
+                    padding: '5px 22px',
+                    borderRadius: '20px',
+                    border: isCompleted ? '1.5px solid rgba(52, 211, 153, 0.45)' : '1px solid var(--glass-border)',
+                    boxShadow: isCompleted ? '0 0 20px rgba(52, 211, 153, 0.25)' : '0 4px 15px rgba(0,0,0,0.15)',
+                    transition: 'all 0.3s ease'
+                  }}>
+                    {currentFrame.msg}
+                    {currentFrame.queue && currentFrame.queue.length > 0 && (
+                      <span style={{ color: '#60a5fa', marginLeft: '10px', fontSize: '0.95rem' }}>
+                        | Queue: [{currentFrame.queue.map(id => {
+                          const parsedId = typeof id === 'object' ? id.id : id;
+                          const node = nodes.find(n => n.id === parsedId);
+                          return node ? node.label : parsedId;
+                        }).join(', ')}]
+                      </span>
+                    )}
+                    {currentFrame.stack && currentFrame.stack.length > 0 && (
+                      <span style={{ color: '#ec4899', marginLeft: '10px', fontSize: '0.95rem' }}>
+                        | Stack: [{currentFrame.stack.map(id => {
+                          const node = nodes.find(n => n.id === id);
+                          return node ? node.label : id;
+                        }).join(', ')}]
+                      </span>
+                    )}
+                  </span>
+                </div>
+              </div>
+            );
+          })()}
 
           {/* Graph Canvas */}
           <div
@@ -2674,14 +3199,17 @@ const GraphVisualizer = ({ onBack, openSettings, initialAlgo = 'Dijkstra', onCop
             {/* Edge Lines drawing */}
             <svg style={{ position: 'absolute', top: 0, left: 0, width: '100%', height: '100%', pointerEvents: 'none', overflow: 'visible' }}>
               <defs>
-                <marker id="arrow" viewBox="0 0 10 10" refX="22" refY="5" markerWidth="6" markerHeight="6" orient="auto-start-reverse">
-                  <path d="M 0 0 L 10 5 L 0 10 z" fill="#6366f1" />
+                {/* Default directional arrow: large, prominent (16px), vivid electric cyan with dark contrast outline */}
+                <marker id="arrow" viewBox="0 0 16 16" refX="14" refY="8" markerWidth="16" markerHeight="16" orient="auto" markerUnits="userSpaceOnUse">
+                  <path d="M 2 2.5 L 14 8 L 2 13.5 L 5 8 z" fill="#00e5ff" stroke="#070a13" strokeWidth="1.5" strokeLinejoin="round" />
                 </marker>
-                <marker id="arrow-active" viewBox="0 0 10 10" refX="22" refY="5" markerWidth="8" markerHeight="8" orient="auto-start-reverse">
-                  <path d="M 0 0 L 10 5 L 0 10 z" fill="#fbbf24" />
+                {/* Active traversal arrow: high-contrast coral/rose (18px) with crisp white border */}
+                <marker id="arrow-active" viewBox="0 0 16 16" refX="14" refY="8" markerWidth="18" markerHeight="18" orient="auto" markerUnits="userSpaceOnUse">
+                  <path d="M 2 2 L 14 8 L 2 14 L 5 8 z" fill="#ff385c" stroke="#ffffff" strokeWidth="1.5" strokeLinejoin="round" />
                 </marker>
-                <marker id="arrow-path" viewBox="0 0 10 10" refX="22" refY="5" markerWidth="8" markerHeight="8" orient="auto-start-reverse">
-                  <path d="M 0 0 L 10 5 L 0 10 z" fill="#10b981" />
+                {/* Shortest path arrow: bright emerald neon (19px) with crisp white border */}
+                <marker id="arrow-path" viewBox="0 0 16 16" refX="14" refY="8" markerWidth="19" markerHeight="19" orient="auto" markerUnits="userSpaceOnUse">
+                  <path d="M 2 2 L 14 8 L 2 14 L 5 8 z" fill="#10b981" stroke="#ffffff" strokeWidth="1.5" strokeLinejoin="round" />
                 </marker>
               </defs>
 
@@ -2695,29 +3223,79 @@ const GraphVisualizer = ({ onBack, openSettings, initialAlgo = 'Dijkstra', onCop
                 const isActive = currentFrame.activeEdge === edgeKey1 || currentFrame.activeEdge === edgeKey2;
                 const isPath = currentFrame.pathHighlight?.includes(edgeKey1) || currentFrame.pathHighlight?.includes(edgeKey2);
 
-                let color = 'rgba(99, 102, 241, 0.4)';
+                // Clear color hierarchy: Neutral slate connector line separates completely from electric cyan arrow and numbers
+                let color = 'rgba(148, 163, 184, 0.6)';
                 let strokeWidth = 2.5;
-                if (isActive) { color = '#fbbf24'; strokeWidth = 4.5; }
+                if (isActive) { color = '#f59e0b'; strokeWidth = 4.5; }
                 if (isPath) { color = '#10b981'; strokeWidth = 5.5; }
 
-                // Text placement in center
-                const midX = (fromNode.x + toNode.x) / 2;
-                const midY = (fromNode.y + toNode.y) / 2;
+                const dx = toNode.x - fromNode.x;
+                const dy = toNode.y - fromNode.y;
+                const dist = Math.hypot(dx, dy) || 1;
+                const nodeRadius = 25;
+
+                // Handle reverse edge offset so bidirectional edges don't overlap
+                const hasReverseEdge = isDirected && edges.some(e => e.from === edge.to && e.to === edge.from);
+                const perpX = -dy / dist;
+                const perpY = dx / dist;
+                const offset = hasReverseEdge ? 5 : 0;
+
+                // Start point at border of fromNode
+                const x1 = fromNode.x + (dx / dist) * nodeRadius + perpX * offset;
+                const y1 = fromNode.y + (dy / dist) * nodeRadius + perpY * offset;
+
+                // End point: stop 3px outside border of toNode for clean arrowhead tip placement against node border
+                const stopDist = nodeRadius + (isDirected ? 3 : 0);
+                const x2 = toNode.x - (dx / dist) * stopDist + perpX * offset;
+                const y2 = toNode.y - (dy / dist) * stopDist + perpY * offset;
+
+                // Text placement in center of clipped line
+                const midX = (x1 + x2) / 2;
+                const midY = (y1 + y2) / 2;
 
                 return (
                   <g key={edge.id}>
                     <line
-                      x1={fromNode.x}
-                      y1={fromNode.y}
-                      x2={toNode.x}
-                      y2={toNode.y}
+                      x1={x1}
+                      y1={y1}
+                      x2={x2}
+                      y2={y2}
                       stroke={color}
                       strokeWidth={strokeWidth}
-                      markerEnd={isDirected ? (isPath ? 'url(#arrow-path)' : isActive ? 'url(#arrow-active)' : 'url(#arrow') : undefined}
+                      markerEnd={isDirected ? (isPath ? 'url(#arrow-path)' : isActive ? 'url(#arrow-active)' : 'url(#arrow)') : undefined}
                       style={{ transition: 'stroke 0.3s, stroke-width 0.3s' }}
                     />
-                    <rect x={midX - 10} y={midY - 10} width={20} height={20} rx={4} fill="#1e293b" stroke="var(--glass-border)" strokeWidth="1" />
-                    <text x={midX} y={midY + 4} textAnchor="middle" fill="#fff" fontSize="10" fontWeight="bold">{edge.weight}</text>
+                    {(() => {
+                      const isFlowMode = algoMode === 'Edmonds-Karp';
+                      const currentEdgeFlow = currentFrame.flows ? (currentFrame.flows[edge.id] ?? currentFrame.flows[`${edge.from}-${edge.to}`] ?? 0) : 0;
+                      const isSaturated = isFlowMode && currentEdgeFlow >= edge.weight && edge.weight > 0;
+                      const boxW = isFlowMode ? 46 : 28;
+                      return (
+                        <>
+                          <rect
+                            x={midX - boxW / 2}
+                            y={midY - 11}
+                            width={boxW}
+                            height={22}
+                            rx={6}
+                            fill="#0f172a"
+                            stroke={isSaturated ? '#ef4444' : isPath ? '#10b981' : isActive ? '#f59e0b' : 'rgba(148, 163, 184, 0.45)'}
+                            strokeWidth={isSaturated ? '2' : '1.5'}
+                          />
+                          <text
+                            x={midX}
+                            y={midY + 4}
+                            textAnchor="middle"
+                            fill={isSaturated ? '#fca5a5' : isPath ? '#6ee7b7' : isActive ? '#fde68a' : '#f8fafc'}
+                            fontSize={isFlowMode ? '10' : '11'}
+                            fontWeight="bold"
+                            fontFamily="monospace"
+                          >
+                            {isFlowMode ? `${currentEdgeFlow}/${edge.weight}` : edge.weight}
+                          </text>
+                        </>
+                      );
+                    })()}
                   </g>
                 );
               })}
@@ -2727,34 +3305,95 @@ const GraphVisualizer = ({ onBack, openSettings, initialAlgo = 'Dijkstra', onCop
             {nodes.map(node => {
               const isVisited = currentFrame.visited && currentFrame.visited[node.id];
               const isActive = currentFrame.active === node.id;
+              const isPathNode = currentFrame.pathHighlight && currentFrame.pathHighlight.some(edgeKey => {
+                const parts = edgeKey.split('-');
+                return parts.includes(String(node.id));
+              });
 
               let bg = 'linear-gradient(135deg, var(--accent-primary), var(--accent-secondary))';
               let border = '2px solid var(--glass-border)';
               let glow = '0 0 10px rgba(99,102,241,0.2)';
+              let textColor = '#ffffff';
 
               if (isVisited) {
                 bg = 'linear-gradient(135deg, #10b981, #059669)';
-                glow = '0 0 18px rgba(16,185,129,0.5)';
+                border = '2px solid rgba(16,185,129,0.5)';
+                glow = '0 0 12px rgba(16,185,129,0.3)';
+              }
+              if (isPathNode) {
+                bg = 'linear-gradient(135deg, #059669, #047857)';
+                border = '2.5px solid #34d399';
+                glow = '0 0 12px rgba(52,211,153,0.35)';
               }
               if (isActive) {
-                bg = 'linear-gradient(135deg, #fbbf24, #f59e0b)';
-                border = '3px solid #fff';
-                glow = '0 0 25px rgba(245,158,11,0.8)';
+                bg = 'linear-gradient(135deg, #f59e0b, #d97706)';
+                border = '2.5px solid #ffffff';
+                // Gentle, non-irritating soft shadow (no harsh blinding yellow glare)
+                glow = '0 0 10px rgba(245,158,11,0.3), 0 3px 8px rgba(0,0,0,0.4)';
+                textColor = '#0f172a'; // Bold dark text on amber background for perfect contrast
               }
 
-              // Dynamic distance/status badge on nodes
+              // Dynamic distance/status badge on nodes with clear labels
               let distText = '';
+              let isInfinite = false;
               if (algoMode === 'Dijkstra' || algoMode === 'Bellman-Ford' || algoMode === 'Floyd-Warshall') {
                 const currentDist = currentFrame.dist && currentFrame.dist[node.id] !== undefined ? currentFrame.dist[node.id] : node.dist;
-                distText = currentDist === Infinity ? '∞' : String(currentDist);
+                isInfinite = currentDist === Infinity;
+                distText = isInfinite ? 'd: ∞' : `d: ${currentDist}`;
+              } else if (algoMode === 'Edmonds-Karp') {
+                if (currentFrame.minCut) {
+                  distText = currentFrame.minCut.S.includes(node.id) ? 'Cut: S' : 'Cut: T';
+                } else if (node.id === startNode) {
+                  distText = 'Source (s)';
+                } else if (node.id === targetNode) {
+                  distText = 'Sink (t)';
+                }
               } else if (algoMode === 'Prim') {
                 const keyVal = currentFrame.keys && currentFrame.keys[node.id] !== undefined ? currentFrame.keys[node.id] : Infinity;
-                distText = keyVal === Infinity ? '∞' : String(keyVal);
+                isInfinite = keyVal === Infinity;
+                distText = isInfinite ? 'key: ∞' : `key: ${keyVal}`;
               } else if (algoMode === 'Kahn') {
                 const inDeg = currentFrame.inDegrees && currentFrame.inDegrees[node.id] !== undefined ? currentFrame.inDegrees[node.id] : 0;
-                distText = `In:${inDeg}`;
+                distText = `in: ${inDeg}`;
               } else if (algoMode === 'Greedy') {
-                distText = `h:${node.h}`;
+                distText = `h: ${node.h}`;
+              }
+
+              // Intelligent badge placement: avoid covering incoming directional arrows
+              const relevantEdges = edges.filter(e => isDirected ? e.to === node.id : (e.from === node.id || e.to === node.id));
+              const hasIncomingFromTop = relevantEdges.some(e => {
+                const otherId = e.to === node.id ? e.from : e.to;
+                const other = nodes.find(n => n.id === otherId);
+                if (!other) return false;
+                return (other.y - node.y) < -15; // other node is above this node
+              });
+              const hasIncomingFromBottom = relevantEdges.some(e => {
+                const otherId = e.to === node.id ? e.from : e.to;
+                const other = nodes.find(n => n.id === otherId);
+                if (!other) return false;
+                return (other.y - node.y) > 15; // other node is below this node
+              });
+
+              let badgeStyle = {
+                top: '-22px',
+                left: '50%',
+                transform: 'translateX(-50%)'
+              };
+
+              if (hasIncomingFromTop && !hasIncomingFromBottom) {
+                // Incoming edge from upside (top): move distance badge to bottom so downward arrow is 100% visible
+                badgeStyle = {
+                  bottom: '-24px',
+                  left: '50%',
+                  transform: 'translateX(-50%)'
+                };
+              } else if (hasIncomingFromTop && hasIncomingFromBottom) {
+                // Incoming edges from both top and bottom: move badge to right side
+                badgeStyle = {
+                  top: '-8px',
+                  right: '-30px',
+                  transform: 'none'
+                };
               }
 
               return (
@@ -2775,8 +3414,8 @@ const GraphVisualizer = ({ onBack, openSettings, initialAlgo = 'Dijkstra', onCop
                     flexDirection: 'column',
                     alignItems: 'center',
                     justifyContent: 'center',
-                    color: '#fff',
-                    fontWeight: 'bold',
+                    color: textColor,
+                    fontWeight: 900,
                     fontSize: '1.1rem',
                     boxShadow: glow,
                     cursor: 'grab',
@@ -2789,14 +3428,22 @@ const GraphVisualizer = ({ onBack, openSettings, initialAlgo = 'Dijkstra', onCop
                   {distText !== '' && (
                     <span style={{
                       position: 'absolute',
-                      top: '-18px',
-                      fontSize: '0.75rem',
-                      background: 'rgba(30,41,59,0.9)',
-                      padding: '2px 6px',
+                      ...badgeStyle,
+                      fontSize: '0.72rem',
+                      background: '#0b0f19',
+                      padding: '2px 8px',
                       borderRadius: '8px',
-                      border: '1px solid var(--glass-border)',
-                      color: '#fbbf24',
-                      fontWeight: 800
+                      border: isInfinite
+                        ? '1px solid rgba(148, 163, 184, 0.35)'
+                        : '1.5px solid rgba(52, 211, 153, 0.45)',
+                      color: isInfinite ? '#94a3b8' : '#34d399',
+                      fontWeight: 800,
+                      fontFamily: 'monospace',
+                      boxShadow: '0 2px 6px rgba(0,0,0,0.6)',
+                      whiteSpace: 'nowrap',
+                      pointerEvents: 'none',
+                      transition: 'all 0.2s ease',
+                      zIndex: 15
                     }}>
                       {distText}
                     </span>
@@ -2821,6 +3468,7 @@ const GraphVisualizer = ({ onBack, openSettings, initialAlgo = 'Dijkstra', onCop
             <div style={{ display: 'flex', alignItems: 'center', gap: isMobile ? '4px' : '8px', flexWrap: 'wrap', justifyContent: 'center' }}>
               <select className="styled-select" style={{ width: isMobile ? '110px' : '130px', fontWeight: 'bold' }} value={algoMode} onChange={e => { setAlgoMode(e.target.value); handleResetAnimation(); }} disabled={isPlaying}>
                 <option value="Dijkstra">Dijkstra</option>
+                <option value="Edmonds-Karp">{"Edmonds-Karp (Max Flow)"}</option>
                 <option value="BFS">BFS</option>
                 <option value="DFS">DFS</option>
                 <option value="Greedy">Greedy BFS</option>
@@ -2832,15 +3480,15 @@ const GraphVisualizer = ({ onBack, openSettings, initialAlgo = 'Dijkstra', onCop
               </select>
 
               <div style={{ display: 'flex', gap: '4px', alignItems: 'center' }}>
-                <span style={{ fontSize: '0.75rem', color: 'var(--text-secondary)', fontWeight: 'bold' }}>Start:</span>
+                <span style={{ fontSize: '0.75rem', color: 'var(--text-secondary)', fontWeight: 'bold' }}>{algoMode === 'Edmonds-Karp' ? 'Source (s):' : 'Start:'}</span>
                 <select className="styled-select" style={{ width: '55px', padding: '2px 4px' }} value={startNode} onChange={e => setStartNode(parseInt(e.target.value))} disabled={isPlaying}>
                   {nodes.map(n => <option key={n.id} value={n.id}>{n.label}</option>)}
                 </select>
               </div>
 
-              {(algoMode === 'Dijkstra' || algoMode === 'Greedy' || algoMode === 'Bellman-Ford') && (
+              {(algoMode === 'Dijkstra' || algoMode === 'Greedy' || algoMode === 'Bellman-Ford' || algoMode === 'Edmonds-Karp') && (
                 <div style={{ display: 'flex', gap: '4px', alignItems: 'center' }}>
-                  <span style={{ fontSize: '0.75rem', color: 'var(--text-secondary)', fontWeight: 'bold' }}>Target:</span>
+                  <span style={{ fontSize: '0.75rem', color: 'var(--text-secondary)', fontWeight: 'bold' }}>{algoMode === 'Edmonds-Karp' ? 'Sink (t):' : 'Target:'}</span>
                   <select className="styled-select" style={{ width: '55px', padding: '2px 4px' }} value={targetNode} onChange={e => setTargetNode(parseInt(e.target.value))} disabled={isPlaying}>
                     {nodes.map(n => <option key={n.id} value={n.id}>{n.label}</option>)}
                   </select>
@@ -2911,21 +3559,47 @@ const GraphVisualizer = ({ onBack, openSettings, initialAlgo = 'Dijkstra', onCop
                 <span style={{ fontWeight: 600, fontSize: '0.8rem', color: 'var(--text-primary)', display: 'flex', alignItems: 'center', gap: '6px' }}>
                   📋 Execution Log & Active State
                 </span>
-                <button
-                  onClick={() => setShowLogPanel(false)}
-                  style={{
-                    background: 'transparent',
-                    border: 'none',
-                    color: 'var(--text-secondary)',
-                    cursor: 'pointer',
-                    fontSize: '1rem',
-                    padding: '0 4px',
-                    lineHeight: 1
-                  }}
-                  title="Hide Log"
-                >
-                  ×
-                </button>
+                <div style={{ display: 'flex', alignItems: 'center', gap: '6px' }}>
+                  <button
+                    onClick={() => {
+                      hasUserMovedLog.current = false;
+                      setLogPosition(getFreeLogPosition());
+                    }}
+                    style={{
+                      background: 'rgba(255,255,255,0.06)',
+                      border: '1px solid rgba(255,255,255,0.12)',
+                      borderRadius: '5px',
+                      color: 'var(--text-secondary)',
+                      cursor: 'pointer',
+                      fontSize: '0.72rem',
+                      padding: '2px 7px',
+                      display: 'flex',
+                      alignItems: 'center',
+                      gap: '4px',
+                      transition: 'all 0.2s ease'
+                    }}
+                    onMouseEnter={e => { e.currentTarget.style.color = 'var(--text-primary)'; e.currentTarget.style.borderColor = 'rgba(255,255,255,0.25)'; }}
+                    onMouseLeave={e => { e.currentTarget.style.color = 'var(--text-secondary)'; e.currentTarget.style.borderColor = 'rgba(255,255,255,0.12)'; }}
+                    title="Snap log to free unoccupied canvas space (avoids core nodes)"
+                  >
+                    <span>🧭</span> Free Space
+                  </button>
+                  <button
+                    onClick={() => setShowLogPanel(false)}
+                    style={{
+                      background: 'transparent',
+                      border: 'none',
+                      color: 'var(--text-secondary)',
+                      cursor: 'pointer',
+                      fontSize: '1rem',
+                      padding: '0 4px',
+                      lineHeight: 1
+                    }}
+                    title="Hide Log"
+                  >
+                    ×
+                  </button>
+                </div>
               </div>
 
               {/* Content Body */}
@@ -2961,7 +3635,7 @@ const GraphVisualizer = ({ onBack, openSettings, initialAlgo = 'Dijkstra', onCop
                       <>
                         <div>
                           <span style={{ color: 'var(--text-secondary)' }}>Active Node: </span>
-                          <span style={{ color: '#fbbf24', fontWeight: 'bold' }}>
+                          <span style={{ color: '#38bdf8', fontWeight: 'bold' }}>
                             {frame.active !== undefined && frame.active !== null && frame.active !== -1 ? `Node ${nodes.find(n => n.id === frame.active)?.label || frame.active}` : 'None'}
                           </span>
                         </div>
@@ -2992,7 +3666,7 @@ const GraphVisualizer = ({ onBack, openSettings, initialAlgo = 'Dijkstra', onCop
 
                         {frame.dsuState && (
                           <div>
-                            <div style={{ marginBottom: '2px', fontSize: '0.7rem', color: '#fbbf24', marginTop: '4px' }}>Union-Find Parents:</div>
+                            <div style={{ marginBottom: '2px', fontSize: '0.7rem', color: '#a78bfa', marginTop: '4px' }}>Union-Find Parents:</div>
                             <div style={{ background: 'rgba(0,0,0,0.18)', padding: '4px 6px', borderRadius: '4px', fontFamily: 'monospace', color: '#10b981', fontSize: '0.7rem', display: 'flex', flexDirection: 'column', gap: '2px' }}>
                               {Object.keys(frame.dsuState).map(k => {
                                 const nodeLabel = nodes.find(n => n.id === parseInt(k))?.label || k;
@@ -3103,7 +3777,7 @@ const GraphVisualizer = ({ onBack, openSettings, initialAlgo = 'Dijkstra', onCop
                 </div>
                 <div>
                   <span style={{ color: 'var(--text-secondary)' }}>Active Node: </span>
-                  <span style={{ color: '#fbbf24', fontWeight: 'bold' }}>
+                  <span style={{ color: '#38bdf8', fontWeight: 'bold' }}>
                     {currentFrame.active !== undefined && currentFrame.active !== null && currentFrame.active !== -1 ? `Node ${nodes.find(n => n.id === currentFrame.active)?.label || currentFrame.active}` : 'None'}
                   </span>
                 </div>
@@ -3216,7 +3890,7 @@ const GraphVisualizer = ({ onBack, openSettings, initialAlgo = 'Dijkstra', onCop
                   <button onClick={() => setLocalFontSize(prev => Math.max(10, prev - 2))} style={{ background: 'transparent', border: '1px solid var(--glass-border)', borderRadius: '4px', color: 'var(--text-secondary)', fontSize: '0.73rem', padding: '1px 6px', cursor: 'pointer' }}>A−</button>
                   <button onClick={() => setLocalFontSize(prev => Math.min(40, prev + 2))} style={{ background: 'transparent', border: '1px solid var(--glass-border)', borderRadius: '4px', color: 'var(--text-secondary)', fontSize: '0.73rem', padding: '1px 6px', cursor: 'pointer' }}>A+</button>
                   <button
-                    onClick={() => onShowUpcomingFeatures ? onShowUpcomingFeatures() : setIsRunnerOpen(true)}
+                    onClick={() => setIsRunnerOpen(true)}
                     style={{ padding: '2px 8px', fontSize: '0.74rem', whiteSpace: 'nowrap', display: 'inline-flex', alignItems: 'center', background: 'rgba(16,185,129,0.15)', color: '#34d399', border: '1px solid rgba(16,185,129,0.3)', borderRadius: '5px', cursor: 'pointer' }}
                   >▶ Run</button>
                   <button onClick={handleCopyCode} style={{ padding: '2px 8px', fontSize: '0.74rem', background: 'transparent', border: '1px solid var(--glass-border)', borderRadius: '5px', color: 'var(--text-secondary)', cursor: 'pointer' }}>
@@ -3225,31 +3899,14 @@ const GraphVisualizer = ({ onBack, openSettings, initialAlgo = 'Dijkstra', onCop
                 </div>
               </div>
 
-              <div style={{ flex: 1, padding: '1rem 0', overflow: 'auto', background: 'var(--bg-secondary)' }}>
-                <pre style={{
-                  margin: 0,
-                  color: 'var(--text-primary)',
-                  fontFamily: "'Fira Code', monospace",
-                  fontSize: `${localFontSize}px`,
-                  lineHeight: '1.55'
-                }}>
-                  <code>
-                    {toAllman(getGraphCodeTemplate(codeLang, algoMode, String(startNode), String(targetNode))).split('\n').map((line, i) => {
-                      const isMatch = currentFrame.activeLine && line.includes(currentFrame.activeLine);
-                      return (
-                        <div key={i} style={{
-                          background: isMatch ? 'rgba(16, 185, 129, 0.15)' : 'transparent',
-                          borderLeft: isMatch ? '3px solid #10b981' : '3px solid transparent',
-                          padding: '1px 12px',
-                          transition: 'all 0.15s'
-                        }}>
-                          <span style={{ whiteSpace: wordWrap === 'on' ? 'pre-wrap' : 'pre', fontFamily: "'Fira Code', monospace", color: isMatch ? '#ffffff' : 'var(--text-primary)' }}>{line || ' '}</span>
-                        </div>
-                      );
-                    })}
-                  </code>
-                </pre>
-              </div>
+              <NumberedCodeViewer
+                code={toAllman(getGraphCodeTemplate(codeLang, algoMode, String(startNode), String(targetNode)))}
+                fontSize={localFontSize}
+                wordWrap={wordWrap}
+                accentColor="emerald"
+                isHighlighted={(line) => currentFrame.activeLine && line.includes(currentFrame.activeLine)}
+                bg="var(--bg-secondary)"
+              />
 
               <div style={{ padding: '0.8rem', borderTop: '1px solid var(--glass-border)', display: 'flex', justifyContent: 'space-between', background: 'var(--glass-bg)' }}>
                 <button className="btn btn-clear" style={{ width: '100%' }} onClick={() => setShowCode(false)}>💻 Hide Panel</button>
@@ -3278,7 +3935,7 @@ const GraphVisualizer = ({ onBack, openSettings, initialAlgo = 'Dijkstra', onCop
         language={codeLang}
       />
       <TopicInfoModal
-        topicKey={algoMode === 'Dijkstra' ? 'DIJKSTRA_GRAPH' : algoMode === 'BFS' ? 'BFS_GRAPH' : algoMode === 'DFS' ? 'DFS_GRAPH' : algoMode === 'Greedy' ? 'GREEDY_GRAPH' : algoMode === 'Prim' ? 'PRIM_GRAPH' : algoMode === 'Bellman-Ford' ? 'BELLMAN_GRAPH' : algoMode === 'Floyd-Warshall' ? 'FLOYD_GRAPH' : 'KAHN_GRAPH'}
+        topicKey={algoMode === 'Dijkstra' ? 'DIJKSTRA_GRAPH' : algoMode === 'Edmonds-Karp' ? 'MOD4_EDMONDS_KARP' : algoMode === 'BFS' ? 'BFS_GRAPH' : algoMode === 'DFS' ? 'DFS_GRAPH' : algoMode === 'Greedy' ? 'GREEDY_GRAPH' : algoMode === 'Prim' ? 'PRIM_GRAPH' : algoMode === 'Bellman-Ford' ? 'BELLMAN_GRAPH' : algoMode === 'Floyd-Warshall' ? 'FLOYD_GRAPH' : 'KAHN_GRAPH'}
         isOpen={showTopicInfo}
         onClose={() => setShowTopicInfo(false)}
       />

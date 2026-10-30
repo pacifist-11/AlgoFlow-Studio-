@@ -3,7 +3,9 @@ import React, { useState, useEffect, useRef, useCallback } from 'react';
 import gsap from 'gsap';
 import { getSortSearchCode } from './codeTemplatesSort';
 import CodeRunnerModal from './CodeRunnerModal.jsx';
+import NumberedCodeViewer from './NumberedCodeViewer.jsx';
 import TopicInfoModal from './TopicInfoModal.jsx';
+import { setScreenContext, recordScreenError } from './screenContext.js';
 
 // Allman brace formatter
 const toAllman = code => {
@@ -63,6 +65,245 @@ const copyToClipboard = (text) => {
   } else {
     return fallbackCopy(text);
   }
+};
+
+export const ALGO_COMPLEXITIES = {
+  'Bubble Sort': {
+    timeBest: 'Ω(N)',
+    timeAvg: 'Θ(N²)',
+    timeWorst: 'O(N²)',
+    space: 'O(1)',
+    stable: 'Yes',
+    inPlace: 'Yes',
+    type: 'Comparison (Exchange)'
+  },
+  'Selection Sort': {
+    timeBest: 'Ω(N²)',
+    timeAvg: 'Θ(N²)',
+    timeWorst: 'O(N²)',
+    space: 'O(1)',
+    stable: 'No',
+    inPlace: 'Yes',
+    type: 'Comparison (Selection)'
+  },
+  'Insertion Sort': {
+    timeBest: 'Ω(N)',
+    timeAvg: 'Θ(N²)',
+    timeWorst: 'O(N²)',
+    space: 'O(1)',
+    stable: 'Yes',
+    inPlace: 'Yes',
+    type: 'Comparison (Insertion)'
+  },
+  'Merge Sort': {
+    timeBest: 'Ω(N log N)',
+    timeAvg: 'Θ(N log N)',
+    timeWorst: 'O(N log N)',
+    space: 'O(N)',
+    stable: 'Yes',
+    inPlace: 'No',
+    type: 'Divide & Conquer'
+  },
+  'Quick Sort': {
+    timeBest: 'Ω(N log N)',
+    timeAvg: 'Θ(N log N)',
+    timeWorst: 'O(N²)',
+    space: 'O(log N)',
+    stable: 'No',
+    inPlace: 'Yes',
+    type: 'Divide & Conquer (Partition)'
+  },
+  'Heap Sort': {
+    timeBest: 'Ω(N log N)',
+    timeAvg: 'Θ(N log N)',
+    timeWorst: 'O(N log N)',
+    space: 'O(1)',
+    stable: 'No',
+    inPlace: 'Yes',
+    type: 'Comparison (Binary Heap)'
+  },
+  'Shell Sort': {
+    timeBest: 'Ω(N log N)',
+    timeAvg: 'Θ(N^(4/3))',
+    timeWorst: 'O(N²)',
+    space: 'O(1)',
+    stable: 'No',
+    inPlace: 'Yes',
+    type: 'Diminishing Increment Sort'
+  },
+  'Cocktail Shaker Sort': {
+    timeBest: 'Ω(N)',
+    timeAvg: 'Θ(N²)',
+    timeWorst: 'O(N²)',
+    space: 'O(1)',
+    stable: 'Yes',
+    inPlace: 'Yes',
+    type: 'Bidirectional Bubble Sort'
+  },
+  'Cocktail Sort': {
+    timeBest: 'Ω(N)',
+    timeAvg: 'Θ(N²)',
+    timeWorst: 'O(N²)',
+    space: 'O(1)',
+    stable: 'Yes',
+    inPlace: 'Yes',
+    type: 'Bidirectional Bubble Sort'
+  },
+  'Counting Sort': {
+    timeBest: 'Ω(N + K)',
+    timeAvg: 'Θ(N + K)',
+    timeWorst: 'O(N + K)',
+    space: 'O(K)',
+    stable: 'Yes',
+    inPlace: 'No',
+    type: 'Non-Comparison Integer Sort'
+  },
+  'Radix Sort': {
+    timeBest: 'Ω(N · d)',
+    timeAvg: 'Θ(N · d)',
+    timeWorst: 'O(N · d)',
+    space: 'O(N + K)',
+    stable: 'Yes',
+    inPlace: 'No',
+    type: 'Non-Comparison Distribution'
+  },
+  'Linear Search': {
+    timeBest: 'Ω(1)',
+    timeAvg: 'Θ(N)',
+    timeWorst: 'O(N)',
+    space: 'O(1)',
+    stable: 'N/A',
+    inPlace: 'Yes',
+    type: 'Sequential Search'
+  },
+  'Binary Search': {
+    timeBest: 'Ω(1)',
+    timeAvg: 'Θ(log N)',
+    timeWorst: 'O(log N)',
+    space: 'O(1)',
+    stable: 'N/A',
+    inPlace: 'Yes',
+    type: 'Divide & Conquer Search'
+  }
+};
+
+export const detectInputCase = (algo, arr, searchVal) => {
+  if (!arr || arr.length === 0) return 'avg';
+
+  const n = arr.length;
+  let isSorted = true;
+  let isReverseSorted = true;
+  for (let idx = 0; idx < n - 1; idx++) {
+    if (arr[idx] > arr[idx + 1]) isSorted = false;
+    if (arr[idx] < arr[idx + 1]) isReverseSorted = false;
+  }
+
+  if (algo === 'Bubble Sort' || algo === 'Insertion Sort' || algo === 'Cocktail Shaker Sort' || algo === 'Cocktail Sort') {
+    if (isSorted) return 'best';
+    if (isReverseSorted) return 'worst';
+    return 'avg';
+  }
+
+  if (algo === 'Quick Sort') {
+    if (isSorted || isReverseSorted) return 'worst';
+    return 'avg';
+  }
+
+  if (algo === 'Selection Sort') {
+    if (isSorted) return 'best';
+    if (isReverseSorted) return 'worst';
+    return 'avg';
+  }
+
+  if (algo === 'Shell Sort') {
+    if (isSorted) return 'best';
+    if (isReverseSorted) return 'worst';
+    return 'avg';
+  }
+
+  if (algo === 'Merge Sort' || algo === 'Heap Sort' || algo === 'Counting Sort' || algo === 'Radix Sort') {
+    return 'avg';
+  }
+
+  if (algo === 'Linear Search') {
+    const val = parseInt(searchVal);
+    if (isNaN(val)) return 'avg';
+    const targetIdx = arr.indexOf(val);
+    if (targetIdx === 0) return 'best';
+    if (targetIdx === -1 || targetIdx === arr.length - 1) return 'worst';
+    return 'avg';
+  }
+
+  if (algo === 'Binary Search') {
+    const val = parseInt(searchVal);
+    if (isNaN(val)) return 'avg';
+    const sorted = [...arr].sort((a, b) => a - b);
+    const mid = Math.floor((sorted.length - 1) / 2);
+    if (sorted[mid] === val) return 'best';
+    if (!sorted.includes(val)) return 'worst';
+    return 'avg';
+  }
+
+  return 'avg';
+};
+
+export const getPointerDetails = (algo, frame) => {
+  if (!frame) return [];
+  const { arr, i, j, k } = frame;
+  const getValStr = (idx) => {
+    if (idx === undefined || idx === -1 || !arr) return null;
+    return `Index ${idx} (Val: ${arr[idx] ?? 'N/A'})`;
+  };
+  const details = [];
+
+  if (algo === 'Bubble Sort') {
+    if (i !== -1) details.push({ label: 'Index j', val: getValStr(i), color: '#fbbf24' });
+    if (j !== -1) details.push({ label: 'Index j+1', val: getValStr(j), color: '#60a5fa' });
+    if (k !== -1) details.push({ label: 'Sorted boundary', val: getValStr(k), color: '#10b981' });
+  } else if (algo === 'Selection Sort') {
+    if (i !== -1) details.push({ label: 'Index j', val: getValStr(i), color: '#fbbf24' });
+    if (j !== -1) details.push({ label: 'Min Index', val: getValStr(j), color: '#60a5fa' });
+    if (k !== -1) details.push({ label: 'Index i (sorted)', val: getValStr(k), color: '#10b981' });
+  } else if (algo === 'Insertion Sort') {
+    if (i !== -1) details.push({ label: 'Active Key Index', val: getValStr(i), color: '#fbbf24' });
+    if (j !== -1) details.push({ label: 'Index j', val: getValStr(j), color: '#60a5fa' });
+    if (k !== -1) details.push({ label: 'Sorted Boundary', val: getValStr(k), color: '#10b981' });
+  } else if (algo === 'Merge Sort') {
+    if (i !== -1) details.push({ label: 'Merge Left', val: getValStr(i), color: '#fbbf24' });
+    if (j !== -1) details.push({ label: 'Merge Right', val: getValStr(j), color: '#60a5fa' });
+    if (k !== -1) details.push({ label: 'Merge Active', val: getValStr(k), color: '#10b981' });
+  } else if (algo === 'Quick Sort') {
+    if (i !== -1) details.push({ label: 'Pivot Index', val: getValStr(i), color: '#fbbf24' });
+    if (j !== -1) details.push({ label: 'Pointer i', val: getValStr(j), color: '#60a5fa' });
+    if (k !== -1) details.push({ label: 'Pointer j', val: getValStr(k), color: '#10b981' });
+  } else if (algo === 'Heap Sort') {
+    if (i !== -1) details.push({ label: 'Node i', val: getValStr(i), color: '#fbbf24' });
+    if (j !== -1) details.push({ label: 'Largest Node', val: getValStr(j), color: '#60a5fa' });
+    if (k !== -1) details.push({ label: 'End index', val: getValStr(k), color: '#10b981' });
+  } else if (algo === 'Counting Sort') {
+    if (i !== -1) details.push({ label: 'Input Index', val: getValStr(i), color: '#fbbf24' });
+    if (j !== -1) details.push({ label: 'Placed Index', val: getValStr(j), color: '#60a5fa' });
+  } else if (algo === 'Radix Sort') {
+    if (i !== -1) details.push({ label: 'Item Index', val: getValStr(i), color: '#fbbf24' });
+    if (j !== -1) details.push({ label: 'Output Index', val: getValStr(j), color: '#60a5fa' });
+    if (k !== -1) details.push({ label: 'Place Value', val: `${k}s place`, color: '#10b981' });
+  } else if (algo === 'Shell Sort') {
+    if (i !== -1) details.push({ label: 'Index i', val: getValStr(i), color: '#fbbf24' });
+    if (j !== -1) details.push({ label: 'Index j', val: getValStr(j), color: '#60a5fa' });
+    if (k !== -1) details.push({ label: 'Current Gap', val: String(k), color: '#10b981' });
+  } else if (algo === 'Cocktail Shaker Sort' || algo === 'Cocktail Sort') {
+    if (i !== -1) details.push({ label: 'Index i', val: getValStr(i), color: '#fbbf24' });
+    if (j !== -1) details.push({ label: 'Swapped occurred', val: j === 1 ? 'Yes' : 'No', color: '#60a5fa' });
+    if (k !== -1) details.push({ label: 'Direction', val: k === 1 ? 'Forward' : 'Backward', color: '#10b981' });
+  } else if (algo === 'Linear Search') {
+    if (i !== -1) details.push({ label: 'Mid/Active Index', val: getValStr(i), color: '#fbbf24' });
+  } else if (algo === 'Binary Search') {
+    if (i !== -1) details.push({ label: 'Mid Index', val: getValStr(i), color: '#fbbf24' });
+    if (j !== -1) details.push({ label: 'Left Index', val: getValStr(j), color: '#60a5fa' });
+    if (k !== -1) details.push({ label: 'Right Index', val: getValStr(k), color: '#10b981' });
+  }
+
+  return details;
 };
 
 const getHeapTreePositions = (n, width, height) => {
@@ -135,86 +376,101 @@ const getBSTPositions = (arr, width, height) => {
 const highlightLogText = (text) => {
   if (!text) return '';
   const str = String(text);
-  const lower = str.toLowerCase();
 
-  if (
-    lower.includes('root full') ||
-    lower.includes('split') ||
-    lower.includes('imbalance') ||
-    lower.includes('rotate') ||
-    lower.includes('rotation') ||
-    lower.includes('delete') ||
-    lower.includes('deleted') ||
-    lower.includes('remove') ||
-    lower.includes('removed') ||
-    lower.includes('pop') ||
-    lower.includes('popped') ||
-    lower.includes('mismatch') ||
-    lower.includes('⚡')
-  ) {
+  const renderContent = (contentStr) => {
+    const lower = contentStr.toLowerCase();
+
+    if (
+      lower.includes('root full') ||
+      lower.includes('split') ||
+      lower.includes('imbalance') ||
+      lower.includes('rotate') ||
+      lower.includes('rotation') ||
+      lower.includes('delete') ||
+      lower.includes('deleted') ||
+      lower.includes('remove') ||
+      lower.includes('removed') ||
+      lower.includes('pop') ||
+      lower.includes('popped') ||
+      lower.includes('mismatch') ||
+      lower.includes('not found') ||
+      lower.includes('⚡')
+    ) {
+      const regex = /(\b\d+(?:\.\d+)?\b)/g;
+      const parts = contentStr.split(regex);
+      return (
+        <span style={{ color: '#f87171', fontWeight: 'bold' }}>
+          {parts.map((p, i) =>
+            regex.test(p) ? <span key={i} style={{ color: '#fbbf24', textShadow: '0 0 8px rgba(251,191,36,0.3)' }}>{p}</span> : p
+          )}
+        </span>
+      );
+    }
+
+    if (
+      lower.includes('starting') ||
+      lower.includes('starting ') ||
+      lower.includes('inserted') ||
+      lower.includes('insert(') ||
+      lower.includes('insert ') ||
+      lower.includes('create node') ||
+      lower.includes('success') ||
+      lower.includes('match') ||
+      lower.includes('completed') ||
+      lower.includes('complete') ||
+      lower.includes('done') ||
+      lower.includes('found') ||
+      lower.includes('placed') ||
+      lower.includes('✦') ||
+      lower.includes('✓') ||
+      lower.includes('✅')
+    ) {
+      const regex = /(\b\d+(?:\.\d+)?\b)/g;
+      const parts = contentStr.split(regex);
+      return (
+        <span style={{ color: '#34d399', fontWeight: 'bold' }}>
+          {parts.map((p, i) =>
+            regex.test(p) ? <span key={i} style={{ color: '#fbbf24' }}>{p}</span> : p
+          )}
+        </span>
+      );
+    }
+
+    if (
+      lower.includes('going to') ||
+      lower.includes('compare') ||
+      lower.includes('comparing') ||
+      lower.includes('probe') ||
+      lower.includes('probing') ||
+      lower.includes('relaxation') ||
+      lower.includes('check') ||
+      lower.includes('swap') ||
+      lower.includes('swapped') ||
+      lower.includes('➜') ||
+      lower.includes('↳')
+    ) {
+      const regex = /(\b\d+(?:\.\d+)?\b)/g;
+      const parts = contentStr.split(regex);
+      return (
+        <span style={{ color: '#fb923c', fontWeight: 600 }}>
+          {parts.map((p, i) =>
+            regex.test(p) ? <span key={i} style={{ color: '#fbbf24', fontWeight: 'bold' }}>{p}</span> : p
+          )}
+        </span>
+      );
+    }
+
     const regex = /(\b\d+(?:\.\d+)?\b)/g;
-    const parts = str.split(regex);
-    return (
-      <span style={{ color: '#f87171', fontWeight: 'bold' }}>
-        {parts.map((p, i) =>
-          regex.test(p) ? <span key={i} style={{ color: '#fbbf24', textShadow: '0 0 8px rgba(251,191,36,0.3)' }}>{p}</span> : p
-        )}
-      </span>
+    const parts = contentStr.split(regex);
+    return parts.map((p, i) =>
+      /^\d+(?:\.\d+)?$/.test(p) ? <strong key={i} style={{ color: '#fbbf24' }}>{p}</strong> : p
     );
-  }
+  };
 
-  if (
-    lower.includes('inserted') ||
-    lower.includes('insert(') ||
-    lower.includes('insert ') ||
-    lower.includes('create node') ||
-    lower.includes('success') ||
-    lower.includes('match') ||
-    lower.includes('completed') ||
-    lower.includes('done') ||
-    lower.includes('✦') ||
-    lower.includes('✓') ||
-    lower.includes('✅')
-  ) {
-    const regex = /(\b\d+(?:\.\d+)?\b)/g;
-    const parts = str.split(regex);
-    return (
-      <span style={{ color: '#34d399', fontWeight: 'bold' }}>
-        {parts.map((p, i) =>
-          regex.test(p) ? <span key={i} style={{ color: '#fbbf24' }}>{p}</span> : p
-        )}
-      </span>
-    );
-  }
-
-  if (
-    lower.includes('going to') ||
-    lower.includes('compare') ||
-    lower.includes('comparing') ||
-    lower.includes('probe') ||
-    lower.includes('probing') ||
-    lower.includes('relaxation') ||
-    lower.includes('check') ||
-    lower.includes('swap') ||
-    lower.includes('swapped') ||
-    lower.includes('➜') ||
-    lower.includes('↳')
-  ) {
-    const regex = /(\b\d+(?:\.\d+)?\b)/g;
-    const parts = str.split(regex);
-    return (
-      <span style={{ color: '#fb923c', fontWeight: 600 }}>
-        {parts.map((p, i) =>
-          regex.test(p) ? <span key={i} style={{ color: '#fbbf24', fontWeight: 'bold' }}>{p}</span> : p
-        )}
-      </span>
-    );
-  }
-
-  const regex = /(\b\d+(?:\.\d+)?\b)/g;
-  const parts = str.split(regex);
-  return parts.map((p, i) =>
-    /^\d+(?:\.\d+)?$/.test(p) ? <strong key={i} style={{ color: '#fbbf24' }}>{p}</strong> : p
+  return (
+    <span>
+      {renderContent(str)}
+    </span>
   );
 };
 
@@ -392,9 +648,50 @@ const SortSearchVisualizer = ({ onBack, openSettings, initialTab = 'Sort', initi
     return () => window.removeEventListener('resize', handleResize);
   }, []);
 
+  // Synchronize Live Screen Telemetry & Problem Diagnostics for AI ChatBot
+  useEffect(() => {
+    const algo = activeTab === 'Sort' ? selectedSort : selectedSearch;
+    const stepData = timeline && timeline[currentStep] ? timeline[currentStep] : null;
+    const recentMsgs = timeline ? timeline.slice(Math.max(0, currentStep - 4), currentStep + 1).map(s => s.msg) : [];
+    const screenSummary = `${activeTab} mode with algorithm ${algo}. Array: [${array.slice(0, 10).join(', ')}${array.length > 10 ? '...' : ''}]. ${activeTab === 'Search' ? `Searching for: ${searchValue}` : ''}`;
+
+    let problem = null;
+    if (stepData?.msg) {
+      const m = stepData.msg.toLowerCase();
+      if (m.includes('not found') || m.includes('failed') || m.includes('error')) {
+        problem = stepData.msg;
+      }
+    }
+
+    setScreenContext({
+      screenTitle: `${activeTab} Visualizer`,
+      activeAlgo: algo,
+      currentStep,
+      totalSteps: timeline ? timeline.length : 0,
+      currentStepMessage: stepData?.msg || `${algo} ready on array of ${array.length} items.`,
+      recentLogs: recentMsgs,
+      screenDataSummary: screenSummary,
+      lastErrorOrIssue: problem
+    });
+  }, [activeTab, selectedSort, selectedSearch, currentStep, timeline, array, searchValue]);
+
+  // Dynamic free-space finder: places log panel in bottom-right corner away from the central array bars
+  const getFreeLogPosition = () => {
+    if (typeof window === 'undefined') return { x: 500, y: 350 };
+    const winW = window.innerWidth;
+    const winH = window.innerHeight;
+    const panelW = 520;
+    const panelH = 280;
+    return {
+      x: Math.max(30, winW - panelW - 40),
+      y: Math.max(80, winH - panelH - 100)
+    };
+  };
+
   // Draggable execution log states
   const [showLogPanel, setShowLogPanel] = useState(true);
-  const [logPosition, setLogPosition] = useState({ x: 50, y: 150 });
+  const [logPosition, setLogPosition] = useState(() => getFreeLogPosition());
+  const hasUserMovedLog = useRef(false);
   const [logSize, setLogSize] = useState({ width: 520, height: 280 });
   const [isDraggingLog, setIsDraggingLog] = useState(false);
   const dragStart = useRef({ x: 0, y: 0 });
@@ -476,6 +773,7 @@ const SortSearchVisualizer = ({ onBack, openSettings, initialTab = 'Sort', initi
       const dx = clientX - dragStart.current.x;
       const dy = clientY - dragStart.current.y;
 
+      hasUserMovedLog.current = true;
       setLogPosition({
         x: Math.max(-logSize.width + 40, Math.min(window.innerWidth - 40, panelStart.current.x + dx)),
         y: Math.max(0, Math.min(window.innerHeight - 40, panelStart.current.y + dy))
@@ -641,11 +939,12 @@ const SortSearchVisualizer = ({ onBack, openSettings, initialTab = 'Sort', initi
 
   const handleCustomArray = () => {
     if (!customArrayStr.trim()) return;
-    const arr = customArrayStr.split(',').map(n => parseInt(n.trim())).filter(n => !isNaN(n) && n > 0 && n <= 100);
+    const parsed = customArrayStr.split(',').map(n => parseInt(n.trim())).filter(n => !isNaN(n) && n >= 0 && n <= 100);
+    const arr = parsed.slice(0, 30);
     if (arr.length > 0) {
       setArray(arr);
       setInitialArray(arr);
-      setTimeline([{ arr: [...arr], i: -1, j: -1, k: -1, msg: 'Loaded custom array' }]);
+      setTimeline([{ arr: [...arr], i: -1, j: -1, k: -1, msg: `Loaded custom array (${arr.length} elements${parsed.length > 30 ? ' - max 30' : ''})` }]);
       setCurrentStep(0);
       setIsPlaying(false);
     }
@@ -894,8 +1193,10 @@ const SortSearchVisualizer = ({ onBack, openSettings, initialTab = 'Sort', initi
       }
 
       if (largest !== i) {
+        let oldParent = arr[i];
+        let oldChild = arr[largest];
         let temp = arr[i]; arr[i] = arr[largest]; arr[largest] = temp;
-        record(arr, i, largest, -1, `Swapped parent ${arr[largest]} and child ${arr[i]}`, frames, { heapSize: n });
+        record(arr, i, largest, -1, `Swapped parent ${oldParent} and child ${oldChild}`, frames, { heapSize: n });
         heapify(n, largest);
       }
     };
@@ -1050,7 +1351,7 @@ const SortSearchVisualizer = ({ onBack, openSettings, initialTab = 'Sort', initi
     let arr = [...array];
     let frames = [];
 
-    let maxVal = Math.max(...arr);
+    let maxVal = Math.max(...arr, 0);
     const getDigit = (num, place) => {
       return Math.floor(Math.abs(num) / place) % 10;
     };
@@ -1060,11 +1361,12 @@ const SortSearchVisualizer = ({ onBack, openSettings, initialTab = 'Sort', initi
       i: -1,
       j: -1,
       k: 1,
-      msg: 'Starting Radix Sort: Find maximum value to decide passes',
+      msg: 'Starting Radix Sort: LSD passes',
       buckets: Array.from({ length: 10 }, () => [])
     });
 
-    for (let place = 1; Math.floor(maxVal / place) > 0; place *= 10) {
+    let maxPass = maxVal > 0 ? maxVal : 1;
+    for (let place = 1; Math.floor(maxPass / place) > 0; place *= 10) {
       let buckets = Array.from({ length: 10 }, () => []);
 
       // Step 1: Distribute elements into buckets
@@ -1121,7 +1423,7 @@ const SortSearchVisualizer = ({ onBack, openSettings, initialTab = 'Sort', initi
       i: -1,
       j: -1,
       k: -1,
-      msg: 'Radix Sort complete! Array is fully sorted!',
+      msg: 'Radix Sort Complete!',
       buckets: Array.from({ length: 10 }, () => [])
     });
 
@@ -1143,7 +1445,7 @@ const SortSearchVisualizer = ({ onBack, openSettings, initialTab = 'Sort', initi
       i: -1,
       j: -1,
       k: -1,
-      msg: `Starting Counting Sort: Range is [${minVal}, ${maxVal}] (size ${range})`,
+      msg: `Starting Counting Sort: Range [${minVal}, ${maxVal}]`,
       counts: [...counts],
       minVal
     });
@@ -1204,7 +1506,7 @@ const SortSearchVisualizer = ({ onBack, openSettings, initialTab = 'Sort', initi
       i: -1,
       j: -1,
       k: -1,
-      msg: 'Counting Sort complete! Array is fully sorted!',
+      msg: 'Counting Sort Complete!',
       counts: new Array(range).fill(0),
       minVal
     });
@@ -1606,11 +1908,31 @@ const SortSearchVisualizer = ({ onBack, openSettings, initialTab = 'Sort', initi
 
         {/* Left Column: Visualizer */}
         <div style={{ display: (isMobile && mobileTab !== 'vis') ? 'none' : 'flex', flex: 1, flexDirection: 'column', overflow: 'hidden', position: 'relative' }}>
-          <div style={{ textAlign: 'center', marginBottom: '1.2rem', height: '40px', display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0 }}>
-            <span style={{ fontSize: isMobile ? '1.05rem' : '1.4rem', color: 'var(--text-primary)', fontWeight: 'bold', background: 'rgba(255,255,255,0.05)', padding: '6px 20px', borderRadius: '20px', border: '1px solid var(--glass-border)', boxShadow: '0 4px 15px rgba(0,0,0,0.2)' }}>
-              {frame.msg || 'Select a sort or search algorithm'}
-            </span>
-          </div>
+          {(() => {
+            const isCompleted = timeline.length > 0 && currentStep === timeline.length - 1 && (frame.msg?.includes('Complete') || frame.msg?.includes('Found') || frame.msg?.includes('not found'));
+            const complexity = ALGO_COMPLEXITIES[currentDisplayedAlgo] || ALGO_COMPLEXITIES['Bubble Sort'];
+            const nVal = frame.arr ? frame.arr.length : array.length;
+
+            return (
+              <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', marginBottom: '1.2rem', gap: '8px', flexShrink: 0 }}>
+                <div style={{ height: '40px', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+                  <span style={{
+                    fontSize: isMobile ? '1.02rem' : '1.35rem',
+                    color: isCompleted ? '#34d399' : 'var(--text-primary)',
+                    fontWeight: 'bold',
+                    background: isCompleted ? 'rgba(52, 211, 153, 0.12)' : 'rgba(255,255,255,0.05)',
+                    padding: '6px 20px',
+                    borderRadius: '20px',
+                    border: isCompleted ? '1.5px solid rgba(52, 211, 153, 0.45)' : '1px solid var(--glass-border)',
+                    boxShadow: isCompleted ? '0 0 20px rgba(52, 211, 153, 0.25)' : '0 4px 15px rgba(0,0,0,0.2)',
+                    transition: 'all 0.3s ease'
+                  }}>
+                    {frame.msg || 'Select a sort or search algorithm'}
+                  </span>
+                </div>
+              </div>
+            );
+          })()}
 
           {visualizerStyle === 'crane' ? (() => {
             const totalItems = Math.max(1, frame.arr?.length || 1);
@@ -2305,21 +2627,47 @@ const SortSearchVisualizer = ({ onBack, openSettings, initialTab = 'Sort', initi
                 <span style={{ fontWeight: 600, fontSize: '0.8rem', color: 'var(--text-primary)', display: 'flex', alignItems: 'center', gap: '6px' }}>
                   📋 Execution Log & Active State
                 </span>
-                <button
-                  onClick={() => setShowLogPanel(false)}
-                  style={{
-                    background: 'transparent',
-                    border: 'none',
-                    color: 'var(--text-secondary)',
-                    cursor: 'pointer',
-                    fontSize: '1rem',
-                    padding: '0 4px',
-                    lineHeight: 1
-                  }}
-                  title="Hide Log"
-                >
-                  ×
-                </button>
+                <div style={{ display: 'flex', alignItems: 'center', gap: '6px' }}>
+                  <button
+                    onClick={() => {
+                      hasUserMovedLog.current = false;
+                      setLogPosition(getFreeLogPosition());
+                    }}
+                    style={{
+                      background: 'rgba(255,255,255,0.06)',
+                      border: '1px solid rgba(255,255,255,0.12)',
+                      borderRadius: '5px',
+                      color: 'var(--text-secondary)',
+                      cursor: 'pointer',
+                      fontSize: '0.72rem',
+                      padding: '2px 7px',
+                      display: 'flex',
+                      alignItems: 'center',
+                      gap: '4px',
+                      transition: 'all 0.2s ease'
+                    }}
+                    onMouseEnter={e => { e.currentTarget.style.color = 'var(--text-primary)'; e.currentTarget.style.borderColor = 'rgba(255,255,255,0.25)'; }}
+                    onMouseLeave={e => { e.currentTarget.style.color = 'var(--text-secondary)'; e.currentTarget.style.borderColor = 'rgba(255,255,255,0.12)'; }}
+                    title="Snap log to free unoccupied canvas space (avoids core animation)"
+                  >
+                    <span>🧭</span> Free Space
+                  </button>
+                  <button
+                    onClick={() => setShowLogPanel(false)}
+                    style={{
+                      background: 'transparent',
+                      border: 'none',
+                      color: 'var(--text-secondary)',
+                      cursor: 'pointer',
+                      fontSize: '1rem',
+                      padding: '0 4px',
+                      lineHeight: 1
+                    }}
+                    title="Hide Log"
+                  >
+                    ×
+                  </button>
+                </div>
               </div>
 
               {/* Content Body */}
@@ -2370,60 +2718,10 @@ const SortSearchVisualizer = ({ onBack, openSettings, initialTab = 'Sort', initi
                           <div style={{ fontSize: '0.7rem', textTransform: 'uppercase', fontWeight: 'bold', marginBottom: '2px', color: 'var(--accent-secondary)' }}>Pointers & Highlights</div>
                           <div style={{ display: 'flex', flexDirection: 'column', gap: '2px' }}>
                             {(() => {
-                              const getValStr = (idx) => {
-                                if (idx === undefined || idx === -1 || !frame.arr) return null;
-                                return `Index ${idx} (Val: ${frame.arr[idx] ?? 'N/A'})`;
-                              };
-                              const details = [];
-                              const { i, j, k } = frame;
-
-                              if (currentDisplayedAlgo === 'Bubble Sort') {
-                                if (i !== -1) details.push({ label: 'Index j', val: getValStr(i), color: '#fbbf24' });
-                                if (j !== -1) details.push({ label: 'Index j+1', val: getValStr(j), color: '#60a5fa' });
-                                if (k !== -1) details.push({ label: 'Sorted boundary', val: getValStr(k), color: '#10b981' });
-                              } else if (currentDisplayedAlgo === 'Selection Sort') {
-                                if (i !== -1) details.push({ label: 'Index j', val: getValStr(i), color: '#fbbf24' });
-                                if (j !== -1) details.push({ label: 'Min Index', val: getValStr(j), color: '#60a5fa' });
-                                if (k !== -1) details.push({ label: 'Index i (sorted)', val: getValStr(k), color: '#10b981' });
-                              } else if (currentDisplayedAlgo === 'Insertion Sort') {
-                                if (i !== -1) details.push({ label: 'Active Key Index', val: getValStr(i), color: '#fbbf24' });
-                                if (j !== -1) details.push({ label: 'Index j', val: getValStr(j), color: '#60a5fa' });
-                                if (k !== -1) details.push({ label: 'Sorted Boundary', val: getValStr(k), color: '#10b981' });
-                              } else if (currentDisplayedAlgo === 'Merge Sort') {
-                                if (i !== -1) details.push({ label: 'Merge Left', val: getValStr(i), color: '#fbbf24' });
-                                if (j !== -1) details.push({ label: 'Merge Right', val: getValStr(j), color: '#60a5fa' });
-                                if (k !== -1) details.push({ label: 'Merge Active', val: getValStr(k), color: '#10b981' });
-                              } else if (currentDisplayedAlgo === 'Quick Sort') {
-                                if (i !== -1) details.push({ label: 'Pivot Index', val: getValStr(i), color: '#fbbf24' });
-                                if (j !== -1) details.push({ label: 'Pointer i', val: getValStr(j), color: '#60a5fa' });
-                                if (k !== -1) details.push({ label: 'Pointer j', val: getValStr(k), color: '#10b981' });
-                              } else if (currentDisplayedAlgo === 'Heap Sort') {
-                                if (i !== -1) details.push({ label: 'Node i', val: getValStr(i), color: '#fbbf24' });
-                                if (j !== -1) details.push({ label: 'Largest Node', val: getValStr(j), color: '#60a5fa' });
-                                if (k !== -1) details.push({ label: 'End index', val: getValStr(k), color: '#10b981' });
-                              } else if (currentDisplayedAlgo === 'Counting Sort') {
-                                if (i !== -1) details.push({ label: 'Input Index', val: getValStr(i), color: '#fbbf24' });
-                                if (j !== -1) details.push({ label: 'Placed Index', val: getValStr(j), color: '#60a5fa' });
-                              } else if (currentDisplayedAlgo === 'Radix Sort') {
-                                if (i !== -1) details.push({ label: 'Item Index', val: getValStr(i), color: '#fbbf24' });
-                                if (j !== -1) details.push({ label: 'Output Index', val: getValStr(j), color: '#60a5fa' });
-                                if (k !== -1) details.push({ label: 'Place Value', val: `${k}s place`, color: '#10b981' });
-                              } else if (currentDisplayedAlgo === 'Shell Sort') {
-                                if (i !== -1) details.push({ label: 'Index i', val: getValStr(i), color: '#fbbf24' });
-                                if (j !== -1) details.push({ label: 'Index j', val: getValStr(j), color: '#60a5fa' });
-                                if (k !== -1) details.push({ label: 'Current Gap', val: String(k), color: '#10b981' });
-                              } else if (currentDisplayedAlgo === 'Cocktail Shaker Sort') {
-                                if (i !== -1) details.push({ label: 'Index i', val: getValStr(i), color: '#fbbf24' });
-                                if (j !== -1) details.push({ label: 'Swapped occurred', val: j === 1 ? 'Yes' : 'No', color: '#60a5fa' });
-                                if (k !== -1) details.push({ label: 'Direction', val: k === 1 ? 'Forward' : 'Backward', color: '#10b981' });
-                              } else if (currentDisplayedAlgo === 'Linear Search') {
-                                if (i !== -1) details.push({ label: 'Mid/Active Index', val: getValStr(i), color: '#fbbf24' });
-                              } else if (currentDisplayedAlgo === 'Binary Search') {
-                                if (i !== -1) details.push({ label: 'Mid Index', val: getValStr(i), color: '#fbbf24' });
-                                if (j !== -1) details.push({ label: 'Left Index', val: getValStr(j), color: '#60a5fa' });
-                                if (k !== -1) details.push({ label: 'Right Index', val: getValStr(k), color: '#10b981' });
+                              const details = getPointerDetails(currentDisplayedAlgo, frame);
+                              if (details.length === 0) {
+                                return <span style={{ fontStyle: 'italic', color: 'var(--text-secondary)' }}>No active pointers</span>;
                               }
-
                               return details.map((d, idx) => (
                                 <div key={idx} style={{ display: 'flex', justifyContent: 'space-between', gap: '4px' }}>
                                   <span>{d.label}:</span>
@@ -2433,6 +2731,122 @@ const SortSearchVisualizer = ({ onBack, openSettings, initialTab = 'Sort', initi
                             })()}
                           </div>
                         </div>
+
+                        {/* Asymptotic Complexity Analysis Card */}
+                        {(() => {
+                          const complexity = ALGO_COMPLEXITIES[currentDisplayedAlgo] || ALGO_COMPLEXITIES['Bubble Sort'];
+                          const isCompleted = timeline.length > 0 && currentStep === timeline.length - 1 && (frame.msg?.includes('Complete') || frame.msg?.includes('Found') || frame.msg?.includes('not found'));
+                          const nVal = frame.arr ? frame.arr.length : array.length;
+                          const sourceArr = initialArray.length > 0 ? initialArray : array;
+                          const activeCase = detectInputCase(currentDisplayedAlgo, sourceArr, searchValue);
+
+                          return (
+                            <div style={{
+                              borderTop: isCompleted ? '1.5px solid rgba(56, 189, 248, 0.6)' : '1px solid rgba(255,255,255,0.08)',
+                              paddingTop: '6px',
+                              marginTop: '6px',
+                              background: isCompleted ? 'linear-gradient(135deg, rgba(14, 165, 233, 0.12), rgba(16, 185, 129, 0.12))' : 'rgba(0, 0, 0, 0.18)',
+                              borderRadius: '8px',
+                              padding: '7px 8px',
+                              border: isCompleted ? '1px solid rgba(56, 189, 248, 0.45)' : '1px solid rgba(255,255,255,0.05)',
+                              boxShadow: isCompleted ? '0 0 15px rgba(56, 189, 248, 0.2)' : 'none',
+                              transition: 'all 0.3s ease'
+                            }}>
+                              <div style={{ fontSize: '0.72rem', textTransform: 'uppercase', fontWeight: 'bold', marginBottom: '2px', color: isCompleted ? '#38bdf8' : '#38bdf8', display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
+                                <span>⚡ Complexity for N={nVal}:</span>
+                              </div>
+                              <div style={{ fontSize: '0.64rem', color: isCompleted ? '#34d399' : '#94a3b8', fontStyle: 'italic', marginBottom: '6px' }}>
+                                [{complexity.type}]
+                              </div>
+                              <div style={{
+                                background: isCompleted ? 'rgba(15, 23, 42, 0.7)' : 'rgba(0, 0, 0, 0.3)',
+                                border: isCompleted ? '1px solid rgba(56, 189, 248, 0.35)' : '1px solid rgba(56, 189, 248, 0.18)',
+                                borderRadius: '6px',
+                                padding: '6px 8px',
+                                display: 'flex',
+                                flexDirection: 'column',
+                                gap: '5px',
+                                fontSize: '0.68rem',
+                                fontFamily: 'monospace'
+                              }}>
+                                <div>
+                                  <div style={{ color: 'var(--text-secondary)', fontSize: '0.64rem', marginBottom: '3px', fontWeight: 600 }}>⏱️ Time Complexity:</div>
+                                  <div style={{ display: 'flex', flexDirection: 'column', gap: '2px', paddingLeft: '4px' }}>
+                                    {/* Best */}
+                                    <div style={{
+                                      display: 'flex',
+                                      justifyContent: 'space-between',
+                                      alignItems: 'center',
+                                      padding: activeCase === 'best' ? '2px 5px' : '1px 0',
+                                      borderRadius: '4px',
+                                      background: activeCase === 'best' ? 'rgba(52, 211, 153, 0.18)' : 'transparent',
+                                      border: activeCase === 'best' ? '1px solid rgba(52, 211, 153, 0.4)' : '1px solid transparent'
+                                    }}>
+                                      <span style={{ color: activeCase === 'best' ? '#34d399' : '#94a3b8', fontWeight: activeCase === 'best' ? 'bold' : 'normal' }}>
+                                        {activeCase === 'best' ? '⚡ Best (Active):' : 'Best:'}
+                                      </span>
+                                      <span style={{ color: activeCase === 'best' ? '#34d399' : '#cbd5e1', fontWeight: activeCase === 'best' ? 'bold' : 'normal' }}>
+                                        {complexity.timeBest}
+                                      </span>
+                                    </div>
+
+                                    {/* Avg */}
+                                    <div style={{
+                                      display: 'flex',
+                                      justifyContent: 'space-between',
+                                      alignItems: 'center',
+                                      padding: activeCase === 'avg' ? '2px 5px' : '1px 0',
+                                      borderRadius: '4px',
+                                      background: activeCase === 'avg' ? 'rgba(56, 189, 248, 0.18)' : 'transparent',
+                                      border: activeCase === 'avg' ? '1px solid rgba(56, 189, 248, 0.4)' : '1px solid transparent'
+                                    }}>
+                                      <span style={{ color: activeCase === 'avg' ? '#38bdf8' : '#94a3b8', fontWeight: activeCase === 'avg' ? 'bold' : 'normal' }}>
+                                        {activeCase === 'avg' ? '⚡ Avg (Active):' : 'Avg:'}
+                                      </span>
+                                      <span style={{ color: activeCase === 'avg' ? '#38bdf8' : '#cbd5e1', fontWeight: activeCase === 'avg' ? 'bold' : 'normal' }}>
+                                        {complexity.timeAvg}
+                                      </span>
+                                    </div>
+
+                                    {/* Worst */}
+                                    <div style={{
+                                      display: 'flex',
+                                      justifyContent: 'space-between',
+                                      alignItems: 'center',
+                                      padding: activeCase === 'worst' ? '2px 5px' : '1px 0',
+                                      borderRadius: '4px',
+                                      background: activeCase === 'worst' ? 'rgba(248, 113, 113, 0.18)' : 'transparent',
+                                      border: activeCase === 'worst' ? '1px solid rgba(248, 113, 113, 0.4)' : '1px solid transparent'
+                                    }}>
+                                      <span style={{ color: activeCase === 'worst' ? '#f87171' : '#94a3b8', fontWeight: activeCase === 'worst' ? 'bold' : 'normal' }}>
+                                        {activeCase === 'worst' ? '⚡ Worst (Active):' : 'Worst:'}
+                                      </span>
+                                      <span style={{ color: activeCase === 'worst' ? '#f87171' : '#cbd5e1', fontWeight: activeCase === 'worst' ? 'bold' : 'normal' }}>
+                                        {complexity.timeWorst}
+                                      </span>
+                                    </div>
+                                  </div>
+                                </div>
+                                <div style={{ borderTop: '1px dashed rgba(255,255,255,0.08)', paddingTop: '4px' }}>
+                                  <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                                    <span style={{ color: 'var(--text-secondary)' }}>💾 Space:</span>
+                                    <span style={{ color: '#a78bfa', fontWeight: 'bold' }}>{complexity.space}</span>
+                                  </div>
+                                </div>
+                                {complexity.stable !== 'N/A' && (
+                                  <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                                    <span style={{ color: 'var(--text-secondary)' }}>Stable:</span>
+                                    <span style={{ color: complexity.stable === 'Yes' ? '#34d399' : '#f87171', fontWeight: 'bold' }}>{complexity.stable}</span>
+                                  </div>
+                                )}
+                                <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                                  <span style={{ color: 'var(--text-secondary)' }}>In-Place:</span>
+                                  <span style={{ color: complexity.inPlace === 'Yes' ? '#34d399' : '#f87171', fontWeight: 'bold' }}>{complexity.inPlace}</span>
+                                </div>
+                              </div>
+                            </div>
+                          );
+                        })()}
                       </>
                     );
                   })()}
@@ -2580,13 +2994,45 @@ const SortSearchVisualizer = ({ onBack, openSettings, initialTab = 'Sort', initi
         {/* Inline Mobile Log Panel */}
         {isMobile && showLogPanel && mobileTab === 'log' && (
           <div style={{ flex: 1, background: 'var(--bg-secondary)', borderRadius: '14px', border: '1px solid var(--glass-border)', display: 'flex', flexDirection: 'column', padding: '0.85rem', overflow: 'hidden', height: '100%', width: '100%' }}>
-            <div style={{ padding: '6px 12px', background: 'rgba(255, 255, 255, 0.04)', borderBottom: '1px solid var(--glass-border)', display: 'flex', justifyContent: 'space-between', alignItems: 'center', flexShrink: 0 }}>
+            <div style={{ padding: '6px 12px', background: 'rgba(255, 255, 255, 0.04)', borderBottom: '1px solid var(--glass-border)', display: 'flex', justifyContent: 'space-between', alignItems: 'center', flexShrink: 0, flexWrap: 'wrap', gap: '6px' }}>
               <span style={{ fontWeight: 600, fontSize: '0.85rem', color: 'var(--text-primary)' }}>
                 📋 Execution Log & Active State
               </span>
+              <div style={{ display: 'flex', alignItems: 'center', gap: '6px' }}>
+                <button
+                  className="btn btn-clear"
+                  style={{ padding: '2px 8px', fontSize: '0.72rem' }}
+                  onClick={() => { setIsPlaying(false); setCurrentStep(p => Math.max(0, p - 1)); }}
+                  disabled={!timeline.length || currentStep === 0}
+                  title="Previous Step"
+                >
+                  ◀
+                </button>
+                <button
+                  className="btn btn-clear"
+                  style={{ padding: '2px 10px', fontSize: '0.72rem', background: isPlaying ? 'rgba(59,130,246,0.6)' : 'var(--accent-primary)', color: 'white' }}
+                  onClick={() => setIsPlaying(p => !p)}
+                  disabled={!timeline.length}
+                  title={isPlaying ? 'Pause' : 'Play'}
+                >
+                  {isPlaying ? '⏸' : '▶'}
+                </button>
+                <button
+                  className="btn btn-clear"
+                  style={{ padding: '2px 8px', fontSize: '0.72rem' }}
+                  onClick={() => { setIsPlaying(false); setCurrentStep(p => Math.min(timeline.length - 1, p + 1)); }}
+                  disabled={!timeline.length || currentStep === timeline.length - 1}
+                  title="Next Step"
+                >
+                  ▶
+                </button>
+                <span style={{ fontSize: '0.75rem', color: 'var(--text-secondary)', fontFamily: 'monospace' }}>
+                  {timeline.length ? `${currentStep + 1}/${timeline.length}` : '0/0'}
+                </span>
+              </div>
             </div>
             <div style={{ display: 'flex', flex: 1, flexDirection: 'column', overflow: 'hidden', gap: '10px', marginTop: '10px' }}>
-              <div style={{ background: 'rgba(0,0,0,0.25)', border: '1px solid var(--glass-border)', borderRadius: '8px', padding: '10px 12px', display: 'flex', flexDirection: 'column', gap: '8px', fontSize: '0.8rem', color: 'var(--text-secondary)' }}>
+              <div style={{ background: 'rgba(0,0,0,0.25)', border: '1px solid var(--glass-border)', borderRadius: '8px', padding: '10px 12px', display: 'flex', flexDirection: 'column', gap: '6px', fontSize: '0.8rem', color: 'var(--text-secondary)' }}>
                 <div style={{ fontSize: '0.75rem', color: 'var(--accent-primary)', textTransform: 'uppercase', fontWeight: 'bold', borderBottom: '1px solid rgba(255,255,255,0.06)', paddingBottom: '4px' }}>
                   Active State
                 </div>
@@ -2599,33 +3045,134 @@ const SortSearchVisualizer = ({ onBack, openSettings, initialTab = 'Sort', initi
                   <span style={{ color: '#34d399', fontFamily: 'monospace', fontWeight: 'bold' }}>[{frame.arr ? frame.arr.join(', ') : ''}]</span>
                 </div>
                 {(() => {
-                  const details = [];
-                  const { i, j, k } = frame;
-                  const getValStr = (idx) => (idx !== undefined && idx !== -1 && frame.arr) ? `Idx ${idx} (Val: ${frame.arr[idx] ?? 'N/A'})` : null;
-
-                  if (currentDisplayedAlgo === 'Bubble Sort') {
-                    if (i !== -1) details.push({ label: 'Index j', val: getValStr(i), color: '#fbbf24' });
-                    if (j !== -1) details.push({ label: 'Index j+1', val: getValStr(j), color: '#60a5fa' });
-                  } else if (currentDisplayedAlgo === 'Selection Sort') {
-                    if (i !== -1) details.push({ label: 'Index j', val: getValStr(i), color: '#fbbf24' });
-                    if (j !== -1) details.push({ label: 'Min Index', val: getValStr(j), color: '#60a5fa' });
-                  } else if (currentDisplayedAlgo === 'Insertion Sort') {
-                    if (i !== -1) details.push({ label: 'Active Key Index', val: getValStr(i), color: '#fbbf24' });
-                  } else if (currentDisplayedAlgo === 'Counting Sort') {
-                    if (i !== -1) details.push({ label: 'Input Index', val: getValStr(i), color: '#fbbf24' });
-                    if (j !== -1) details.push({ label: 'Placed Index', val: getValStr(j), color: '#60a5fa' });
-                  } else if (currentDisplayedAlgo === 'Binary Search') {
-                    if (i !== -1) details.push({ label: 'Mid Index', val: getValStr(i), color: '#fbbf24' });
-                    if (j !== -1) details.push({ label: 'Left Index', val: getValStr(j), color: '#60a5fa' });
-                    if (k !== -1) details.push({ label: 'Right Index', val: getValStr(k), color: '#10b981' });
-                  }
-
-                  return details.map((d, index) => (
-                    <div key={index} style={{ display: 'flex', justifyContent: 'space-between' }}>
-                      <span>{d.label}:</span>
-                      <span style={{ color: d.color, fontWeight: 'bold' }}>{d.val}</span>
+                  const details = getPointerDetails(currentDisplayedAlgo, frame);
+                  if (details.length === 0) return null;
+                  return (
+                    <div style={{ display: 'flex', flexDirection: 'column', gap: '3px', marginTop: '2px' }}>
+                      {details.map((d, index) => (
+                        <div key={index} style={{ display: 'flex', justifyContent: 'space-between', fontSize: '0.75rem' }}>
+                          <span>{d.label}:</span>
+                          <span style={{ color: d.color, fontWeight: 'bold' }}>{d.val}</span>
+                        </div>
+                      ))}
                     </div>
-                  ));
+                  );
+                })()}
+
+                {/* Mobile Asymptotic Complexities */}
+                {(() => {
+                  const complexity = ALGO_COMPLEXITIES[currentDisplayedAlgo] || ALGO_COMPLEXITIES['Bubble Sort'];
+                  const isCompleted = timeline.length > 0 && currentStep === timeline.length - 1 && (frame.msg?.includes('Complete') || frame.msg?.includes('Found') || frame.msg?.includes('not found'));
+                  const nVal = frame.arr ? frame.arr.length : array.length;
+                  const sourceArr = initialArray.length > 0 ? initialArray : array;
+                  const activeCase = detectInputCase(currentDisplayedAlgo, sourceArr, searchValue);
+
+                  return (
+                    <div style={{
+                      marginTop: '6px',
+                      paddingTop: '6px',
+                      borderTop: isCompleted ? '1.5px solid rgba(56, 189, 248, 0.6)' : '1px solid rgba(255,255,255,0.08)',
+                      background: isCompleted ? 'linear-gradient(135deg, rgba(14, 165, 233, 0.12), rgba(16, 185, 129, 0.12))' : 'rgba(0,0,0,0.18)',
+                      borderRadius: '8px',
+                      padding: '6px 8px',
+                      border: isCompleted ? '1px solid rgba(56, 189, 248, 0.45)' : '1px solid rgba(255,255,255,0.04)',
+                      boxShadow: isCompleted ? '0 0 15px rgba(56, 189, 248, 0.2)' : 'none',
+                      transition: 'all 0.3s ease'
+                    }}>
+                      <div style={{ fontSize: '0.72rem', color: isCompleted ? '#38bdf8' : '#38bdf8', fontWeight: 'bold', textTransform: 'uppercase', marginBottom: '2px', display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
+                        <span>⚡ Complexity for N={nVal}:</span>
+                      </div>
+                      <div style={{ fontSize: '0.64rem', color: isCompleted ? '#34d399' : '#94a3b8', fontStyle: 'italic', marginBottom: '6px' }}>
+                        [{complexity.type}]
+                      </div>
+                      <div style={{
+                        background: isCompleted ? 'rgba(15, 23, 42, 0.7)' : 'rgba(0,0,0,0.3)',
+                        borderRadius: '6px',
+                        padding: '6px 8px',
+                        border: isCompleted ? '1px solid rgba(56, 189, 248, 0.3)' : '1px solid rgba(255,255,255,0.04)',
+                        display: 'flex',
+                        flexDirection: 'column',
+                        gap: '5px',
+                        fontSize: '0.72rem',
+                        fontFamily: 'monospace'
+                      }}>
+                        <div>
+                          <div style={{ color: 'var(--text-secondary)', fontSize: '0.64rem', marginBottom: '3px', fontWeight: 600 }}>⏱️ Time Complexity:</div>
+                          <div style={{ display: 'flex', flexDirection: 'column', gap: '2px', paddingLeft: '4px' }}>
+                            {/* Best */}
+                            <div style={{
+                              display: 'flex',
+                              justifyContent: 'space-between',
+                              alignItems: 'center',
+                              padding: activeCase === 'best' ? '2px 5px' : '1px 0',
+                              borderRadius: '4px',
+                              background: activeCase === 'best' ? 'rgba(52, 211, 153, 0.18)' : 'transparent',
+                              border: activeCase === 'best' ? '1px solid rgba(52, 211, 153, 0.4)' : '1px solid transparent'
+                            }}>
+                              <span style={{ color: activeCase === 'best' ? '#34d399' : '#94a3b8', fontWeight: activeCase === 'best' ? 'bold' : 'normal' }}>
+                                {activeCase === 'best' ? '⚡ Best (Active):' : 'Best:'}
+                              </span>
+                              <span style={{ color: activeCase === 'best' ? '#34d399' : '#cbd5e1', fontWeight: activeCase === 'best' ? 'bold' : 'normal' }}>
+                                {complexity.timeBest}
+                              </span>
+                            </div>
+
+                            {/* Avg */}
+                            <div style={{
+                              display: 'flex',
+                              justifyContent: 'space-between',
+                              alignItems: 'center',
+                              padding: activeCase === 'avg' ? '2px 5px' : '1px 0',
+                              borderRadius: '4px',
+                              background: activeCase === 'avg' ? 'rgba(56, 189, 248, 0.18)' : 'transparent',
+                              border: activeCase === 'avg' ? '1px solid rgba(56, 189, 248, 0.4)' : '1px solid transparent'
+                            }}>
+                              <span style={{ color: activeCase === 'avg' ? '#38bdf8' : '#94a3b8', fontWeight: activeCase === 'avg' ? 'bold' : 'normal' }}>
+                                {activeCase === 'avg' ? '⚡ Avg (Active):' : 'Avg:'}
+                              </span>
+                              <span style={{ color: activeCase === 'avg' ? '#38bdf8' : '#cbd5e1', fontWeight: activeCase === 'avg' ? 'bold' : 'normal' }}>
+                                {complexity.timeAvg}
+                              </span>
+                            </div>
+
+                            {/* Worst */}
+                            <div style={{
+                              display: 'flex',
+                              justifyContent: 'space-between',
+                              alignItems: 'center',
+                              padding: activeCase === 'worst' ? '2px 5px' : '1px 0',
+                              borderRadius: '4px',
+                              background: activeCase === 'worst' ? 'rgba(248, 113, 113, 0.18)' : 'transparent',
+                              border: activeCase === 'worst' ? '1px solid rgba(248, 113, 113, 0.4)' : '1px solid transparent'
+                            }}>
+                              <span style={{ color: activeCase === 'worst' ? '#f87171' : '#94a3b8', fontWeight: activeCase === 'worst' ? 'bold' : 'normal' }}>
+                                {activeCase === 'worst' ? '⚡ Worst (Active):' : 'Worst:'}
+                              </span>
+                              <span style={{ color: activeCase === 'worst' ? '#f87171' : '#cbd5e1', fontWeight: activeCase === 'worst' ? 'bold' : 'normal' }}>
+                                {complexity.timeWorst}
+                              </span>
+                            </div>
+                          </div>
+                        </div>
+                        <div style={{ borderTop: '1px dashed rgba(255,255,255,0.08)', paddingTop: '4px' }}>
+                          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                            <span style={{ color: 'var(--text-secondary)' }}>💾 Space:</span>
+                            <span style={{ color: '#a78bfa', fontWeight: 'bold' }}>{complexity.space}</span>
+                          </div>
+                        </div>
+                        {complexity.stable !== 'N/A' && (
+                          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                            <span style={{ color: 'var(--text-secondary)' }}>Stable:</span>
+                            <span style={{ color: complexity.stable === 'Yes' ? '#34d399' : '#f87171', fontWeight: 'bold' }}>{complexity.stable}</span>
+                          </div>
+                        )}
+                        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                          <span style={{ color: 'var(--text-secondary)' }}>In-Place:</span>
+                          <span style={{ color: complexity.inPlace === 'Yes' ? '#34d399' : '#f87171', fontWeight: 'bold' }}>{complexity.inPlace}</span>
+                        </div>
+                      </div>
+                    </div>
+                  );
                 })()}
               </div>
 
@@ -2698,7 +3245,7 @@ const SortSearchVisualizer = ({ onBack, openSettings, initialTab = 'Sort', initi
                   <button onClick={() => setLocalFontSize(prev => Math.max(10, prev - 2))} style={{ background: 'transparent', border: '1px solid var(--glass-border)', borderRadius: '4px', color: 'var(--text-secondary)', fontSize: '0.73rem', padding: '1px 6px', cursor: 'pointer' }}>A−</button>
                   <button onClick={() => setLocalFontSize(prev => Math.min(40, prev + 2))} style={{ background: 'transparent', border: '1px solid var(--glass-border)', borderRadius: '4px', color: 'var(--text-secondary)', fontSize: '0.73rem', padding: '1px 6px', cursor: 'pointer' }}>A+</button>
                   <button
-                    onClick={() => onShowUpcomingFeatures ? onShowUpcomingFeatures() : setIsRunnerOpen(true)}
+                    onClick={() => setIsRunnerOpen(true)}
                     style={{ padding: '2px 8px', fontSize: '0.74rem', whiteSpace: 'nowrap', display: 'inline-flex', alignItems: 'center', background: 'rgba(16,185,129,0.15)', color: '#34d399', border: '1px solid rgba(16,185,129,0.3)', borderRadius: '5px', cursor: 'pointer' }}
                   >▶ Run</button>
                   <button
@@ -2707,42 +3254,15 @@ const SortSearchVisualizer = ({ onBack, openSettings, initialTab = 'Sort', initi
                   >{copied ? '✓ Copied' : '📋 Copy'}</button>
                 </div>
               </div>
-              <div className="code-box" style={{ flex: 1, overflow: 'auto', padding: '1rem', borderRadius: '8px' }}>
-                <pre style={{
-                  margin: 0,
-                  color: 'var(--text-primary)',
-                  fontFamily: "'Fira Code', monospace",
-                  lineHeight: '1.6',
-                  fontSize: `${localFontSize}px`
-                }}>
-                  {(() => {
-                    const rawCode = getSortSearchCode(currentDisplayedAlgo, codeLang, array, searchValue ? parseInt(searchValue) : undefined);
-                    const codeLines = toAllman(rawCode).split('\n');
-                    const frame = timeline[currentStep] || {};
-                    return codeLines.map((lineText, idx) => {
-                      const isHighlighted = isSortSearchLineMatch(currentDisplayedAlgo, frame.msg || '', lineText);
-                      return (
-                        <div
-                          key={idx}
-                          style={{
-                            background: isHighlighted ? 'rgba(59,130,246,0.16)' : 'transparent',
-                            borderLeft: isHighlighted ? '3px solid var(--accent-primary)' : '3px solid transparent',
-                            padding: '1px 12px',
-                            transition: 'all 0.15s ease'
-                          }}
-                        >
-                          <span style={{
-                            whiteSpace: wordWrap === 'on' ? 'pre-wrap' : 'pre',
-                            color: isHighlighted ? '#ffffff' : 'var(--text-primary)',
-                            fontFamily: "'Fira Code', monospace"
-                          }}>
-                            {lineText || ' '}
-                          </span>
-                        </div>
-                      );
-                    });
-                  })()}
-                </pre>
+              <div className="code-box" style={{ flex: 1, overflow: 'hidden', padding: 0, borderRadius: '8px', display: 'flex', flexDirection: 'column' }}>
+                <NumberedCodeViewer
+                  code={toAllman(getSortSearchCode(currentDisplayedAlgo, codeLang, array, searchValue ? parseInt(searchValue) : undefined))}
+                  fontSize={localFontSize}
+                  wordWrap={wordWrap}
+                  accentColor="var(--accent-primary)"
+                  isHighlighted={(line) => isSortSearchLineMatch(currentDisplayedAlgo, (timeline[currentStep] || {}).msg || '', line)}
+                  bg="transparent"
+                />
               </div>
             </div>
           </>

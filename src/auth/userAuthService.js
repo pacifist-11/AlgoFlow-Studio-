@@ -4,20 +4,32 @@
 const ACTIVE_USER_KEY = 'algoflow_active_user';
 const ONBOARDING_SEEN_KEY = 'algoflow_onboarding_seen';
 const GOOGLE_CLIENT_ID_KEY = 'algoflow_google_client_id';
-const DEFAULT_GOOGLE_CLIENT_ID = '896580003359-2sgpbjbjukcidci5u1pbv7744fimamda.apps.googleusercontent.com';
+const DEFAULT_GOOGLE_CLIENT_ID = '896580003359-5dlc9jesa3728bvv3mgi8q6mn364pqiq.apps.googleusercontent.com';
+const DEPRECATED_CLIENT_IDS = [
+  '896580003359-2sgpbjbjukcidci5u1pbv7744fimamda.apps.googleusercontent.com'
+];
 
 /**
  * Resolve the Google OAuth Client ID (from env, localStorage, or default)
  */
 export function getGoogleClientId() {
-  try {
-    const envId = import.meta.env?.VITE_GOOGLE_CLIENT_ID;
-    if (envId && envId.trim()) return envId.trim();
-  } catch {}
+  // Purge any deprecated/deleted client IDs from localStorage
   try {
     const saved = localStorage.getItem(GOOGLE_CLIENT_ID_KEY);
-    if (saved && saved.trim()) return saved.trim();
+    if (saved && (DEPRECATED_CLIENT_IDS.includes(saved.trim()) || saved.includes('2sgp'))) {
+      localStorage.removeItem(GOOGLE_CLIENT_ID_KEY);
+    } else if (saved && saved.trim()) {
+      return saved.trim();
+    }
   } catch {}
+
+  try {
+    const envId = import.meta.env?.VITE_GOOGLE_CLIENT_ID;
+    if (envId && envId.trim() && !DEPRECATED_CLIENT_IDS.includes(envId.trim()) && !envId.includes('2sgp')) {
+      return envId.trim();
+    }
+  } catch {}
+
   return DEFAULT_GOOGLE_CLIENT_ID;
 }
 
@@ -328,6 +340,31 @@ export function launchRealGoogleOAuth({ clientId, onUserSuccess, onError }) {
   }
 }
 
+/**
+ * Decode JWT ID Token returned by Google Identity Services (GIS)
+ */
+export function decodeGoogleCredential(credential) {
+  try {
+    if (!credential || typeof credential !== 'string') return null;
+    const parts = credential.split('.');
+    if (parts.length < 2) return null;
+    const base64Url = parts[1];
+    const base64 = base64Url.replace(/-/g, '+').replace(/_/g, '/');
+    const atobFn = typeof window !== 'undefined' ? window.atob : null;
+    if (!atobFn) return null;
+    const jsonPayload = decodeURIComponent(
+      atobFn(base64)
+        .split('')
+        .map(c => '%' + ('00' + c.charCodeAt(0).toString(16)).slice(-2))
+        .join('')
+    );
+    return JSON.parse(jsonPayload);
+  } catch (err) {
+    console.warn('Failed to decode Google JWT credential:', err);
+    return null;
+  }
+}
+
 // ─── User-Keyed Chat History Storage ─────────────────────────────────────────
 
 export function getUserChatStorageKey(email) {
@@ -370,6 +407,94 @@ export function clearUserChatMessages(email) {
     localStorage.removeItem(key);
   } catch (err) {
     console.warn('Failed to clear user chat history:', err);
+  }
+}
+
+// ─── Multi-Session Chat Management (like Gemini, ChatGPT, Copilot) ───────────
+
+export function getUserSessionsStorageKey(email) {
+  if (email && email.includes('@')) {
+    return `algoflow_sessions_${email.trim().toLowerCase()}`;
+  }
+  return 'algoflow_sessions_guest';
+}
+
+export function generateSessionTitle(query) {
+  if (!query || typeof query !== 'string') return 'New Chat';
+  let t = query.trim();
+  t = t.replace(/^(can you please|could you please|please|can you|could you|help me with|help me|tell me about|explain to me|explain|what is the difference between|what is|what are|how do i|how to|why did|why does|what happens when|how does|what about)\s+/i, '');
+  t = t.replace(/[?!.:;]+$/, '').trim();
+  if (!t) return 'New Chat';
+  t = t.charAt(0).toUpperCase() + t.slice(1);
+  if (t.length > 34) {
+    t = t.slice(0, 32).trim() + '…';
+  }
+  return t;
+}
+
+export function loadUserChatSessions(email) {
+  try {
+    const key = getUserSessionsStorageKey(email);
+    const raw = localStorage.getItem(key);
+    if (raw) {
+      const parsed = JSON.parse(raw);
+      if (Array.isArray(parsed) && parsed.length > 0) {
+        return parsed;
+      }
+    }
+  } catch (err) {
+    console.warn('Failed to load chat sessions:', err);
+  }
+
+  // Migrate legacy single chat if present
+  const legacy = loadUserChatMessages(email);
+  if (legacy && legacy.length > 0) {
+    const firstQ = legacy.find(m => m.role === 'user');
+    const title = firstQ ? generateSessionTitle(firstQ.text) : 'Previous Chat';
+    const searchedQueries = legacy.filter(m => m.role === 'user').map(m => m.text).slice(0, 20);
+    const legacySession = {
+      id: `session_${Date.now()}`,
+      title,
+      createdAt: Date.now() - 1800000,
+      updatedAt: Date.now(),
+      searchedQueries,
+      messages: legacy
+    };
+    saveUserChatSessions(email, [legacySession]);
+    return [legacySession];
+  }
+
+  return [];
+}
+
+export function saveUserChatSessions(email, sessions) {
+  if (!Array.isArray(sessions)) return;
+  const key = getUserSessionsStorageKey(email);
+  
+  // Adaptive quota-safe persistence: reduces retention and prunes heavy image payloads if browser storage limit is reached
+  let maxSessions = 20;
+  let maxMessages = 30;
+
+  for (let attempt = 0; attempt < 3; attempt++) {
+    try {
+      const toSave = sessions.slice(0, maxSessions).map((s, sIdx) => ({
+        ...s,
+        messages: Array.isArray(s.messages) ? s.messages.slice(-maxMessages).map((m, mIdx) => {
+          // If past session or old message and quota pressure, drop heavy base64 image data to retain full conversation text
+          if (attempt > 0 && m.image && (sIdx > 0 || mIdx < s.messages.length - 2)) {
+            const { image: _, ...rest } = m;
+            return rest;
+          }
+          return m;
+        }) : []
+      }));
+      localStorage.setItem(key, JSON.stringify(toSave));
+      return;
+    } catch (err) {
+      maxSessions = Math.max(5, Math.floor(maxSessions / 2));
+      maxMessages = Math.max(10, Math.floor(maxMessages / 2));
+      console.warn(`localStorage quota pressure, trimming to ${maxSessions} sessions:`, err);
+    }
   }
 }
 

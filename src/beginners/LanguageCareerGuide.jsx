@@ -1,4 +1,5 @@
 import React, { useState } from 'react';
+import NumberedCodeViewer from '../NumberedCodeViewer.jsx';
 
 export default function LanguageCareerGuide() {
   const [selectedLang, setSelectedLang] = useState('c');
@@ -400,200 +401,6 @@ class BankAccount {
         this.balance = initialDeposit;
     }
 
-    public synchronized void deposit(double amount) {
-        if (amount > 0) {
-            balance += amount;
-            System.out.println("Deposited $" + amount + " | New Balance: $" + balance);
-        }
-    }
-}
-
-public class Main {
-    public static void main(String[] args) {
-        BankAccount acc = new BankAccount("ACC-98214", 500.0);
-        acc.deposit(250.0);
-    }
-}`
-    },
-    {
-      id: 'python',
-      name: 'Python',
-      icon: '🐍',
-      color: '#34d399',
-      accentBg: 'rgba(52, 211, 153, 0.12)',
-      tagline: 'AI, Machine Learning, Data Science & Fast Prototyping',
-      beginnerDifficulty: 'Easiest (Clean syntax that reads like English)',
-      industryDemand: '⭐⭐⭐⭐⭐ (#1 Worldwide for AI & Data Analysis)',
-      fields: [
-        'Artificial Intelligence & Machine Learning (PyTorch, TensorFlow)',
-        'Data Science, Analytics & Big Data (Pandas, NumPy, Matplotlib)',
-        'Generative AI & Large Language Models (LangChain, Hugging Face)',
-        'Web Backends & Rapid APIs (FastAPI, Django, Flask)',
-        'Cybersecurity Scripting, Ethical Hacking & Automation'
-      ],
-      jobTitles: [
-        'AI / Machine Learning Engineer',
-        'Data Scientist / Data Analyst',
-        'Python Web Developer (Backend)',
-        'Automation & QA Scripting Engineer',
-        'Cybersecurity Security Researcher'
-      ],
-      famousApps: ['ChatGPT / OpenAI Backend', 'Instagram Backend (Django)', 'Spotify Recommendation Engine', 'Netflix AI Algorithm', 'Dropbox'],
-      whyLearn: 'Python has the gentlest learning curve and the most vibrant open-source ecosystem in the world. If your goal is AI, Machine Learning, Data Analytics, or rapid web app development, Python is mandatory.',
-      languageInfo: {
-        creator: 'Guido van Rossum (CWI, Netherlands)',
-        yearCreated: 1991,
-        paradigm: 'Multi-paradigm (Imperative, OOP, Functional, Reflective)',
-        typing: 'Dynamic, Strong, Duck-typed',
-        executionModel: 'Interpreted Bytecode via CPython Virtual Machine (with PyPy JIT alternatives)',
-        memoryModel: 'Automatic Reference Counting + Generational Garbage Collector (cyclic detector)',
-        superpowers: [
-          'Unrivaled #1 programming language for Artificial Intelligence, Machine Learning, and LLMs',
-          'Exceptionally clean English-like syntax enabling 3x-5x faster prototyping speed',
-          'Rich ecosystem of C-optimized mathematical libraries (NumPy, SciPy, PyTorch, Pandas)'
-        ],
-        limitations: [
-          'Slower pure CPU execution speed compared to compiled languages like C++, Rust, or Go',
-          'Global Interpreter Lock (GIL) historically constrains multi-threaded CPU bound tasks',
-          'Runtime dynamic type errors unless Type Hints and mypy static checks are used'
-        ],
-        popularFrameworks: ['PyTorch', 'TensorFlow', 'FastAPI', 'Django', 'Pandas', 'NumPy', 'Hugging Face Transformers'],
-        salaryBands: {
-          entry: '$90,000 - $125,000 / yr (₹8 - 18 LPA)',
-          senior: '$155,000 - $250,000+ / yr (₹28 - 65+ LPA)'
-        },
-        keyConcepts: [
-          { term: 'List Comprehensions & Generators', desc: 'Elegant concise syntax for creating collections with lazy iterator memory.' },
-          { term: 'Duck Typing & Dunder Methods', desc: '"If it quacks like a duck" polymorphism with __init__, __str__, __len__ hooks.' },
-          { term: 'Vectorization (NumPy)', desc: 'SIMD hardware accelerated matrix operations without slow Python for-loops.' },
-          { term: 'Decorators (@)', desc: 'Higher-order wrapper functions extending behavior dynamically at runtime.' }
-        ]
-      },
-      fourYearRoadmap: [
-        { year: '1st Year (Freshman)', milestone: 'Python Syntax, Data Structures (Lists, Dicts, Tuples, Sets), File Handling, Basic Git' },
-        { year: '2nd Year (Sophomore)', milestone: 'Data Wrangling with Pandas & NumPy, SQL Databases, Basic DSA in Python, OOPs' },
-        { year: '3rd Year (Junior)', milestone: 'Machine Learning (Scikit-learn), Deep Learning (PyTorch), FastAPI web backend, Kaggle' },
-        { year: '4th Year (Senior)', milestone: 'Generative AI (RAG, LLM fine-tuning), Model Deployment (MLflow, Docker), AI Placements' }
-      ],
-      moocsAndCerts: {
-        moocs: [
-          { name: 'Python for Everybody Specialization', provider: 'University of Michigan (Coursera)', link: 'https://coursera.org' },
-          { name: 'Machine Learning Specialization', provider: 'DeepLearning.AI / Andrew Ng (Coursera)', link: 'https://coursera.org' },
-          { name: 'Joy of Computing using Python', provider: 'NPTEL (IIT Madras)', link: 'https://nptel.ac.in' }
-        ],
-        certifications: [
-          { name: 'PCEP / PCAP Certified Associate Python Programmer', issuer: 'OpenEDG Python Institute' },
-          { name: 'AWS Certified Machine Learning - Specialty', issuer: 'Amazon Web Services' }
-        ],
-        challenges: [
-          { name: 'Kaggle (Competitions, Notebooks & Datasets)', url: 'https://kaggle.com' },
-          { name: 'LeetCode (Python DSA & SQL 50 Study Plan)', url: 'https://leetcode.com' },
-          { name: 'HackerRank Python 5-Star Track', url: 'https://hackerrank.com' }
-        ]
-      },
-      codeSnippet: `# Python: Data Analysis & Statistics with Pandas
-import pandas as pd
-
-data = {
-    'Student': ['Aarav', 'Diya', 'Rohan', 'Sneha', 'Vikram'],
-    'Branch': ['CSE', 'ECE', 'CSE', 'MECH', 'AIDS'],
-    'LeetCode_Solved': [180, 140, 220, 95, 210]
-}
-
-df = pd.DataFrame(data)
-print("--- Average LeetCode Problems Solved by Branch ---")
-print(df.groupby('Branch')['LeetCode_Solved'].mean())`
-    },
-    {
-      id: 'go',
-      name: 'Go (Golang)',
-      icon: '🐹',
-      color: '#22d3ee',
-      accentBg: 'rgba(34, 211, 238, 0.12)',
-      tagline: 'High Concurrency, Cloud Native & Microservices Engine',
-      beginnerDifficulty: 'Moderate (Clean syntax with built-in concurrency)',
-      industryDemand: '⭐⭐⭐⭐ (The Engine of Kubernetes, Docker & DevOps)',
-      fields: [
-        'Cloud-Native Infrastructure & DevOps (Docker, Kubernetes, Terraform)',
-        'High-Scale Backend Microservices (Uber, Twitch, Google Cloud)',
-        'Network Programming & High-Concurrency Web Servers (Goroutines)',
-        'Cybersecurity & Network Tools',
-        'Distributed Storage & Message Brokers'
-      ],
-      jobTitles: [
-        'Cloud Engineer / Platform Developer',
-        'Go Backend Engineer',
-        'DevOps / SRE (Site Reliability Engineer)',
-        'Distributed Systems Architect'
-      ],
-      famousApps: ['Docker', 'Kubernetes', 'Terraform', 'Twitch Video Streaming Backend', 'Cloudflare Proxy'],
-      whyLearn: 'Created by Google, Go is designed for building fast, concurrent network servers and distributed cloud platforms. Its lightweight Goroutines make handling millions of simultaneous user connections incredibly simple.',
-      languageInfo: {
-        creator: 'Robert Griesemer, Rob Pike, Ken Thompson (Google)',
-        yearCreated: 2009,
-        paradigm: 'Concurrent, Imperative, Structured',
-        typing: 'Static, Strong, Inferred',
-        executionModel: 'Statically Compiled directly to single Standalone Native Binaries',
-        memoryModel: 'Automatic Concurrent Mark-and-Sweep Garbage Collector + Stack Escape Analysis',
-        superpowers: [
-          'Goroutines: ultra-lightweight green threads (only ~2 KB initial stack vs 1 MB OS thread)',
-          'Built-in CSP Channels enabling safe lock-free communication between concurrent routines',
-          'Single standalone statically linked binary output with zero external runtime dependencies'
-        ],
-        limitations: [
-          'No classical OOP inheritance (deliberately uses composition and structural interfaces)',
-          'Explicit repetitive error handling checks (if err != nil) throughout codebases',
-          'Younger generics system compared to C++ or Java'
-        ],
-        popularFrameworks: ['Gin Gonic', 'Fiber', 'gRPC-Go', 'Echo', 'Cobra CLI', 'GORM'],
-        salaryBands: {
-          entry: '$95,000 - $130,000 / yr (₹10 - 20 LPA)',
-          senior: '$160,000 - $260,000+ / yr (₹30 - 70+ LPA)'
-        },
-        keyConcepts: [
-          { term: 'Goroutines (go fn())', desc: 'Multiplexed lightweight threads managed entirely by the Go M:N runtime scheduler.' },
-          { term: 'Channels (make(chan T))', desc: 'Thread-safe conduits for synchronizing data between goroutines without explicit mutexes.' },
-          { term: 'Structural Interfaces', desc: 'Implicit interface satisfaction: types implement interfaces simply by defining the methods.' },
-          { term: 'Defer Statement', desc: 'Guarantees execution of cleanup logic (closing files/connections) when enclosing function exits.' }
-        ]
-      },
-      fourYearRoadmap: [
-        { year: '1st Year (Freshman)', milestone: 'Go Syntax, Structs, Pointers, Slices & Basic CLI Applications' },
-        { year: '2nd Year (Sophomore)', milestone: 'Concurrency with Goroutines & Channels, Interfaces, Error Handling, REST APIs' },
-        { year: '3rd Year (Junior)', milestone: 'gRPC Microservices, Docker, PostgreSQL Integration, High-Throughput Web Services' },
-        { year: '4th Year (Senior)', milestone: 'Kubernetes Operators, Distributed Caching, Cloud Native Placements & DevOps' }
-      ],
-      moocsAndCerts: {
-        moocs: [
-          { name: 'Programming with Google Go Specialization', provider: 'UC Irvine (Coursera)', link: 'https://coursera.org' },
-          { name: 'Building Modern Web Applications with Go', provider: 'Udemy', link: 'https://udemy.com' }
-        ],
-        certifications: [
-          { name: 'Certified Kubernetes Application Developer (CKAD)', issuer: 'Cloud Native Computing Foundation (CNCF)' },
-          { name: 'Google Cloud Professional Cloud Architect', issuer: 'Google Cloud' }
-        ],
-        challenges: [
-          { name: 'Exercism Go Track (Mentor Reviewed Exercises)', url: 'https://exercism.org/tracks/go' },
-          { name: 'LeetCode (Go Solutions for Concurrency & Arrays)', url: 'https://leetcode.com' },
-          { name: 'Gophercises (20 Hands-on Go Projects)', url: 'https://gophercises.com' }
-        ]
-      },
-      codeSnippet: `// Go: Ultra-Lightweight Goroutines for Concurrent Execution
-package main
-
-import (
-    "fmt"
-    "time"
-)
-
-func worker(id int, ch chan string) {
-    time.Sleep(100 * time.Millisecond)
-    ch <- fmt.Sprintf("Worker #%d completed task in parallel", id)
-}
-
-func main() {
-    ch := make(chan string)
-    for i := 1; i <= 3; i++ {
     public synchronized void deposit(double amount) {
         if (amount > 0) {
             balance += amount;
@@ -1413,20 +1220,22 @@ fn main() {
             <h4 style={{ margin: 0, fontSize: '15px', color: current.color }}>
               💻 Live Real-World Code Sample in {current.name}
             </h4>
-            <pre style={{
+            <div style={{
               background: 'var(--glass-bg)',
-              padding: '16px',
               borderRadius: '10px',
               border: '1.5px solid var(--glass-border)',
-              color: 'var(--accent-primary)',
-              fontFamily: 'Consolas, Monaco, "Courier New", monospace',
-              fontSize: '13px',
-              lineHeight: '1.6',
-              overflowX: 'auto',
+              overflow: 'hidden',
               margin: 0
             }}>
-              <code>{current.codeSnippet}</code>
-            </pre>
+              <NumberedCodeViewer
+                code={current.codeSnippet}
+                fontSize={13}
+                lineHeight={1.6}
+                accentColor="var(--accent-primary)"
+                bg="var(--glass-bg)"
+                style={{ maxHeight: '400px' }}
+              />
+            </div>
           </div>
         )}
 

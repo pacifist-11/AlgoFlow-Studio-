@@ -77,10 +77,10 @@ export default function UserProfileBadge({ onOpenConnectModal, onOpenSettings })
             e.currentTarget.style.background = 'rgba(56, 189, 248, 0.12)';
             e.currentTarget.style.borderColor = 'var(--accent-primary, rgba(56, 189, 248, 0.35))';
           }}
-          title="Sign in with your 4-Digit PIN or Email"
+          title="Sign in with Google or 4-Digit PIN"
         >
           <span style={{ fontSize: '13px' }}>⚡</span>
-          <span>Sign In (4-Pin)</span>
+          <span>Sign In</span>
         </button>
 
         <button

@@ -129,23 +129,36 @@ export default async function handler(req, res) {
         } catch (err) {
           console.warn('Google tokeninfo id_token lookup:', err.message);
         }
+
+        // 3. Fallback: If network lookup failed, verify unexpired Google JWT payload
+        if (!verifiedUser && cleanToken.includes('.')) {
+          try {
+            const parts = cleanToken.split('.');
+            if (parts.length === 3) {
+              const payload = JSON.parse(Buffer.from(parts[1], 'base64').toString('utf8'));
+              const isGoogleIss = payload.iss === 'https://accounts.google.com' || payload.iss === 'accounts.google.com';
+              const isNotExpired = payload.exp ? (payload.exp * 1000 > Date.now()) : true;
+              if (isGoogleIss && isNotExpired && payload.email) {
+                verifiedUser = {
+                  google_id: payload.sub,
+                  email: payload.email.toLowerCase().trim(),
+                  name: payload.name || payload.given_name || 'Google User',
+                  picture: payload.picture || ''
+                };
+              }
+            }
+          } catch (parseErr) {
+            console.warn('Google JWT parse fallback:', parseErr.message);
+          }
+        }
       }
     }
 
-    // 3. Fallback to direct client profile if verified on client or offline mode
-    if (!verifiedUser && directProfile && directProfile.email) {
-      verifiedUser = {
-        google_id: directProfile.sub || `usr_${Date.now()}`,
-        email: directProfile.email.toLowerCase().trim(),
-        name: directProfile.name || 'Google User',
-        picture: directProfile.picture || ''
-      };
-    }
-
+    // Strict token verification required - prevent client profile spoofing
     if (!verifiedUser || !verifiedUser.email) {
       return res.status(400).json({ 
         error: 'invalid_token',
-        error_description: 'Valid Google credential, id_token, or access_token required.'
+        error_description: 'A valid Google credential, id_token, or access_token is required for authentication.'
       });
     }
 

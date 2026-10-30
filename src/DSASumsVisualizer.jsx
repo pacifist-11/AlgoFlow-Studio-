@@ -1068,6 +1068,8 @@ const DSASumsVisualizer = ({ onBack, onOpenDebugger }) => {
                     style={{ 
                       display: 'flex', 
                       alignItems: 'center', 
+                      minWidth: 'max-content',
+                      width: '100%',
                       padding: '2px 8px', 
                       background: rowBg, 
                       borderLeft: rowBorder, 
@@ -1076,11 +1078,17 @@ const DSASumsVisualizer = ({ onBack, onOpenDebugger }) => {
                     }}
                   >
                     <span style={{ 
+                      position: 'sticky',
+                      left: 0,
+                      zIndex: 3,
                       width: '36px', 
                       userSelect: 'none', 
                       textAlign: 'right', 
                       paddingRight: '12px', 
                       color: isJustExecuted ? '#10b981' : isNextToExecute ? '#ef4444' : 'var(--text-secondary)', 
+                      background: isJustExecuted ? 'rgba(6, 40, 25, 0.98)' : isNextToExecute ? 'rgba(40, 10, 15, 0.98)' : 'var(--bg-secondary)',
+                      borderRight: '1px solid rgba(255, 255, 255, 0.08)',
+                      marginRight: '10px',
                       fontSize: '0.82em', 
                       flexShrink: 0,
                       fontWeight: isJustExecuted || isNextToExecute ? 700 : 400

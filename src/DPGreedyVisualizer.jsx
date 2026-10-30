@@ -3,6 +3,7 @@ import React, { useState, useEffect, useRef } from 'react';
 import gsap from 'gsap';
 import { getDPCodeTemplate } from './codeTemplatesDP';
 import CodeRunnerModal from './CodeRunnerModal.jsx';
+import NumberedCodeViewer from './NumberedCodeViewer.jsx';
 
 // Allman brace formatter
 const toAllman = code => {
@@ -291,9 +292,23 @@ const DPGreedyVisualizer = ({ onBack, openSettings, initialTab = 'LCS', onCopyCo
   const [copied, setCopied] = useState(false);
   const [isRunnerOpen, setIsRunnerOpen] = useState(false);
 
+  // Dynamic free-space finder: places log panel in bottom-right corner away from the DP tables
+  const getFreeLogPosition = () => {
+    if (typeof window === 'undefined') return { x: 500, y: 350 };
+    const winW = window.innerWidth;
+    const winH = window.innerHeight;
+    const panelW = 520;
+    const panelH = 280;
+    return {
+      x: Math.max(30, winW - panelW - 40),
+      y: Math.max(80, winH - panelH - 100)
+    };
+  };
+
   // Layout sizing
   const [showLogPanel, setShowLogPanel] = useState(true);
-  const [logPosition, setLogPosition] = useState({ x: 50, y: 150 });
+  const [logPosition, setLogPosition] = useState(() => getFreeLogPosition());
+  const hasUserMovedLog = useRef(false);
   const [logSize, setLogSize] = useState({ width: 520, height: 280 });
   const [isDraggingLog, setIsDraggingLog] = useState(false);
   const dragStart = useRef({ x: 0, y: 0 });
@@ -402,6 +417,7 @@ const DPGreedyVisualizer = ({ onBack, openSettings, initialTab = 'LCS', onCopyCo
       const dx = clientX - dragStart.current.x;
       const dy = clientY - dragStart.current.y;
       
+      hasUserMovedLog.current = true;
       setLogPosition({
         x: Math.max(-logSize.width + 40, Math.min(window.innerWidth - 40, panelStart.current.x + dx)),
         y: Math.max(0, Math.min(window.innerHeight - 40, panelStart.current.y + dy))
@@ -2484,21 +2500,47 @@ const DPGreedyVisualizer = ({ onBack, openSettings, initialTab = 'LCS', onCopyCo
                 <span style={{ fontWeight: 600, fontSize: '0.8rem', color: 'var(--text-primary)', display: 'flex', alignItems: 'center', gap: '6px' }}>
                   📋 Execution Tracelog & Active State
                 </span>
-                <button
-                  onClick={() => setShowLogPanel(false)}
-                  style={{
-                    background: 'transparent',
-                    border: 'none',
-                    color: 'var(--text-secondary)',
-                    cursor: 'pointer',
-                    fontSize: '1rem',
-                    padding: '0 4px',
-                    lineHeight: 1
-                  }}
-                  title="Hide Log"
-                >
-                  ×
-                </button>
+                <div style={{ display: 'flex', alignItems: 'center', gap: '6px' }}>
+                  <button
+                    onClick={() => {
+                      hasUserMovedLog.current = false;
+                      setLogPosition(getFreeLogPosition());
+                    }}
+                    style={{
+                      background: 'rgba(255,255,255,0.06)',
+                      border: '1px solid rgba(255,255,255,0.12)',
+                      borderRadius: '5px',
+                      color: 'var(--text-secondary)',
+                      cursor: 'pointer',
+                      fontSize: '0.72rem',
+                      padding: '2px 7px',
+                      display: 'flex',
+                      alignItems: 'center',
+                      gap: '4px',
+                      transition: 'all 0.2s ease'
+                    }}
+                    onMouseEnter={e => { e.currentTarget.style.color = 'var(--text-primary)'; e.currentTarget.style.borderColor = 'rgba(255,255,255,0.25)'; }}
+                    onMouseLeave={e => { e.currentTarget.style.color = 'var(--text-secondary)'; e.currentTarget.style.borderColor = 'rgba(255,255,255,0.12)'; }}
+                    title="Snap log to free unoccupied canvas space (avoids core animation)"
+                  >
+                    <span>🧭</span> Free Space
+                  </button>
+                  <button
+                    onClick={() => setShowLogPanel(false)}
+                    style={{
+                      background: 'transparent',
+                      border: 'none',
+                      color: 'var(--text-secondary)',
+                      cursor: 'pointer',
+                      fontSize: '1rem',
+                      padding: '0 4px',
+                      lineHeight: 1
+                    }}
+                    title="Hide Log"
+                  >
+                    ×
+                  </button>
+                </div>
               </div>
 
               {/* Content Body */}
@@ -2653,42 +2695,16 @@ const DPGreedyVisualizer = ({ onBack, openSettings, initialTab = 'LCS', onCopyCo
               </div>
             </div>
 
-            {/* Code Box displaying the template */}
-            <div className="code-box" style={{ flex: 1, borderRadius: 0, border: 'none', margin: 0, overflow: 'auto', padding: '1rem' }}>
-              <pre style={{
-                margin: 0,
-                color: 'var(--text-primary)',
-                fontFamily: "'Fira Code', monospace",
-                lineHeight: '1.6',
-                fontSize: `${localFontSize}px`
-              }}>
-                {(() => {
-                  const codeLines = toAllman(currentCode).split('\n');
-                  const frame = timeline[currentStep] || {};
-                  return codeLines.map((lineText, idx) => {
-                    const isHighlighted = isDPLineMatch(activeTab, frame.msg || '', lineText);
-                    return (
-                      <div 
-                        key={idx} 
-                        style={{ 
-                          background: isHighlighted ? 'rgba(59,130,246,0.16)' : 'transparent',
-                          borderLeft: isHighlighted ? '3px solid var(--accent-primary)' : '3px solid transparent',
-                          padding: '1px 12px',
-                          transition: 'all 0.15s ease'
-                        }}
-                      >
-                        <span style={{ 
-                          whiteSpace: wordWrap === 'on' ? 'pre-wrap' : 'pre',
-                          color: isHighlighted ? '#ffffff' : 'var(--text-primary)',
-                          fontFamily: "'Fira Code', monospace"
-                        }}>
-                          {lineText || ' '}
-                        </span>
-                      </div>
-                    );
-                  });
-                })()}
-              </pre>
+            {/* Code Box displaying the template with sticky line numbers */}
+            <div className="code-box" style={{ flex: 1, borderRadius: 0, border: 'none', margin: 0, overflow: 'hidden', padding: 0, display: 'flex', flexDirection: 'column' }}>
+              <NumberedCodeViewer
+                code={toAllman(currentCode)}
+                fontSize={localFontSize}
+                wordWrap={wordWrap}
+                accentColor="var(--accent-primary)"
+                isHighlighted={(line) => isDPLineMatch(activeTab, (timeline[currentStep] || {}).msg || '', line)}
+                bg="transparent"
+              />
             </div>
 
             {/* Drag column resize */}

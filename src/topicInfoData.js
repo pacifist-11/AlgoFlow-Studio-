@@ -1437,7 +1437,7 @@ export const TOPIC_INFO = {
   'MOD3_BITMASK_DP': {
     title: 'Bitmask DP (TSP & Hamiltonian Path)',
     summary: 'Compresses subset state representation into integer bitmasks to solve NP-hard routing and set cover problems in exponential space.',
-    formula: 'dp[mask][u] = min_{v in mask} (dp[mask \ (1<<u)][v] + dist[v][u]) | Time: O(2^N * N^2)',
+    formula: 'dp[mask][u] = min_{v in mask} (dp[mask \\ (1<<u)][v] + dist[v][u]) | Time: O(2^N * N^2)',
     example: 'Travelling Salesman Problem (TSP) with N=16 cities ➔ Reduced from 16! (20 trillion) to 2^16 * 16^2 (16 million ops).',
     realLife: ['Logistics delivery route optimization', 'Chip wire layout routing'],
     howToUse: ['Represent subset of visited vertices as bitmask integer (e.g. 0b1011 = cities 0,1,3 visited).'],

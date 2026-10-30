@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState } from 'react';
 import VehicleComplexitySpeedway from './VehicleComplexitySpeedway.jsx';
 
 // Comprehensive DSA Question Pool across all core algorithmic disciplines
@@ -377,7 +377,9 @@ export default function WhyDSAMattersGuide({ initialTab = 'speedway' }) {
   // Interactive Randomized Quiz State
   const [selectedCategory, setSelectedCategory] = useState('all');
   const [quizQuestionCount, setQuizQuestionCount] = useState(5);
-  const [activeQuestions, setActiveQuestions] = useState([]);
+  const [activeQuestions, setActiveQuestions] = useState(() => {
+    return [...ALL_DSA_QUIZ_QUESTIONS].sort(() => Math.random() - 0.5).slice(0, 5);
+  });
   const [userAnswers, setUserAnswers] = useState({});
   const [quizScore, setQuizScore] = useState({ answered: 0, correct: 0 });
   const [quizRound, setQuizRound] = useState(1);
@@ -446,10 +448,7 @@ export default function WhyDSAMattersGuide({ initialTab = 'speedway' }) {
     setQuizRound(prev => prev + 1);
   };
 
-  // Initialize random questions on mount
-  useEffect(() => {
-    generateNewQuizSet('all', 5);
-  }, []);
+
 
   const handleCategoryChange = (catKey) => {
     setSelectedCategory(catKey);
