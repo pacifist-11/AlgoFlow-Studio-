@@ -84,6 +84,106 @@ function apiDevServerPlugin() {
           return;
         }
 
+        if (req.url.startsWith('/api/admin/deactivations')) {
+          const run = async (bodyObj = {}) => {
+            req.body = bodyObj;
+            const mod = await import('./api/admin/deactivations.js');
+            return mod.default(req, res);
+          };
+
+          if (req.method === 'GET' || req.method === 'OPTIONS') {
+            return run({});
+          }
+
+          let body = '';
+          req.on('data', chunk => { body += chunk; });
+          req.on('end', async () => {
+            try {
+              const parsed = body ? JSON.parse(body) : {};
+              await run(parsed);
+            } catch (e) {
+              return res.status(500).json({ error: e.message });
+            }
+          });
+          return;
+        }
+
+        if (req.url.startsWith('/api/admin/feedbacks')) {
+          const run = async () => {
+            const mod = await import('./api/admin/feedbacks.js');
+            return mod.default(req, res);
+          };
+          return run();
+        }
+
+        if (req.url.startsWith('/api/admin/verify-pin')) {
+          const run = async (bodyObj = {}) => {
+            req.body = bodyObj;
+            const mod = await import('./api/admin/verify-pin.js');
+            return mod.default(req, res);
+          };
+
+          if (req.method === 'GET' || req.method === 'OPTIONS') {
+            return run({});
+          }
+
+          let body = '';
+          req.on('data', chunk => { body += chunk; });
+          req.on('end', async () => {
+            try {
+              const parsed = body ? JSON.parse(body) : {};
+              await run(parsed);
+            } catch (e) {
+              return res.status(500).json({ error: e.message });
+            }
+          });
+          return;
+        }
+
+        if (req.url.startsWith('/api/admin/clear')) {
+          const run = async (bodyObj = {}) => {
+            req.body = bodyObj;
+            const mod = await import('./api/admin/clear.js');
+            return mod.default(req, res);
+          };
+
+          let body = '';
+          req.on('data', chunk => { body += chunk; });
+          req.on('end', async () => {
+            try {
+              const parsed = body ? JSON.parse(body) : {};
+              await run(parsed);
+            } catch (e) {
+              return res.status(500).json({ error: e.message });
+            }
+          });
+          return;
+        }
+
+        if (req.url.startsWith('/api/feedback/submit-direct')) {
+          const run = async (bodyObj = {}) => {
+            req.body = bodyObj;
+            const mod = await import('./api/feedback/submit-direct.js');
+            return mod.default(req, res);
+          };
+
+          if (req.method === 'GET' || req.method === 'OPTIONS') {
+            return run({});
+          }
+
+          let body = '';
+          req.on('data', chunk => { body += chunk; });
+          req.on('end', async () => {
+            try {
+              const parsed = body ? JSON.parse(body) : {};
+              await run(parsed);
+            } catch (e) {
+              return res.status(500).json({ error: e.message });
+            }
+          });
+          return;
+        }
+
         if (!req.url.startsWith('/api/auth/')) {
           return next();
         }

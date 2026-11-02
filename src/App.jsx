@@ -1527,6 +1527,11 @@ function App() {
   });
   const [adminErrorMessage, setAdminErrorMessage] = useState('');
   const [adminFeedbacksList, setAdminFeedbacksList] = useState([]);
+  const [adminActiveTab, setAdminActiveTab] = useState('feedbacks'); // 'feedbacks' | 'deactivations'
+  const [adminDeactivationsList, setAdminDeactivationsList] = useState([]);
+  const [adminDeactivationsStats, setAdminDeactivationsStats] = useState({ total: 0, pending: 0, approved: 0, autoDeleted: 0, cancelled: 0, rejected: 0 });
+  const [deactivationSearchQuery, setDeactivationSearchQuery] = useState('');
+  const [deactivationActionLoading, setDeactivationActionLoading] = useState(null);
 
   // Helper for safe API requests to handle connection errors and invalid/empty responses
   const safeFetchJson = async (url, options = {}) => {
@@ -2121,6 +2126,7 @@ function App() {
       });
       setIsAdminAuthenticated(true);
       fetchAdminFeedbacks(adminPinInput.trim());
+      fetchAdminDeactivations(adminPinInput.trim());
     } catch (err) {
       setAdminErrorMessage(err.message);
     }
@@ -2132,9 +2138,53 @@ function App() {
         method: 'GET',
         headers: { 'Authorization': pinCode }
       });
-      setAdminFeedbacksList(data);
+      setAdminFeedbacksList(Array.isArray(data) ? data : []);
     } catch (err) {
       console.error("Failed to fetch database feedbacks:", err);
+    }
+  };
+
+  const fetchAdminDeactivations = async (pinCode) => {
+    try {
+      const data = await safeFetchJson('/api/admin/deactivations', {
+        method: 'GET',
+        headers: { 'Authorization': pinCode }
+      });
+      if (data && data.deactivations) {
+        setAdminDeactivationsList(Array.isArray(data.deactivations) ? data.deactivations : []);
+        if (data.stats) {
+          setAdminDeactivationsStats(data.stats);
+        }
+      }
+    } catch (err) {
+      console.error("Failed to fetch database deactivations:", err);
+    }
+  };
+
+  const handleAdminDeactivationAction = async (id, email, action) => {
+    const isApprove = action === 'approve';
+    const confirmPrompt = isApprove
+      ? `⚡ APPROVE IMMEDIATE DELETION\n\nAre you sure you want to approve immediate deactivation for ${email}?\n\nThis will immediately and permanently delete this user account and credentials from the database!`
+      : `✕ REJECT DEACTIVATION\n\nAre you sure you want to reject deactivation for ${email}?\n\nThis will restore the account to active status.`;
+
+    if (!window.confirm(confirmPrompt)) return;
+
+    setDeactivationActionLoading(id);
+    try {
+      const res = await safeFetchJson('/api/admin/deactivations', {
+        method: 'POST',
+        headers: { 
+          'Content-Type': 'application/json',
+          'Authorization': adminPinInput.trim() || 'Irctc@11'
+        },
+        body: JSON.stringify({ action, id, email })
+      });
+      alert(res.message || `Action "${action}" completed successfully!`);
+      await fetchAdminDeactivations(adminPinInput.trim() || 'Irctc@11');
+    } catch (err) {
+      alert(err.message || `Failed to ${action} deactivation.`);
+    } finally {
+      setDeactivationActionLoading(null);
     }
   };
 
@@ -6283,10 +6333,10 @@ function App() {
         </div>
       )}
 
-      {/* Developer Feedback Console Modal */}
+      {/* Developer Management & Deactivation Console Modal */}
       {isAdminFeedbackOpen && (
         <div className="modal-overlay" style={{ zIndex: 1001 }}>
-          <div className="modal-content" style={{ maxWidth: '650px', width: '90%', position: 'relative', overflow: 'hidden', padding: '2.2rem', maxHeight: '85vh', display: 'flex', flexDirection: 'column' }}>
+          <div className="modal-content" style={{ maxWidth: '750px', width: '92%', position: 'relative', overflow: 'hidden', padding: '2rem', maxHeight: '88vh', display: 'flex', flexDirection: 'column' }}>
             <button style={{ position: 'absolute', right: '15px', top: '15px', background: 'transparent', border: 'none', color: 'var(--text-secondary)', fontSize: '1.2rem', cursor: 'pointer' }} onClick={() => setIsAdminFeedbackOpen(false)}>✕</button>
             
             {!isAdminAuthenticated ? (
@@ -6296,7 +6346,7 @@ function App() {
                   <h2 className="title-gradient" style={{ margin: 0, fontSize: '1.7rem', fontWeight: 'bold' }}>Developer Authentication</h2>
                 </div>
                 <p style={{ color: 'var(--text-secondary)', fontSize: '0.9rem', lineHeight: '1.5', margin: '0 0 1.2rem 0' }}>
-                  Access to the persistent feedback database console is restricted. Please verify your Developer PIN to unlock logs.
+                  Access to the persistent feedback and account deactivation management console is restricted. Please verify your Developer PIN to unlock logs.
                 </p>
 
                 <div className="select-group" style={{ marginBottom: '1.2rem' }}>
@@ -6328,119 +6378,417 @@ function App() {
               </>
             ) : (
               <>
-                <div style={{ display: 'flex', alignItems: 'center', gap: '10px', marginBottom: '0.5rem' }}>
-                  <span style={{ fontSize: '1.8rem' }}>🛠️</span>
-                  <h2 className="title-gradient" style={{ margin: 0, fontSize: '1.8rem', textAlign: 'left', fontWeight: 'bold' }}>Developer Feedback Console</h2>
+                <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: '10px', marginBottom: '0.4rem', flexWrap: 'wrap' }}>
+                  <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
+                    <span style={{ fontSize: '1.8rem' }}>🛠️</span>
+                    <h2 className="title-gradient" style={{ margin: 0, fontSize: '1.7rem', fontWeight: 'bold' }}>Developer Management Console</h2>
+                  </div>
+                  <span style={{ fontSize: '0.75rem', background: 'rgba(34, 197, 94, 0.15)', color: '#4ade80', border: '1px solid rgba(34, 197, 94, 0.3)', padding: '3px 10px', borderRadius: '12px', fontWeight: 'bold' }}>
+                    ● PostgreSQL Connected
+                  </span>
                 </div>
-                <p style={{ color: 'var(--text-secondary)', fontSize: '0.85rem', margin: '0 0 1rem 0' }}>
-                  Monitor and inspect user-submitted ratings, emails, and bug reports from the PostgreSQL database server.
-                </p>
                 
-                {/* Filter / Search Bar */}
-                <div style={{ display: 'flex', gap: '0.5rem', marginBottom: '1rem', flexShrink: 0 }}>
-                  <input 
-                    type="text" 
-                    className="styled-input" 
-                    style={{ flex: 1, padding: '0.5rem 0.85rem', fontSize: '0.88rem', borderRadius: '8px' }}
-                    placeholder="Search by email or comment details..."
-                    value={feedbackSearchQuery}
-                    onChange={e => setFeedbackSearchQuery(e.target.value)}
-                  />
-                  {feedbackSearchQuery && (
-                    <button className="btn btn-clear" style={{ padding: '0.5rem 1rem', fontSize: '0.85rem' }} onClick={() => setFeedbackSearchQuery('')}>Clear</button>
-                  )}
-                  <button 
-                    className="btn btn-clear" 
-                    style={{ padding: '0.5rem 1.2rem', fontSize: '0.85rem', borderColor: 'var(--accent-primary)', color: 'var(--accent-primary)', background: 'rgba(59,130,246,0.08)', display: 'flex', alignItems: 'center', gap: '5px' }} 
-                    onClick={() => fetchAdminFeedbacks(adminPinInput.trim() || 'Irctc@11')}
-                  >
-                    🔄 Refresh
-                  </button>
-                </div>
+                <p style={{ color: 'var(--text-secondary)', fontSize: '0.84rem', margin: '0 0 0.8rem 0' }}>
+                  Monitor user feedbacks, inspect bug reports, and approve/manage 7-day account deactivations.
+                </p>
 
-                {/* Scrollable list of feedback logs */}
-                <div style={{ flex: 1, overflowY: 'auto', display: 'flex', flexDirection: 'column', gap: '0.75rem', paddingRight: '4px', minHeight: '200px' }}>
-                  {(() => {
-                    const filtered = adminFeedbacksList.filter(log => 
-                      !feedbackSearchQuery.trim() || 
-                      (log.email || '').toLowerCase().includes(feedbackSearchQuery.toLowerCase()) ||
-                      (log.feedback_text || '').toLowerCase().includes(feedbackSearchQuery.toLowerCase()) ||
-                      (log.category || '').toLowerCase().includes(feedbackSearchQuery.toLowerCase())
-                    );
-
-                    if (filtered.length === 0) {
-                      return (
-                        <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', height: '100%', minHeight: '200px', color: 'var(--text-secondary)', gap: '10px' }}>
-                          <span style={{ fontSize: '2.5rem' }}>📂</span>
-                          <p style={{ fontSize: '0.9rem', fontStyle: 'italic' }}>
-                            {adminFeedbacksList.length === 0 ? 'No feedbacks found in PostgreSQL database.' : 'No database records match your search filters.'}
-                          </p>
-                        </div>
-                      );
-                    }
-
-                    return filtered.map((log, idx) => (
-                      <div key={log.id || idx} style={{ background: 'var(--glass-bg)', border: '1px solid var(--glass-border)', borderRadius: '10px', padding: '1rem', display: 'flex', flexDirection: 'column', gap: '0.5rem' }}>
-                        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', flexWrap: 'wrap', gap: '5px' }}>
-                          <span style={{ fontSize: '0.85rem', color: 'var(--accent-primary)', fontWeight: 'bold', fontFamily: 'monospace' }}>
-                            {log.email}
-                          </span>
-                          <span style={{ fontSize: '0.75rem', color: 'var(--text-secondary)' }}>
-                            🕒 {new Date(log.created_at || log.timestamp).toLocaleString()}
-                          </span>
-                        </div>
-
-                        <div style={{ display: 'flex', gap: '10px', alignItems: 'center', flexWrap: 'wrap' }}>
-                          <span style={{ fontSize: '0.78rem', background: log.category === 'Bug Report' ? 'rgba(239,68,68,0.15)' : 'rgba(59,130,246,0.15)', border: `1px solid ${log.category === 'Bug Report' ? '#ef4444' : '#3b82f6'}`, color: log.category === 'Bug Report' ? '#dc2626' : 'var(--accent-primary)', padding: '2px 8px', borderRadius: '12px', fontWeight: 'bold' }}>
-                            {log.category}
-                          </span>
-                          <span style={{ color: '#d97706', fontSize: '1rem' }}>
-                            {'★'.repeat(log.rating || 5)}{'☆'.repeat(5 - (log.rating || 5))}
-                          </span>
-                        </div>
-
-                        {log.feedback_text && (
-                          <p style={{ color: 'var(--text-primary)', fontSize: '0.88rem', margin: '4px 0 0 0', lineHeight: '1.45', whiteSpace: 'pre-wrap', background: 'var(--glass-bg)', padding: '0.6rem 0.8rem', borderRadius: '6px', borderLeft: '3px solid var(--accent-primary)' }}>
-                            {log.feedback_text}
-                          </p>
-                        )}
-                      </div>
-                    ));
-                  })()}
-                </div>
-
-                {/* Bottom Admin Control actions */}
-                <div style={{ display: 'flex', gap: '0.75rem', marginTop: '1.2rem', paddingTop: '1rem', borderTop: '1px solid var(--glass-border)', flexShrink: 0 }}>
-                  <button 
-                    className="btn btn-clear" 
-                    style={{ flex: 1, borderColor: '#ef4444', color: '#dc2626', background: 'rgba(239,68,68,0.05)', fontSize: '0.85rem' }} 
-                    onClick={clearAdminFeedbacks}
-                  >
-                    🗑️ Clear Database Logs
-                  </button>
-                  <button 
-                    className="btn btn-clear" 
-                    style={{ flex: 1, borderColor: 'var(--accent-primary)', color: 'var(--accent-primary)', background: 'rgba(59,130,246,0.05)', fontSize: '0.85rem' }} 
-                    onClick={() => {
-                      const blob = new Blob([JSON.stringify(adminFeedbacksList, null, 2)], { type: 'application/json' });
-                      const url = URL.createObjectURL(blob);
-                      const a = document.createElement('a');
-                      a.href = url;
-                      a.download = `postgresql_feedback_export_${new Date().toISOString().slice(0,10)}.json`;
-                      a.click();
-                      URL.revokeObjectURL(url);
+                {/* Navigation Tabs (Feedbacks vs Deactivations) */}
+                <div style={{ display: 'flex', gap: '8px', borderBottom: '1px solid var(--glass-border)', paddingBottom: '8px', marginBottom: '0.9rem' }}>
+                  <button
+                    onClick={() => setAdminActiveTab('feedbacks')}
+                    style={{
+                      padding: '7px 14px',
+                      borderRadius: '8px',
+                      border: adminActiveTab === 'feedbacks' ? '1px solid var(--accent-primary)' : '1px solid transparent',
+                      background: adminActiveTab === 'feedbacks' ? 'rgba(56, 189, 248, 0.15)' : 'transparent',
+                      color: adminActiveTab === 'feedbacks' ? 'var(--accent-primary)' : 'var(--text-secondary)',
+                      fontSize: '0.88rem',
+                      fontWeight: '700',
+                      cursor: 'pointer',
+                      display: 'flex',
+                      alignItems: 'center',
+                      gap: '6px',
+                      transition: 'all 0.2s'
                     }}
                   >
-                    📥 Export as JSON
+                    <span>💬 User Feedbacks</span>
+                    <span style={{ fontSize: '0.75rem', background: 'rgba(255,255,255,0.1)', padding: '1px 6px', borderRadius: '10px' }}>
+                      {adminFeedbacksList.length}
+                    </span>
                   </button>
-                  <button 
-                    className="btn btn-start" 
-                    style={{ width: '120px', padding: '0.6rem', fontSize: '0.9rem' }} 
-                    onClick={() => setIsAdminFeedbackOpen(false)}
+
+                  <button
+                    onClick={() => {
+                      setAdminActiveTab('deactivations');
+                      fetchAdminDeactivations(adminPinInput.trim() || 'Irctc@11');
+                    }}
+                    style={{
+                      padding: '7px 14px',
+                      borderRadius: '8px',
+                      border: adminActiveTab === 'deactivations' ? '1px solid #ef4444' : '1px solid transparent',
+                      background: adminActiveTab === 'deactivations' ? 'rgba(239, 68, 68, 0.15)' : 'transparent',
+                      color: adminActiveTab === 'deactivations' ? '#f87171' : 'var(--text-secondary)',
+                      fontSize: '0.88rem',
+                      fontWeight: '700',
+                      cursor: 'pointer',
+                      display: 'flex',
+                      alignItems: 'center',
+                      gap: '6px',
+                      transition: 'all 0.2s'
+                    }}
                   >
-                    Close
+                    <span>⚠️ Deactivations</span>
+                    {adminDeactivationsStats.pending > 0 ? (
+                      <span style={{ fontSize: '0.72rem', background: '#dc2626', color: '#fff', padding: '1px 7px', borderRadius: '10px', fontWeight: '800', animation: 'pulse 2s infinite' }}>
+                        {adminDeactivationsStats.pending} PENDING
+                      </span>
+                    ) : (
+                      <span style={{ fontSize: '0.75rem', background: 'rgba(255,255,255,0.1)', padding: '1px 6px', borderRadius: '10px' }}>
+                        {adminDeactivationsList.length}
+                      </span>
+                    )}
                   </button>
                 </div>
+
+                {/* TAB 1: FEEDBACK LOGS */}
+                {adminActiveTab === 'feedbacks' && (
+                  <>
+                    {/* Filter / Search Bar */}
+                    <div style={{ display: 'flex', gap: '0.5rem', marginBottom: '0.9rem', flexShrink: 0 }}>
+                      <input 
+                        type="text" 
+                        className="styled-input" 
+                        style={{ flex: 1, padding: '0.5rem 0.85rem', fontSize: '0.88rem', borderRadius: '8px' }}
+                        placeholder="Search by email or comment details..."
+                        value={feedbackSearchQuery}
+                        onChange={e => setFeedbackSearchQuery(e.target.value)}
+                      />
+                      {feedbackSearchQuery && (
+                        <button className="btn btn-clear" style={{ padding: '0.5rem 1rem', fontSize: '0.85rem' }} onClick={() => setFeedbackSearchQuery('')}>Clear</button>
+                      )}
+                      <button 
+                        className="btn btn-clear" 
+                        style={{ padding: '0.5rem 1.2rem', fontSize: '0.85rem', borderColor: 'var(--accent-primary)', color: 'var(--accent-primary)', background: 'rgba(59,130,246,0.08)', display: 'flex', alignItems: 'center', gap: '5px' }} 
+                        onClick={() => fetchAdminFeedbacks(adminPinInput.trim() || 'Irctc@11')}
+                      >
+                        🔄 Refresh
+                      </button>
+                    </div>
+
+                    {/* Scrollable list of feedback logs */}
+                    <div style={{ flex: 1, overflowY: 'auto', display: 'flex', flexDirection: 'column', gap: '0.75rem', paddingRight: '4px', minHeight: '220px' }}>
+                      {(() => {
+                        const filtered = adminFeedbacksList.filter(log => 
+                          !feedbackSearchQuery.trim() || 
+                          (log.email || '').toLowerCase().includes(feedbackSearchQuery.toLowerCase()) ||
+                          (log.feedback_text || '').toLowerCase().includes(feedbackSearchQuery.toLowerCase()) ||
+                          (log.category || '').toLowerCase().includes(feedbackSearchQuery.toLowerCase())
+                        );
+
+                        if (filtered.length === 0) {
+                          return (
+                            <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', height: '100%', minHeight: '200px', color: 'var(--text-secondary)', gap: '10px' }}>
+                              <span style={{ fontSize: '2.5rem' }}>📂</span>
+                              <p style={{ fontSize: '0.9rem', fontStyle: 'italic' }}>
+                                {adminFeedbacksList.length === 0 ? 'No feedbacks found in PostgreSQL database.' : 'No database records match your search filters.'}
+                              </p>
+                            </div>
+                          );
+                        }
+
+                        return filtered.map((log, idx) => (
+                          <div key={log.id || idx} style={{ background: 'var(--glass-bg)', border: '1px solid var(--glass-border)', borderRadius: '10px', padding: '1rem', display: 'flex', flexDirection: 'column', gap: '0.5rem' }}>
+                            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', flexWrap: 'wrap', gap: '5px' }}>
+                              <span style={{ fontSize: '0.85rem', color: 'var(--accent-primary)', fontWeight: 'bold', fontFamily: 'monospace' }}>
+                                {log.email}
+                              </span>
+                              <span style={{ fontSize: '0.75rem', color: 'var(--text-secondary)' }}>
+                                🕒 {new Date(log.created_at || log.timestamp).toLocaleString()}
+                              </span>
+                            </div>
+
+                            <div style={{ display: 'flex', gap: '10px', alignItems: 'center', flexWrap: 'wrap' }}>
+                              <span style={{ fontSize: '0.78rem', background: log.category === 'Bug Report' ? 'rgba(239,68,68,0.15)' : 'rgba(59,130,246,0.15)', border: `1px solid ${log.category === 'Bug Report' ? '#ef4444' : '#3b82f6'}`, color: log.category === 'Bug Report' ? '#dc2626' : 'var(--accent-primary)', padding: '2px 8px', borderRadius: '12px', fontWeight: 'bold' }}>
+                                {log.category}
+                              </span>
+                              <span style={{ color: '#d97706', fontSize: '1rem' }}>
+                                {'★'.repeat(log.rating || 5)}{'☆'.repeat(5 - (log.rating || 5))}
+                              </span>
+                            </div>
+
+                            {log.feedback_text && (
+                              <p style={{ color: 'var(--text-primary)', fontSize: '0.88rem', margin: '4px 0 0 0', lineHeight: '1.45', whiteSpace: 'pre-wrap', background: 'var(--glass-bg)', padding: '0.6rem 0.8rem', borderRadius: '6px', borderLeft: '3px solid var(--accent-primary)' }}>
+                                {log.feedback_text}
+                              </p>
+                            )}
+                          </div>
+                        ));
+                      })()}
+                    </div>
+
+                    {/* Bottom Admin Control actions */}
+                    <div style={{ display: 'flex', gap: '0.75rem', marginTop: '1.2rem', paddingTop: '1rem', borderTop: '1px solid var(--glass-border)', flexShrink: 0 }}>
+                      <button 
+                        className="btn btn-clear" 
+                        style={{ flex: 1, borderColor: '#ef4444', color: '#dc2626', background: 'rgba(239,68,68,0.05)', fontSize: '0.85rem' }} 
+                        onClick={clearAdminFeedbacks}
+                      >
+                        🗑️ Clear Database Logs
+                      </button>
+                      <button 
+                        className="btn btn-clear" 
+                        style={{ flex: 1, borderColor: 'var(--accent-primary)', color: 'var(--accent-primary)', background: 'rgba(59,130,246,0.05)', fontSize: '0.85rem' }} 
+                        onClick={() => {
+                          const blob = new Blob([JSON.stringify(adminFeedbacksList, null, 2)], { type: 'application/json' });
+                          const url = URL.createObjectURL(blob);
+                          const a = document.createElement('a');
+                          a.href = url;
+                          a.download = `postgresql_feedback_export_${new Date().toISOString().slice(0,10)}.json`;
+                          a.click();
+                          URL.revokeObjectURL(url);
+                        }}
+                      >
+                        📥 Export Feedbacks JSON
+                      </button>
+                      <button 
+                        className="btn btn-start" 
+                        style={{ width: '120px', padding: '0.6rem', fontSize: '0.9rem' }} 
+                        onClick={() => setIsAdminFeedbackOpen(false)}
+                      >
+                        Close
+                      </button>
+                    </div>
+                  </>
+                )}
+
+                {/* TAB 2: DEACTIVATION REQUESTS */}
+                {adminActiveTab === 'deactivations' && (
+                  <>
+                    {/* Metrics Summary Row */}
+                    <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(130px, 1fr))', gap: '8px', marginBottom: '0.9rem', flexShrink: 0 }}>
+                      <div style={{ background: 'var(--glass-bg)', border: '1px solid var(--glass-border)', padding: '8px 10px', borderRadius: '8px', textAlign: 'center' }}>
+                        <div style={{ fontSize: '0.72rem', color: 'var(--text-secondary)' }}>Total Requests</div>
+                        <div style={{ fontSize: '1.15rem', fontWeight: '800', color: 'var(--text-primary)' }}>{adminDeactivationsStats.total}</div>
+                      </div>
+                      <div style={{ background: 'rgba(239, 68, 68, 0.1)', border: '1px solid rgba(239, 68, 68, 0.3)', padding: '8px 10px', borderRadius: '8px', textAlign: 'center' }}>
+                        <div style={{ fontSize: '0.72rem', color: '#f87171' }}>⏳ Pending Review</div>
+                        <div style={{ fontSize: '1.15rem', fontWeight: '800', color: '#ef4444' }}>{adminDeactivationsStats.pending}</div>
+                      </div>
+                      <div style={{ background: 'rgba(34, 197, 94, 0.1)', border: '1px solid rgba(34, 197, 94, 0.3)', padding: '8px 10px', borderRadius: '8px', textAlign: 'center' }}>
+                        <div style={{ fontSize: '0.72rem', color: '#4ade80' }}>⚡ Admin Approved</div>
+                        <div style={{ fontSize: '1.15rem', fontWeight: '800', color: '#22c55e' }}>{adminDeactivationsStats.approved}</div>
+                      </div>
+                      <div style={{ background: 'rgba(168, 85, 247, 0.1)', border: '1px solid rgba(168, 85, 247, 0.3)', padding: '8px 10px', borderRadius: '8px', textAlign: 'center' }}>
+                        <div style={{ fontSize: '0.72rem', color: '#c084fc' }}>🕒 7d Auto-Deleted</div>
+                        <div style={{ fontSize: '1.15rem', fontWeight: '800', color: '#a855f7' }}>{adminDeactivationsStats.autoDeleted}</div>
+                      </div>
+                    </div>
+
+                    {/* Filter & Refresh */}
+                    <div style={{ display: 'flex', gap: '0.5rem', marginBottom: '0.9rem', flexShrink: 0 }}>
+                      <input 
+                        type="text" 
+                        className="styled-input" 
+                        style={{ flex: 1, padding: '0.5rem 0.85rem', fontSize: '0.88rem', borderRadius: '8px' }}
+                        placeholder="Search deactivations by email, name, or reason..."
+                        value={deactivationSearchQuery}
+                        onChange={e => setDeactivationSearchQuery(e.target.value)}
+                      />
+                      {deactivationSearchQuery && (
+                        <button className="btn btn-clear" style={{ padding: '0.5rem 1rem', fontSize: '0.85rem' }} onClick={() => setDeactivationSearchQuery('')}>Clear</button>
+                      )}
+                      <button 
+                        className="btn btn-clear" 
+                        style={{ padding: '0.5rem 1.2rem', fontSize: '0.85rem', borderColor: '#ef4444', color: '#ef4444', background: 'rgba(239,68,68,0.08)', display: 'flex', alignItems: 'center', gap: '5px' }} 
+                        onClick={() => fetchAdminDeactivations(adminPinInput.trim() || 'Irctc@11')}
+                      >
+                        🔄 Refresh
+                      </button>
+                    </div>
+
+                    {/* Scrollable list of deactivations */}
+                    <div style={{ flex: 1, overflowY: 'auto', display: 'flex', flexDirection: 'column', gap: '0.75rem', paddingRight: '4px', minHeight: '220px' }}>
+                      {(() => {
+                        const filtered = adminDeactivationsList.filter(item => 
+                          !deactivationSearchQuery.trim() || 
+                          (item.email || '').toLowerCase().includes(deactivationSearchQuery.toLowerCase()) ||
+                          (item.name || '').toLowerCase().includes(deactivationSearchQuery.toLowerCase()) ||
+                          (item.reason || '').toLowerCase().includes(deactivationSearchQuery.toLowerCase())
+                        );
+
+                        if (filtered.length === 0) {
+                          return (
+                            <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', height: '100%', minHeight: '200px', color: 'var(--text-secondary)', gap: '10px' }}>
+                              <span style={{ fontSize: '2.5rem' }}>🛡️</span>
+                              <p style={{ fontSize: '0.9rem', fontStyle: 'italic' }}>
+                                {adminDeactivationsList.length === 0 ? 'No account deactivation requests recorded yet.' : 'No deactivations match your search query.'}
+                              </p>
+                            </div>
+                          );
+                        }
+
+                        return filtered.map((item, idx) => {
+                          const isPending = item.status === 'pending_deletion';
+                          const scheduledTime = item.scheduled_deletion_at ? new Date(item.scheduled_deletion_at).getTime() : 0;
+                          const diffMs = scheduledTime - Date.now();
+                          const daysLeft = Math.max(0, Math.floor(diffMs / (1000 * 60 * 60 * 24)));
+                          const hoursLeft = Math.max(0, Math.floor((diffMs % (1000 * 60 * 60 * 24)) / (1000 * 60 * 60)));
+                          const countdownStr = diffMs > 0 
+                            ? `Auto-deletes in ${daysLeft}d ${hoursLeft}h if not approved` 
+                            : `7-day window elapsed (auto-deletes on next refresh)`;
+
+                          return (
+                            <div 
+                              key={item.id || idx} 
+                              style={{ 
+                                background: isPending ? 'rgba(239, 68, 68, 0.04)' : 'var(--glass-bg)', 
+                                border: isPending ? '1.5px solid rgba(239, 68, 68, 0.35)' : '1px solid var(--glass-border)', 
+                                borderRadius: '10px', 
+                                padding: '1rem', 
+                                display: 'flex', 
+                                flexDirection: 'column', 
+                                gap: '0.6rem' 
+                              }}
+                            >
+                              <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', flexWrap: 'wrap', gap: '6px' }}>
+                                <div>
+                                  <div style={{ fontSize: '0.92rem', color: 'var(--text-primary)', fontWeight: 'bold' }}>
+                                    {item.name || 'Anonymous User'}
+                                  </div>
+                                  <div style={{ fontSize: '0.82rem', color: 'var(--accent-primary)', fontFamily: 'monospace' }}>
+                                    ✉ {item.email}
+                                  </div>
+                                </div>
+                                <span style={{ fontSize: '0.74rem', color: 'var(--text-secondary)' }}>
+                                  Requested: {new Date(item.requested_at).toLocaleString()}
+                                </span>
+                              </div>
+
+                              <div style={{ fontSize: '0.82rem', color: 'var(--text-secondary)', background: 'var(--glass-bg)', padding: '6px 10px', borderRadius: '6px' }}>
+                                <strong>Reason:</strong> {item.reason || 'None specified'}
+                              </div>
+
+                              {/* Status Badge & Countdown */}
+                              <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', flexWrap: 'wrap', gap: '8px' }}>
+                                <div>
+                                  {item.status === 'pending_deletion' && (
+                                    <span style={{ display: 'inline-flex', alignItems: 'center', gap: '5px', fontSize: '0.78rem', background: 'rgba(239,68,68,0.15)', color: '#ef4444', border: '1px solid rgba(239,68,68,0.4)', padding: '3px 9px', borderRadius: '12px', fontWeight: 'bold' }}>
+                                      ⏳ Pending Admin Approval
+                                    </span>
+                                  )}
+                                  {item.status === 'approved_by_admin' && (
+                                    <span style={{ display: 'inline-flex', alignItems: 'center', gap: '5px', fontSize: '0.78rem', background: 'rgba(34,197,94,0.15)', color: '#4ade80', border: '1px solid rgba(34,197,94,0.4)', padding: '3px 9px', borderRadius: '12px', fontWeight: 'bold' }}>
+                                      ⚡ Approved by Admin (Permanently Deleted)
+                                    </span>
+                                  )}
+                                  {item.status === 'auto_deleted_7_days' && (
+                                    <span style={{ display: 'inline-flex', alignItems: 'center', gap: '5px', fontSize: '0.78rem', background: 'rgba(168,85,247,0.15)', color: '#c084fc', border: '1px solid rgba(168,85,247,0.4)', padding: '3px 9px', borderRadius: '12px', fontWeight: 'bold' }}>
+                                      🕒 Auto-Deleted (7 Days Elapsed)
+                                    </span>
+                                  )}
+                                  {(item.status === 'cancelled' || item.status === 'cancelled_by_user') && (
+                                    <span style={{ display: 'inline-flex', alignItems: 'center', gap: '5px', fontSize: '0.78rem', background: 'rgba(56,189,248,0.15)', color: '#38bdf8', border: '1px solid rgba(56,189,248,0.4)', padding: '3px 9px', borderRadius: '12px', fontWeight: 'bold' }}>
+                                      🔄 Cancelled by User (Signed in)
+                                    </span>
+                                  )}
+                                  {item.status === 'rejected_by_admin' && (
+                                    <span style={{ display: 'inline-flex', alignItems: 'center', gap: '5px', fontSize: '0.78rem', background: 'rgba(148,163,184,0.15)', color: '#94a3b8', border: '1px solid rgba(148,163,184,0.4)', padding: '3px 9px', borderRadius: '12px', fontWeight: 'bold' }}>
+                                      ✕ Rejected by Admin (Restored)
+                                    </span>
+                                  )}
+                                </div>
+
+                                {isPending && (
+                                  <span style={{ fontSize: '0.75rem', color: '#f59e0b', fontWeight: '600' }}>
+                                    📅 {countdownStr}
+                                  </span>
+                                )}
+                              </div>
+
+                              {/* Admin Action Buttons for Pending Requests */}
+                              {isPending && (
+                                <div style={{ display: 'flex', gap: '8px', marginTop: '4px', paddingTop: '8px', borderTop: '1px dashed rgba(239,68,68,0.25)' }}>
+                                  <button
+                                    onClick={() => handleAdminDeactivationAction(item.id, item.email, 'approve')}
+                                    disabled={deactivationActionLoading === item.id}
+                                    style={{
+                                      flex: 1.5,
+                                      padding: '7px 12px',
+                                      borderRadius: '8px',
+                                      background: 'linear-gradient(135deg, #dc2626, #b91c1c)',
+                                      border: 'none',
+                                      color: '#ffffff',
+                                      fontSize: '0.82rem',
+                                      fontWeight: '700',
+                                      cursor: deactivationActionLoading === item.id ? 'not-allowed' : 'pointer',
+                                      display: 'flex',
+                                      alignItems: 'center',
+                                      justifyContent: 'center',
+                                      gap: '6px',
+                                      boxShadow: '0 2px 8px rgba(220, 38, 38, 0.3)'
+                                    }}
+                                  >
+                                    <span>⚡</span>
+                                    <span>{deactivationActionLoading === item.id ? 'Deleting...' : 'Approve & Delete Now'}</span>
+                                  </button>
+
+                                  <button
+                                    onClick={() => handleAdminDeactivationAction(item.id, item.email, 'reject')}
+                                    disabled={deactivationActionLoading === item.id}
+                                    style={{
+                                      flex: 1,
+                                      padding: '7px 12px',
+                                      borderRadius: '8px',
+                                      background: 'var(--glass-bg)',
+                                      border: '1px solid var(--glass-border)',
+                                      color: 'var(--text-secondary)',
+                                      fontSize: '0.82rem',
+                                      fontWeight: '600',
+                                      cursor: deactivationActionLoading === item.id ? 'not-allowed' : 'pointer',
+                                      display: 'flex',
+                                      alignItems: 'center',
+                                      justifyContent: 'center',
+                                      gap: '5px'
+                                    }}
+                                  >
+                                    <span>✕</span>
+                                    <span>Reject Request</span>
+                                  </button>
+                                </div>
+                              )}
+                            </div>
+                          );
+                        });
+                      })()}
+                    </div>
+
+                    {/* Bottom Deactivations Control */}
+                    <div style={{ display: 'flex', gap: '0.75rem', marginTop: '1.2rem', paddingTop: '1rem', borderTop: '1px solid var(--glass-border)', flexShrink: 0 }}>
+                      <button 
+                        className="btn btn-clear" 
+                        style={{ flex: 1, borderColor: '#ef4444', color: '#dc2626', background: 'rgba(239,68,68,0.05)', fontSize: '0.85rem' }} 
+                        onClick={() => {
+                          const blob = new Blob([JSON.stringify(adminDeactivationsList, null, 2)], { type: 'application/json' });
+                          const url = URL.createObjectURL(blob);
+                          const a = document.createElement('a');
+                          a.href = url;
+                          a.download = `postgresql_deactivations_export_${new Date().toISOString().slice(0,10)}.json`;
+                          a.click();
+                          URL.revokeObjectURL(url);
+                        }}
+                      >
+                        📥 Export Deactivations JSON
+                      </button>
+                      <button 
+                        className="btn btn-start" 
+                        style={{ width: '120px', padding: '0.6rem', fontSize: '0.9rem' }} 
+                        onClick={() => setIsAdminFeedbackOpen(false)}
+                      >
+                        Close
+                      </button>
+                    </div>
+                  </>
+                )}
               </>
             )}
           </div>

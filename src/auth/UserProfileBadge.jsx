@@ -16,7 +16,7 @@ export default function UserProfileBadge({ onOpenConnectModal, onOpenSettings })
     setIsDeactivating(true);
     setDeactivateError('');
     try {
-      await requestAccountDeactivation({
+      const res = await requestAccountDeactivation({
         email: user.email,
         name: user.name,
         reason: deactivateReason
@@ -24,6 +24,9 @@ export default function UserProfileBadge({ onOpenConnectModal, onOpenSettings })
       setIsDeactivating(false);
       setShowDeactivateModal(false);
       setDropdownOpen(false);
+      logoutUser();
+      setUser(null);
+      alert(res?.message || `Your account deactivation request has been submitted.\n\n• If approved by an Admin, it will be deleted immediately.\n• Otherwise, it will automatically delete after 7 days.\n\nYou have been automatically logged out.`);
     } catch (err) {
       setIsDeactivating(false);
       setDeactivateError(err.message || 'Failed to deactivate account.');
@@ -347,27 +350,38 @@ export default function UserProfileBadge({ onOpenConnectModal, onOpenSettings })
                   Deactivate &amp; Delete Account
                 </h3>
                 <span style={{ fontSize: '0.78rem', color: 'var(--text-secondary, #94a3b8)' }}>
-                  7-Day Deletion Grace Period
+                  Admin Approval or 7-Day Auto Deletion
                 </span>
               </div>
             </div>
 
             <p style={{ margin: 0, fontSize: '0.86rem', color: 'var(--text-secondary, #cbd5e1)', lineHeight: '1.5' }}>
-              Deactivating gives you a <strong>7-day grace period</strong>. Your account data is scheduled for permanent deletion in 7 days.
+              Submit an account deactivation and permanent deletion request:
             </p>
 
             <div style={{
               background: 'rgba(239, 68, 68, 0.08)',
               border: '1px solid rgba(239, 68, 68, 0.25)',
               borderRadius: '10px',
-              padding: '10px 14px',
+              padding: '12px 14px',
               fontSize: '0.8rem',
-              color: '#dc2626',
-              lineHeight: '1.4'
+              color: 'var(--text-primary, #f8fafc)',
+              lineHeight: '1.5',
+              display: 'flex',
+              flexDirection: 'column',
+              gap: '6px'
             }}>
-              📅 <strong>Scheduled Permanent Deletion:</strong> {scheduledSevenDaysDate}
-              <div style={{ marginTop: '6px', color: 'var(--text-secondary, #cbd5e1)' }}>
-                💡 <strong>Restore anytime:</strong> If you change your mind, simply sign in with your email within 7 days to cancel deactivation and restore your account immediately.
+              <div style={{ color: '#ef4444', fontWeight: 'bold' }}>
+                ⚡ <strong>Admin Approval:</strong> If approved by an Administrator, your account is permanently deleted immediately.
+              </div>
+              <div style={{ color: '#f59e0b', fontWeight: '600' }}>
+                ⏳ <strong>7-Day Automatic Expiry:</strong> If not approved sooner, it will automatically delete on <u>{scheduledSevenDaysDate}</u>.
+              </div>
+              <div style={{ color: '#38bdf8', fontWeight: '600' }}>
+                🚪 <strong>Automatic Logout:</strong> You will be automatically logged out immediately upon submitting this request.
+              </div>
+              <div style={{ fontSize: '0.75rem', color: 'var(--text-secondary, #94a3b8)', marginTop: '2px' }}>
+                💡 <em>Restore anytime:</em> Signing in before approval or within 7 days cancels deactivation and restores your account.
               </div>
             </div>
 
@@ -427,7 +441,7 @@ export default function UserProfileBadge({ onOpenConnectModal, onOpenSettings })
                 onClick={handleConfirmDeactivate}
                 disabled={isDeactivating}
                 style={{
-                  flex: 1.5,
+                  flex: 1.6,
                   padding: '10px',
                   borderRadius: '10px',
                   background: 'linear-gradient(135deg, #dc2626, #b91c1c)',
@@ -439,7 +453,7 @@ export default function UserProfileBadge({ onOpenConnectModal, onOpenSettings })
                   boxShadow: '0 4px 14px rgba(220, 38, 38, 0.4)'
                 }}
               >
-                {isDeactivating ? 'Deactivating...' : 'Schedule Deactivation (7 Days) →'}
+                {isDeactivating ? 'Submitting & Logging Out...' : 'Confirm Deactivation & Log Out 🚪'}
               </button>
             </div>
           </div>

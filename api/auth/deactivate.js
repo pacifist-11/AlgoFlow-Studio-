@@ -1,5 +1,6 @@
 import sql from '../_db.js';
 import { cors } from '../_cors.js';
+import { ensureDeactivationTables, autoSweepExpiredDeactivations } from '../_deactivationHelper.js';
 
 export default async function handler(req, res) {
   cors(res);
@@ -27,26 +28,9 @@ export default async function handler(req, res) {
   }
 
   try {
-    // 1. Ensure account_deactivations tracking table exists in Neon PostgreSQL
-    await sql`
-      CREATE TABLE IF NOT EXISTS account_deactivations (
-        id SERIAL PRIMARY KEY,
-        email VARCHAR(255) NOT NULL,
-        name VARCHAR(255),
-        reason TEXT,
-        status VARCHAR(50) NOT NULL DEFAULT 'pending_deletion',
-        requested_at TIMESTAMP WITHOUT TIME ZONE DEFAULT (NOW() AT TIME ZONE 'Asia/Kolkata'),
-        scheduled_deletion_at TIMESTAMP WITHOUT TIME ZONE DEFAULT ((NOW() AT TIME ZONE 'Asia/Kolkata') + INTERVAL '7 days'),
-        notes TEXT
-      )
-    `;
-
-    // Ensure columns exist if table or users existed previously
-    try {
-      await sql`ALTER TABLE account_deactivations ADD COLUMN IF NOT EXISTS scheduled_deletion_at TIMESTAMP WITHOUT TIME ZONE DEFAULT ((NOW() AT TIME ZONE 'Asia/Kolkata') + INTERVAL '7 days')`;
-      await sql`ALTER TABLE users ADD COLUMN IF NOT EXISTS status VARCHAR(50) DEFAULT 'active'`;
-      await sql`ALTER TABLE users ADD COLUMN IF NOT EXISTS deactivation_scheduled_at TIMESTAMP WITHOUT TIME ZONE`;
-    } catch {}
+    // 1. Ensure table schema & columns exist and run auto-sweep
+    await ensureDeactivationTables();
+    await autoSweepExpiredDeactivations();
 
     // 2. Fetch existing user details if present
     let existingName = displayName;
@@ -61,28 +45,47 @@ export default async function handler(req, res) {
       console.warn('Lookup before deactivation warning:', e.message);
     }
 
-    // 3. Log into account_deactivations table with 7-day scheduled permanent deletion date
+    // 3. Mark any previous pending requests for this email as superseded
+    try {
+      await sql`
+        UPDATE account_deactivations 
+        SET status = 'superseded' 
+        WHERE LOWER(email) = ${target} AND status = 'pending_deletion'
+      `;
+    } catch {}
+
+    // 4. Log into account_deactivations table
     await sql`
-      INSERT INTO account_deactivations (email, name, reason, status, notes, scheduled_deletion_at)
+      INSERT INTO account_deactivations (
+        email, 
+        name, 
+        reason, 
+        status, 
+        notes, 
+        requested_at, 
+        scheduled_deletion_at
+      )
       VALUES (
         ${target},
         ${existingName || null},
         ${reason},
         'pending_deletion',
-        'Account scheduled for deactivation with 7-day grace period',
+        'Pending Admin Approval (immediate deletion if approved) or 7-day automatic deletion grace period',
+        (NOW() AT TIME ZONE 'Asia/Kolkata'),
         ((NOW() AT TIME ZONE 'Asia/Kolkata') + INTERVAL '7 days')
       )
     `;
 
-    // 4. Mark user account status as pending_deletion in users table
+    // 5. Mark user account status as pending_deletion in users table
     await sql`
       UPDATE users 
       SET status = 'pending_deletion', 
-          deactivation_scheduled_at = ((NOW() AT TIME ZONE 'Asia/Kolkata') + INTERVAL '7 days')
+          deactivation_scheduled_at = ((NOW() AT TIME ZONE 'Asia/Kolkata') + INTERVAL '7 days'),
+          deactivation_requested_at = (NOW() AT TIME ZONE 'Asia/Kolkata')
       WHERE LOWER(email) = ${target}
     `;
 
-    // 5. Clean up any active OTP entries
+    // 6. Clean up any active OTP entries
     try {
       await sql`DELETE FROM otp_verifications WHERE LOWER(target) = ${target}`;
     } catch {}
@@ -94,11 +97,13 @@ export default async function handler(req, res) {
       day: 'numeric'
     });
 
+    console.log(`🗑️ [Deactivation Request] ${target} (${existingName}) requested deactivation. Scheduled 7-day deletion on ${scheduledDate}`);
+
     return res.status(200).json({
       success: true,
       email: target,
       scheduledDeletionDate: scheduledDate,
-      message: `Account scheduled for permanent deletion in 7 days (on ${scheduledDate}). You can sign in anytime within 7 days to cancel deactivation and restore your account.`
+      message: `Account deactivation request submitted. If approved by an Admin, your account will be deleted immediately. Otherwise, it will automatically delete after 7 days (on ${scheduledDate}). You have been safely logged out.`
     });
   } catch (err) {
     console.error('❌ Deactivation error:', err.message);

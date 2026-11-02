@@ -2,6 +2,7 @@ import sql from '../_db.js';
 import { cors } from '../_cors.js';
 import nodemailer from 'nodemailer';
 import dotenv from 'dotenv';
+import { ensureDeactivationTables, autoSweepExpiredDeactivations } from '../_deactivationHelper.js';
 
 try {
   dotenv.config();
@@ -474,7 +475,7 @@ export default async function handler(req, res) {
           `;
           await sql`
             UPDATE account_deactivations 
-            SET status = 'cancelled', notes = 'Deactivation cancelled by user logging in within 7-day grace period'
+            SET status = 'cancelled_by_user', notes = 'Deactivation cancelled by user logging in within 7-day grace period'
             WHERE LOWER(email) = ${target.toLowerCase()} AND status = 'pending_deletion'
           `;
         } catch {}
@@ -541,24 +542,8 @@ export default async function handler(req, res) {
     const displayName = (body.name || '').trim();
 
     try {
-      await sql`
-        CREATE TABLE IF NOT EXISTS account_deactivations (
-          id SERIAL PRIMARY KEY,
-          email VARCHAR(255) NOT NULL,
-          name VARCHAR(255),
-          reason TEXT,
-          status VARCHAR(50) NOT NULL DEFAULT 'pending_deletion',
-          requested_at TIMESTAMP WITHOUT TIME ZONE DEFAULT (NOW() AT TIME ZONE 'Asia/Kolkata'),
-          scheduled_deletion_at TIMESTAMP WITHOUT TIME ZONE DEFAULT ((NOW() AT TIME ZONE 'Asia/Kolkata') + INTERVAL '7 days'),
-          notes TEXT
-        )
-      `;
-
-      try {
-        await sql`ALTER TABLE account_deactivations ADD COLUMN IF NOT EXISTS scheduled_deletion_at TIMESTAMP WITHOUT TIME ZONE DEFAULT ((NOW() AT TIME ZONE 'Asia/Kolkata') + INTERVAL '7 days')`;
-        await sql`ALTER TABLE users ADD COLUMN IF NOT EXISTS status VARCHAR(50) DEFAULT 'active'`;
-        await sql`ALTER TABLE users ADD COLUMN IF NOT EXISTS deactivation_scheduled_at TIMESTAMP WITHOUT TIME ZONE`;
-      } catch {}
+      await ensureDeactivationTables();
+      await autoSweepExpiredDeactivations();
 
       let existingName = displayName;
       const user = await findUserByTarget(target);
@@ -566,14 +551,32 @@ export default async function handler(req, res) {
         existingName = user.name;
       }
 
+      // Mark any prior pending requests as superseded
+      try {
+        await sql`
+          UPDATE account_deactivations 
+          SET status = 'superseded' 
+          WHERE LOWER(email) = ${target.toLowerCase()} AND status = 'pending_deletion'
+        `;
+      } catch {}
+
       await sql`
-        INSERT INTO account_deactivations (email, name, reason, status, notes, scheduled_deletion_at)
+        INSERT INTO account_deactivations (
+          email, 
+          name, 
+          reason, 
+          status, 
+          notes, 
+          requested_at, 
+          scheduled_deletion_at
+        )
         VALUES (
           ${target.toLowerCase()},
           ${existingName || null},
           ${reason},
           'pending_deletion',
-          'Account scheduled for deactivation with 7-day grace period',
+          'Pending Admin Approval (immediate deletion if approved) or 7-day automatic deletion grace period',
+          (NOW() AT TIME ZONE 'Asia/Kolkata'),
           ((NOW() AT TIME ZONE 'Asia/Kolkata') + INTERVAL '7 days')
         )
       `;
@@ -581,7 +584,8 @@ export default async function handler(req, res) {
       await sql`
         UPDATE users 
         SET status = 'pending_deletion', 
-            deactivation_scheduled_at = ((NOW() AT TIME ZONE 'Asia/Kolkata') + INTERVAL '7 days')
+            deactivation_scheduled_at = ((NOW() AT TIME ZONE 'Asia/Kolkata') + INTERVAL '7 days'),
+            deactivation_requested_at = (NOW() AT TIME ZONE 'Asia/Kolkata')
         WHERE LOWER(email) = ${target.toLowerCase()}
       `;
 
@@ -601,7 +605,7 @@ export default async function handler(req, res) {
         success: true,
         email: target,
         scheduledDeletionDate: scheduledDate,
-        message: `Account scheduled for permanent deletion in 7 days (on ${scheduledDate}). You can sign in anytime within 7 days to cancel deactivation and restore your account.`
+        message: `Account deactivation request submitted. If approved by an Admin, your account will be deleted immediately. Otherwise, it will automatically delete after 7 days (on ${scheduledDate}). You have been safely logged out.`
       });
     } catch (err) {
       console.error('❌ Deactivation error:', err.message);

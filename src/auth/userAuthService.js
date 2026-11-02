@@ -564,12 +564,18 @@ export async function requestAccountDeactivation({ email, name = '', reason = ''
       throw new Error(data.error || 'Failed to deactivate account.');
     }
 
-    // Clean up local storage and switch to guest
+    // 1. Remove from local saved accounts on this device
     removeSavedAccount(email);
-    const active = getActiveUser();
-    if (active && active.email?.toLowerCase() === email.toLowerCase()) {
-      continueAsGuest();
-    }
+
+    // 2. Clear all chat history, sessions, and habits for this deactivated email
+    clearUserChatMessages(email);
+    try {
+      localStorage.removeItem(getUserSessionsStorageKey(email));
+      localStorage.removeItem(getUserHabitsStorageKey(email));
+    } catch {}
+
+    // 3. Immediately log out the user from active state completely
+    logoutUser();
 
     return data;
   } catch (err) {

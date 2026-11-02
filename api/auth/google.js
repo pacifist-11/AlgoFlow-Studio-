@@ -169,23 +169,61 @@ export default async function handler(req, res) {
     // 4. Upsert User in Neon Serverless PostgreSQL Database
     await ensureUsersTable();
 
+    // Check if user had a pending deactivation
+    try {
+      const existingRows = await sql`
+        SELECT id, email, status, deactivation_scheduled_at 
+        FROM users 
+        WHERE LOWER(email) = ${verifiedUser.email.toLowerCase()} 
+        LIMIT 1
+      `;
+      if (existingRows && existingRows.length > 0) {
+        const existingRec = existingRows[0];
+        if (existingRec.status === 'pending_deletion' || existingRec.deactivation_scheduled_at) {
+          const isExpired = existingRec.deactivation_scheduled_at && new Date(existingRec.deactivation_scheduled_at).getTime() <= Date.now();
+          if (isExpired) {
+            // 7 days have passed without admin approval: permanent deletion fulfilled, start fresh
+            await sql`DELETE FROM users WHERE LOWER(email) = ${verifiedUser.email.toLowerCase()}`;
+            await sql`
+              UPDATE account_deactivations 
+              SET status = 'auto_deleted_7_days', notes = 'Account automatically permanently deleted: 7-day grace period elapsed.' 
+              WHERE LOWER(email) = ${verifiedUser.email.toLowerCase()} AND status = 'pending_deletion'
+            `;
+          } else {
+            // Logged back in within 7 days before admin approval: restore account and cancel deactivation!
+            await sql`
+              UPDATE account_deactivations 
+              SET status = 'cancelled_by_user', notes = 'Deactivation cancelled by user logging in with Google during grace period' 
+              WHERE LOWER(email) = ${verifiedUser.email.toLowerCase()} AND status = 'pending_deletion'
+            `;
+          }
+        }
+      }
+    } catch (e) {
+      console.warn('Deactivation check during Google sign-in:', e.message);
+    }
+
     let dbRecord = null;
     try {
       const rows = await sql`
-        INSERT INTO users (google_id, email, name, picture, role, last_login)
+        INSERT INTO users (google_id, email, name, picture, role, last_login, status, deactivation_scheduled_at)
         VALUES (
           ${verifiedUser.google_id || null}, 
           ${verifiedUser.email}, 
           ${verifiedUser.name}, 
           ${verifiedUser.picture || null}, 
           ${role}, 
-          (NOW() AT TIME ZONE 'Asia/Kolkata')
+          (NOW() AT TIME ZONE 'Asia/Kolkata'),
+          'active',
+          NULL
         )
         ON CONFLICT (email)
         DO UPDATE SET
           google_id = COALESCE(EXCLUDED.google_id, users.google_id),
           name = EXCLUDED.name,
           picture = COALESCE(EXCLUDED.picture, users.picture),
+          status = 'active',
+          deactivation_scheduled_at = NULL,
           last_login = (NOW() AT TIME ZONE 'Asia/Kolkata')
         RETURNING id, google_id, email, name, picture, role, created_at, last_login
       `;
