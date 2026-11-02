@@ -4182,6 +4182,38 @@ function App() {
             )}
           </div>
 
+          {/* Developer Console Link in Settings */}
+          <div style={{ marginTop: '0.8rem', borderTop: '1px solid var(--glass-border)', paddingTop: '0.8rem' }}>
+            <button
+              type="button"
+              onClick={() => {
+                setIsSettingsOpen(false);
+                setIsAdminFeedbackOpen(true);
+              }}
+              style={{
+                width: '100%',
+                padding: '0.65rem',
+                borderRadius: '10px',
+                background: 'rgba(56, 189, 248, 0.08)',
+                border: '1px solid rgba(56, 189, 248, 0.3)',
+                color: 'var(--accent-primary, #38bdf8)',
+                fontSize: '0.85rem',
+                fontWeight: '700',
+                cursor: 'pointer',
+                display: 'flex',
+                alignItems: 'center',
+                justifyContent: 'center',
+                gap: '8px',
+                transition: 'all 0.2s'
+              }}
+              onMouseEnter={e => e.currentTarget.style.background = 'rgba(56, 189, 248, 0.16)'}
+              onMouseLeave={e => e.currentTarget.style.background = 'rgba(56, 189, 248, 0.08)'}
+            >
+              <span>🛠️</span>
+              <span>Open Developer &amp; Deactivations Console</span>
+            </button>
+          </div>
+
           <button className="btn btn-start" style={{ marginTop: '0.75rem', padding: '0.75rem' }} onClick={() => setIsSettingsOpen(false)}>Save &amp; Close</button>
         </div>
       </div>
@@ -6817,18 +6849,16 @@ function App() {
               >
                 💬 Feel any error or problem? Give Feedback
               </button>
-              {(new URLSearchParams(window.location.search).get('dev') === 'true' || new URLSearchParams(window.location.search).get('admin') === 'true') && (
-                <button 
-                  className="btn btn-clear" 
-                  style={{ padding: '0.55rem 1.3rem', fontSize: '0.85rem', display: 'flex', alignItems: 'center', gap: '8px', background: 'rgba(59,130,246,0.08)', border: '1px solid rgba(59,130,246,0.3)', borderRadius: '30px', cursor: 'pointer', color: 'var(--accent-primary)', transition: 'all 0.25s' }}
-                  onClick={() => { setIsAdminFeedbackOpen(true); }}
-                  onMouseEnter={e => e.currentTarget.style.transform = 'scale(1.03) translateY(-1px)'}
-                  onMouseLeave={e => e.currentTarget.style.transform = 'scale(1) translateY(0)'}
-                  title="View submitted feedback entries to inspect and debug code issues"
-                >
-                  🛠️ Feedback Console
-                </button>
-              )}
+              <button 
+                className="btn btn-clear" 
+                style={{ padding: '0.55rem 1.3rem', fontSize: '0.85rem', display: 'flex', alignItems: 'center', gap: '8px', background: 'rgba(59,130,246,0.08)', border: '1px solid rgba(59,130,246,0.3)', borderRadius: '30px', cursor: 'pointer', color: 'var(--accent-primary)', transition: 'all 0.25s' }}
+                onClick={() => { setIsAdminFeedbackOpen(true); }}
+                onMouseEnter={e => e.currentTarget.style.transform = 'scale(1.03) translateY(-1px)'}
+                onMouseLeave={e => e.currentTarget.style.transform = 'scale(1) translateY(0)'}
+                title="Open Developer & Deactivations Console (Protected with PIN: Irctc@11)"
+              >
+                🛠️ Developer Console
+              </button>
             </div>
           </div>
         </div>
