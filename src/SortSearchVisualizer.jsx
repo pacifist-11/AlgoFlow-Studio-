@@ -373,6 +373,43 @@ const getBSTPositions = (arr, width, height) => {
   return positions;
 };
 
+const buildDivideConquerTree = (arr) => {
+  if (!arr || arr.length === 0) return { nodes: [], levels: [], maxDepth: 0 };
+  const nodes = [];
+  const levels = [];
+
+  const traverse = (l, r, depth, parentId) => {
+    const id = `${l}-${r}-${depth}`;
+    const node = {
+      id,
+      l,
+      r,
+      depth,
+      parentId,
+      len: r - l + 1,
+      initialSub: arr.slice(l, r + 1),
+      mid: Math.floor((l + r) / 2),
+      isLeaf: l >= r,
+      children: []
+    };
+
+    if (!levels[depth]) levels[depth] = [];
+    levels[depth].push(node);
+    nodes.push(node);
+
+    if (l < r) {
+      const m = Math.floor((l + r) / 2);
+      const leftChild = traverse(l, m, depth + 1, id);
+      const rightChild = traverse(m + 1, r, depth + 1, id);
+      node.children = [leftChild.id, rightChild.id];
+    }
+    return node;
+  };
+
+  traverse(0, arr.length - 1, 0, null);
+  return { nodes, levels, maxDepth: levels.length - 1 };
+};
+
 const highlightLogText = (text) => {
   if (!text) return '';
   const str = String(text);
@@ -537,11 +574,20 @@ const isSortSearchLineMatch = (algo, msg, lineText) => {
     if (m.includes('starting')) {
       return line.includes('mergesort') || line.includes('merge_sort');
     }
-    if (m.includes('comparing')) {
-      return line.includes('if') && line.includes('l[i] <= r[j]');
+    if (m.includes('divide') || m.includes('splitting')) {
+      return line.includes('sort(l, m)') || line.includes('sort(m + 1, r)') || line.includes('mergesort(');
     }
-    if (m.includes('writing') || m.includes('copying')) {
+    if (m.includes('base case')) {
+      return line.includes('if (l >= r)') || line.includes('if (l < r)');
+    }
+    if (m.includes('conquer') || m.includes('compare') || m.includes('comparing')) {
+      return line.includes('if') && (line.includes('l[i] <= r[j]') || line.includes('l[i] < r[j]'));
+    }
+    if (m.includes('placing') || m.includes('writing') || m.includes('copying')) {
       return line.includes('arr[k') || line.includes('arr[k++]');
+    }
+    if (m.includes('merged')) {
+      return line.includes('merge(');
     }
   }
 
@@ -937,7 +983,7 @@ const SortSearchVisualizer = ({ isActive = true, onBack, openSettings, initialTa
   }, [currentStep, showLogPanel, timeline]);
 
   useEffect(() => {
-    if (currentDisplayedAlgo === 'Heap Sort' || currentDisplayedAlgo === 'Binary Search') {
+    if (currentDisplayedAlgo === 'Heap Sort' || currentDisplayedAlgo === 'Binary Search' || currentDisplayedAlgo === 'Merge Sort') {
       setShowTreePanel(true);
     } else {
       setShowTreePanel(false);
@@ -1149,9 +1195,16 @@ const SortSearchVisualizer = ({ isActive = true, onBack, openSettings, initialTa
   const mergeSort = () => {
     let arr = [...array];
     let frames = [];
-    record(arr, -1, -1, -1, 'Starting Merge Sort', frames);
+    const initialArr = [...array];
+    let sortedRanges = [];
 
-    const merge = (l, m, r) => {
+    record(arr, -1, -1, -1, 'Starting Merge Sort (Divide & Conquer)', frames, {
+      phase: 'init',
+      initialArr,
+      sortedRanges: []
+    });
+
+    const merge = (l, m, r, depth) => {
       let n1 = m - l + 1;
       let n2 = r - m;
       let L = new Array(n1);
@@ -1160,43 +1213,171 @@ const SortSearchVisualizer = ({ isActive = true, onBack, openSettings, initialTa
       for (let i = 0; i < n1; i++) L[i] = arr[l + i];
       for (let j = 0; j < n2; j++) R[j] = arr[m + 1 + j];
 
+      record(arr, l, r, m, `CONQUER: Merging sorted halves [${L.join(', ')}] and [${R.join(', ')}]`, frames, {
+        phase: 'merge_start',
+        initialArr,
+        activeRange: [l, r],
+        leftRange: [l, m],
+        rightRange: [m + 1, r],
+        leftArr: [...L],
+        rightArr: [...R],
+        mergedSoFar: [],
+        sortedRanges: [...sortedRanges],
+        depth
+      });
+
       let i = 0, j = 0, k = l;
+      let mergedSub = [];
       while (i < n1 && j < n2) {
-        record(arr, l + i, m + 1 + j, k, `Comparing left and right sub-arrays`, frames);
+        record(arr, l + i, m + 1 + j, k, `COMPARE: ${L[i]} (left) vs ${R[j]} (right). ${L[i] <= R[j] ? `${L[i]} ≤ ${R[j]}` : `${R[j]} < ${L[i]}`}`, frames, {
+          phase: 'compare',
+          initialArr,
+          activeRange: [l, r],
+          leftRange: [l, m],
+          rightRange: [m + 1, r],
+          leftIdx: i,
+          rightIdx: j,
+          leftArr: [...L],
+          rightArr: [...R],
+          mergedSoFar: [...mergedSub],
+          writeIndex: k,
+          sortedRanges: [...sortedRanges],
+          depth
+        });
+
         if (L[i] <= R[j]) {
           arr[k] = L[i];
-          record(arr, -1, -1, k, `Writing ${L[i]} to position ${k}`, frames);
+          mergedSub.push(L[i]);
+          record(arr, l + i, -1, k, `PLACING: ${L[i]} into merged position [${k}]`, frames, {
+            phase: 'place',
+            initialArr,
+            activeRange: [l, r],
+            leftRange: [l, m],
+            rightRange: [m + 1, r],
+            leftIdx: i,
+            rightIdx: j,
+            placedVal: L[i],
+            leftArr: [...L],
+            rightArr: [...R],
+            mergedSoFar: [...mergedSub],
+            writeIndex: k,
+            sortedRanges: [...sortedRanges],
+            depth
+          });
           i++;
         } else {
           arr[k] = R[j];
-          record(arr, -1, -1, k, `Writing ${R[j]} to position ${k}`, frames);
+          mergedSub.push(R[j]);
+          record(arr, -1, m + 1 + j, k, `PLACING: ${R[j]} into merged position [${k}]`, frames, {
+            phase: 'place',
+            initialArr,
+            activeRange: [l, r],
+            leftRange: [l, m],
+            rightRange: [m + 1, r],
+            leftIdx: i,
+            rightIdx: j,
+            placedVal: R[j],
+            leftArr: [...L],
+            rightArr: [...R],
+            mergedSoFar: [...mergedSub],
+            writeIndex: k,
+            sortedRanges: [...sortedRanges],
+            depth
+          });
           j++;
         }
         k++;
       }
       while (i < n1) {
         arr[k] = L[i];
-        record(arr, -1, -1, k, `Copying remaining ${L[i]} from left`, frames);
+        mergedSub.push(L[i]);
+        record(arr, l + i, -1, k, `COPYING REMAINING: ${L[i]} from left subarray to position [${k}]`, frames, {
+          phase: 'place',
+          initialArr,
+          activeRange: [l, r],
+          leftRange: [l, m],
+          rightRange: [m + 1, r],
+          leftIdx: i,
+          rightIdx: j,
+          placedVal: L[i],
+          leftArr: [...L],
+          rightArr: [...R],
+          mergedSoFar: [...mergedSub],
+          writeIndex: k,
+          sortedRanges: [...sortedRanges],
+          depth
+        });
         i++; k++;
       }
       while (j < n2) {
         arr[k] = R[j];
-        record(arr, -1, -1, k, `Copying remaining ${R[j]} from right`, frames);
+        mergedSub.push(R[j]);
+        record(arr, -1, m + 1 + j, k, `COPYING REMAINING: ${R[j]} from right subarray to position [${k}]`, frames, {
+          phase: 'place',
+          initialArr,
+          activeRange: [l, r],
+          leftRange: [l, m],
+          rightRange: [m + 1, r],
+          leftIdx: i,
+          rightIdx: j,
+          placedVal: R[j],
+          leftArr: [...L],
+          rightArr: [...R],
+          mergedSoFar: [...mergedSub],
+          writeIndex: k,
+          sortedRanges: [...sortedRanges],
+          depth
+        });
         j++; k++;
       }
-      record(arr, l, r, -1, `Merged range [${l}, ${r}]`, frames);
+
+      sortedRanges.push(`${l}-${r}`);
+      record(arr, l, r, -1, `MERGED: Subarray [${l}..${r}] sorted: [${arr.slice(l, r + 1).join(', ')}]`, frames, {
+        phase: 'merged',
+        initialArr,
+        activeRange: [l, r],
+        sortedRanges: [...sortedRanges],
+        mergedValues: arr.slice(l, r + 1),
+        depth
+      });
     };
 
-    const sort = (l, r) => {
-      if (l >= r) return;
+    const sort = (l, r, depth = 0) => {
+      if (l >= r) {
+        sortedRanges.push(`${l}-${r}`);
+        record(arr, l, r, -1, `BASE CASE: Subarray of size 1 [${arr[l]}] at index ${l} is trivially sorted`, frames, {
+          phase: 'base',
+          initialArr,
+          activeRange: [l, r],
+          sortedRanges: [...sortedRanges],
+          depth
+        });
+        return;
+      }
+
       let m = Math.floor((l + r) / 2);
-      sort(l, m);
-      sort(m + 1, r);
-      merge(l, m, r);
+      record(arr, l, r, m, `DIVIDE: Splitting range [${l}..${r}] into [${l}..${m}] & [${m + 1}..${r}]`, frames, {
+        phase: 'divide',
+        initialArr,
+        activeRange: [l, r],
+        leftRange: [l, m],
+        rightRange: [m + 1, r],
+        mid: m,
+        sortedRanges: [...sortedRanges],
+        depth
+      });
+
+      sort(l, m, depth + 1);
+      sort(m + 1, r, depth + 1);
+      merge(l, m, r, depth);
     };
 
-    sort(0, arr.length - 1);
-    record(arr, -1, -1, -1, 'Merge Sort Complete!', frames);
+    sort(0, arr.length - 1, 0);
+    record(arr, -1, -1, -1, 'Merge Sort Complete! All levels combined.', frames, {
+      phase: 'complete',
+      initialArr,
+      sortedRanges: [...sortedRanges]
+    });
     setTimeline(frames);
     setCurrentStep(0);
     setIsPlaying(true);
@@ -1618,6 +1799,280 @@ const SortSearchVisualizer = ({ isActive = true, onBack, openSettings, initialTa
     else if (selectedSearch === 'Binary Search') binarySearch();
   };
 
+  const renderDivideConquerTree = (frame, width = 600, height = 400) => {
+    const initialArr = frame.initialArr || frame.arr || array;
+    if (!initialArr || initialArr.length === 0) {
+      return (
+        <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', height: '100%', color: 'var(--text-secondary)', fontStyle: 'italic' }}>
+          No elements to display
+        </div>
+      );
+    }
+
+    const { levels, maxDepth } = buildDivideConquerTree(initialArr);
+    const activeRange = frame.activeRange;
+    const leftRange = frame.leftRange;
+    const rightRange = frame.rightRange;
+    const phase = frame.phase || 'init';
+    const sortedRanges = frame.sortedRanges || [];
+    const currentArr = frame.arr || initialArr;
+
+    return (
+      <div style={{
+        display: 'flex',
+        flexDirection: 'column',
+        width: '100%',
+        height: '100%',
+        overflowY: 'auto',
+        overflowX: 'auto',
+        padding: '10px 14px',
+        userSelect: 'none'
+      }}>
+        {/* Phase Header Banner */}
+        <div style={{
+          display: 'flex',
+          justifyContent: 'space-between',
+          alignItems: 'center',
+          padding: '8px 14px',
+          background: 'rgba(0,0,0,0.35)',
+          borderRadius: '10px',
+          border: '1px solid var(--glass-border)',
+          marginBottom: '16px',
+          flexWrap: 'wrap',
+          gap: '8px',
+          flexShrink: 0
+        }}>
+          <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+            <span style={{ fontSize: '1.2rem' }}>
+              {phase === 'divide' ? '✂️' : (phase === 'base' ? '🎯' : (phase === 'merged' || phase === 'complete' ? '✅' : '🔄'))}
+            </span>
+            <div>
+              <div style={{ fontSize: '0.84rem', fontWeight: 'bold', color: 'var(--text-primary)' }}>
+                {phase === 'divide' ? 'DIVIDE PHASE: Recursive Splitting into Halves' :
+                 phase === 'base' ? 'CONQUER: Base Case (Single element is sorted)' :
+                 phase === 'complete' ? 'COMPLETE: Merge Sort Finished (O(N log N))' :
+                 'COMBINE PHASE: Merging Two Sorted Subarrays'}
+              </div>
+              <div style={{ fontSize: '0.74rem', color: 'var(--text-secondary)' }}>
+                {frame.msg || 'Merge Sort Divide & Conquer in progress'}
+              </div>
+            </div>
+          </div>
+
+          {/* Legend */}
+          <div style={{ display: 'flex', gap: '10px', fontSize: '0.72rem', color: 'var(--text-secondary)', alignItems: 'center', flexWrap: 'wrap' }}>
+            <span style={{ display: 'flex', alignItems: 'center', gap: '4px' }}>
+              <span style={{ width: '8px', height: '8px', borderRadius: '50%', background: '#f59e0b', boxShadow: '0 0 6px #f59e0b' }}></span> Divide
+            </span>
+            <span style={{ display: 'flex', alignItems: 'center', gap: '4px' }}>
+              <span style={{ width: '8px', height: '8px', borderRadius: '50%', background: '#38bdf8', boxShadow: '0 0 6px #38bdf8' }}></span> Base Case
+            </span>
+            <span style={{ display: 'flex', alignItems: 'center', gap: '4px' }}>
+              <span style={{ width: '8px', height: '8px', borderRadius: '50%', background: '#c084fc', boxShadow: '0 0 6px #c084fc' }}></span> Merging
+            </span>
+            <span style={{ display: 'flex', alignItems: 'center', gap: '4px' }}>
+              <span style={{ width: '8px', height: '8px', borderRadius: '50%', background: '#10b981', boxShadow: '0 0 6px #10b981' }}></span> Sorted
+            </span>
+          </div>
+        </div>
+
+        {/* Tree Levels */}
+        <div style={{ display: 'flex', flexDirection: 'column', gap: '22px', flex: 1 }}>
+          {levels.map((levelNodes, d) => {
+            const isBaseLevel = d === maxDepth;
+            return (
+              <div key={d} style={{ display: 'flex', flexDirection: 'column', gap: '6px' }}>
+                {/* Level Title Badge */}
+                <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+                  <span style={{
+                    fontSize: '0.75rem',
+                    fontWeight: '800',
+                    letterSpacing: '0.04em',
+                    textTransform: 'uppercase',
+                    color: isBaseLevel ? '#38bdf8' : (d === 0 ? '#a78bfa' : 'var(--text-secondary)'),
+                    background: 'rgba(255,255,255,0.04)',
+                    border: '1px solid var(--glass-border)',
+                    padding: '2px 8px',
+                    borderRadius: '12px'
+                  }}>
+                    {d === 0 ? 'Level 0: Root Array (Original)' : 
+                     isBaseLevel ? `Level ${d} (Base Cases): Subarrays of Size 1` : 
+                     `Level ${d}: Subarrays (Split ${d})`}
+                  </span>
+                  {d < maxDepth && (
+                    <span style={{ fontSize: '0.7rem', color: 'var(--text-secondary)', opacity: 0.7 }}>
+                      ⬇️ Splits into 2 halves
+                    </span>
+                  )}
+                </div>
+
+                {/* Subarray Cards in this Level */}
+                <div style={{
+                  display: 'flex',
+                  justifyContent: 'space-around',
+                  alignItems: 'center',
+                  gap: '12px',
+                  flexWrap: 'wrap',
+                  padding: '4px 0'
+                }}>
+                  {levelNodes.map(node => {
+                    const isSorted = sortedRanges.includes(`${node.l}-${node.r}`) || phase === 'complete';
+                    const isActive = activeRange && activeRange[0] === node.l && activeRange[1] === node.r;
+                    const isLeftChild = leftRange && leftRange[0] === node.l && leftRange[1] === node.r;
+                    const isRightChild = rightRange && rightRange[0] === node.l && rightRange[1] === node.r;
+
+                    let displayVals = isSorted ? currentArr.slice(node.l, node.r + 1) : node.initialSub;
+
+                    let borderColor = 'var(--glass-border)';
+                    let bgColor = 'rgba(255, 255, 255, 0.03)';
+                    let glow = 'none';
+                    let tag = null;
+
+                    if (isActive) {
+                      if (phase === 'divide') {
+                        borderColor = '#f59e0b';
+                        bgColor = 'rgba(245, 158, 11, 0.16)';
+                        glow = '0 0 16px rgba(245, 158, 11, 0.4)';
+                        tag = `✂️ Splitting at mid=${node.mid}`;
+                      } else if (phase === 'base') {
+                        borderColor = '#38bdf8';
+                        bgColor = 'rgba(56, 189, 248, 0.18)';
+                        glow = '0 0 16px rgba(56, 189, 248, 0.4)';
+                        tag = '🎯 Base Case (Size 1)';
+                      } else if (phase === 'merge_start' || phase === 'compare' || phase === 'place') {
+                        borderColor = '#c084fc';
+                        bgColor = 'rgba(192, 132, 252, 0.18)';
+                        glow = '0 0 18px rgba(192, 132, 252, 0.45)';
+                        tag = '🔄 Merging';
+                      } else if (phase === 'merged') {
+                        borderColor = '#10b981';
+                        bgColor = 'rgba(16, 185, 129, 0.2)';
+                        glow = '0 0 18px rgba(16, 185, 129, 0.5)';
+                        tag = '✓ Merged & Sorted';
+                      }
+                    } else if (isLeftChild && (phase === 'compare' || phase === 'place' || phase === 'merge_start')) {
+                      borderColor = '#f59e0b';
+                      bgColor = 'rgba(245, 158, 11, 0.12)';
+                      tag = 'Left Subarray (i)';
+                    } else if (isRightChild && (phase === 'compare' || phase === 'place' || phase === 'merge_start')) {
+                      borderColor = '#60a5fa';
+                      bgColor = 'rgba(96, 165, 250, 0.12)';
+                      tag = 'Right Subarray (j)';
+                    } else if (isSorted) {
+                      borderColor = 'rgba(16, 185, 129, 0.45)';
+                      bgColor = 'rgba(16, 185, 129, 0.08)';
+                      tag = '✓ Sorted';
+                    }
+
+                    return (
+                      <div
+                        key={node.id}
+                        style={{
+                          background: bgColor,
+                          border: `1.5px solid ${borderColor}`,
+                          borderRadius: '10px',
+                          padding: '6px 10px',
+                          boxShadow: glow,
+                          transition: 'all 0.25s cubic-bezier(0.16, 1, 0.3, 1)',
+                          display: 'flex',
+                          flexDirection: 'column',
+                          alignItems: 'center',
+                          gap: '4px',
+                          minWidth: `${Math.max(node.len * 34, 58)}px`
+                        }}
+                      >
+                        {/* Header tag */}
+                        <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', width: '100%', gap: '6px' }}>
+                          <span style={{ fontSize: '0.68rem', fontFamily: 'monospace', color: 'var(--text-secondary)' }}>
+                            [{node.l}..{node.r}]
+                          </span>
+                          {tag && (
+                            <span style={{
+                              fontSize: '0.64rem',
+                              fontWeight: 'bold',
+                              color: isSorted ? '#34d399' : (isActive ? '#fbbf24' : 'var(--text-primary)'),
+                              background: 'rgba(0,0,0,0.35)',
+                              padding: '1px 5px',
+                              borderRadius: '4px'
+                            }}>
+                              {tag}
+                            </span>
+                          )}
+                        </div>
+
+                        {/* Subarray Values */}
+                        <div style={{ display: 'flex', gap: '3px', alignItems: 'center' }}>
+                          {displayVals.map((val, cellIdx) => {
+                            const globalIdx = node.l + cellIdx;
+                            const isCompareLeft = isLeftChild && frame.leftIdx === cellIdx;
+                            const isCompareRight = isRightChild && frame.rightIdx === cellIdx;
+                            const isPlaced = isActive && frame.writeIndex === globalIdx;
+
+                            let cellBg = isSorted ? 'rgba(16, 185, 129, 0.25)' : 'rgba(255, 255, 255, 0.08)';
+                            let cellColor = isSorted ? '#34d399' : 'var(--text-primary)';
+                            let cellBorder = '1px solid rgba(255,255,255,0.1)';
+
+                            if (isCompareLeft) {
+                              cellBg = 'rgba(245, 158, 11, 0.45)';
+                              cellBorder = '1.5px solid #fbbf24';
+                              cellColor = '#fff';
+                            } else if (isCompareRight) {
+                              cellBg = 'rgba(96, 165, 250, 0.45)';
+                              cellBorder = '1.5px solid #60a5fa';
+                              cellColor = '#fff';
+                            } else if (isPlaced) {
+                              cellBg = 'rgba(16, 185, 129, 0.5)';
+                              cellBorder = '2px solid #34d399';
+                              cellColor = '#fff';
+                            }
+
+                            return (
+                              <div
+                                key={cellIdx}
+                                style={{
+                                  minWidth: '28px',
+                                  height: '26px',
+                                  padding: '0 4px',
+                                  background: cellBg,
+                                  border: cellBorder,
+                                  borderRadius: '6px',
+                                  display: 'flex',
+                                  alignItems: 'center',
+                                  justifyContent: 'center',
+                                  fontWeight: 'bold',
+                                  fontSize: '0.82rem',
+                                  color: cellColor,
+                                  transition: 'all 0.2s ease',
+                                  position: 'relative'
+                                }}
+                              >
+                                {val}
+                                {isCompareLeft && (
+                                  <span style={{ position: 'absolute', top: '-14px', fontSize: '0.62rem', color: '#fbbf24', fontWeight: 'bold' }}>
+                                    ↑ i
+                                  </span>
+                                )}
+                                {isCompareRight && (
+                                  <span style={{ position: 'absolute', top: '-14px', fontSize: '0.62rem', color: '#60a5fa', fontWeight: 'bold' }}>
+                                    ↑ j
+                                  </span>
+                                )}
+                              </div>
+                            );
+                          })}
+                        </div>
+                      </div>
+                    );
+                  })}
+                </div>
+              </div>
+            );
+          })}
+        </div>
+      </div>
+    );
+  };
+
   const renderTreeSVG = (width = 600, height = 400) => {
     const frame = timeline[currentStep] || { arr: array, i: -1, j: -1, k: -1, msg: '' };
     const arr = frame.arr || array;
@@ -1627,6 +2082,10 @@ const SortSearchVisualizer = ({ isActive = true, onBack, openSettings, initialTa
           No elements to display
         </div>
       );
+    }
+
+    if (currentDisplayedAlgo === 'Merge Sort') {
+      return renderDivideConquerTree(frame, width, height);
     }
 
     if (currentDisplayedAlgo === 'Heap Sort') {
@@ -1924,6 +2383,9 @@ const SortSearchVisualizer = ({ isActive = true, onBack, openSettings, initialTa
           <select className="styled-select" value={visualizerStyle} onChange={e => setVisualizerStyle(e.target.value)} disabled={isPlaying}>
             <option value="classic">📊 Classic 2D Bars</option>
             <option value="crane">🏗️ 3D Industrial Crane</option>
+            {currentDisplayedAlgo === 'Merge Sort' && (
+              <option value="divide_conquer">🌳 Divide & Conquer (Split & Merge)</option>
+            )}
           </select>
 
           {activeTab === 'Sort' ? (
@@ -1964,7 +2426,7 @@ const SortSearchVisualizer = ({ isActive = true, onBack, openSettings, initialTa
               <input type="checkbox" checked={showCode} onChange={e => setShowCode(e.target.checked)} style={{ accentColor: 'var(--accent-primary)', cursor: 'pointer' }} />
               <span>Code</span>
             </label>
-            {(currentDisplayedAlgo === 'Heap Sort' || currentDisplayedAlgo === 'Binary Search') && (
+            {(currentDisplayedAlgo === 'Heap Sort' || currentDisplayedAlgo === 'Binary Search' || currentDisplayedAlgo === 'Merge Sort') && (
               <label style={{ display: 'flex', alignItems: 'center', gap: '6px', cursor: 'pointer', color: 'var(--text-primary)', userSelect: 'none' }}>
                 <input type="checkbox" checked={showTreePanel} onChange={e => setShowTreePanel(e.target.checked)} style={{ accentColor: 'var(--accent-primary)', cursor: 'pointer' }} />
                 <span>Tree</span>
@@ -1980,7 +2442,7 @@ const SortSearchVisualizer = ({ isActive = true, onBack, openSettings, initialTa
       {isMobile && (
         <div className="mobile-tabs-container">
           <button className={`mobile-tab-btn ${mobileTab === 'vis' ? 'active' : ''}`} onClick={() => setMobileTab('vis')}>📊 Visualizer</button>
-          {(currentDisplayedAlgo === 'Heap Sort' || currentDisplayedAlgo === 'Binary Search') && (
+          {(currentDisplayedAlgo === 'Heap Sort' || currentDisplayedAlgo === 'Binary Search' || currentDisplayedAlgo === 'Merge Sort') && (
             <button className={`mobile-tab-btn ${mobileTab === 'tree' ? 'active' : ''}`} onClick={() => { setMobileTab('tree'); setShowTreePanel(true); }}>🌳 Tree</button>
           )}
           <button className={`mobile-tab-btn ${mobileTab === 'code' ? 'active' : ''}`} onClick={() => { setMobileTab('code'); setShowCode(true); }}>💻 Code</button>
@@ -2520,7 +2982,11 @@ const SortSearchVisualizer = ({ isActive = true, onBack, openSettings, initialTa
                 </div>
               </div>
             );
-          })() : (
+          })() : (visualizerStyle === 'divide_conquer' && currentDisplayedAlgo === 'Merge Sort') ? (
+            <div style={{ flex: 1, display: 'flex', flexDirection: 'column', background: 'var(--canvas-bg, var(--glass-bg))', borderRadius: '14px', border: '1px solid var(--glass-border)', padding: '1rem', overflow: 'hidden', minHeight: 0 }}>
+              {renderDivideConquerTree(frame, 900, 520)}
+            </div>
+          ) : (
             <div style={{ flex: 1, display: 'flex', alignItems: 'flex-end', justifyContent: 'center', gap: isMobile ? '4px' : '8px', background: 'var(--glass-bg)', borderRadius: '14px', border: '1px solid var(--glass-border)', padding: isMobile ? '1rem 0.5rem' : '2rem 1rem', overflow: 'hidden' }}>
               {frame.arr.map((val, idx) => {
                 let bg = 'linear-gradient(to top, var(--accent-primary), var(--accent-secondary))';
@@ -3096,14 +3562,14 @@ const SortSearchVisualizer = ({ isActive = true, onBack, openSettings, initialTa
             </div>
           )}
 
-          {showTreePanel && !isMobile && (currentDisplayedAlgo === 'Heap Sort' || currentDisplayedAlgo === 'Binary Search') && (
+          {showTreePanel && !isMobile && (currentDisplayedAlgo === 'Heap Sort' || currentDisplayedAlgo === 'Binary Search' || currentDisplayedAlgo === 'Merge Sort') && (
             <div
               style={{
                 position: 'fixed',
-                left: `${Math.max(0, Math.min(treePanelPosition.x, window.innerWidth - treePanelSize.width))}px`,
-                top: `${Math.max(0, Math.min(treePanelPosition.y, window.innerHeight - treePanelSize.height))}px`,
-                width: `${treePanelSize.width}px`,
-                height: `${treePanelSize.height}px`,
+                left: `${Math.max(0, Math.min(treePanelPosition.x, window.innerWidth - (currentDisplayedAlgo === 'Merge Sort' ? Math.max(treePanelSize.width, 660) : treePanelSize.width)))}px`,
+                top: `${Math.max(0, Math.min(treePanelPosition.y, window.innerHeight - (currentDisplayedAlgo === 'Merge Sort' ? Math.max(treePanelSize.height, 460) : treePanelSize.height)))}px`,
+                width: `${currentDisplayedAlgo === 'Merge Sort' ? Math.max(treePanelSize.width, 660) : treePanelSize.width}px`,
+                height: `${currentDisplayedAlgo === 'Merge Sort' ? Math.max(treePanelSize.height, 460) : treePanelSize.height}px`,
                 background: 'var(--glass-bg)',
                 backdropFilter: 'blur(12px)',
                 border: '1px solid var(--glass-border)',
@@ -3134,7 +3600,7 @@ const SortSearchVisualizer = ({ isActive = true, onBack, openSettings, initialTa
                 }}
               >
                 <span style={{ fontWeight: 600, fontSize: '0.85rem', color: 'var(--text-primary)', display: 'flex', alignItems: 'center', gap: '6px' }}>
-                  🌳 {currentDisplayedAlgo === 'Heap Sort' ? 'Heap Tree Visualizer' : 'BST Recursion Tree'}
+                  🌳 {currentDisplayedAlgo === 'Heap Sort' ? 'Heap Tree Visualizer' : (currentDisplayedAlgo === 'Merge Sort' ? 'Divide & Conquer Recursion Tree' : 'BST Recursion Tree')}
                 </span>
                 <button
                   onClick={() => setShowTreePanel(false)}
@@ -3381,11 +3847,11 @@ const SortSearchVisualizer = ({ isActive = true, onBack, openSettings, initialTa
         )}
 
         {/* Inline Mobile Tree Panel */}
-        {isMobile && mobileTab === 'tree' && (currentDisplayedAlgo === 'Heap Sort' || currentDisplayedAlgo === 'Binary Search') && (
+        {isMobile && mobileTab === 'tree' && (currentDisplayedAlgo === 'Heap Sort' || currentDisplayedAlgo === 'Binary Search' || currentDisplayedAlgo === 'Merge Sort') && (
           <div style={{ flex: 1, background: 'var(--bg-secondary)', borderRadius: '14px', border: '1px solid var(--glass-border)', display: 'flex', flexDirection: 'column', padding: '0.85rem', overflow: 'hidden', height: '100%', width: '100%' }}>
             <div style={{ padding: '6px 12px', background: 'rgba(255, 255, 255, 0.04)', borderBottom: '1px solid var(--glass-border)', display: 'flex', justifyContent: 'space-between', alignItems: 'center', flexShrink: 0 }}>
               <span style={{ fontWeight: 600, fontSize: '0.85rem', color: 'var(--text-primary)' }}>
-                🌳 {currentDisplayedAlgo === 'Heap Sort' ? 'Heap Tree Visualizer' : 'BST Recursion Tree'}
+                🌳 {currentDisplayedAlgo === 'Heap Sort' ? 'Heap Tree Visualizer' : (currentDisplayedAlgo === 'Merge Sort' ? 'Divide & Conquer Recursion Tree' : 'BST Recursion Tree')}
               </span>
             </div>
             <div style={{ flex: 1, display: 'flex', alignItems: 'center', justifyContent: 'center', background: 'var(--panel-inner-bg, rgba(0,0,0,0.04))', borderRadius: '10px', marginTop: '10px', overflow: 'hidden', padding: '5px' }}>
