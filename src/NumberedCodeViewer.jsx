@@ -17,9 +17,12 @@ export default function NumberedCodeViewer({
   activeLineIndex = null,
   renderCustomLine = null,
   accentColor = 'var(--accent-primary, #3b82f6)',
-  bg = 'rgba(8, 15, 30, 0.95)',
+  bg = null,
   style = {}
 }) {
+  const isLight = typeof document !== 'undefined' && document.documentElement.getAttribute('data-theme-type') === 'light';
+  const effectiveBg = bg !== null ? bg : (isLight ? 'var(--bg-secondary, #f8fafc)' : 'rgba(8, 15, 30, 0.95)');
+
   const cleanCode = typeof code === 'string' ? code.replace(/\r\n/g, '\n').replace(/\r/g, '\n') : '';
   const lines = cleanCode.split('\n');
   if (lines.length > 1 && lines[lines.length - 1] === '') {
@@ -31,9 +34,11 @@ export default function NumberedCodeViewer({
   const gutterWidth = Math.max(38, digitCount * 8 + 18);
 
   const isEmerald = typeof accentColor === 'string' && (accentColor.includes('10b981') || accentColor === 'emerald');
-  const activeBorderColor = isEmerald ? '#10b981' : (accentColor || 'var(--accent-primary, #38bdf8)');
-  const activeBg = isEmerald ? 'rgba(16, 185, 129, 0.18)' : 'rgba(59, 130, 246, 0.18)';
-  const activeGutterColor = isEmerald ? '#34d399' : (accentColor || '#38bdf8');
+  const activeBorderColor = isEmerald ? (isLight ? '#059669' : '#10b981') : (accentColor || (isLight ? 'var(--accent-primary, #2563eb)' : 'var(--accent-primary, #38bdf8)'));
+  const activeBg = isLight 
+    ? (isEmerald ? 'rgba(16, 185, 129, 0.16)' : 'rgba(37, 99, 235, 0.14)') 
+    : (isEmerald ? 'rgba(16, 185, 129, 0.18)' : 'rgba(59, 130, 246, 0.18)');
+  const activeGutterColor = isEmerald ? (isLight ? '#047857' : '#34d399') : (accentColor || (isLight ? '#2563eb' : '#38bdf8'));
 
   return (
     <div
@@ -44,7 +49,7 @@ export default function NumberedCodeViewer({
         flex: 1,
         overflow: 'auto',
         position: 'relative',
-        background: bg,
+        background: effectiveBg,
         borderRadius: '6px',
         ...style
       }}
@@ -72,11 +77,15 @@ export default function NumberedCodeViewer({
 
           const rowBg = highlighted ? activeBg : 'transparent';
           const gutterBg = highlighted 
-            ? (isEmerald ? 'rgba(6, 40, 25, 0.98)' : 'rgba(15, 30, 60, 0.98)')
-            : (bg || 'rgba(8, 15, 30, 0.98)');
+            ? (isLight 
+                ? (isEmerald ? 'rgba(16, 185, 129, 0.22)' : 'rgba(37, 99, 235, 0.18)') 
+                : (effectiveBg === 'transparent' ? (isEmerald ? 'rgba(16, 185, 129, 0.22)' : 'rgba(59, 130, 246, 0.22)') : (isEmerald ? 'rgba(6, 40, 25, 0.98)' : 'rgba(15, 30, 60, 0.98)')))
+            : (isLight 
+                ? 'var(--bg-secondary, #f8fafc)' 
+                : (effectiveBg === 'transparent' ? 'var(--panel-inner-bg, rgba(0,0,0,0.03))' : (effectiveBg || 'rgba(8, 15, 30, 0.98)')));
           const gutterBorder = highlighted 
-            ? `1px solid ${activeBorderColor}` 
-            : '1px solid rgba(255, 255, 255, 0.08)';
+            ? `1.5px solid ${activeBorderColor}` 
+            : (isLight ? '1px solid var(--glass-border, rgba(0, 0, 0, 0.08))' : '1px solid var(--glass-border, rgba(255, 255, 255, 0.08))');
 
           return (
             <div
@@ -106,7 +115,7 @@ export default function NumberedCodeViewer({
                   paddingRight: '12px',
                   paddingLeft: '6px',
                   userSelect: 'none',
-                  color: highlighted ? activeGutterColor : 'var(--text-secondary, #64748b)',
+                  color: highlighted ? (isLight ? (isEmerald ? '#047857' : 'var(--accent-primary, #2563eb)') : (effectiveBg === 'transparent' ? (isEmerald ? '#059669' : 'var(--accent-primary, #2563eb)') : activeGutterColor)) : 'var(--text-secondary, #64748b)',
                   fontWeight: highlighted ? '700' : '400',
                   fontSize: `${Math.max(10, numFontSize - 1)}px`,
                   fontFamily: "'Fira Code', 'JetBrains Mono', Consolas, monospace",
@@ -131,7 +140,8 @@ export default function NumberedCodeViewer({
                   paddingRight: '16px',
                   whiteSpace: wordWrap === 'on' ? 'pre-wrap' : 'pre',
                   wordBreak: wordWrap === 'on' ? 'break-all' : 'normal',
-                  color: highlighted ? '#ffffff' : 'var(--text-primary, #e2e8f0)',
+                  color: isLight ? 'var(--text-primary, #0f172a)' : (highlighted ? '#ffffff' : 'var(--text-primary, #f8fafc)'),
+                  fontWeight: highlighted ? 700 : 400,
                   fontFamily: "'Fira Code', 'JetBrains Mono', Consolas, monospace",
                   fontSize: `${numFontSize}px`,
                   lineHeight: lineHeight,

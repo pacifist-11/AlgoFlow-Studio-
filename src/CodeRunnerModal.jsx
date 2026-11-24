@@ -10,7 +10,7 @@ import { setScreenContext, recordScreenError, clearScreenError } from './screenC
 // Cache for Pyodide instance so it only downloads once per session
 let pyodideInstance = null;
 
-async function getPyodideInstance(onStatus) {
+export async function getPyodideInstance(onStatus) {
   if (pyodideInstance) return pyodideInstance;
 
   if (!window.loadPyodide) {
@@ -448,26 +448,28 @@ _err = _stderr_buffer.getvalue()
       }}>
         {/* Terminal Header */}
         <div style={{
-          padding: '12px 20px',
+          padding: '12px 16px',
           background: '#111827',
           borderBottom: '1px solid rgba(255,255,255,0.06)',
           display: 'flex',
           justifyContent: 'space-between',
           alignItems: 'center',
+          flexWrap: 'wrap',
+          gap: '10px',
           flexShrink: 0
         }}>
-          <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+          <div style={{ display: 'flex', alignItems: 'center', gap: '8px', flexWrap: 'wrap' }}>
             <span style={{ width: '12px', height: '12px', borderRadius: '50%', background: '#ef4444', display: 'inline-block' }}></span>
             <span style={{ width: '12px', height: '12px', borderRadius: '50%', background: '#f59e0b', display: 'inline-block' }}></span>
             <span style={{ width: '12px', height: '12px', borderRadius: '50%', background: '#10b981', display: 'inline-block' }}></span>
             
-            <span style={{ marginLeft: '10px', color: '#e2e8f0', fontSize: '0.88rem', fontFamily: 'monospace', fontWeight: 'bold' }}>
+            <span style={{ marginLeft: '6px', color: '#e2e8f0', fontSize: '0.88rem', fontFamily: 'monospace', fontWeight: 'bold' }}>
               💻 terminal - {language} Code Runner
             </span>
 
             {/* Engine Pill Badge */}
             <span style={{
-              marginLeft: '10px',
+              marginLeft: '6px',
               padding: '3px 10px',
               borderRadius: '20px',
               fontSize: '0.72rem',

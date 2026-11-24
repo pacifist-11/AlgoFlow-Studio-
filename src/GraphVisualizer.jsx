@@ -1547,9 +1547,9 @@ const highlightLogText = (text) => {
     const regex = /(\b\d+(?:\.\d+)?\b)/g;
     const parts = str.split(regex);
     return (
-      <span style={{ color: '#f87171', fontWeight: 'bold' }}>
+      <span style={{ color: 'var(--danger, #ef4444)', fontWeight: 'bold' }}>
         {parts.map((p, i) => 
-          regex.test(p) ? <span key={i} style={{ color: '#fde68a', fontWeight: 'bold' }}>{p}</span> : p
+          regex.test(p) ? <span key={i} style={{ color: 'var(--warning, #d97706)', fontWeight: 'bold' }}>{p}</span> : p
         )}
       </span>
     );
@@ -1571,9 +1571,9 @@ const highlightLogText = (text) => {
     const regex = /(\b\d+(?:\.\d+)?\b)/g;
     const parts = str.split(regex);
     return (
-      <span style={{ color: '#34d399', fontWeight: 'bold' }}>
+      <span style={{ color: 'var(--success, #10b981)', fontWeight: 'bold' }}>
         {parts.map((p, i) => 
-          regex.test(p) ? <span key={i} style={{ color: '#6ee7b7', fontWeight: 'bold' }}>{p}</span> : p
+          regex.test(p) ? <span key={i} style={{ color: 'var(--warning, #d97706)', fontWeight: 'bold' }}>{p}</span> : p
         )}
       </span>
     );
@@ -1596,9 +1596,9 @@ const highlightLogText = (text) => {
     const regex = /(\b\d+(?:\.\d+)?\b)/g;
     const parts = str.split(regex);
     return (
-      <span style={{ color: '#fb923c', fontWeight: 600 }}>
+      <span style={{ color: 'var(--accent-primary)', fontWeight: 600 }}>
         {parts.map((p, i) => 
-          regex.test(p) ? <span key={i} style={{ color: '#fde68a', fontWeight: 'bold' }}>{p}</span> : p
+          regex.test(p) ? <span key={i} style={{ color: 'var(--warning, #d97706)', fontWeight: 'bold' }}>{p}</span> : p
         )}
       </span>
     );
@@ -1607,11 +1607,11 @@ const highlightLogText = (text) => {
   const regex = /(\b\d+(?:\.\d+)?\b)/g;
   const parts = str.split(regex);
   return parts.map((p, i) => 
-    /^\d+(?:\.\d+)?$/.test(p) ? <strong key={i} style={{ color: '#f8fafc' }}>{p}</strong> : p
+    /^\d+(?:\.\d+)?$/.test(p) ? <strong key={i} style={{ color: 'var(--warning, #d97706)' }}>{p}</strong> : p
   );
 };
 
-const GraphVisualizer = ({ onBack, openSettings, initialAlgo = 'Dijkstra', onCopyCode, onCodeChange, fontSize = 14, wordWrap = 'off', onShowUpcomingFeatures }) => {
+const GraphVisualizer = ({ isActive = true, onBack, openSettings, initialAlgo = 'Dijkstra', onCopyCode, onCodeChange, fontSize = 14, wordWrap = 'off', onShowUpcomingFeatures }) => {
   const [localFontSize, setLocalFontSize] = useState(fontSize);
   useEffect(() => {
     setLocalFontSize(fontSize);
@@ -1853,6 +1853,7 @@ const GraphVisualizer = ({ onBack, openSettings, initialAlgo = 'Dijkstra', onCop
 
   // Synchronize Live Screen Telemetry & Problem Diagnostics for AI ChatBot
   useEffect(() => {
+    if (!isActive) return;
     const stepData = timeline && timeline[currentStep] ? timeline[currentStep] : null;
     const recentMsgs = timeline ? timeline.slice(Math.max(0, currentStep - 4), currentStep + 1).map(s => s.msg) : [];
     const screenSummary = `${nodes.length} nodes, ${edges.length} edges (${isDirected ? 'Directed' : 'Undirected'}). Algo: ${algoMode}. Start/Source: ${startNode}, Target/Sink: ${targetNode}.`;
@@ -1877,7 +1878,20 @@ const GraphVisualizer = ({ onBack, openSettings, initialAlgo = 'Dijkstra', onCop
       screenDataSummary: screenSummary,
       lastErrorOrIssue: problem
     });
-  }, [algoMode, currentStep, timeline, nodes, edges, isDirected, startNode, targetNode]);
+
+    return () => {
+      setScreenContext({
+        screenTitle: 'Home Dashboard',
+        activeAlgo: 'None',
+        currentStep: 0,
+        totalSteps: 0,
+        currentStepMessage: 'Home Dashboard active.',
+        recentLogs: [],
+        screenDataSummary: 'AlgoFlow Studio Home Dashboard active.',
+        lastErrorOrIssue: null
+      });
+    };
+  }, [isActive, algoMode, currentStep, timeline, nodes, edges, isDirected, startNode, targetNode]);
   const [speed, setSpeed] = useState(400);
 
   // Side-by-side Code
@@ -3116,10 +3130,10 @@ const GraphVisualizer = ({ onBack, openSettings, initialAlgo = 'Dijkstra', onCop
       )}
 
       {/* Main Workspace split */}
-      <div style={{ flex: 1, display: 'flex', flexDirection: isMobile ? 'column' : 'row', overflow: 'hidden' }}>
+      <div style={{ flex: 1, display: 'flex', flexDirection: isMobile ? 'column' : 'row', overflow: 'hidden', minHeight: 0 }}>
 
         {/* Left Side: Visualizer and Animation Controls */}
-        <div style={{ display: (isMobile && mobileTab !== 'vis') ? 'none' : 'flex', flex: 1, flexDirection: 'column', padding: isMobile ? '0.35rem' : '1.2rem', overflow: 'hidden' }}>
+        <div style={{ display: (isMobile && mobileTab !== 'vis') ? 'none' : 'flex', flex: 1, flexDirection: 'column', padding: isMobile ? '0.35rem' : '1.2rem', overflow: 'hidden', minHeight: 0 }}>
 
           {/* Active step message bar and Completed Complexity Highlight Banner */}
           {(() => {
@@ -3181,19 +3195,19 @@ const GraphVisualizer = ({ onBack, openSettings, initialAlgo = 'Dijkstra', onCop
 
           {/* Graph Canvas */}
           <div
+            className="graph-canvas-container"
             ref={containerRef}
             onClick={handleCanvasClick}
             onMouseMove={handleCanvasMouseMove}
             onMouseUp={handleCanvasMouseUp}
             style={{
               flex: 1,
-              background: 'rgba(15,23,42,0.4)',
+              background: 'var(--canvas-bg, var(--glass-bg))',
               borderRadius: '16px',
               border: '1px solid var(--glass-border)',
               position: 'relative',
               overflow: 'hidden',
-              cursor: draggingNode !== null ? 'grabbing' : 'crosshair',
-              boxShadow: 'inset 0 0 40px rgba(0,0,0,0.2)'
+              cursor: draggingNode !== null ? 'grabbing' : 'crosshair'
             }}
           >
             {/* Edge Lines drawing */}
@@ -3278,15 +3292,15 @@ const GraphVisualizer = ({ onBack, openSettings, initialAlgo = 'Dijkstra', onCop
                             width={boxW}
                             height={22}
                             rx={6}
-                            fill="#0f172a"
-                            stroke={isSaturated ? '#ef4444' : isPath ? '#10b981' : isActive ? '#f59e0b' : 'rgba(148, 163, 184, 0.45)'}
+                            fill="var(--bg-secondary, #ffffff)"
+                            stroke={isSaturated ? '#ef4444' : isPath ? 'var(--success, #059669)' : isActive ? 'var(--warning, #d97706)' : 'var(--glass-border)'}
                             strokeWidth={isSaturated ? '2' : '1.5'}
                           />
                           <text
                             x={midX}
                             y={midY + 4}
                             textAnchor="middle"
-                            fill={isSaturated ? '#fca5a5' : isPath ? '#6ee7b7' : isActive ? '#fde68a' : '#f8fafc'}
+                            fill={isSaturated ? '#ef4444' : isPath ? 'var(--success, #059669)' : isActive ? 'var(--warning, #d97706)' : 'var(--text-primary)'}
                             fontSize={isFlowMode ? '10' : '11'}
                             fontWeight="bold"
                             fontFamily="monospace"
@@ -3430,16 +3444,16 @@ const GraphVisualizer = ({ onBack, openSettings, initialAlgo = 'Dijkstra', onCop
                       position: 'absolute',
                       ...badgeStyle,
                       fontSize: '0.72rem',
-                      background: '#0b0f19',
+                      background: 'var(--bg-secondary, #ffffff)',
                       padding: '2px 8px',
                       borderRadius: '8px',
                       border: isInfinite
-                        ? '1px solid rgba(148, 163, 184, 0.35)'
-                        : '1.5px solid rgba(52, 211, 153, 0.45)',
-                      color: isInfinite ? '#94a3b8' : '#34d399',
+                        ? '1px solid var(--glass-border)'
+                        : '1.5px solid var(--glass-border)',
+                      color: isInfinite ? 'var(--text-secondary)' : 'var(--success, #059669)',
                       fontWeight: 800,
                       fontFamily: 'monospace',
-                      boxShadow: '0 2px 6px rgba(0,0,0,0.6)',
+                      boxShadow: '0 2px 6px rgba(0,0,0,0.1)',
                       whiteSpace: 'nowrap',
                       pointerEvents: 'none',
                       transition: 'all 0.2s ease',
@@ -3511,29 +3525,71 @@ const GraphVisualizer = ({ onBack, openSettings, initialAlgo = 'Dijkstra', onCop
               </button>
               <button className="btn btn-clear" style={{ padding: '0.4rem 0.8rem' }} onClick={() => { setIsPlaying(false); setCurrentStep(p => Math.min(timeline.length - 1, p + 1)); }} disabled={!timeline.length || currentStep === timeline.length - 1}>▶</button>
               <button className="btn btn-clear" style={{ padding: '0.4rem 0.8rem' }} onClick={() => { setIsPlaying(false); setCurrentStep(timeline.length - 1); }} disabled={!timeline.length || currentStep === timeline.length - 1}>⏭</button>
-              <span style={{ fontSize: '0.85rem', color: 'var(--text-secondary)', fontFamily: 'monospace', marginLeft: '5px' }}>{timeline.length ? currentStep + 1 : 0}/{timeline.length}</span>
             </div>
 
-            <div style={{ display: 'flex', alignItems: 'center', gap: '8px', width: isMobile ? '100%' : 'auto', justifyContent: 'center' }}>
-              <span style={{ color: 'var(--text-secondary)', fontSize: '0.8rem', fontWeight: 'bold', whiteSpace: 'nowrap' }}>Speed ({speed}ms)</span>
-              <input type="range" min={50} max={1500} step={50} value={1550 - speed} onChange={e => setSpeed(1550 - Number(e.target.value))} style={{ width: '120px', accentColor: 'var(--accent-primary)', cursor: 'pointer' }} title={`Delay: ${speed}ms`}/>
+            {/* Center Step Status Bar */}
+            <div style={{ flex: 1, display: 'flex', alignItems: 'center', justifyContent: 'center', padding: '0 12px', overflow: 'hidden' }}>
+              <span style={{
+                fontSize: '0.86rem',
+                color: 'var(--text-primary)',
+                fontWeight: 600,
+                background: 'var(--panel-inner-bg, rgba(0,0,0,0.04))',
+                padding: '4px 16px',
+                borderRadius: '20px',
+                border: '1px solid var(--glass-border)',
+                whiteSpace: 'nowrap',
+                overflow: 'hidden',
+                textOverflow: 'ellipsis',
+                maxWidth: '100%',
+                boxShadow: '0 2px 8px rgba(0,0,0,0.06)'
+              }} title={currentFrame?.msg || 'Ready'}>
+                💡 {currentFrame?.msg || 'Select an algorithm and click Run.'}
+              </span>
+            </div>
+
+            <div style={{ display: 'flex', alignItems: 'center', gap: '10px', flexShrink: 0 }}>
+              <span style={{ fontSize: '0.85rem', color: 'var(--text-secondary)', fontFamily: 'monospace', whiteSpace: 'nowrap' }}>{timeline.length ? currentStep + 1 : 0}/{timeline.length}</span>
+              <input 
+                type="range"
+                min={0}
+                max={Math.max(0, timeline.length - 1)}
+                value={currentStep}
+                disabled={timeline.length === 0}
+                onChange={e => {
+                  setIsPlaying(false);
+                  setCurrentStep(Number(e.target.value));
+                }}
+                style={{
+                  width: '110px',
+                  accentColor: 'var(--accent-primary)',
+                  cursor: timeline.length > 0 ? 'pointer' : 'default',
+                  height: '6px'
+                }}
+                title={`Step scrubber: Jump to step ${timeline.length ? currentStep + 1 : 0} / ${timeline.length}`}
+              />
+
+              <div style={{ display: 'flex', alignItems: 'center', gap: '8px', marginLeft: '6px' }}>
+                <span style={{ color: 'var(--text-secondary)', fontSize: '0.8rem', fontWeight: 'bold', whiteSpace: 'nowrap' }}>Speed ({speed}ms)</span>
+                <input type="range" min={50} max={1500} step={50} value={1550 - speed} onChange={e => setSpeed(1550 - Number(e.target.value))} style={{ width: '110px', accentColor: 'var(--accent-primary)', cursor: 'pointer' }} title={`Delay: ${speed}ms`}/>
+              </div>
             </div>
           </div>
 
           {showLogPanel && !isMobile && (
             <div 
+              className="floating-log-panel"
               style={{
                 position: 'absolute',
                 left: `${logPosition.x}px`,
                 top: `${logPosition.y}px`,
                 width: `${logSize.width}px`,
                 height: `${logSize.height}px`,
-                background: 'rgba(15, 23, 42, 0.45)', // Translucent glassmorphism
+                background: 'var(--glass-bg)',
                 backdropFilter: 'blur(16px) saturate(180%)',
                 WebkitBackdropFilter: 'blur(16px) saturate(180%)',
-                border: '1px solid rgba(255, 255, 255, 0.08)',
+                border: '1px solid var(--glass-border)',
                 borderRadius: '16px',
-                boxShadow: '0 20px 50px rgba(0,0,0,0.5)',
+                boxShadow: 'var(--card-shadow, 0 10px 30px -5px rgba(0,0,0,0.12), 0 4px 6px -4px rgba(0,0,0,0.08))',
                 display: 'flex',
                 flexDirection: 'column',
                 overflow: 'hidden',
@@ -3546,8 +3602,8 @@ const GraphVisualizer = ({ onBack, openSettings, initialAlgo = 'Dijkstra', onCop
                 onTouchStart={handleLogHeaderMouseDown}
                 style={{
                   padding: '8px 12px',
-                  background: 'rgba(255, 255, 255, 0.04)',
-                  borderBottom: '1px solid rgba(255, 255, 255, 0.08)',
+                  background: 'var(--panel-inner-bg, rgba(0, 0, 0, 0.03))',
+                  borderBottom: '1px solid var(--glass-border)',
                   display: 'flex',
                   justifyContent: 'space-between',
                   alignItems: 'center',
@@ -3609,7 +3665,7 @@ const GraphVisualizer = ({ onBack, openSettings, initialAlgo = 'Dijkstra', onCop
                 <div
                   style={{
                     width: `${activeStateWidth}px`,
-                    background: 'rgba(0, 0, 0, 0.25)',
+                    background: 'var(--panel-inner-bg, rgba(0, 0, 0, 0.04))',
                     borderRight: '1px solid var(--glass-border)',
                     padding: '6px 8px',
                     display: 'flex',
@@ -3621,7 +3677,7 @@ const GraphVisualizer = ({ onBack, openSettings, initialAlgo = 'Dijkstra', onCop
                     flexShrink: 0
                   }}
                 >
-                  <div style={{ fontSize: '0.72rem', color: 'var(--accent-primary)', textTransform: 'uppercase', fontWeight: 'bold', borderBottom: '1px solid rgba(255,255,255,0.06)', paddingBottom: '2px' }}>
+                  <div style={{ fontSize: '0.72rem', color: 'var(--accent-primary)', textTransform: 'uppercase', fontWeight: 'bold', borderBottom: '1px solid var(--glass-border)', paddingBottom: '2px' }}>
                     Active State
                   </div>
                   <div>
@@ -3635,14 +3691,14 @@ const GraphVisualizer = ({ onBack, openSettings, initialAlgo = 'Dijkstra', onCop
                       <>
                         <div>
                           <span style={{ color: 'var(--text-secondary)' }}>Active Node: </span>
-                          <span style={{ color: '#38bdf8', fontWeight: 'bold' }}>
+                          <span style={{ color: 'var(--accent-primary)', fontWeight: 'bold' }}>
                             {frame.active !== undefined && frame.active !== null && frame.active !== -1 ? `Node ${nodes.find(n => n.id === frame.active)?.label || frame.active}` : 'None'}
                           </span>
                         </div>
 
                         <div>
                           <div style={{ marginBottom: '2px', fontSize: '0.7rem' }}>Visited / Resolved Nodes:</div>
-                          <div style={{ background: 'rgba(0,0,0,0.18)', padding: '2px 4px', borderRadius: '4px', fontFamily: 'monospace', color: '#34d399', wordBreak: 'break-all', fontWeight: 'bold' }}>
+                          <div style={{ background: 'var(--panel-code-bg, rgba(0,0,0,0.06))', border: '1px solid var(--glass-border)', padding: '2px 4px', borderRadius: '4px', fontFamily: 'monospace', color: 'var(--success, #059669)', wordBreak: 'break-all', fontWeight: 'bold' }}>
                             {frame.visited ? (
                               Object.keys(frame.visited).length > 0 ? Object.keys(frame.visited).join(', ') : 'None'
                             ) : frame.dist ? (
@@ -3655,7 +3711,7 @@ const GraphVisualizer = ({ onBack, openSettings, initialAlgo = 'Dijkstra', onCop
                           <div style={{ marginBottom: '2px', fontSize: '0.7rem' }}>
                             {algoMode === 'DFS' ? 'Stack State:' : 'Queue State:'}
                           </div>
-                          <div style={{ background: 'rgba(0,0,0,0.18)', padding: '2px 4px', borderRadius: '4px', fontFamily: 'monospace', color: '#60a5fa', wordBreak: 'break-all' }}>
+                          <div style={{ background: 'var(--panel-code-bg, rgba(0,0,0,0.06))', border: '1px solid var(--glass-border)', padding: '2px 4px', borderRadius: '4px', fontFamily: 'monospace', color: 'var(--accent-primary)', wordBreak: 'break-all' }}>
                             {frame.queue ? (
                               `[${frame.queue.map(item => typeof item === 'object' ? item.id : item).join(', ')}]`
                             ) : frame.stack ? (
@@ -3666,15 +3722,15 @@ const GraphVisualizer = ({ onBack, openSettings, initialAlgo = 'Dijkstra', onCop
 
                         {frame.dsuState && (
                           <div>
-                            <div style={{ marginBottom: '2px', fontSize: '0.7rem', color: '#a78bfa', marginTop: '4px' }}>Union-Find Parents:</div>
-                            <div style={{ background: 'rgba(0,0,0,0.18)', padding: '4px 6px', borderRadius: '4px', fontFamily: 'monospace', color: '#10b981', fontSize: '0.7rem', display: 'flex', flexDirection: 'column', gap: '2px' }}>
+                            <div style={{ marginBottom: '2px', fontSize: '0.7rem', color: 'var(--accent-secondary, #7c3aed)', fontWeight: 'bold', marginTop: '4px' }}>Union-Find Parents:</div>
+                            <div style={{ background: 'var(--panel-code-bg, rgba(0,0,0,0.06))', border: '1px solid var(--glass-border)', padding: '4px 6px', borderRadius: '4px', fontFamily: 'monospace', color: 'var(--success, #059669)', fontSize: '0.7rem', display: 'flex', flexDirection: 'column', gap: '2px' }}>
                               {Object.keys(frame.dsuState).map(k => {
                                 const nodeLabel = nodes.find(n => n.id === parseInt(k))?.label || k;
                                 const parentLabel = nodes.find(n => n.id === frame.dsuState[k])?.label || frame.dsuState[k];
                                 return (
                                   <div key={k} style={{ display: 'flex', justifyContent: 'space-between' }}>
                                     <span>{nodeLabel}:</span>
-                                    <span style={{ color: 'white', fontWeight: 'bold' }}>parent ➔ {parentLabel}</span>
+                                    <span style={{ color: 'var(--text-primary)', fontWeight: 'bold' }}>parent ➔ {parentLabel}</span>
                                   </div>
                                 );
                               })}
@@ -3682,7 +3738,7 @@ const GraphVisualizer = ({ onBack, openSettings, initialAlgo = 'Dijkstra', onCop
                           </div>
                         )}
 
-                        <div style={{ borderTop: '1px solid rgba(255,255,255,0.06)', paddingTop: '4px', marginTop: '2px' }}>
+                        <div style={{ borderTop: '1px solid var(--glass-border)', paddingTop: '4px', marginTop: '2px' }}>
                           <div style={{ fontSize: '0.7rem', textTransform: 'uppercase', fontWeight: 'bold', marginBottom: '2px', color: 'var(--accent-secondary)' }}>Trace Variables</div>
                           <div style={{ display: 'flex', flexDirection: 'column', gap: '2px' }}>
                             {frame.activeEdge && (
@@ -3696,7 +3752,7 @@ const GraphVisualizer = ({ onBack, openSettings, initialAlgo = 'Dijkstra', onCop
                             {frame.activeLine && (
                               <div style={{ marginTop: '4px' }}>
                                 <div style={{ fontSize: '0.65rem', color: 'var(--text-secondary)' }}>Snippet:</div>
-                                <div style={{ fontSize: '0.7rem', color: '#60a5fa', fontFamily: 'monospace', background: 'rgba(0,0,0,0.2)', padding: '2px 4px', borderRadius: '4px', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }} title={frame.activeLine}>
+                                <div style={{ fontSize: '0.7rem', color: 'var(--accent-primary)', fontFamily: 'monospace', background: 'var(--panel-code-bg, rgba(0,0,0,0.06))', border: '1px solid var(--glass-border)', padding: '2px 4px', borderRadius: '4px', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }} title={frame.activeLine}>
                                   {frame.activeLine}
                                 </div>
                               </div>
@@ -3716,7 +3772,7 @@ const GraphVisualizer = ({ onBack, openSettings, initialAlgo = 'Dijkstra', onCop
                 />
 
                 {/* Operations/Timeline Log */}
-                <div ref={logContainerRef} style={{ flex: 1, background: 'rgba(0,0,0,0.15)', padding: '6px 8px', overflowY: 'auto' }}>
+                <div ref={logContainerRef} style={{ flex: 1, background: 'var(--panel-inner-bg, rgba(0,0,0,0.02))', padding: '6px 8px', overflowY: 'auto' }}>
                   <div style={{ fontSize: '0.7rem', color: 'var(--text-secondary)', fontWeight: 'bold', textTransform: 'uppercase', marginBottom: '4px' }}>Log Steps</div>
                   {timeline.length === 0 && (
                     <div style={{ color: 'var(--text-secondary)', fontStyle: 'italic', fontSize: '0.7rem' }}>
@@ -3830,7 +3886,7 @@ const GraphVisualizer = ({ onBack, openSettings, initialAlgo = 'Dijkstra', onCop
               </div>
 
               {/* Log Timeline Steps */}
-              <div style={{ flex: 1, background: 'rgba(0,0,0,0.15)', borderRadius: '10px', padding: '0.75rem 1rem', overflowY: 'auto', border: '1px solid rgba(255,255,255,0.03)' }}>
+              <div style={{ flex: 1, background: 'var(--panel-inner-bg, rgba(0,0,0,0.02))', borderRadius: '10px', padding: '0.75rem 1rem', overflowY: 'auto', border: '1px solid var(--glass-border)' }}>
                 {timeline.length === 0 && (
                   <div style={{ color: 'var(--text-secondary)', fontStyle: 'italic', textAlign: 'center', marginTop: '20px' }}>
                     No simulation logs yet. Run traversal to start.
@@ -3866,8 +3922,8 @@ const GraphVisualizer = ({ onBack, openSettings, initialAlgo = 'Dijkstra', onCop
               {/* Sticky 2-row header */}
               <div style={{ flexShrink: 0, borderBottom: '1px solid var(--glass-border)', background: 'var(--bg-secondary)' }}>
                 {/* Row 1: Language pills */}
-                <div style={{ padding: '8px 12px', display: 'flex', alignItems: 'center', gap: '5px', borderBottom: '1px solid rgba(255,255,255,0.05)', flexWrap: 'wrap' }}>
-                  <span style={{ fontSize: '0.78rem', fontWeight: 700, color: 'var(--text-secondary)', whiteSpace: 'nowrap' }}>🌐 Lang:</span>
+                <div style={{ padding: '8px 12px', display: 'flex', alignItems: 'center', gap: '5px', borderBottom: '1px solid var(--glass-border)', flexWrap: 'wrap' }}>
+                  <span style={{ fontSize: '0.78rem', fontWeight: 700, color: 'var(--text-primary)', whiteSpace: 'nowrap' }}>🌐 Lang:</span>
                   {['C','Java','Python','JS'].map(lang => (
                     <button key={lang} onClick={() => setCodeLang(lang)}
                       style={{
@@ -3875,10 +3931,10 @@ const GraphVisualizer = ({ onBack, openSettings, initialAlgo = 'Dijkstra', onCop
                         fontSize: '0.74rem',
                         borderRadius: '5px',
                         border: codeLang === lang ? '1.5px solid var(--accent-primary)' : '1px solid var(--glass-border)',
-                        background: codeLang === lang ? 'var(--accent-primary)' : 'transparent',
-                        color: codeLang === lang ? '#fff' : 'var(--text-secondary)',
+                        background: codeLang === lang ? 'var(--accent-primary)' : 'var(--panel-inner-bg, rgba(0,0,0,0.04))',
+                        color: codeLang === lang ? '#fff' : 'var(--text-primary)',
                         cursor: 'pointer',
-                        fontWeight: codeLang === lang ? 700 : 400,
+                        fontWeight: codeLang === lang ? 700 : 500,
                         transition: 'all 0.15s'
                       }}
                     >{lang === 'JS' ? 'JavaScript' : lang}</button>

@@ -257,48 +257,48 @@ export const getPointerDetails = (algo, frame) => {
   const details = [];
 
   if (algo === 'Bubble Sort') {
-    if (i !== -1) details.push({ label: 'Index j', val: getValStr(i), color: '#fbbf24' });
+    if (i !== -1) details.push({ label: 'Index j', val: getValStr(i), color: 'var(--warning, #b45309)' });
     if (j !== -1) details.push({ label: 'Index j+1', val: getValStr(j), color: '#60a5fa' });
     if (k !== -1) details.push({ label: 'Sorted boundary', val: getValStr(k), color: '#10b981' });
   } else if (algo === 'Selection Sort') {
-    if (i !== -1) details.push({ label: 'Index j', val: getValStr(i), color: '#fbbf24' });
+    if (i !== -1) details.push({ label: 'Index j', val: getValStr(i), color: 'var(--warning, #b45309)' });
     if (j !== -1) details.push({ label: 'Min Index', val: getValStr(j), color: '#60a5fa' });
     if (k !== -1) details.push({ label: 'Index i (sorted)', val: getValStr(k), color: '#10b981' });
   } else if (algo === 'Insertion Sort') {
-    if (i !== -1) details.push({ label: 'Active Key Index', val: getValStr(i), color: '#fbbf24' });
+    if (i !== -1) details.push({ label: 'Active Key Index', val: getValStr(i), color: 'var(--warning, #b45309)' });
     if (j !== -1) details.push({ label: 'Index j', val: getValStr(j), color: '#60a5fa' });
     if (k !== -1) details.push({ label: 'Sorted Boundary', val: getValStr(k), color: '#10b981' });
   } else if (algo === 'Merge Sort') {
-    if (i !== -1) details.push({ label: 'Merge Left', val: getValStr(i), color: '#fbbf24' });
+    if (i !== -1) details.push({ label: 'Merge Left', val: getValStr(i), color: 'var(--warning, #b45309)' });
     if (j !== -1) details.push({ label: 'Merge Right', val: getValStr(j), color: '#60a5fa' });
     if (k !== -1) details.push({ label: 'Merge Active', val: getValStr(k), color: '#10b981' });
   } else if (algo === 'Quick Sort') {
-    if (i !== -1) details.push({ label: 'Pivot Index', val: getValStr(i), color: '#fbbf24' });
+    if (i !== -1) details.push({ label: 'Pivot Index', val: getValStr(i), color: 'var(--warning, #b45309)' });
     if (j !== -1) details.push({ label: 'Pointer i', val: getValStr(j), color: '#60a5fa' });
     if (k !== -1) details.push({ label: 'Pointer j', val: getValStr(k), color: '#10b981' });
   } else if (algo === 'Heap Sort') {
-    if (i !== -1) details.push({ label: 'Node i', val: getValStr(i), color: '#fbbf24' });
+    if (i !== -1) details.push({ label: 'Node i', val: getValStr(i), color: 'var(--warning, #b45309)' });
     if (j !== -1) details.push({ label: 'Largest Node', val: getValStr(j), color: '#60a5fa' });
     if (k !== -1) details.push({ label: 'End index', val: getValStr(k), color: '#10b981' });
   } else if (algo === 'Counting Sort') {
-    if (i !== -1) details.push({ label: 'Input Index', val: getValStr(i), color: '#fbbf24' });
+    if (i !== -1) details.push({ label: 'Input Index', val: getValStr(i), color: 'var(--warning, #b45309)' });
     if (j !== -1) details.push({ label: 'Placed Index', val: getValStr(j), color: '#60a5fa' });
   } else if (algo === 'Radix Sort') {
-    if (i !== -1) details.push({ label: 'Item Index', val: getValStr(i), color: '#fbbf24' });
+    if (i !== -1) details.push({ label: 'Item Index', val: getValStr(i), color: 'var(--warning, #b45309)' });
     if (j !== -1) details.push({ label: 'Output Index', val: getValStr(j), color: '#60a5fa' });
     if (k !== -1) details.push({ label: 'Place Value', val: `${k}s place`, color: '#10b981' });
   } else if (algo === 'Shell Sort') {
-    if (i !== -1) details.push({ label: 'Index i', val: getValStr(i), color: '#fbbf24' });
+    if (i !== -1) details.push({ label: 'Index i', val: getValStr(i), color: 'var(--warning, #b45309)' });
     if (j !== -1) details.push({ label: 'Index j', val: getValStr(j), color: '#60a5fa' });
     if (k !== -1) details.push({ label: 'Current Gap', val: String(k), color: '#10b981' });
   } else if (algo === 'Cocktail Shaker Sort' || algo === 'Cocktail Sort') {
-    if (i !== -1) details.push({ label: 'Index i', val: getValStr(i), color: '#fbbf24' });
+    if (i !== -1) details.push({ label: 'Index i', val: getValStr(i), color: 'var(--warning, #b45309)' });
     if (j !== -1) details.push({ label: 'Swapped occurred', val: j === 1 ? 'Yes' : 'No', color: '#60a5fa' });
     if (k !== -1) details.push({ label: 'Direction', val: k === 1 ? 'Forward' : 'Backward', color: '#10b981' });
   } else if (algo === 'Linear Search') {
-    if (i !== -1) details.push({ label: 'Mid/Active Index', val: getValStr(i), color: '#fbbf24' });
+    if (i !== -1) details.push({ label: 'Mid/Active Index', val: getValStr(i), color: 'var(--warning, #b45309)' });
   } else if (algo === 'Binary Search') {
-    if (i !== -1) details.push({ label: 'Mid Index', val: getValStr(i), color: '#fbbf24' });
+    if (i !== -1) details.push({ label: 'Mid Index', val: getValStr(i), color: 'var(--warning, #b45309)' });
     if (j !== -1) details.push({ label: 'Left Index', val: getValStr(j), color: '#60a5fa' });
     if (k !== -1) details.push({ label: 'Right Index', val: getValStr(k), color: '#10b981' });
   }
@@ -399,9 +399,9 @@ const highlightLogText = (text) => {
       const regex = /(\b\d+(?:\.\d+)?\b)/g;
       const parts = contentStr.split(regex);
       return (
-        <span style={{ color: '#f87171', fontWeight: 'bold' }}>
+        <span style={{ color: 'var(--danger, #ef4444)', fontWeight: 'bold' }}>
           {parts.map((p, i) =>
-            regex.test(p) ? <span key={i} style={{ color: '#fbbf24', textShadow: '0 0 8px rgba(251,191,36,0.3)' }}>{p}</span> : p
+            regex.test(p) ? <span key={i} style={{ color: 'var(--warning, #d97706)' }}>{p}</span> : p
           )}
         </span>
       );
@@ -428,9 +428,9 @@ const highlightLogText = (text) => {
       const regex = /(\b\d+(?:\.\d+)?\b)/g;
       const parts = contentStr.split(regex);
       return (
-        <span style={{ color: '#34d399', fontWeight: 'bold' }}>
+        <span style={{ color: 'var(--success, #10b981)', fontWeight: 'bold' }}>
           {parts.map((p, i) =>
-            regex.test(p) ? <span key={i} style={{ color: '#fbbf24' }}>{p}</span> : p
+            regex.test(p) ? <span key={i} style={{ color: 'var(--warning, #d97706)' }}>{p}</span> : p
           )}
         </span>
       );
@@ -452,9 +452,9 @@ const highlightLogText = (text) => {
       const regex = /(\b\d+(?:\.\d+)?\b)/g;
       const parts = contentStr.split(regex);
       return (
-        <span style={{ color: '#fb923c', fontWeight: 600 }}>
+        <span style={{ color: 'var(--accent-primary)', fontWeight: 600 }}>
           {parts.map((p, i) =>
-            regex.test(p) ? <span key={i} style={{ color: '#fbbf24', fontWeight: 'bold' }}>{p}</span> : p
+            regex.test(p) ? <span key={i} style={{ color: 'var(--warning, #d97706)', fontWeight: 'bold' }}>{p}</span> : p
           )}
         </span>
       );
@@ -463,7 +463,7 @@ const highlightLogText = (text) => {
     const regex = /(\b\d+(?:\.\d+)?\b)/g;
     const parts = contentStr.split(regex);
     return parts.map((p, i) =>
-      /^\d+(?:\.\d+)?$/.test(p) ? <strong key={i} style={{ color: '#fbbf24' }}>{p}</strong> : p
+      /^\d+(?:\.\d+)?$/.test(p) ? <strong key={i} style={{ color: 'var(--warning, #d97706)' }}>{p}</strong> : p
     );
   };
 
@@ -611,10 +611,25 @@ const isSortSearchLineMatch = (algo, msg, lineText) => {
     }
   }
 
+  if (algo === 'Radix Sort') {
+    if (m.includes('pass') || m.includes('starting')) {
+      return line.includes('exp') || line.includes('radixsort') || line.includes('radix_sort') || line.includes('countingsort');
+    }
+    if (m.includes('bucket') || m.includes('inspecting')) {
+      return line.includes('count[') || line.includes('/ exp') || line.includes('% 10');
+    }
+    if (m.includes('extracted') || m.includes('collecting')) {
+      return line.includes('output[') || line.includes('arr[i] =') || line.includes('arr[idx] =');
+    }
+    if (m.includes('complete')) {
+      return line.includes('return') || line.includes('}');
+    }
+  }
+
   return false;
 };
 
-const SortSearchVisualizer = ({ onBack, openSettings, initialTab = 'Sort', initialSort = 'Bubble Sort', initialSearch = 'Linear Search', onCopyCode, onCodeChange, fontSize = 14, wordWrap = 'off', onShowUpcomingFeatures }) => {
+const SortSearchVisualizer = ({ isActive = true, onBack, openSettings, initialTab = 'Sort', initialSort = 'Bubble Sort', initialSearch = 'Linear Search', onCopyCode, onCodeChange, fontSize = 14, wordWrap = 'off', onShowUpcomingFeatures }) => {
   const [localFontSize, setLocalFontSize] = useState(fontSize);
   useEffect(() => {
     setLocalFontSize(fontSize);
@@ -650,6 +665,7 @@ const SortSearchVisualizer = ({ onBack, openSettings, initialTab = 'Sort', initi
 
   // Synchronize Live Screen Telemetry & Problem Diagnostics for AI ChatBot
   useEffect(() => {
+    if (!isActive) return;
     const algo = activeTab === 'Sort' ? selectedSort : selectedSearch;
     const stepData = timeline && timeline[currentStep] ? timeline[currentStep] : null;
     const recentMsgs = timeline ? timeline.slice(Math.max(0, currentStep - 4), currentStep + 1).map(s => s.msg) : [];
@@ -673,7 +689,20 @@ const SortSearchVisualizer = ({ onBack, openSettings, initialTab = 'Sort', initi
       screenDataSummary: screenSummary,
       lastErrorOrIssue: problem
     });
-  }, [activeTab, selectedSort, selectedSearch, currentStep, timeline, array, searchValue]);
+
+    return () => {
+      setScreenContext({
+        screenTitle: 'Home Dashboard',
+        activeAlgo: 'None',
+        currentStep: 0,
+        totalSteps: 0,
+        currentStepMessage: 'Home Dashboard active.',
+        recentLogs: [],
+        screenDataSummary: 'AlgoFlow Studio Home Dashboard active.',
+        lastErrorOrIssue: null
+      });
+    };
+  }, [isActive, activeTab, selectedSort, selectedSearch, currentStep, timeline, array, searchValue]);
 
   // Dynamic free-space finder: places log panel in bottom-right corner away from the central array bars
   const getFreeLogPosition = () => {
@@ -1356,18 +1385,43 @@ const SortSearchVisualizer = ({ onBack, openSettings, initialTab = 'Sort', initi
       return Math.floor(Math.abs(num) / place) % 10;
     };
 
+    // Calculate total passes (number of decimal digits in maxVal)
+    let totalPasses = 1;
+    let tempMax = maxVal;
+    while (Math.floor(tempMax / 10) > 0) {
+      totalPasses++;
+      tempMax = Math.floor(tempMax / 10);
+    }
+
+    const getPlaceLabel = (place) => {
+      if (place === 1) return '1s (Units)';
+      if (place === 10) return '10s (Tens)';
+      if (place === 100) return '100s (Hundreds)';
+      if (place === 1000) return '1,000s (Thousands)';
+      return `${place}s`;
+    };
+
     frames.push({
       arr: [...arr],
       i: -1,
       j: -1,
-      k: 1,
-      msg: 'Starting Radix Sort: LSD passes',
+      k: -1,
+      activePlace: 1,
+      placeName: '1s (Units)',
+      passNum: 1,
+      totalPasses,
+      activeBucket: -1,
+      activeVal: null,
+      phase: 'init',
+      msg: `Starting Radix Sort: ${totalPasses} LSD pass${totalPasses > 1 ? 'es' : ''} needed for max value (${maxVal})`,
       buckets: Array.from({ length: 10 }, () => [])
     });
 
+    let passNum = 1;
     let maxPass = maxVal > 0 ? maxVal : 1;
-    for (let place = 1; Math.floor(maxPass / place) > 0; place *= 10) {
+    for (let place = 1; Math.floor(maxPass / place) > 0; place *= 10, passNum++) {
       let buckets = Array.from({ length: 10 }, () => []);
+      const placeName = getPlaceLabel(place);
 
       // Step 1: Distribute elements into buckets
       for (let i = 0; i < arr.length; i++) {
@@ -1378,8 +1432,16 @@ const SortSearchVisualizer = ({ onBack, openSettings, initialTab = 'Sort', initi
           arr: [...arr],
           i: i,
           j: -1,
-          k: place,
-          msg: `Digit place ${place}s: Checking element ${val}, digit is ${digit}. Move to bucket ${digit}`,
+          k: -1, // Keep bar coloring accurate: do not hijack k with place scalar
+          activePlace: place,
+          placeName,
+          passNum,
+          totalPasses,
+          activeBucket: digit,
+          activeVal: val,
+          activeDigit: digit,
+          phase: 'distribute',
+          msg: `📥 [Pass ${passNum} • ${placeName}] Inspecting ${val} (digit: ${digit}) ➔ Move to Bucket [${digit}]`,
           buckets: buckets.map((b, idx) => idx === digit ? [...b, val] : [...b])
         });
 
@@ -1398,8 +1460,15 @@ const SortSearchVisualizer = ({ onBack, openSettings, initialTab = 'Sort', initi
             arr: [...newArr],
             i: -1,
             j: idx,
-            k: place,
-            msg: `Digit place ${place}s: Pulling ${val} from bucket ${d} back to index ${idx}`,
+            k: idx, // Highlight the newly positioned element green in the array
+            activePlace: place,
+            placeName,
+            passNum,
+            totalPasses,
+            activeBucket: d,
+            activeVal: val,
+            phase: 'collect',
+            msg: `📤 [Pass ${passNum} • ${placeName}] Bucket [${d}] ➔ Restored ${val} to index ${idx}`,
             buckets: buckets.map(b => [...b])
           });
 
@@ -1412,8 +1481,15 @@ const SortSearchVisualizer = ({ onBack, openSettings, initialTab = 'Sort', initi
         arr: [...arr],
         i: -1,
         j: -1,
-        k: place,
-        msg: `Completed pass for ${place}s place: Array is temporarily sorted by this digit`,
+        k: -1,
+        activePlace: place,
+        placeName,
+        passNum,
+        totalPasses,
+        activeBucket: -1,
+        activeVal: null,
+        phase: 'pass_done',
+        msg: `✨ Pass ${passNum}/${totalPasses} Complete: Array stably sorted by ${placeName} place`,
         buckets: Array.from({ length: 10 }, () => [])
       });
     }
@@ -1423,7 +1499,15 @@ const SortSearchVisualizer = ({ onBack, openSettings, initialTab = 'Sort', initi
       i: -1,
       j: -1,
       k: -1,
-      msg: 'Radix Sort Complete!',
+      activePlace: -1,
+      placeName: 'Done',
+      passNum: totalPasses,
+      totalPasses,
+      activeBucket: -1,
+      activeVal: null,
+      phase: 'complete',
+      isComplete: true,
+      msg: `🎉 Radix Sort Complete! Array fully sorted in ${totalPasses} passes [O(d · (n + b))].`,
       buckets: Array.from({ length: 10 }, () => [])
     });
 
@@ -1904,17 +1988,17 @@ const SortSearchVisualizer = ({ onBack, openSettings, initialTab = 'Sort', initi
         </div>
       )}
 
-      <div style={{ flex: 1, display: 'flex', flexDirection: isMobile ? 'column' : 'row', padding: isMobile ? '0.35rem' : '1.5rem', gap: isMobile ? '0.5rem' : '1.5rem', overflow: 'hidden' }}>
+      <div style={{ flex: 1, display: 'flex', flexDirection: isMobile ? 'column' : 'row', padding: isMobile ? '0.35rem' : '1.2rem', gap: isMobile ? '0.5rem' : '1.2rem', overflow: 'hidden', minHeight: 0 }}>
 
         {/* Left Column: Visualizer */}
-        <div style={{ display: (isMobile && mobileTab !== 'vis') ? 'none' : 'flex', flex: 1, flexDirection: 'column', overflow: 'hidden', position: 'relative' }}>
+        <div style={{ display: (isMobile && mobileTab !== 'vis') ? 'none' : 'flex', flex: 1, flexDirection: 'column', overflow: 'hidden', position: 'relative', minHeight: 0 }}>
           {(() => {
-            const isCompleted = timeline.length > 0 && currentStep === timeline.length - 1 && (frame.msg?.includes('Complete') || frame.msg?.includes('Found') || frame.msg?.includes('not found'));
+            const isCompleted = timeline.length > 0 && currentStep === timeline.length - 1 && (frame.msg?.includes('Complete') || frame.msg?.includes('Found') || frame.msg?.includes('not found') || frame.isComplete);
             const complexity = ALGO_COMPLEXITIES[currentDisplayedAlgo] || ALGO_COMPLEXITIES['Bubble Sort'];
             const nVal = frame.arr ? frame.arr.length : array.length;
 
             return (
-              <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', marginBottom: '1.2rem', gap: '8px', flexShrink: 0 }}>
+              <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', marginBottom: '1.2rem', gap: '8px', flexShrink: 0, width: '100%' }}>
                 <div style={{ height: '40px', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
                   <span style={{
                     fontSize: isMobile ? '1.02rem' : '1.35rem',
@@ -1975,8 +2059,8 @@ const SortSearchVisualizer = ({ onBack, openSettings, initialTab = 'Sort', initi
                   alignItems: 'center',
                   justifyContent: 'space-between',
                   padding: '6px 14px',
-                  background: 'rgba(15, 23, 42, 0.85)',
-                  border: '1px solid rgba(255, 255, 255, 0.1)',
+                  background: 'var(--glass-bg)',
+                  border: '1px solid var(--glass-border)',
                   borderRadius: '10px',
                   zIndex: 20,
                   fontSize: isMobile ? '10.5px' : '12px',
@@ -2000,8 +2084,8 @@ const SortSearchVisualizer = ({ onBack, openSettings, initialTab = 'Sort', initi
                   </div>
 
                   <div style={{ display: 'flex', alignItems: 'center', gap: '12px', fontFamily: 'monospace' }}>
-                    <span style={{ color: '#fbbf24', display: 'flex', alignItems: 'center', gap: '4px' }}>
-                      <span style={{ width: '8px', height: '8px', borderRadius: '50%', background: '#fbbf24', display: 'inline-block' }} />
+                    <span style={{ color: 'var(--warning, #b45309)', display: 'flex', alignItems: 'center', gap: '4px' }}>
+                      <span style={{ width: '8px', height: '8px', borderRadius: '50%', background: 'var(--warning, #b45309)', display: 'inline-block' }} />
                       Crane A ({isSearch ? 'Target' : 'PTR i'}): [{craneAIdx}] = {frame.arr[craneAIdx] !== undefined ? frame.arr[craneAIdx] : '-'}
                     </span>
                     {craneBActive && (
@@ -2500,10 +2584,10 @@ const SortSearchVisualizer = ({ onBack, openSettings, initialTab = 'Sort', initi
                         boxShadow: 'inset 0 0 10px rgba(0,0,0,0.1)'
                       }}
                     >
-                      <span style={{ fontSize: '0.75rem', fontWeight: 'bold', color: '#fbbf24', borderBottom: '1px solid var(--glass-border)', width: '100%', textAlign: 'center', paddingBottom: '3px' }}>
+                      <span style={{ fontSize: '0.75rem', fontWeight: 'bold', color: 'var(--warning, #b45309)', borderBottom: '1px solid var(--glass-border)', width: '100%', textAlign: 'center', paddingBottom: '3px' }}>
                         Val: {numVal}
                       </span>
-                      <span style={{ fontSize: '1.1rem', fontWeight: 'bold', color: '#fff', paddingTop: '4px' }}>
+                      <span style={{ fontSize: '1.1rem', fontWeight: 'bold', color: 'var(--text-primary)', paddingTop: '4px' }}>
                         {cnt}
                       </span>
                     </div>
@@ -2519,89 +2603,193 @@ const SortSearchVisualizer = ({ onBack, openSettings, initialTab = 'Sort', initi
               background: 'var(--glass-bg)',
               borderRadius: '14px',
               border: '1px solid var(--glass-border)',
-              padding: '1rem',
+              padding: isMobile ? '0.65rem 0.5rem' : '1rem',
               display: 'flex',
               flexDirection: 'column',
               gap: '10px',
-              flexShrink: 0
+              flexShrink: 0,
+              overflowX: 'auto'
             }}>
-              <h4 style={{ margin: 0, color: 'var(--text-secondary)', fontSize: '0.9rem', fontWeight: 'bold' }}>
-                🪣 Radix Digits Buckets (0 to 9) - {frame.k}s Place
-              </h4>
-              <div style={{ display: 'grid', gridTemplateColumns: 'repeat(10, 1fr)', gap: isMobile ? '4px' : '10px' }}>
-                {frame.buckets.map((bucket, bIdx) => (
-                  <div
-                    key={bIdx}
-                    style={{
-                      background: 'rgba(255,255,255,0.03)',
-                      border: '1px solid var(--glass-border)',
-                      borderRadius: '8px',
-                      minHeight: isMobile ? '50px' : '80px',
-                      display: 'flex',
-                      flexDirection: 'column',
-                      alignItems: 'center',
-                      padding: '4px 0',
-                      gap: '4px',
-                      boxShadow: 'inset 0 0 10px rgba(0,0,0,0.1)'
-                    }}
-                  >
-                    <span style={{ fontSize: isMobile ? '0.7rem' : '0.85rem', fontWeight: 'bold', color: '#fbbf24', borderBottom: '1px solid var(--glass-border)', width: '100%', textAlign: 'center', paddingBottom: '3px' }}>
-                      [{bIdx}]
+              <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', flexWrap: 'wrap', gap: '8px' }}>
+                <h4 style={{ margin: 0, color: 'var(--text-primary)', fontSize: '0.92rem', fontWeight: 'bold', display: 'flex', alignItems: 'center', gap: '8px' }}>
+                  <span>🪣 Radix Digit Buckets [0–9]</span>
+                  {frame.placeName && !frame.isComplete && (
+                    <span style={{
+                      background: 'rgba(59, 130, 246, 0.15)',
+                      border: '1px solid rgba(59, 130, 246, 0.3)',
+                      color: 'var(--accent-primary)',
+                      fontSize: '0.78rem',
+                      padding: '2px 8px',
+                      borderRadius: '6px',
+                      fontWeight: 600
+                    }}>
+                      Pass {frame.passNum || 1} of {frame.totalPasses || 2}: {frame.placeName} Place
                     </span>
-                    <div style={{ display: 'flex', flexDirection: 'column', gap: '2px', width: '100%', alignItems: 'center', overflowY: 'auto' }}>
-                      {bucket.map((val, idx) => (
-                        <div
-                          key={idx}
-                          style={{
-                            background: 'linear-gradient(135deg, var(--accent-primary), var(--accent-secondary))',
-                            borderRadius: '4px',
-                            padding: '1px 4px',
-                            fontSize: isMobile ? '0.65rem' : '0.8rem',
-                            fontWeight: 'bold',
-                            color: '#fff',
-                            boxShadow: '0 2px 5px rgba(0,0,0,0.2)'
-                          }}
-                        >
-                          {val}
-                        </div>
-                      ))}
+                  )}
+                  {frame.isComplete && (
+                    <span style={{
+                      background: 'rgba(16, 185, 129, 0.15)',
+                      border: '1px solid rgba(16, 185, 129, 0.3)',
+                      color: '#10b981',
+                      fontSize: '0.78rem',
+                      padding: '2px 8px',
+                      borderRadius: '6px',
+                      fontWeight: 700
+                    }}>
+                      ✓ All Passes Finished
+                    </span>
+                  )}
+                </h4>
+                {frame.phase && !frame.isComplete && (
+                  <span style={{
+                    fontSize: '0.8rem',
+                    fontWeight: 600,
+                    color: frame.phase === 'collect' ? '#a78bfa' : 'var(--warning, #b45309)',
+                    background: frame.phase === 'collect' ? 'rgba(167, 139, 250, 0.1)' : 'rgba(217, 119, 6, 0.15)',
+                    padding: '2px 8px',
+                    borderRadius: '6px',
+                    border: `1px solid ${frame.phase === 'collect' ? 'rgba(167, 139, 250, 0.3)' : 'rgba(217, 119, 6, 0.35)'}`
+                  }}>
+                    {frame.phase === 'collect' ? '📤 Collecting to Array' : '📥 Distributing to Buckets'}
+                  </span>
+                )}
+              </div>
+
+              <div style={{ display: 'grid', gridTemplateColumns: 'repeat(10, 1fr)', gap: isMobile ? '4px' : '10px', minWidth: isMobile ? '380px' : 'auto' }}>
+                {frame.buckets.map((bucket, bIdx) => {
+                  const isActiveBucket = frame.activeBucket === bIdx;
+                  return (
+                    <div
+                      key={bIdx}
+                      style={{
+                        background: isActiveBucket ? 'rgba(217, 119, 6, 0.15)' : 'var(--glass-bg)',
+                        border: isActiveBucket ? '2px solid var(--warning, #b45309)' : '1px solid var(--glass-border)',
+                        borderRadius: '10px',
+                        minHeight: isMobile ? '56px' : '90px',
+                        display: 'flex',
+                        flexDirection: 'column',
+                        alignItems: 'center',
+                        padding: '6px 2px',
+                        gap: '4px',
+                        boxShadow: isActiveBucket ? '0 0 16px rgba(217, 119, 6, 0.35)' : 'inset 0 0 10px rgba(0,0,0,0.1)',
+                        transform: isActiveBucket ? 'translateY(-2px)' : 'none',
+                        transition: 'all 0.2s ease'
+                      }}
+                    >
+                      <span style={{
+                        fontSize: isMobile ? '0.7rem' : '0.85rem',
+                        fontWeight: 'bold',
+                        color: isActiveBucket ? 'var(--warning, #b45309)' : 'var(--text-secondary)',
+                        borderBottom: `1px solid ${isActiveBucket ? 'rgba(251, 191, 36, 0.4)' : 'var(--glass-border)'}`,
+                        width: '100%',
+                        textAlign: 'center',
+                        paddingBottom: '3px'
+                      }}>
+                        [{bIdx}]
+                      </span>
+                      <div style={{ display: 'flex', flexDirection: 'column', gap: '3px', width: '100%', alignItems: 'center', overflowY: 'auto' }}>
+                        {bucket.map((val, idx) => {
+                          const isNewestItem = isActiveBucket && frame.activeVal === val;
+                          return (
+                            <div
+                              key={idx}
+                              style={{
+                                background: isNewestItem
+                                  ? 'linear-gradient(135deg, #f59e0b, #d97706)'
+                                  : 'linear-gradient(135deg, var(--accent-primary), var(--accent-secondary))',
+                                borderRadius: '4px',
+                                padding: '2px 5px',
+                                fontSize: isMobile ? '0.68rem' : '0.82rem',
+                                fontWeight: 'bold',
+                                color: '#fff',
+                                boxShadow: isNewestItem ? '0 0 8px #f59e0b' : '0 2px 5px rgba(0,0,0,0.2)',
+                                transition: 'all 0.15s ease'
+                              }}
+                            >
+                              {val}
+                            </div>
+                          );
+                        })}
+                      </div>
                     </div>
-                  </div>
-                ))}
+                  );
+                })}
               </div>
             </div>
           )}
 
-          <div style={{ display: 'flex', flexDirection: isMobile ? 'column' : 'row', justifyContent: 'space-between', alignItems: 'center', marginTop: '1.5rem', background: 'var(--glass-bg)', padding: isMobile ? '10px 14px' : '12px 24px', borderRadius: '16px', border: '1px solid var(--glass-border)', flexShrink: 0, gap: '10px' }}>
+          <div style={{ display: 'flex', flexDirection: isMobile ? 'column' : 'row', justifyContent: 'space-between', alignItems: 'center', marginTop: isMobile ? '0.5rem' : '0.85rem', background: 'var(--glass-bg)', padding: isMobile ? '10px 14px' : '10px 20px', borderRadius: '16px', border: '1px solid var(--glass-border)', flexShrink: 0, gap: '10px', boxShadow: '0 4px 15px rgba(0,0,0,0.06)' }}>
             <div style={{ display: 'flex', alignItems: 'center', gap: isMobile ? '4px' : '8px', flexWrap: 'wrap', justifyContent: 'center' }}>
               <button className="btn btn-clear" style={{ fontWeight: 'bold' }} onClick={() => { setIsPlaying(false); setCurrentStep(0); }} disabled={!timeline.length || currentStep === 0}>⏮ First</button>
               <button className="btn btn-clear" style={{ fontWeight: 'bold' }} onClick={() => { setIsPlaying(false); setCurrentStep(p => Math.max(0, p - 1)); }} disabled={!timeline.length || currentStep === 0}>◀ Prev</button>
               <button className="btn btn-clear" style={{ border: 'none', background: isPlaying ? 'rgba(59,130,246,0.6)' : 'var(--accent-primary)', color: 'white', fontWeight: 'bold', boxShadow: '0 4px 10px rgba(59,130,246,0.4)' }} onClick={() => setIsPlaying(p => !p)} disabled={!timeline.length}>{isPlaying ? '⏸' : '▶ Play'}</button>
               <button className="btn btn-clear" style={{ fontWeight: 'bold' }} onClick={() => { setIsPlaying(false); setCurrentStep(p => Math.min(timeline.length - 1, p + 1)); }} disabled={!timeline.length || currentStep === timeline.length - 1}>Next ▶</button>
               <button className="btn btn-clear" style={{ fontWeight: 'bold' }} onClick={() => { setIsPlaying(false); setCurrentStep(timeline.length - 1); }} disabled={!timeline.length || currentStep === timeline.length - 1}>Last ⏭</button>
-              <span style={{ fontSize: '0.85rem', color: 'var(--text-secondary)', marginLeft: isMobile ? '5px' : '15px', fontWeight: 'bold', fontFamily: 'monospace' }}>Step: {timeline.length ? currentStep + 1 : 0}/{timeline.length}</span>
             </div>
 
-            <div style={{ display: 'flex', alignItems: 'center', gap: '8px', width: isMobile ? '100%' : 'auto', justifyContent: 'center' }}>
-              <span style={{ color: 'var(--text-secondary)', fontWeight: 600, fontSize: '0.82rem', whiteSpace: 'nowrap' }}>Speed ({speed}ms)</span>
-              <input type="range" min={50} max={1500} step={50} value={1550 - speed} onChange={e => setSpeed(1550 - Number(e.target.value))} style={{ width: isMobile ? '100%' : '160px', accentColor: 'var(--accent-primary)', cursor: 'pointer' }} title={`Delay: ${speed}ms`} />
+            {/* Center Step Status Bar */}
+            <div style={{ flex: 1, display: 'flex', alignItems: 'center', justifyContent: 'center', padding: '0 12px', overflow: 'hidden' }}>
+              <span style={{
+                fontSize: '0.86rem',
+                color: 'var(--text-primary)',
+                fontWeight: 600,
+                background: 'var(--panel-inner-bg, rgba(0,0,0,0.04))',
+                padding: '5px 16px',
+                borderRadius: '20px',
+                border: '1px solid var(--glass-border)',
+                whiteSpace: 'nowrap',
+                overflow: 'hidden',
+                textOverflow: 'ellipsis',
+                maxWidth: '100%',
+                boxShadow: '0 2px 8px rgba(0,0,0,0.06)'
+              }} title={frame?.msg || 'Ready'}>
+                💡 {frame?.msg || 'Ready to sort/search.'}
+              </span>
+            </div>
+
+            <div style={{ display: 'flex', alignItems: 'center', gap: '10px', flexShrink: 0 }}>
+              <span style={{ fontSize: '0.85rem', color: 'var(--text-secondary)', fontWeight: 'bold', fontFamily: 'monospace', whiteSpace: 'nowrap' }}>Step: {timeline.length ? currentStep + 1 : 0}/{timeline.length}</span>
+              <input 
+                type="range"
+                min={0}
+                max={Math.max(0, timeline.length - 1)}
+                value={currentStep}
+                disabled={timeline.length === 0}
+                onChange={e => {
+                  setIsPlaying(false);
+                  setCurrentStep(Number(e.target.value));
+                }}
+                style={{
+                  width: '110px',
+                  accentColor: 'var(--accent-primary)',
+                  cursor: timeline.length > 0 ? 'pointer' : 'default',
+                  height: '6px'
+                }}
+                title={`Step scrubber: Jump to step ${timeline.length ? currentStep + 1 : 0} / ${timeline.length}`}
+              />
+
+              <div style={{ display: 'flex', alignItems: 'center', gap: '8px', marginLeft: '6px' }}>
+                <span style={{ color: 'var(--text-secondary)', fontWeight: 600, fontSize: '0.82rem', whiteSpace: 'nowrap' }}>Speed ({speed}ms)</span>
+                <input type="range" min={50} max={1500} step={50} value={1550 - speed} onChange={e => setSpeed(1550 - Number(e.target.value))} style={{ width: isMobile ? '100%' : '130px', accentColor: 'var(--accent-primary)', cursor: 'pointer' }} title={`Delay: ${speed}ms`} />
+              </div>
             </div>
           </div>
 
           {showLogPanel && !isMobile && (
             <div
+              className="floating-log-panel"
               style={{
                 position: 'absolute',
                 left: `${logPosition.x}px`,
                 top: `${logPosition.y}px`,
                 width: `${logSize.width}px`,
                 height: `${logSize.height}px`,
-                background: 'rgba(15, 23, 42, 0.45)', // Translucent glassmorphism
+                background: 'var(--glass-bg)',
                 backdropFilter: 'blur(16px) saturate(180%)',
                 WebkitBackdropFilter: 'blur(16px) saturate(180%)',
-                border: '1px solid rgba(255, 255, 255, 0.08)',
+                border: '1px solid var(--glass-border)',
                 borderRadius: '16px',
-                boxShadow: '0 20px 50px rgba(0,0,0,0.5)',
+                boxShadow: 'var(--card-shadow, 0 10px 30px -5px rgba(0,0,0,0.12), 0 4px 6px -4px rgba(0,0,0,0.08))',
                 display: 'flex',
                 flexDirection: 'column',
                 overflow: 'hidden',
@@ -2614,8 +2802,8 @@ const SortSearchVisualizer = ({ onBack, openSettings, initialTab = 'Sort', initi
                 onTouchStart={handleLogHeaderMouseDown}
                 style={{
                   padding: '8px 12px',
-                  background: 'rgba(255, 255, 255, 0.04)',
-                  borderBottom: '1px solid rgba(255, 255, 255, 0.08)',
+                  background: 'var(--panel-inner-bg, rgba(0, 0, 0, 0.03))',
+                  borderBottom: '1px solid var(--glass-border)',
                   display: 'flex',
                   justifyContent: 'space-between',
                   alignItems: 'center',
@@ -2677,7 +2865,7 @@ const SortSearchVisualizer = ({ onBack, openSettings, initialTab = 'Sort', initi
                 <div
                   style={{
                     width: `${activeStateWidth}px`,
-                    background: 'rgba(0, 0, 0, 0.25)',
+                    background: 'var(--panel-inner-bg, rgba(0, 0, 0, 0.04))',
                     borderRight: '1px solid var(--glass-border)',
                     padding: '6px 8px',
                     display: 'flex',
@@ -2689,7 +2877,7 @@ const SortSearchVisualizer = ({ onBack, openSettings, initialTab = 'Sort', initi
                     flexShrink: 0
                   }}
                 >
-                  <div style={{ fontSize: '0.72rem', color: 'var(--accent-primary)', textTransform: 'uppercase', fontWeight: 'bold', borderBottom: '1px solid rgba(255,255,255,0.06)', paddingBottom: '2px' }}>
+                  <div style={{ fontSize: '0.72rem', color: 'var(--accent-primary)', textTransform: 'uppercase', fontWeight: 'bold', borderBottom: '1px solid var(--glass-border)', paddingBottom: '2px' }}>
                     Active State
                   </div>
                   <div>
@@ -2706,7 +2894,7 @@ const SortSearchVisualizer = ({ onBack, openSettings, initialTab = 'Sort', initi
                         <div>
                           <div style={{ marginBottom: '2px', fontSize: '0.7rem' }}>Elements:</div>
                           {frame.arr && frame.arr.length > 0 ? (
-                            <div style={{ background: 'rgba(0,0,0,0.18)', padding: '2px 4px', borderRadius: '4px', fontFamily: 'monospace', color: '#34d399', wordBreak: 'break-all', fontWeight: 'bold' }}>
+                            <div style={{ background: 'var(--panel-code-bg, rgba(0,0,0,0.06))', border: '1px solid var(--glass-border)', padding: '2px 4px', borderRadius: '4px', fontFamily: 'monospace', color: '#10b981', wordBreak: 'break-all', fontWeight: 'bold' }}>
                               [{frame.arr.join(', ')}]
                             </div>
                           ) : (
@@ -2714,7 +2902,7 @@ const SortSearchVisualizer = ({ onBack, openSettings, initialTab = 'Sort', initi
                           )}
                         </div>
 
-                        <div style={{ borderTop: '1px solid rgba(255,255,255,0.06)', paddingTop: '4px', marginTop: '2px' }}>
+                        <div style={{ borderTop: '1px solid var(--glass-border)', paddingTop: '4px', marginTop: '2px' }}>
                           <div style={{ fontSize: '0.7rem', textTransform: 'uppercase', fontWeight: 'bold', marginBottom: '2px', color: 'var(--accent-secondary)' }}>Pointers & Highlights</div>
                           <div style={{ display: 'flex', flexDirection: 'column', gap: '2px' }}>
                             {(() => {
@@ -2752,15 +2940,15 @@ const SortSearchVisualizer = ({ onBack, openSettings, initialTab = 'Sort', initi
                               boxShadow: isCompleted ? '0 0 15px rgba(56, 189, 248, 0.2)' : 'none',
                               transition: 'all 0.3s ease'
                             }}>
-                              <div style={{ fontSize: '0.72rem', textTransform: 'uppercase', fontWeight: 'bold', marginBottom: '2px', color: isCompleted ? '#38bdf8' : '#38bdf8', display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
+                              <div style={{ fontSize: '0.72rem', textTransform: 'uppercase', fontWeight: 'bold', marginBottom: '2px', color: 'var(--accent-primary, #0284c7)', display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
                                 <span>⚡ Complexity for N={nVal}:</span>
                               </div>
-                              <div style={{ fontSize: '0.64rem', color: isCompleted ? '#34d399' : '#94a3b8', fontStyle: 'italic', marginBottom: '6px' }}>
+                              <div style={{ fontSize: '0.64rem', color: isCompleted ? 'var(--success, #059669)' : 'var(--text-secondary)', fontStyle: 'italic', marginBottom: '6px' }}>
                                 [{complexity.type}]
                               </div>
                               <div style={{
-                                background: isCompleted ? 'rgba(15, 23, 42, 0.7)' : 'rgba(0, 0, 0, 0.3)',
-                                border: isCompleted ? '1px solid rgba(56, 189, 248, 0.35)' : '1px solid rgba(56, 189, 248, 0.18)',
+                                background: 'var(--panel-code-bg, rgba(0,0,0,0.05))',
+                                border: '1px solid var(--glass-border)',
                                 borderRadius: '6px',
                                 padding: '6px 8px',
                                 display: 'flex',
@@ -2916,7 +3104,7 @@ const SortSearchVisualizer = ({ onBack, openSettings, initialTab = 'Sort', initi
                 top: `${Math.max(0, Math.min(treePanelPosition.y, window.innerHeight - treePanelSize.height))}px`,
                 width: `${treePanelSize.width}px`,
                 height: `${treePanelSize.height}px`,
-                background: 'rgba(15, 23, 42, 0.95)',
+                background: 'var(--glass-bg)',
                 backdropFilter: 'blur(12px)',
                 border: '1px solid var(--glass-border)',
                 borderRadius: '12px',
@@ -3032,7 +3220,7 @@ const SortSearchVisualizer = ({ onBack, openSettings, initialTab = 'Sort', initi
               </div>
             </div>
             <div style={{ display: 'flex', flex: 1, flexDirection: 'column', overflow: 'hidden', gap: '10px', marginTop: '10px' }}>
-              <div style={{ background: 'rgba(0,0,0,0.25)', border: '1px solid var(--glass-border)', borderRadius: '8px', padding: '10px 12px', display: 'flex', flexDirection: 'column', gap: '6px', fontSize: '0.8rem', color: 'var(--text-secondary)' }}>
+              <div style={{ background: 'var(--panel-inner-bg, rgba(0,0,0,0.04))', border: '1px solid var(--glass-border)', borderRadius: '8px', padding: '10px 12px', display: 'flex', flexDirection: 'column', gap: '6px', fontSize: '0.8rem', color: 'var(--text-secondary)' }}>
                 <div style={{ fontSize: '0.75rem', color: 'var(--accent-primary)', textTransform: 'uppercase', fontWeight: 'bold', borderBottom: '1px solid rgba(255,255,255,0.06)', paddingBottom: '4px' }}>
                   Active State
                 </div>
@@ -3082,14 +3270,14 @@ const SortSearchVisualizer = ({ onBack, openSettings, initialTab = 'Sort', initi
                       <div style={{ fontSize: '0.72rem', color: isCompleted ? '#38bdf8' : '#38bdf8', fontWeight: 'bold', textTransform: 'uppercase', marginBottom: '2px', display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
                         <span>⚡ Complexity for N={nVal}:</span>
                       </div>
-                      <div style={{ fontSize: '0.64rem', color: isCompleted ? '#34d399' : '#94a3b8', fontStyle: 'italic', marginBottom: '6px' }}>
+                      <div style={{ fontSize: '0.64rem', color: isCompleted ? 'var(--success, #059669)' : 'var(--text-secondary)', fontStyle: 'italic', marginBottom: '6px' }}>
                         [{complexity.type}]
                       </div>
                       <div style={{
-                        background: isCompleted ? 'rgba(15, 23, 42, 0.7)' : 'rgba(0,0,0,0.3)',
+                        background: 'var(--panel-code-bg, rgba(0,0,0,0.05))',
                         borderRadius: '6px',
                         padding: '6px 8px',
-                        border: isCompleted ? '1px solid rgba(56, 189, 248, 0.3)' : '1px solid rgba(255,255,255,0.04)',
+                        border: '1px solid var(--glass-border)',
                         display: 'flex',
                         flexDirection: 'column',
                         gap: '5px',
@@ -3200,7 +3388,7 @@ const SortSearchVisualizer = ({ onBack, openSettings, initialTab = 'Sort', initi
                 🌳 {currentDisplayedAlgo === 'Heap Sort' ? 'Heap Tree Visualizer' : 'BST Recursion Tree'}
               </span>
             </div>
-            <div style={{ flex: 1, display: 'flex', alignItems: 'center', justifyContent: 'center', background: 'rgba(0,0,0,0.2)', borderRadius: '10px', marginTop: '10px', overflow: 'hidden', padding: '5px' }}>
+            <div style={{ flex: 1, display: 'flex', alignItems: 'center', justifyContent: 'center', background: 'var(--panel-inner-bg, rgba(0,0,0,0.04))', borderRadius: '10px', marginTop: '10px', overflow: 'hidden', padding: '5px' }}>
               {renderTreeSVG(600, 400)}
             </div>
           </div>
@@ -3221,8 +3409,8 @@ const SortSearchVisualizer = ({ onBack, openSettings, initialTab = 'Sort', initi
               {/* Header — sticky 2-row layout */}
               <div style={{ flexShrink: 0, borderBottom: '1px solid var(--glass-border)', background: 'var(--bg-secondary)', borderRadius: '14px 14px 0 0' }}>
                 {/* Row 1: Language selector */}
-                <div style={{ padding: '8px 12px', display: 'flex', alignItems: 'center', gap: '5px', borderBottom: '1px solid rgba(255,255,255,0.05)', flexWrap: 'wrap' }}>
-                  <span style={{ fontSize: '0.78rem', fontWeight: 700, color: 'var(--text-secondary)', whiteSpace: 'nowrap' }}>🌐 Lang:</span>
+                <div style={{ padding: '8px 12px', display: 'flex', alignItems: 'center', gap: '5px', borderBottom: '1px solid var(--glass-border)', flexWrap: 'wrap' }}>
+                  <span style={{ fontSize: '0.78rem', fontWeight: 700, color: 'var(--text-primary)', whiteSpace: 'nowrap' }}>🌐 Lang:</span>
                   {['C', 'Java', 'Python', 'JS'].map(lang => (
                     <button key={lang} onClick={() => setCodeLang(lang)}
                       style={{
@@ -3230,10 +3418,10 @@ const SortSearchVisualizer = ({ onBack, openSettings, initialTab = 'Sort', initi
                         fontSize: '0.74rem',
                         borderRadius: '5px',
                         border: codeLang === lang ? '1.5px solid var(--accent-primary)' : '1px solid var(--glass-border)',
-                        background: codeLang === lang ? 'var(--accent-primary)' : 'transparent',
-                        color: codeLang === lang ? '#fff' : 'var(--text-secondary)',
+                        background: codeLang === lang ? 'var(--accent-primary)' : 'var(--panel-inner-bg, rgba(0,0,0,0.04))',
+                        color: codeLang === lang ? '#fff' : 'var(--text-primary)',
                         cursor: 'pointer',
-                        fontWeight: codeLang === lang ? 700 : 400,
+                        fontWeight: codeLang === lang ? 700 : 500,
                         transition: 'all 0.15s'
                       }}
                     >{lang === 'JS' ? 'JavaScript' : lang}</button>

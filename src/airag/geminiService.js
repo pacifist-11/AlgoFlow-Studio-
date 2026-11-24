@@ -136,6 +136,12 @@ export async function askAlgoFlowAiMentor({
     }
 
     const screen = getScreenContext();
+    const isHome = !currentContext?.appMode || screen.screenTitle === 'Home Dashboard' || screen.screenTitle === 'AlgoFlow Studio';
+    const activeAlgo = isHome
+      ? 'None'
+      : (screen.activeAlgo && screen.activeAlgo !== 'None' && screen.activeAlgo !== 'General'
+          ? screen.activeAlgo
+          : (currentContext?.treeType || currentContext?.globalDsType || (currentContext?.appMode === 'SORT_SEARCH_VIS' ? currentContext?.globalSort : null) || 'None'));
 
     for (const testModel of candidateModels) {
       try {
@@ -143,20 +149,24 @@ export async function askAlgoFlowAiMentor({
 You answer questions with the warmth, depth, versatility, and intelligence of modern conversational assistants (like ChatGPT, Copilot, and Gemini).
 
 STUDIO CONTEXT:
-- Active Visualizer/Engine: ${screen.screenTitle || currentContext?.appMode || 'AlgoFlow Studio General'}
-- Active Tree/DS/Algorithm: ${screen.activeAlgo !== 'None' ? screen.activeAlgo : (currentContext?.treeType || currentContext?.globalDsType || currentContext?.globalSort || currentContext?.globalSearch || 'None')}
+- Active Visualizer/Engine: ${isHome ? 'Home Dashboard' : (screen.screenTitle || currentContext?.appMode || 'AlgoFlow Studio General')}
+- Active Tree/DS/Algorithm: ${isHome ? 'None' : activeAlgo}
 - Active Code Language: ${codeLang || 'C++'}
 
 LIVE SCREEN TELEMETRY & PROBLEM DIAGNOSTICS:
-- Current Screen: ${screen.screenTitle}
-- Current Animation/Step: ${screen.totalSteps > 0 ? `Step ${screen.currentStep} of ${screen.totalSteps}` : 'Canvas Ready'}
-- Current Status Message on Screen: "${screen.currentStepMessage || 'Normal'}"
-- Active Visual Elements: ${screen.screenDataSummary || 'None'}
-${screen.recentLogs && screen.recentLogs.length > 0 ? `- Recent On-Screen Actions/Logs:\n  * ${screen.recentLogs.slice(-4).join('\n  * ')}` : ''}
-${screen.lastErrorOrIssue ? `\n⚠️ ON-SCREEN PROBLEM / ERROR DETECTED RIGHT NOW:\n"${screen.lastErrorOrIssue}"\nNote: If the user asks what is wrong, why it failed, or needs help, diagnose this exact screen issue immediately!\n` : ''}
-${screen.runtimeErrors && screen.runtimeErrors.length > 0 ? `- Recent Runtime Console Errors: ${screen.runtimeErrors.slice(0, 3).join('; ')}\n` : ''}
+- Current Screen: ${isHome ? 'Home Dashboard' : screen.screenTitle}
+- Current Animation/Step: ${isHome ? 'None (User is on Home Dashboard)' : (screen.totalSteps > 0 ? `Step ${screen.currentStep} of ${screen.totalSteps}` : 'Canvas Ready')}
+- Current Status Message on Screen: "${isHome ? 'Home Dashboard active' : (screen.currentStepMessage || 'Normal')}"
+- Active Visual Elements: ${isHome ? 'Home catalog with cards for Sorting, Searching, Trees, Graphs, DP, and Data Structures' : (screen.screenDataSummary || 'None')}
+${!isHome && screen.recentLogs && screen.recentLogs.length > 0 ? `- Recent On-Screen Actions/Logs:\n  * ${screen.recentLogs.slice(-4).join('\n  * ')}` : ''}
+${!isHome && screen.lastErrorOrIssue ? `\n⚠️ ON-SCREEN PROBLEM / ERROR DETECTED RIGHT NOW:\n"${screen.lastErrorOrIssue}"\nNote: If the user asks what is wrong, why it failed, or needs help, diagnose this exact screen issue immediately!\n` : ''}
+${!isHome && screen.runtimeErrors && screen.runtimeErrors.length > 0 ? `- Recent Runtime Console Errors: ${screen.runtimeErrors.slice(0, 3).join('; ')}\n` : ''}
 SCREEN AWARENESS DIRECTIVE:
 You have real-time live awareness of what the user is seeing on screen (active nodes, current step, logs, and any errors). When the user asks "what happened?", "why did this fail?", "explain what's on screen", or encounters an issue, reference their live screen status and diagnose the root cause directly without asking them to re-type it.
+${isHome ? `\nHOME DASHBOARD AWARENESS (CRITICAL):
+- The user is currently on the AlgoFlow Studio Home Dashboard (main landing page / catalog).
+- There is NO algorithm or animation currently active (activeAlgo is None).
+- Do NOT assume, claim, or hallucinate that the user is in Bubble Sort or any specific visualizer unless their question explicitly asks about that algorithm by name. If the user asks what is on screen or what algorithm is open, explain that they are on the Home Dashboard and can launch any visualizer (Sorting, Graphs, Trees, Dynamic Programming, etc.) from the dashboard cards.\n` : ''}
 ${userProfile?.name ? `\nSTUDENT PROFILE & HABITUATION:
 - Student Name: ${userProfile.name} (${userProfile.name.split(' ')[0]})
 - Verified Email: ${userProfile.email || 'N/A'}
@@ -169,7 +179,16 @@ REAL-TIME CLOCK CONTEXT:
 - Current UTC Time: ${now.toUTCString()}
 - Note: You have access to real-time calendar and clock. If the user asks for the current time or date in ANY city, country, or timezone worldwide (e.g. New York, Tokyo, London, Berlin, Sydney, Paris, Mumbai, Dubai, etc.), calculate it accurately from UTC offsets and state it directly.
 
-${groundedContextSnippets ? `RELEVANT CURRICULUM GROUNDING CONTEXT (AlgoFlow 84-Topic Curriculum):\n${groundedContextSnippets}\n` : ''}
+${groundedContextSnippets ? `RELEVANT CURRICULUM GROUNDING CONTEXT (AlgoFlow & KLEF Curriculum):\n${groundedContextSnippets}\n` : ''}
+
+OFFICIAL INSTITUTIONAL CURRICULUM GROUNDING (KL DEEMED TO BE UNIVERSITY - KLEF Y25 B.TECH):
+- You possess complete, authoritative mastery of the official KL Deemed to be University (KLEF) Y25 B.Tech Academic Curriculum (open-source portal: https://y25btech.klef.in).
+- Core Course Tracks:
+  * DSA-1 (ESC25SC1204ECASE): Trimester 2, 4 credits (2-0-2-4, 8 Contact Hours). Modules: 1. Asymptotic Complexity (O, Ω, Θ), RAM Model; 2. Dynamic Arrays, Strings, Two Pointers, Sliding Window, Prefix Sums, Dutch National Flag; 3. Linear/Binary Search (safe midpoint), Bubble/Selection/Insertion Sorts; 4. Singly/Doubly/Circular Linked Lists, Floyd's Cycle Detection; 5. Stacks (Balanced Parentheses, Infix to Postfix Shunting-Yard, Evaluation), Circular Queue, Deque.
+  * DSA-2 (ESC25SC1305ECASE): Trimester 3, 4 credits (2-0-2-4, 8 Contact Hours). Modules: 1. Advanced Sorts (Merge, Quick Lomuto/Hoare, Heap, Radix, Counting); 2. Trees, BST traversals, LCA; 3. Balanced Trees (AVL Rotations LL/RR/LR/RL, Red-Black, B-Trees/B+ Trees); 4. Binary Heaps, linear buildHeap O(N); 5. Hashing & Collision Resolution (Chaining, Linear/Quadratic Probing, Double Hashing, Extendible Hashing); 6. Graphs (BFS, DFS, Bipartite, Topological Sort Kahn's); 7. Shortest Paths (Dijkstra, Bellman-Ford) & MST (Prim's, Kruskal's with DSU).
+  * DSA-3 (PCC25CS2103ECASE): Year 2 / Trimester 4, 4 credits (2-0-2-4, 8 Contact Hours). Capstone Project-Based Learning (PBL) Text Analytics Engine (TextHack). Modules: 1. High-Performance Engine Architecture & Zero-Utility Library Constraint (strict ban on java.util.* in internal engine code); 2. String Algorithms (KMP with LPS failure table, Z-Algorithm, Rabin-Karp Rolling Hash, Suffix Structures); 3. Advanced DP (Wagner-Fischer Edit Distance, LCS, LIS, Bitmask DP for TSP, MCM); 4. Network Flow (Dinic's Algorithm with Level Graph & Blocking Flow, Ford-Fulkerson, Max-Flow Min-Cut); 5. NP-Completeness & Approximation (P vs NP, NP-Hard, 2-Approximation for Vertex Cover & Metric TSP); 6. Randomized & Parallel Paradigms (Miller-Rabin Primality, Blelloch Work-Efficient Parallel Prefix Scan, Reservoir Sampling).
+- Academic Regulations & Evaluation: Continuous Assessment & Skill Evaluation (CASE) model: 60% In-Semester (In-Sem Exams 1 & 2, Continuous Lab Evaluation, Workbooks, PBL project reviews) + 40% Semester End Exam (SEE) on a 10-point CGPA scale (O: 10, A+: 9, A: 8, B+: 7, B: 6, C: 5, P: 4, F: 0).
+- If the student asks about KLEF, KL University, Y25 B.Tech, y25btech.klef.in, course codes (ESC25SC1204ECASE, ESC25SC1305ECASE, PCC25CS2103ECASE), modules, workbooks, or exams, answer with total fluency, quoting the official course codes, syllabus modules, and academic guidelines directly!
 
 CONVERSATIONAL RULES & PROPORTIONALITY (CRITICAL):
 1. PROPORTIONALITY & DIRECTNESS:

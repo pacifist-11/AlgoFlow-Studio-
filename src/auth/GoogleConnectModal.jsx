@@ -919,50 +919,50 @@ export default function GoogleConnectModal({ isOpen, onClose, onUserConnected, c
                         </div>
                       </div>
 
-                      {/* White Theme 1: Arctic Frost */}
+                      {/* White Theme 1: High Contrast Light */}
                       <div
-                        onClick={() => handleThemePick('Arctic Frost')}
+                        onClick={() => handleThemePick('High Contrast Light')}
                         style={{
                           padding: '14px',
                           borderRadius: '16px',
-                          background: effectiveTheme === 'Arctic Frost' ? 'rgba(2, 132, 199, 0.2)' : 'rgba(248, 250, 252, 0.08)',
-                          border: effectiveTheme === 'Arctic Frost' ? '2px solid #38bdf8' : '1.5px solid rgba(255, 255, 255, 0.12)',
+                          background: effectiveTheme === 'High Contrast Light' ? 'rgba(37, 99, 235, 0.2)' : 'rgba(248, 250, 252, 0.08)',
+                          border: effectiveTheme === 'High Contrast Light' ? '2px solid #3b82f6' : '1.5px solid rgba(255, 255, 255, 0.12)',
                           cursor: 'pointer',
                           transition: 'all 0.25s cubic-bezier(0.4, 0, 0.2, 1)',
-                          boxShadow: effectiveTheme === 'Arctic Frost' 
-                            ? '0 0 24px rgba(56, 189, 248, 0.5), inset 0 0 14px rgba(56, 189, 248, 0.2)' 
+                          boxShadow: effectiveTheme === 'High Contrast Light' 
+                            ? '0 0 24px rgba(59, 130, 246, 0.5), inset 0 0 14px rgba(59, 130, 246, 0.2)' 
                             : '0 4px 12px rgba(0, 0, 0, 0.2)',
-                          transform: effectiveTheme === 'Arctic Frost' ? 'scale(1.02)' : 'scale(1)',
+                          transform: effectiveTheme === 'High Contrast Light' ? 'scale(1.02)' : 'scale(1)',
                           position: 'relative',
                           overflow: 'hidden'
                         }}
                       >
-                        {effectiveTheme === 'Arctic Frost' && (
+                        {effectiveTheme === 'High Contrast Light' && (
                           <div style={{
                             position: 'absolute',
                             top: 0,
                             left: '-100%',
                             width: '200%',
                             height: '100%',
-                            background: 'linear-gradient(90deg, transparent, rgba(56, 189, 248, 0.2), transparent)',
+                            background: 'linear-gradient(90deg, transparent, rgba(59, 130, 246, 0.2), transparent)',
                             pointerEvents: 'none',
                             animation: 'shimmerSweep 2.5s infinite linear'
                           }} />
                         )}
                         <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: '8px' }}>
-                          <span style={{ fontSize: '0.72rem', fontWeight: '700', padding: '2px 8px', borderRadius: '6px', background: 'rgba(255, 255, 255, 0.1)', color: '#38bdf8' }}>
+                          <span style={{ fontSize: '0.72rem', fontWeight: '700', padding: '2px 8px', borderRadius: '6px', background: 'rgba(255, 255, 255, 0.1)', color: '#3b82f6' }}>
                             ☀️ White
                           </span>
-                          {effectiveTheme === 'Arctic Frost' ? (
+                          {effectiveTheme === 'High Contrast Light' ? (
                             <span style={{ 
-                              color: '#38bdf8', 
+                              color: '#3b82f6', 
                               fontSize: '0.78rem', 
                               fontWeight: '800',
-                              background: 'rgba(56, 189, 248, 0.2)',
+                              background: 'rgba(59, 130, 246, 0.2)',
                               padding: '2px 8px',
                               borderRadius: '12px',
-                              border: '1px solid #38bdf8',
-                              boxShadow: '0 0 8px rgba(56, 189, 248, 0.4)'
+                              border: '1px solid #3b82f6',
+                              boxShadow: '0 0 8px rgba(59, 130, 246, 0.4)'
                             }}>
                               ✓ Selected
                             </span>
@@ -970,16 +970,16 @@ export default function GoogleConnectModal({ isOpen, onClose, onUserConnected, c
                             <span style={{ color: '#64748b', fontSize: '0.75rem', fontWeight: '600' }}>Tap to select</span>
                           )}
                         </div>
-                        <div style={{ fontWeight: '800', fontSize: '0.96rem', color: effectiveTheme === 'Arctic Frost' ? '#ffffff' : '#e2e8f0' }}>
-                          Arctic Frost
+                        <div style={{ fontWeight: '800', fontSize: '0.96rem', color: effectiveTheme === 'High Contrast Light' ? '#ffffff' : '#e2e8f0' }}>
+                          High Contrast Light
                         </div>
                         <div style={{ fontSize: '0.76rem', color: '#94a3b8', margin: '4px 0 10px 0' }}>
-                          Frosted ice-white with sky blue
+                          Crisp pure white with maximum readability
                         </div>
                         <div style={{ display: 'flex', gap: '6px', alignItems: 'center' }}>
-                          <span style={{ width: '14px', height: '14px', borderRadius: '50%', background: '#0284c7', boxShadow: '0 0 10px #0284c7' }} />
                           <span style={{ width: '14px', height: '14px', borderRadius: '50%', background: '#2563eb', boxShadow: '0 0 10px #2563eb' }} />
-                          <span style={{ fontSize: '0.72rem', color: '#94a3b8', marginLeft: '4px' }}>Sky &amp; Royal</span>
+                          <span style={{ width: '14px', height: '14px', borderRadius: '50%', background: '#d97706', boxShadow: '0 0 10px #d97706' }} />
+                          <span style={{ fontSize: '0.72rem', color: '#94a3b8', marginLeft: '4px' }}>Blue &amp; Amber</span>
                         </div>
                       </div>
 

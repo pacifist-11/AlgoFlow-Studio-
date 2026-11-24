@@ -812,16 +812,27 @@ fn main() {
       }}>
         {/* Banner */}
         <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', flexWrap: 'wrap', gap: '12px' }}>
-          <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
-            <span style={{ fontSize: '36px' }}>{current.icon}</span>
-            <div>
-              <h3 style={{ margin: 0, fontSize: '24px', fontWeight: '800', color: current.color }}>
-                {current.name}
-              </h3>
-              <span style={{ fontSize: '13.5px', color: 'var(--text-secondary)', fontWeight: '600' }}>
-                {current.tagline}
+          <div style={{ display: 'flex', flexDirection: 'column', gap: '4px' }}>
+            <div style={{ display: 'flex', alignItems: 'center', gap: '10px', flexWrap: 'wrap' }}>
+              <span style={{ 
+                background: current.accentBg, 
+                color: current.color, 
+                border: `1.5px solid ${current.color}60`, 
+                fontSize: '11px', 
+                fontWeight: '800', 
+                padding: '3px 10px', 
+                borderRadius: '8px',
+                letterSpacing: '0.5px'
+              }}>
+                TRACK OVERVIEW
               </span>
+              <h3 style={{ margin: 0, fontSize: '20px', fontWeight: '800', color: current.color }}>
+                {current.tagline}
+              </h3>
             </div>
+            <span style={{ fontSize: '13px', color: 'var(--text-secondary)', fontWeight: '500' }}>
+              Industry roles, 4-year learning roadmap, certified credentials, and practice tracks.
+            </span>
           </div>
 
           <div style={{ display: 'flex', gap: '8px', flexWrap: 'wrap', alignItems: 'center' }}>

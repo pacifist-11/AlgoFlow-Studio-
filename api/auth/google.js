@@ -1,5 +1,6 @@
 import sql from '../_db.js';
 import { cors } from '../_cors.js';
+import { autoSweepExpiredDeactivations } from '../_deactivationHelper.js';
 
 let isTableInitialized = false;
 
@@ -168,6 +169,9 @@ export default async function handler(req, res) {
 
     // 4. Upsert User in Neon Serverless PostgreSQL Database
     await ensureUsersTable();
+    try {
+      await autoSweepExpiredDeactivations();
+    } catch {}
 
     // Check if user had a pending deactivation
     try {

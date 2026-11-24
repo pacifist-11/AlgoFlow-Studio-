@@ -148,9 +148,9 @@ const highlightLogText = (text) => {
     const regex = /(\b\d+(?:\.\d+)?\b)/g;
     const parts = str.split(regex);
     return (
-      <span style={{ color: '#f87171', fontWeight: 'bold' }}>
+      <span style={{ color: 'var(--danger, #ef4444)', fontWeight: 'bold' }}>
         {parts.map((p, i) => 
-          regex.test(p) ? <span key={i} style={{ color: '#fbbf24', textShadow: '0 0 8px rgba(251,191,36,0.3)' }}>{p}</span> : p
+          regex.test(p) ? <span key={i} style={{ color: 'var(--warning, #d97706)' }}>{p}</span> : p
         )}
       </span>
     );
@@ -172,9 +172,9 @@ const highlightLogText = (text) => {
     const regex = /(\b\d+(?:\.\d+)?\b)/g;
     const parts = str.split(regex);
     return (
-      <span style={{ color: '#34d399', fontWeight: 'bold' }}>
+      <span style={{ color: 'var(--success, #10b981)', fontWeight: 'bold' }}>
         {parts.map((p, i) => 
-          regex.test(p) ? <span key={i} style={{ color: '#fbbf24' }}>{p}</span> : p
+          regex.test(p) ? <span key={i} style={{ color: 'var(--warning, #d97706)' }}>{p}</span> : p
         )}
       </span>
     );
@@ -199,9 +199,9 @@ const highlightLogText = (text) => {
     const regex = /(\b\d+(?:\.\d+)?\b)/g;
     const parts = str.split(regex);
     return (
-      <span style={{ color: '#fb923c', fontWeight: 600 }}>
+      <span style={{ color: 'var(--accent-primary)', fontWeight: 600 }}>
         {parts.map((p, i) => 
-          regex.test(p) ? <span key={i} style={{ color: '#fbbf24', fontWeight: 'bold' }}>{p}</span> : p
+          regex.test(p) ? <span key={i} style={{ color: 'var(--warning, #d97706)', fontWeight: 'bold' }}>{p}</span> : p
         )}
       </span>
     );
@@ -210,7 +210,7 @@ const highlightLogText = (text) => {
   const regex = /(\b\d+(?:\.\d+)?\b)/g;
   const parts = str.split(regex);
   return parts.map((p, i) => 
-    /^\d+(?:\.\d+)?$/.test(p) ? <strong key={i} style={{ color: '#fbbf24' }}>{p}</strong> : p
+    /^\d+(?:\.\d+)?$/.test(p) ? <strong key={i} style={{ color: 'var(--warning, #d97706)' }}>{p}</strong> : p
   );
 };
 
@@ -306,6 +306,8 @@ const DPGreedyVisualizer = ({ onBack, openSettings, initialTab = 'LCS', onCopyCo
   };
 
   // Layout sizing
+  const [isMobile, setIsMobile] = useState(typeof window !== 'undefined' ? window.innerWidth < 1024 : false);
+  const [mobileTab, setMobileTab] = useState('vis'); // 'vis' | 'code' | 'log'
   const [showLogPanel, setShowLogPanel] = useState(true);
   const [logPosition, setLogPosition] = useState(() => getFreeLogPosition());
   const hasUserMovedLog = useRef(false);
@@ -315,6 +317,12 @@ const DPGreedyVisualizer = ({ onBack, openSettings, initialTab = 'LCS', onCopyCo
   const panelStart = useRef({ x: 0, y: 0 });
   const [activeStateWidth, setActiveStateWidth] = useState(240);
   const [codeWidth, setCodeWidth] = useState(360);
+
+  useEffect(() => {
+    const handleResize = () => setIsMobile(window.innerWidth < 1024);
+    window.addEventListener('resize', handleResize);
+    return () => window.removeEventListener('resize', handleResize);
+  }, []);
 
   const logContainerRef = useRef(null);
 
@@ -1459,7 +1467,7 @@ const DPGreedyVisualizer = ({ onBack, openSettings, initialTab = 'LCS', onCopyCo
         </div>
 
         <div style={{ display: 'flex', justifyContent: 'center', alignItems: 'center', minHeight: '100%', minWidth: 'min-content', padding: '1rem 1.5rem 2rem 1.5rem', flex: 1 }}>
-          <table style={{ borderCollapse: 'collapse', color: 'white', fontFamily: 'sans-serif' }}>
+          <table style={{ borderCollapse: 'collapse', color: 'var(--text-primary)', fontFamily: 'sans-serif' }}>
             <thead>
               <tr>
                 <th style={{ width: '45px', height: '45px', border: '1px solid var(--glass-border)' }}></th>
@@ -1514,12 +1522,12 @@ const DPGreedyVisualizer = ({ onBack, openSettings, initialTab = 'LCS', onCopyCo
                         textAlign: 'center', position: 'relative',
                         transition: 'all 0.2s ease', transform: scale
                       }}>
-                        <div style={{ fontWeight: 600, fontSize: '1.05rem', color: inPath ? '#34d399' : 'white' }}>{cellVal}</div>
+                        <div style={{ fontWeight: 600, fontSize: '1.05rem', color: inPath ? 'var(--success, #059669)' : 'var(--text-primary)' }}>{cellVal}</div>
                         {arrow && (
                           <div style={{
                             position: 'absolute', top: '2px', left: '2px',
                             fontSize: '0.65rem', opacity: inPath ? 1 : 0.4,
-                            color: inPath ? '#34d399' : 'var(--text-secondary)'
+                            color: inPath ? 'var(--success, #059669)' : 'var(--text-secondary)'
                           }}>
                             {arrow === 'diag' ? '↖' : arrow === 'top' ? '↑' : '←'}
                           </div>
@@ -1654,7 +1662,7 @@ const DPGreedyVisualizer = ({ onBack, openSettings, initialTab = 'LCS', onCopyCo
     }
 
     return (
-      <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', height: '100%', gap: '1.5rem', padding: '1rem', overflowY: 'auto' }}>
+      <div style={{ display: 'grid', gridTemplateColumns: isMobile ? '1fr' : '1fr 1fr', height: '100%', gap: '1.5rem', padding: '1rem', overflowY: 'auto' }}>
 
         {/* Left Side: 0/1 Knapsack (DP Table) */}
         <div style={{ display: 'flex', flexDirection: 'column', background: 'rgba(255,255,255,0.01)', border: '1px solid var(--glass-border)', borderRadius: '12px', padding: '1rem' }}>
@@ -1757,7 +1765,7 @@ const DPGreedyVisualizer = ({ onBack, openSettings, initialTab = 'LCS', onCopyCo
                       padding: '6px', textAlign: 'center', fontSize: '0.78rem',
                       display: 'flex', flexDirection: 'column', gap: '2px'
                     }}>
-                      <strong style={{ color: '#fbbf24' }}>I{item.id}</strong>
+                      <strong style={{ color: 'var(--warning, #b45309)' }}>I{item.id}</strong>
                       <div style={{ fontSize: '0.7rem', color: 'var(--text-secondary)' }}>Ratio: {item.ratio.toFixed(2)}</div>
                       {item.fraction > 0 && (
                         <div style={{ fontSize: '0.7rem', color: '#34d399', fontWeight: 'bold' }}>
@@ -1826,7 +1834,7 @@ const DPGreedyVisualizer = ({ onBack, openSettings, initialTab = 'LCS', onCopyCo
     const isSuboptimal = greedyRemaining === 0 && greedyOptimalCount > dpOptimalCount && dpOptimalCount !== 'INF';
 
     return (
-      <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', height: '100%', gap: '1.5rem', padding: '1rem', overflowY: 'auto' }}>
+      <div style={{ display: 'grid', gridTemplateColumns: isMobile ? '1fr' : '1fr 1fr', height: '100%', gap: '1.5rem', padding: '1rem', overflowY: 'auto' }}>
 
         {/* Left Side: Dynamic Programming array */}
         <div style={{ display: 'flex', flexDirection: 'column', background: 'rgba(255,255,255,0.01)', border: '1px solid var(--glass-border)', borderRadius: '12px', padding: '1.2rem' }}>
@@ -1943,7 +1951,7 @@ const DPGreedyVisualizer = ({ onBack, openSettings, initialTab = 'LCS', onCopyCo
     const tileSize = Math.min(60, Math.floor(340 / N));
 
     return (
-      <div style={{ display: 'grid', gridTemplateColumns: '1.2fr 1fr', height: '100%', gap: '1.5rem', padding: '1.2rem', overflowY: 'auto' }}>
+      <div style={{ display: 'grid', gridTemplateColumns: isMobile ? '1fr' : '1.2fr 1fr', height: '100%', gap: '1.5rem', padding: '1.2rem', overflowY: 'auto' }}>
         {/* Left: Chessboard */}
         <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', background: 'rgba(255,255,255,0.01)', border: '1px solid var(--glass-border)', borderRadius: '12px', padding: '1.2rem' }}>
           <h3 className="title-gradient" style={{ fontSize: '1.1rem', marginBottom: '1rem' }}>
@@ -2009,7 +2017,7 @@ const DPGreedyVisualizer = ({ onBack, openSettings, initialTab = 'LCS', onCopyCo
             </div>
             <div style={{ display: 'flex', justifyContent: 'space-between' }}>
               <span style={{ color: 'var(--text-secondary)' }}>Testing Column:</span>
-              <strong style={{ color: '#fbbf24' }}>{nQueensCol >= 0 ? nQueensCol : '-'}</strong>
+              <strong style={{ color: 'var(--warning, #b45309)' }}>{nQueensCol >= 0 ? nQueensCol : '-'}</strong>
             </div>
             <div style={{ display: 'flex', justifyContent: 'space-between' }}>
               <span style={{ color: 'var(--text-secondary)' }}>Placement Status:</span>
@@ -2043,7 +2051,7 @@ const DPGreedyVisualizer = ({ onBack, openSettings, initialTab = 'LCS', onCopyCo
     const { huffmanNodes = [], huffmanCodes = {}, huffmanMerged } = currentFrame;
 
     return (
-      <div style={{ display: 'grid', gridTemplateColumns: '1.2fr 1fr', height: '100%', gap: '1.5rem', padding: '1.2rem', overflowY: 'auto' }}>
+      <div style={{ display: 'grid', gridTemplateColumns: isMobile ? '1fr' : '1.2fr 1fr', height: '100%', gap: '1.5rem', padding: '1.2rem', overflowY: 'auto' }}>
         {/* Left: Min-Heap Nodes */}
         <div style={{ display: 'flex', flexDirection: 'column', background: 'rgba(255,255,255,0.01)', border: '1px solid var(--glass-border)', borderRadius: '12px', padding: '1.2rem' }}>
           <h3 className="title-gradient" style={{ fontSize: '1.1rem', marginBottom: '1rem' }}>
@@ -2060,7 +2068,7 @@ const DPGreedyVisualizer = ({ onBack, openSettings, initialTab = 'LCS', onCopyCo
                 boxShadow: '0 4px 12px rgba(0,0,0,0.2)'
               }}>
                 <span style={{ fontSize: '1.1rem', fontWeight: 'bold', color: '#60a5fa' }}>{node.char}</span>
-                <span style={{ fontSize: '0.82rem', color: '#fbbf24', background: 'rgba(251,191,36,0.1)', padding: '2px 8px', borderRadius: '12px' }}>
+                <span style={{ fontSize: '0.82rem', color: 'var(--warning, #b45309)', background: 'rgba(217,119,6,0.15)', padding: '2px 8px', borderRadius: '12px' }}>
                   Freq: {node.freq}
                 </span>
               </div>
@@ -2167,7 +2175,7 @@ const DPGreedyVisualizer = ({ onBack, openSettings, initialTab = 'LCS', onCopyCo
                         {val}
                         {arrow === 'DIAG' && <span style={{ position: 'absolute', top: 2, left: 3, fontSize: '0.65rem', color: '#38bdf8' }}>↖</span>}
                         {arrow === 'UP' && <span style={{ position: 'absolute', top: 2, left: 3, fontSize: '0.65rem', color: '#f472b6' }}>↑</span>}
-                        {arrow === 'LEFT' && <span style={{ position: 'absolute', top: 2, left: 3, fontSize: '0.65rem', color: '#fbbf24' }}>←</span>}
+                        {arrow === 'LEFT' && <span style={{ position: 'absolute', top: 2, left: 3, fontSize: '0.65rem', color: 'var(--warning, #b45309)' }}>←</span>}
                       </td>
                     );
                   })}
@@ -2376,11 +2384,47 @@ const DPGreedyVisualizer = ({ onBack, openSettings, initialTab = 'LCS', onCopyCo
         </div>
       </div>
 
+      {/* Mobile Tab Switcher */}
+      {isMobile && (
+        <div style={{ display: 'flex', background: 'var(--glass-bg)', padding: '4px', margin: '0.25rem 0.5rem', gap: '4px', border: '1px solid var(--glass-border)', borderRadius: '10px' }}>
+          <button className={`btn btn-clear ${mobileTab === 'vis' ? 'active' : ''}`} style={{ flex: 1, padding: '6px', fontSize: '0.8rem', background: mobileTab === 'vis' ? 'var(--accent-primary)' : 'transparent', color: mobileTab === 'vis' ? '#fff' : 'var(--text-secondary)' }} onClick={() => setMobileTab('vis')}>📊 Visualizer</button>
+          <button className={`btn btn-clear ${mobileTab === 'code' ? 'active' : ''}`} style={{ flex: 1, padding: '6px', fontSize: '0.8rem', background: mobileTab === 'code' ? 'var(--accent-primary)' : 'transparent', color: mobileTab === 'code' ? '#fff' : 'var(--text-secondary)' }} onClick={() => { setMobileTab('code'); setShowCode(true); }}>💻 Code</button>
+          <button className={`btn btn-clear ${mobileTab === 'log' ? 'active' : ''}`} style={{ flex: 1, padding: '6px', fontSize: '0.8rem', background: mobileTab === 'log' ? 'var(--accent-primary)' : 'transparent', color: mobileTab === 'log' ? '#fff' : 'var(--text-secondary)' }} onClick={() => { setMobileTab('log'); setShowLogPanel(true); }}>📋 Logs</button>
+        </div>
+      )}
+
       {/* MAIN CONTENT BLOCK */}
-      <div style={{ display: 'flex', flex: 1, overflow: 'hidden', position: 'relative' }}>
+      <div style={{ display: 'flex', flex: 1, overflow: 'hidden', position: 'relative', minHeight: 0 }}>
 
         {/* VISUALIZER GRID AREA */}
-        <div style={{ flex: 1, display: 'flex', flexDirection: 'column', background: 'rgba(10, 15, 30, 0.3)', position: 'relative', overflow: 'hidden' }}>
+        <div className="dp-canvas-container" style={{ display: (isMobile && mobileTab !== 'vis') ? 'none' : 'flex', flex: 1, flexDirection: 'column', background: 'var(--canvas-bg, var(--glass-bg))', position: 'relative', overflow: 'hidden', minHeight: 0 }}>
+
+          {/* Active Step Status Banner */}
+          {(() => {
+            const isCompleted = timeline.length > 0 && currentStep === timeline.length - 1;
+            return (
+              <div style={{ display: 'flex', justifyContent: 'center', margin: '8px 0 10px 0', flexShrink: 0, zIndex: 15 }}>
+                <span style={{
+                  fontSize: isMobile ? '0.95rem' : '1.15rem',
+                  color: isCompleted ? '#34d399' : 'var(--text-primary)',
+                  fontWeight: 'bold',
+                  background: isCompleted ? 'rgba(52, 211, 153, 0.12)' : 'var(--glass-bg)',
+                  padding: '5px 22px',
+                  borderRadius: '20px',
+                  border: isCompleted ? '1.5px solid rgba(52, 211, 153, 0.45)' : '1px solid var(--glass-border)',
+                  boxShadow: isCompleted ? '0 0 20px rgba(52, 211, 153, 0.25)' : '0 4px 15px rgba(0,0,0,0.1)',
+                  transition: 'all 0.3s ease',
+                  textAlign: 'center',
+                  maxWidth: '90%',
+                  whiteSpace: 'nowrap',
+                  overflow: 'hidden',
+                  textOverflow: 'ellipsis'
+                }} title={currentFrame.msg || 'Ready to analyze.'}>
+                  {currentFrame.msg || 'Ready to analyze. Click Animate to begin.'}
+                </span>
+              </div>
+            );
+          })()}
 
           <div style={{ flex: 1, position: 'relative', overflow: 'hidden' }}>
 
@@ -2394,11 +2438,11 @@ const DPGreedyVisualizer = ({ onBack, openSettings, initialTab = 'LCS', onCopyCo
 
             {/* FLOATING COMPLEXITY CARD OVERLAY */}
             {showComplexity && (
-              <div style={{
+              <div className="floating-complexity-card" style={{
                 position: 'absolute', top: '15px', right: '15px', zIndex: 30,
-                width: '250px', background: 'rgba(15, 23, 42, 0.88)', border: '1.5px solid var(--glass-border)',
+                width: '250px', background: 'var(--glass-bg)', border: '1.5px solid var(--glass-border)',
                 borderRadius: '12px', padding: '12px', backdropFilter: 'blur(10px)',
-                boxShadow: '0 8px 32px 0 rgba(0,0,0,0.4)', transition: 'all 0.3s ease'
+                boxShadow: 'var(--card-shadow, 0 8px 30px rgba(0,0,0,0.12))', transition: 'all 0.3s ease'
               }}>
                 {(() => {
                   const comp = getDPComplexityInfo(activeTab);
@@ -2409,14 +2453,14 @@ const DPGreedyVisualizer = ({ onBack, openSettings, initialTab = 'LCS', onCopyCo
                         <span style={{ fontSize: '0.82rem', fontWeight: 'bold', color: 'var(--text-primary)' }}>📊 Big-O Complexity</span>
                         <button style={{ background: 'transparent', border: 'none', color: 'var(--text-secondary)', cursor: 'pointer', fontSize: '0.8rem' }} onClick={() => setShowComplexity(false)}>✕</button>
                       </div>
-                      <div style={{ fontSize: '0.78rem', color: '#60a5fa', fontWeight: 'bold', marginBottom: '8px' }}>{comp.title}</div>
+                      <div style={{ fontSize: '0.78rem', color: 'var(--accent-primary, #2563eb)', fontWeight: 'bold', marginBottom: '8px' }}>{comp.title}</div>
                       <div style={{ display: 'flex', flexDirection: 'column', gap: '6px' }}>
                         {comp.operations.map((op, idx) => (
-                          <div key={idx} style={{ display: 'flex', flexDirection: 'column', gap: '2px', background: 'rgba(255,255,255,0.02)', padding: '4px 6px', borderRadius: '4px' }}>
+                          <div key={idx} style={{ display: 'flex', flexDirection: 'column', gap: '2px', background: 'var(--panel-code-bg, rgba(0,0,0,0.04))', border: '1px solid var(--glass-border)', padding: '4px 6px', borderRadius: '4px' }}>
                             <div style={{ fontSize: '0.75rem', fontWeight: 600, color: 'var(--text-primary)' }}>{op.op}</div>
                             <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: '0.7rem', color: 'var(--text-secondary)' }}>
-                              <span>Time: <strong style={{ color: '#fbbf24' }}>{op.time}</strong></span>
-                              <span>Space: <strong style={{ color: '#f472b6' }}>{op.space}</strong></span>
+                              <span>Time: <strong style={{ color: 'var(--warning, #d97706)' }}>{op.time}</strong></span>
+                              <span>Space: <strong style={{ color: 'var(--accent-secondary, #db2777)' }}>{op.space}</strong></span>
                             </div>
                           </div>
                         ))}
@@ -2452,29 +2496,65 @@ const DPGreedyVisualizer = ({ onBack, openSettings, initialTab = 'LCS', onCopyCo
               </button>
             </div>
 
-            <div style={{ fontSize: '0.85rem', color: 'var(--text-secondary)', display: 'flex', alignItems: 'center', gap: '8px' }}>
-              <span style={{ fontWeight: 600, color: 'var(--text-primary)' }}>Frame {timeline.length > 0 ? currentStep + 1 : 0} / {timeline.length}</span>
-              <div style={{ width: '120px', height: '6px', background: 'rgba(255,255,255,0.05)', borderRadius: '3px', overflow: 'hidden' }}>
-                <div style={{ width: `${progress}%`, height: '100%', background: 'linear-gradient(to right, var(--accent-primary), var(--accent-secondary))', transition: 'width 0.15s ease' }}></div>
-              </div>
+            {/* Center Step Status Bar */}
+            <div style={{ flex: 1, display: 'flex', alignItems: 'center', justifyContent: 'center', padding: '0 15px', overflow: 'hidden' }}>
+              <span style={{
+                fontSize: '0.86rem',
+                color: 'var(--text-primary)',
+                fontWeight: 600,
+                background: 'var(--panel-inner-bg, rgba(0,0,0,0.03))',
+                padding: '4px 14px',
+                borderRadius: '16px',
+                border: '1px solid var(--glass-border)',
+                whiteSpace: 'nowrap',
+                overflow: 'hidden',
+                textOverflow: 'ellipsis',
+                maxWidth: '100%'
+              }} title={currentFrame.msg || 'Ready'}>
+                💡 {currentFrame.msg || 'Ready to analyze.'}
+              </span>
+            </div>
+
+            <div style={{ fontSize: '0.85rem', color: 'var(--text-secondary)', display: 'flex', alignItems: 'center', gap: '12px', flexShrink: 0 }}>
+              <span style={{ fontWeight: 600, color: 'var(--text-primary)', whiteSpace: 'nowrap' }}>Frame {timeline.length > 0 ? currentStep + 1 : 0} / {timeline.length}</span>
+              <input 
+                type="range"
+                min={0}
+                max={Math.max(0, timeline.length - 1)}
+                value={currentStep}
+                disabled={timeline.length === 0}
+                onChange={e => {
+                  setIsPlaying(false);
+                  setCurrentStep(Number(e.target.value));
+                }}
+                style={{
+                  width: '130px',
+                  accentColor: 'var(--accent-primary)',
+                  cursor: timeline.length > 0 ? 'pointer' : 'default',
+                  height: '6px'
+                }}
+                title={`Step scrubber: Jump to frame ${timeline.length ? currentStep + 1 : 0} / ${timeline.length}`}
+              />
             </div>
 
           </div>
 
-          {showLogPanel && timeline.length > 0 && (
+          {showLogPanel && timeline.length > 0 && (!isMobile || mobileTab === 'log') && (
             <div 
+              className="floating-log-panel"
               style={{
-                position: 'absolute',
-                left: `${logPosition.x}px`,
-                top: `${logPosition.y}px`,
-                width: `${logSize.width}px`,
-                height: `${logSize.height}px`,
-                background: 'rgba(15, 23, 42, 0.45)', // Translucent glassmorphism
+                position: isMobile ? 'relative' : 'absolute',
+                left: isMobile ? '0' : `${Math.min(logPosition.x, typeof window !== 'undefined' ? window.innerWidth - 340 : 100)}px`,
+                top: isMobile ? '0' : `${logPosition.y}px`,
+                width: isMobile ? '100%' : `${logSize.width}px`,
+                maxWidth: 'calc(100vw - 20px)',
+                height: isMobile ? '100%' : `${logSize.height}px`,
+                background: 'var(--glass-bg)',
                 backdropFilter: 'blur(16px) saturate(180%)',
                 WebkitBackdropFilter: 'blur(16px) saturate(180%)',
-                border: '1px solid rgba(255, 255, 255, 0.08)',
-                borderRadius: '16px',
-                boxShadow: '0 20px 50px rgba(0,0,0,0.5)',
+                border: '1px solid var(--glass-border)',
+                borderRadius: isMobile ? '0' : '16px',
+                boxShadow: 'var(--card-shadow, 0 10px 30px -5px rgba(0,0,0,0.12), 0 4px 6px -4px rgba(0,0,0,0.08))',
                 display: 'flex',
                 flexDirection: 'column',
                 overflow: 'hidden',
@@ -2487,8 +2567,8 @@ const DPGreedyVisualizer = ({ onBack, openSettings, initialTab = 'LCS', onCopyCo
                 onTouchStart={handleLogHeaderMouseDown}
                 style={{
                   padding: '8px 12px',
-                  background: 'rgba(255, 255, 255, 0.04)',
-                  borderBottom: '1px solid rgba(255, 255, 255, 0.08)',
+                  background: 'var(--panel-inner-bg, rgba(0, 0, 0, 0.03))',
+                  borderBottom: '1px solid var(--glass-border)',
                   display: 'flex',
                   justifyContent: 'space-between',
                   alignItems: 'center',
@@ -2550,7 +2630,7 @@ const DPGreedyVisualizer = ({ onBack, openSettings, initialTab = 'LCS', onCopyCo
                 <div
                   style={{
                     width: `${activeStateWidth}px`,
-                    background: 'rgba(0, 0, 0, 0.25)',
+                    background: 'var(--panel-inner-bg, rgba(0, 0, 0, 0.04))',
                     borderRight: '1px solid var(--glass-border)',
                     padding: '6px 8px',
                     display: 'flex',
@@ -2562,42 +2642,42 @@ const DPGreedyVisualizer = ({ onBack, openSettings, initialTab = 'LCS', onCopyCo
                     flexShrink: 0
                   }}
                 >
-                  <div style={{ fontSize: '0.72rem', color: 'var(--accent-primary)', textTransform: 'uppercase', fontWeight: 'bold', borderBottom: '1px solid rgba(255,255,255,0.06)', paddingBottom: '2px' }}>
+                  <div style={{ fontSize: '0.72rem', color: 'var(--accent-primary)', textTransform: 'uppercase', fontWeight: 'bold', borderBottom: '1px solid var(--glass-border)', paddingBottom: '2px' }}>
                     State Variables
                   </div>
                   {activeTab === 'LCS' && (
                     <>
-                      <div>String 1: <strong style={{ color: '#3b82f6' }}>&quot;{lcsStr1}&quot;</strong></div>
-                      <div>String 2: <strong style={{ color: '#ec4899' }}>&quot;{lcsStr2}&quot;</strong></div>
-                      <div>i (row): <strong style={{ color: '#ec4899' }}>{currentFrame.i}</strong></div>
-                      <div>j (col): <strong style={{ color: '#3b82f6' }}>{currentFrame.j}</strong></div>
-                      {currentFrame.lcsStr && <div>LCS: <strong style={{ color: '#10b981' }}>&quot;{currentFrame.lcsStr}&quot;</strong></div>}
+                      <div>String 1: <strong style={{ color: 'var(--accent-primary, #2563eb)' }}>&quot;{lcsStr1}&quot;</strong></div>
+                      <div>String 2: <strong style={{ color: 'var(--accent-secondary, #db2777)' }}>&quot;{lcsStr2}&quot;</strong></div>
+                      <div>i (row): <strong style={{ color: 'var(--accent-secondary, #db2777)' }}>{currentFrame.i}</strong></div>
+                      <div>j (col): <strong style={{ color: 'var(--accent-primary, #2563eb)' }}>{currentFrame.j}</strong></div>
+                      {currentFrame.lcsStr && <div>LCS: <strong style={{ color: 'var(--success, #059669)' }}>&quot;{currentFrame.lcsStr}&quot;</strong></div>}
                     </>
                   )}
                   {activeTab === 'LIS' && (
                     <>
-                      <div>i: <strong style={{ color: '#fb923c' }}>{currentFrame.i}</strong></div>
-                      <div>j: <strong style={{ color: '#38bdf8' }}>{currentFrame.j}</strong></div>
-                      {currentFrame.arr && <div>Value[i]: <strong style={{ color: '#fb923c' }}>{currentFrame.arr[currentFrame.i] ?? '-'}</strong></div>}
-                      {currentFrame.arr && <div>Value[j]: <strong style={{ color: '#38bdf8' }}>{currentFrame.arr[currentFrame.j] ?? '-'}</strong></div>}
-                      {currentFrame.dp && <div>dp[i]: <strong style={{ color: '#10b981' }}>{currentFrame.dp[currentFrame.i] ?? '-'}</strong></div>}
+                      <div>i: <strong style={{ color: 'var(--warning, #d97706)' }}>{currentFrame.i}</strong></div>
+                      <div>j: <strong style={{ color: 'var(--accent-primary, #0284c7)' }}>{currentFrame.j}</strong></div>
+                      {currentFrame.arr && <div>Value[i]: <strong style={{ color: 'var(--warning, #d97706)' }}>{currentFrame.arr[currentFrame.i] ?? '-'}</strong></div>}
+                      {currentFrame.arr && <div>Value[j]: <strong style={{ color: 'var(--accent-primary, #0284c7)' }}>{currentFrame.arr[currentFrame.j] ?? '-'}</strong></div>}
+                      {currentFrame.dp && <div>dp[i]: <strong style={{ color: 'var(--success, #059669)' }}>{currentFrame.dp[currentFrame.i] ?? '-'}</strong></div>}
                     </>
                   )}
                   {activeTab === 'Knapsack' && (
                     <>
-                      <div>W Capacity: <strong style={{ color: '#3b82f6' }}>{knapCapacity}</strong></div>
-                      <div>i (Item): <strong style={{ color: '#ec4899' }}>{currentFrame.i === -1 ? 'Greedy run' : currentFrame.i}</strong></div>
-                      <div>w (Weight): <strong style={{ color: '#3b82f6' }}>{currentFrame.w === -1 ? 'Greedy run' : currentFrame.w}</strong></div>
-                      {currentFrame.greedyWeight > 0 && <div>Greedy W: <strong style={{ color: '#fb923c' }}>{currentFrame.greedyWeight.toFixed(1)}</strong></div>}
-                      {currentFrame.greedyValue > 0 && <div>Greedy V: <strong style={{ color: '#34d399' }}>{currentFrame.greedyValue.toFixed(1)}</strong></div>}
+                      <div>W Capacity: <strong style={{ color: 'var(--accent-primary, #2563eb)' }}>{knapCapacity}</strong></div>
+                      <div>i (Item): <strong style={{ color: 'var(--accent-secondary, #db2777)' }}>{currentFrame.i === -1 ? 'Greedy run' : currentFrame.i}</strong></div>
+                      <div>w (Weight): <strong style={{ color: 'var(--accent-primary, #2563eb)' }}>{currentFrame.w === -1 ? 'Greedy run' : currentFrame.w}</strong></div>
+                      {currentFrame.greedyWeight > 0 && <div>Greedy W: <strong style={{ color: 'var(--warning, #d97706)' }}>{currentFrame.greedyWeight.toFixed(1)}</strong></div>}
+                      {currentFrame.greedyValue > 0 && <div>Greedy V: <strong style={{ color: 'var(--success, #059669)' }}>{currentFrame.greedyValue.toFixed(1)}</strong></div>}
                     </>
                   )}
                   {activeTab === 'CoinChange' && (
                     <>
-                      <div>Target: <strong style={{ color: '#3b82f6' }}>{coinTarget}</strong></div>
-                      <div>DP Subsum: <strong style={{ color: '#ec4899' }}>{currentFrame.currAmount === -1 ? 'Greedy run' : currentFrame.currAmount}</strong></div>
-                      <div>Active Coin: <strong style={{ color: '#fb923c' }}>{currentFrame.activeCoin === -1 ? '-' : currentFrame.activeCoin}</strong></div>
-                      <div>Greedy Left: <strong style={{ color: '#f87171' }}>{currentFrame.greedyRemaining}</strong></div>
+                      <div>Target: <strong style={{ color: 'var(--accent-primary, #2563eb)' }}>{coinTarget}</strong></div>
+                      <div>DP Subsum: <strong style={{ color: 'var(--accent-secondary, #db2777)' }}>{currentFrame.currAmount === -1 ? 'Greedy run' : currentFrame.currAmount}</strong></div>
+                      <div>Active Coin: <strong style={{ color: 'var(--warning, #d97706)' }}>{currentFrame.activeCoin === -1 ? '-' : currentFrame.activeCoin}</strong></div>
+                      <div>Greedy Left: <strong style={{ color: 'var(--danger, #dc2626)' }}>{currentFrame.greedyRemaining}</strong></div>
                     </>
                   )}
                 </div>
@@ -2610,7 +2690,7 @@ const DPGreedyVisualizer = ({ onBack, openSettings, initialTab = 'LCS', onCopyCo
                 />
 
                 {/* Operations/Timeline Log */}
-                <div ref={logContainerRef} style={{ flex: 1, background: 'rgba(0,0,0,0.15)', padding: '6px 8px', overflowY: 'auto', borderRight: '1px solid var(--glass-border)' }}>
+                <div ref={logContainerRef} style={{ flex: 1, background: 'var(--panel-inner-bg, rgba(0,0,0,0.02))', padding: '6px 8px', overflowY: 'auto', borderRight: '1px solid var(--glass-border)' }}>
                   <div style={{ fontSize: '0.7rem', color: 'var(--text-secondary)', fontWeight: 'bold', textTransform: 'uppercase', marginBottom: '4px' }}>Chronological Step History</div>
                   <div style={{ display: 'flex', flexDirection: 'column', gap: '4px' }}>
                     {currentFrame.logs?.map((log, idx) => (
@@ -2632,7 +2712,7 @@ const DPGreedyVisualizer = ({ onBack, openSettings, initialTab = 'LCS', onCopyCo
               </div>
 
               {/* Visual step highlight at bottom of log panel */}
-              <div style={{ background: 'rgba(0,0,0,0.2)', padding: '4px 12px', borderTop: '1px solid rgba(255, 255, 255, 0.08)', fontSize: '0.72rem', color: '#fbbf24', fontWeight: 600 }}>
+              <div style={{ background: 'var(--panel-inner-bg, rgba(0,0,0,0.04))', padding: '4px 12px', borderTop: '1px solid var(--glass-border)', fontSize: '0.72rem', color: 'var(--warning, #d97706)', fontWeight: 600 }}>
                 💡 {currentFrame.msg || 'Ready to analyze.'}
               </div>
 
@@ -2655,14 +2735,14 @@ const DPGreedyVisualizer = ({ onBack, openSettings, initialTab = 'LCS', onCopyCo
         </div>
 
         {/* CODE PANELS / MULTILANGUAGE CODE TEMPLATES ON RIGHT */}
-        {showCode && (
-          <div style={{ width: `${codeWidth}px`, borderLeft: '1px solid var(--glass-border)', display: 'flex', flexDirection: 'column', background: 'var(--bg-secondary)', flexShrink: 0 }}>
+        {showCode && (!isMobile || mobileTab === 'code') && (
+          <div style={{ width: isMobile ? '100%' : `${codeWidth}px`, borderLeft: isMobile ? 'none' : '1px solid var(--glass-border)', display: 'flex', flexDirection: 'column', background: 'var(--bg-secondary)', flexShrink: 0 }}>
 
             {/* Header controls — sticky 2-row layout */}
             <div style={{ flexShrink: 0, borderBottom: '1px solid var(--glass-border)', background: 'var(--bg-secondary)', position: 'sticky', top: 0, zIndex: 2 }}>
               {/* Row 1: Language tabs */}
-              <div style={{ padding: '8px 12px', display: 'flex', alignItems: 'center', gap: '5px', borderBottom: '1px solid rgba(255,255,255,0.05)', flexWrap: 'wrap' }}>
-                <span style={{ fontSize: '0.78rem', fontWeight: 700, color: 'var(--text-secondary)', whiteSpace: 'nowrap' }}>🌐 Lang:</span>
+              <div style={{ padding: '8px 12px', display: 'flex', alignItems: 'center', gap: '5px', borderBottom: '1px solid var(--glass-border)', flexWrap: 'wrap' }}>
+                <span style={{ fontSize: '0.78rem', fontWeight: 700, color: 'var(--text-primary)', whiteSpace: 'nowrap' }}>🌐 Lang:</span>
                 {['C', 'Java', 'Python', 'JS'].map(lang => (
                   <button
                     key={lang}
@@ -2672,10 +2752,10 @@ const DPGreedyVisualizer = ({ onBack, openSettings, initialTab = 'LCS', onCopyCo
                       fontSize: '0.74rem',
                       borderRadius: '5px',
                       border: codeLanguage === lang ? '1.5px solid var(--accent-primary)' : '1px solid var(--glass-border)',
-                      background: codeLanguage === lang ? 'var(--accent-primary)' : 'transparent',
-                      color: codeLanguage === lang ? '#fff' : 'var(--text-secondary)',
+                      background: codeLanguage === lang ? 'var(--accent-primary)' : 'var(--panel-inner-bg, rgba(0,0,0,0.04))',
+                      color: codeLanguage === lang ? '#fff' : 'var(--text-primary)',
                       cursor: 'pointer',
-                      fontWeight: codeLanguage === lang ? 700 : 400,
+                      fontWeight: codeLanguage === lang ? 700 : 500,
                       transition: 'all 0.15s'
                     }}
                   >{lang === 'JS' ? 'JavaScript' : lang}</button>

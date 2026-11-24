@@ -88,9 +88,9 @@ const highlightLogText = (text) => {
     const regex = /(\b\d+(?:\.\d+)?\b)/g;
     const parts = str.split(regex);
     return (
-      <span style={{ color: '#f87171', fontWeight: 'bold' }}>
+      <span style={{ color: 'var(--danger, #ef4444)', fontWeight: 'bold' }}>
         {parts.map((p, i) => 
-          regex.test(p) ? <span key={i} style={{ color: '#fbbf24', textShadow: '0 0 8px rgba(251,191,36,0.3)' }}>{p}</span> : p
+          regex.test(p) ? <span key={i} style={{ color: 'var(--warning, #d97706)' }}>{p}</span> : p
         )}
       </span>
     );
@@ -112,9 +112,9 @@ const highlightLogText = (text) => {
     const regex = /(\b\d+(?:\.\d+)?\b)/g;
     const parts = str.split(regex);
     return (
-      <span style={{ color: '#34d399', fontWeight: 'bold' }}>
+      <span style={{ color: 'var(--success, #10b981)', fontWeight: 'bold' }}>
         {parts.map((p, i) => 
-          regex.test(p) ? <span key={i} style={{ color: '#fbbf24' }}>{p}</span> : p
+          regex.test(p) ? <span key={i} style={{ color: 'var(--warning, #d97706)' }}>{p}</span> : p
         )}
       </span>
     );
@@ -134,9 +134,9 @@ const highlightLogText = (text) => {
     const regex = /(\b\d+(?:\.\d+)?\b)/g;
     const parts = str.split(regex);
     return (
-      <span style={{ color: '#fb923c', fontWeight: 600 }}>
+      <span style={{ color: 'var(--accent-primary)', fontWeight: 600 }}>
         {parts.map((p, i) => 
-          regex.test(p) ? <span key={i} style={{ color: '#fbbf24', fontWeight: 'bold' }}>{p}</span> : p
+          regex.test(p) ? <span key={i} style={{ color: 'var(--warning, #d97706)', fontWeight: 'bold' }}>{p}</span> : p
         )}
       </span>
     );
@@ -145,7 +145,7 @@ const highlightLogText = (text) => {
   const regex = /(\b\d+(?:\.\d+)?\b)/g;
   const parts = str.split(regex);
   return parts.map((p, i) => 
-    /^\d+(?:\.\d+)?$/.test(p) ? <strong key={i} style={{ color: '#fbbf24' }}>{p}</strong> : p
+    /^\d+(?:\.\d+)?$/.test(p) ? <strong key={i} style={{ color: 'var(--warning, #d97706)' }}>{p}</strong> : p
   );
 };
 
@@ -258,6 +258,14 @@ const PatternsVisualizer = ({ onBack, openSettings, onCopyCode, onCodeChange, fo
   const [speed, setSpeed] = useState(400); // Animation delay in ms
   const [copied, setCopied] = useState(false);
   const [isRunnerOpen, setIsRunnerOpen] = useState(false);
+  const [isMobile, setIsMobile] = useState(typeof window !== 'undefined' ? window.innerWidth < 1024 : false);
+  const [mobileTab, setMobileTab] = useState('vis'); // 'vis' | 'code' | 'log'
+
+  useEffect(() => {
+    const handleResize = () => setIsMobile(window.innerWidth < 1024);
+    window.addEventListener('resize', handleResize);
+    return () => window.removeEventListener('resize', handleResize);
+  }, []);
 
   // Trace log variables
   const [showLogPanel, setShowLogPanel] = useState(true);
@@ -986,7 +994,7 @@ const PatternsVisualizer = ({ onBack, openSettings, onCopyCode, onCodeChange, fo
           </div>
           <div style={{ background: 'rgba(245, 158, 11, 0.12)', border: '1.5px solid #f59e0b', borderRadius: '12px', padding: '8px 14px', textAlign: 'center' }}>
             <div style={{ fontSize: '0.72rem', color: 'var(--text-secondary)' }}>Spaces (s)</div>
-            <strong style={{ fontSize: '1.2rem', color: '#fbbf24' }}>{spaces}</strong>
+            <strong style={{ fontSize: '1.2rem', color: 'var(--warning, #b45309)' }}>{spaces}</strong>
           </div>
           <div style={{ background: 'rgba(236, 72, 153, 0.12)', border: '1.5px solid #ec4899', borderRadius: '12px', padding: '8px 14px', textAlign: 'center' }}>
             <div style={{ fontSize: '0.72rem', color: 'var(--text-secondary)' }}>Active Symbol</div>
@@ -1034,11 +1042,11 @@ const PatternsVisualizer = ({ onBack, openSettings, onCopyCode, onCodeChange, fo
           </div>
 
           {/* Terminal Console Output */}
-          <div style={{ width: '45%', background: '#090d16', border: '1.5px solid var(--glass-border)', borderRadius: '14px', padding: '15px', fontFamily: 'monospace', display: 'flex', flexDirection: 'column' }}>
-            <h4 style={{ fontSize: '0.85rem', color: '#38bdf8', marginBottom: '10px', display: 'flex', alignItems: 'center', gap: '6px' }}>
+          <div style={{ width: '45%', background: 'var(--panel-code-bg, rgba(0,0,0,0.04))', border: '1.5px solid var(--glass-border)', borderRadius: '14px', padding: '15px', fontFamily: 'monospace', display: 'flex', flexDirection: 'column' }}>
+            <h4 style={{ fontSize: '0.85rem', color: 'var(--accent-primary, #0284c7)', marginBottom: '10px', display: 'flex', alignItems: 'center', gap: '6px' }}>
               💻 Live Console Output
             </h4>
-            <div style={{ flex: 1, background: 'rgba(0,0,0,0.5)', borderRadius: '8px', padding: '12px', overflowY: 'auto', fontSize: '1.05rem', color: '#10b981', display: 'flex', flexDirection: 'column', gap: '2px' }}>
+            <div style={{ flex: 1, background: 'var(--panel-inner-bg, rgba(0,0,0,0.02))', border: '1px solid var(--glass-border)', borderRadius: '8px', padding: '12px', overflowY: 'auto', fontSize: '1.05rem', color: 'var(--success, #059669)', display: 'flex', flexDirection: 'column', gap: '2px' }}>
               {patternOutputs.map((line, idx) => (
                 <div key={idx} style={{ whiteSpace: 'pre', letterSpacing: '2px' }}>{line}</div>
               ))}
@@ -1094,7 +1102,7 @@ const PatternsVisualizer = ({ onBack, openSettings, onCopyCode, onCodeChange, fo
       </header>
 
       {/* INPUT PANEL AND RUN BUTTONS */}
-      <div style={{ display: 'flex', padding: '10px 20px', background: 'rgba(15, 23, 42, 0.3)', borderBottom: '1px solid var(--glass-border)', alignItems: 'center', justifyContent: 'space-between', gap: '15px', flexShrink: 0 }}>
+      <div style={{ display: 'flex', padding: '10px 20px', background: 'var(--panel-inner-bg, rgba(0,0,0,0.03))', borderBottom: '1px solid var(--glass-border)', alignItems: 'center', justifyContent: 'space-between', gap: '15px', flexShrink: 0 }}>
         
         {/* Dynamic Inputs based on selected Tab */}
         <div style={{ display: 'flex', gap: '12px', alignItems: 'center', flex: 1, flexWrap: 'wrap' }}>
@@ -1134,11 +1142,47 @@ const PatternsVisualizer = ({ onBack, openSettings, onCopyCode, onCodeChange, fo
         </div>
       </div>
 
+      {/* Mobile Tab Switcher */}
+      {isMobile && (
+        <div style={{ display: 'flex', background: 'var(--glass-bg)', padding: '4px', margin: '0.25rem 0.5rem', gap: '4px', border: '1px solid var(--glass-border)', borderRadius: '10px' }}>
+          <button className={`btn btn-clear ${mobileTab === 'vis' ? 'active' : ''}`} style={{ flex: 1, padding: '6px', fontSize: '0.8rem', background: mobileTab === 'vis' ? 'var(--accent-primary)' : 'transparent', color: mobileTab === 'vis' ? '#fff' : 'var(--text-secondary)' }} onClick={() => setMobileTab('vis')}>📊 Visualizer</button>
+          <button className={`btn btn-clear ${mobileTab === 'code' ? 'active' : ''}`} style={{ flex: 1, padding: '6px', fontSize: '0.8rem', background: mobileTab === 'code' ? 'var(--accent-primary)' : 'transparent', color: mobileTab === 'code' ? '#fff' : 'var(--text-secondary)' }} onClick={() => { setMobileTab('code'); setShowCode(true); }}>💻 Code</button>
+          <button className={`btn btn-clear ${mobileTab === 'log' ? 'active' : ''}`} style={{ flex: 1, padding: '6px', fontSize: '0.8rem', background: mobileTab === 'log' ? 'var(--accent-primary)' : 'transparent', color: mobileTab === 'log' ? '#fff' : 'var(--text-secondary)' }} onClick={() => { setMobileTab('log'); setShowLogPanel(true); }}>📋 Logs</button>
+        </div>
+      )}
+
       {/* MAIN CONTENT BLOCK */}
-      <div style={{ display: 'flex', flex: 1, overflow: 'hidden', position: 'relative' }}>
+      <div style={{ display: 'flex', flex: 1, overflow: 'hidden', position: 'relative', minHeight: 0 }}>
         
         {/* VISUALIZER CANVAS AREA */}
-        <div style={{ flex: 1, display: 'flex', flexDirection: 'column', background: 'rgba(10, 15, 30, 0.3)', position: 'relative', overflow: 'hidden' }}>
+        <div className="patterns-canvas-container" style={{ display: (isMobile && mobileTab !== 'vis') ? 'none' : 'flex', flex: 1, flexDirection: 'column', background: 'var(--canvas-bg, var(--glass-bg))', position: 'relative', overflow: 'hidden', minHeight: 0 }}>
+
+          {/* Active Step Status Banner */}
+          {(() => {
+            const isCompleted = timeline.length > 0 && currentStep === timeline.length - 1;
+            return (
+              <div style={{ display: 'flex', justifyContent: 'center', margin: '8px 0 10px 0', flexShrink: 0, zIndex: 15 }}>
+                <span style={{
+                  fontSize: isMobile ? '0.95rem' : '1.15rem',
+                  color: isCompleted ? '#34d399' : 'var(--text-primary)',
+                  fontWeight: 'bold',
+                  background: isCompleted ? 'rgba(52, 211, 153, 0.12)' : 'var(--glass-bg)',
+                  padding: '5px 22px',
+                  borderRadius: '20px',
+                  border: isCompleted ? '1.5px solid rgba(52, 211, 153, 0.45)' : '1px solid var(--glass-border)',
+                  boxShadow: isCompleted ? '0 0 20px rgba(52, 211, 153, 0.25)' : '0 4px 15px rgba(0,0,0,0.1)',
+                  transition: 'all 0.3s ease',
+                  textAlign: 'center',
+                  maxWidth: '90%',
+                  whiteSpace: 'nowrap',
+                  overflow: 'hidden',
+                  textOverflow: 'ellipsis'
+                }} title={currentFrame.msg || 'Ready'}>
+                  {currentFrame.msg || 'Select a pattern and click "Run Pattern Trace" to start.'}
+                </span>
+              </div>
+            );
+          })()}
           
           <div style={{ flex: 1, position: 'relative', overflow: 'hidden' }}>
             
@@ -1146,31 +1190,31 @@ const PatternsVisualizer = ({ onBack, openSettings, onCopyCode, onCodeChange, fo
 
             {/* FLOATING COMPLEXITY CARD OVERLAY */}
             {showComplexity && (
-              <div style={{ 
+              <div className="floating-complexity-card" style={{ 
                 position: 'absolute', top: '15px', right: '15px', zIndex: 30,
-                width: '260px', background: 'rgba(15, 23, 42, 0.9)', border: '1.5px solid var(--glass-border)',
+                width: '260px', background: 'var(--glass-bg)', border: '1.5px solid var(--glass-border)',
                 borderRadius: '12px', padding: '12px', backdropFilter: 'blur(10px)',
-                boxShadow: '0 8px 32px 0 rgba(0,0,0,0.4)', transition: 'all 0.3s ease'
+                boxShadow: 'var(--card-shadow, 0 8px 30px rgba(0,0,0,0.12))', transition: 'all 0.3s ease'
               }}>
                 <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', borderBottom: '1px solid var(--glass-border)', paddingBottom: '6px', marginBottom: '8px' }}>
                   <span style={{ fontSize: '0.82rem', fontWeight: 'bold', color: 'var(--text-primary)' }}>📊 Pattern Complexity Details</span>
                   <button style={{ background: 'transparent', border: 'none', color: 'var(--text-secondary)', cursor: 'pointer', fontSize: '0.8rem' }} onClick={() => setShowComplexity(false)}>✕</button>
                 </div>
-                <div style={{ fontSize: '0.78rem', color: '#60a5fa', fontWeight: 'bold', marginBottom: '8px' }}>Nested Loop Mechanics</div>
+                <div style={{ fontSize: '0.78rem', color: 'var(--accent-primary, #2563eb)', fontWeight: 'bold', marginBottom: '8px' }}>Nested Loop Mechanics</div>
                 <div style={{ display: 'flex', flexDirection: 'column', gap: '6px' }}>
-                  <div style={{ display: 'flex', flexDirection: 'column', gap: '2px', background: 'rgba(255,255,255,0.02)', padding: '4px 6px', borderRadius: '4px' }}>
+                  <div style={{ display: 'flex', flexDirection: 'column', gap: '2px', background: 'var(--panel-code-bg, rgba(0,0,0,0.04))', border: '1px solid var(--glass-border)', padding: '4px 6px', borderRadius: '4px' }}>
                     <div style={{ fontSize: '0.75rem', fontWeight: 600, color: 'var(--text-primary)' }}>Outer Loop (Rows)</div>
                     <div style={{ fontSize: '0.7rem', color: 'var(--text-secondary)' }}>Iterates vertically row-by-row (i = 1..N)</div>
                   </div>
-                  <div style={{ display: 'flex', flexDirection: 'column', gap: '2px', background: 'rgba(255,255,255,0.02)', padding: '4px 6px', borderRadius: '4px' }}>
+                  <div style={{ display: 'flex', flexDirection: 'column', gap: '2px', background: 'var(--panel-code-bg, rgba(0,0,0,0.04))', border: '1px solid var(--glass-border)', padding: '4px 6px', borderRadius: '4px' }}>
                     <div style={{ fontSize: '0.75rem', fontWeight: 600, color: 'var(--text-primary)' }}>Spaces Padding Loop</div>
                     <div style={{ fontSize: '0.7rem', color: 'var(--text-secondary)' }}>Pads offset spaces for centered shapes</div>
                   </div>
-                  <div style={{ display: 'flex', flexDirection: 'column', gap: '2px', background: 'rgba(255,255,255,0.02)', padding: '4px 6px', borderRadius: '4px' }}>
+                  <div style={{ display: 'flex', flexDirection: 'column', gap: '2px', background: 'var(--panel-code-bg, rgba(0,0,0,0.04))', border: '1px solid var(--glass-border)', padding: '4px 6px', borderRadius: '4px' }}>
                     <div style={{ fontSize: '0.75rem', fontWeight: 600, color: 'var(--text-primary)' }}>Time Complexity</div>
                     <div style={{ fontSize: '0.7rem', color: 'var(--text-secondary)' }}>O(N²) quadratic time complexity</div>
                   </div>
-                  <div style={{ display: 'flex', flexDirection: 'column', gap: '2px', background: 'rgba(255,255,255,0.02)', padding: '4px 6px', borderRadius: '4px' }}>
+                  <div style={{ display: 'flex', flexDirection: 'column', gap: '2px', background: 'var(--panel-code-bg, rgba(0,0,0,0.04))', border: '1px solid var(--glass-border)', padding: '4px 6px', borderRadius: '4px' }}>
                     <div style={{ fontSize: '0.75rem', fontWeight: 600, color: 'var(--text-primary)' }}>Space Complexity</div>
                     <div style={{ fontSize: '0.7rem', color: 'var(--text-secondary)' }}>O(1) in-place auxiliary space</div>
                   </div>
@@ -1181,20 +1225,22 @@ const PatternsVisualizer = ({ onBack, openSettings, onCopyCode, onCodeChange, fo
           </div>
 
           {/* FLOATING GLASSMORPHIC LOG PANEL */}
-          {showLogPanel && timeline.length > 0 && (
+          {showLogPanel && timeline.length > 0 && (!isMobile || mobileTab === 'log') && (
             <div 
+              className="floating-log-panel"
               style={{
-                position: 'absolute',
-                left: `${logPosition.x}px`,
-                top: `${logPosition.y}px`,
-                width: `${logSize.width}px`,
-                height: `${logSize.height}px`,
-                background: 'rgba(15, 23, 42, 0.45)', // Translucent glassmorphism
+                position: isMobile ? 'relative' : 'absolute',
+                left: isMobile ? '0' : `${Math.min(logPosition.x, typeof window !== 'undefined' ? window.innerWidth - 340 : 100)}px`,
+                top: isMobile ? '0' : `${logPosition.y}px`,
+                width: isMobile ? '100%' : `${logSize.width}px`,
+                maxWidth: 'calc(100vw - 20px)',
+                height: isMobile ? '100%' : `${logSize.height}px`,
+                background: 'var(--glass-bg)',
                 backdropFilter: 'blur(16px) saturate(180%)',
                 WebkitBackdropFilter: 'blur(16px) saturate(180%)',
-                border: '1px solid rgba(255, 255, 255, 0.08)',
-                borderRadius: '16px',
-                boxShadow: '0 20px 50px rgba(0,0,0,0.5)',
+                border: '1px solid var(--glass-border)',
+                borderRadius: isMobile ? '0' : '16px',
+                boxShadow: 'var(--card-shadow, 0 10px 30px -5px rgba(0,0,0,0.12), 0 4px 6px -4px rgba(0,0,0,0.08))',
                 display: 'flex',
                 flexDirection: 'column',
                 overflow: 'hidden',
@@ -1207,8 +1253,8 @@ const PatternsVisualizer = ({ onBack, openSettings, onCopyCode, onCodeChange, fo
                 onTouchStart={handleLogHeaderMouseDown}
                 style={{
                   padding: '8px 12px', 
-                  background: 'rgba(255, 255, 255, 0.04)', 
-                  borderBottom: '1px solid rgba(255, 255, 255, 0.08)',
+                  background: 'var(--panel-inner-bg, rgba(0, 0, 0, 0.03))', 
+                  borderBottom: '1px solid var(--glass-border)',
                   display: 'flex', 
                   justifyContent: 'space-between', 
                   alignItems: 'center', 
@@ -1227,16 +1273,16 @@ const PatternsVisualizer = ({ onBack, openSettings, onCopyCode, onCodeChange, fo
               <div style={{ display: 'flex', flex: 1, overflow: 'hidden' }}>
                 
                 {/* Active State Values */}
-                <div style={{ width: `${activeStateWidth}px`, borderRight: '1px solid rgba(255, 255, 255, 0.08)', background: 'rgba(0,0,0,0.12)', display: 'flex', flexDirection: 'column', overflow: 'hidden', flexShrink: 0 }}>
-                  <div style={{ padding: '4px 8px', fontSize: '0.72rem', color: 'var(--text-secondary)', fontWeight: 600, borderBottom: '1px solid rgba(255, 255, 255, 0.08)' }}>
+                <div style={{ width: `${activeStateWidth}px`, borderRight: '1px solid var(--glass-border)', background: 'var(--panel-inner-bg, rgba(0,0,0,0.04))', display: 'flex', flexDirection: 'column', overflow: 'hidden', flexShrink: 0 }}>
+                  <div style={{ padding: '4px 8px', fontSize: '0.72rem', color: 'var(--text-secondary)', fontWeight: 600, borderBottom: '1px solid var(--glass-border)' }}>
                     State Variables
                   </div>
                   <div style={{ flex: 1, overflowY: 'auto', padding: '6px 8px', display: 'flex', flexDirection: 'column', gap: '4px', fontSize: '0.72rem', fontFamily: 'monospace' }}>
-                    <div>pattern: <strong style={{ color: '#a78bfa' }}>{selectedPattern}</strong></div>
-                    <div>row (i): <strong style={{ color: '#ec4899' }}>{currentFrame.activeRow || '-'}</strong></div>
-                    <div>col (j): <strong style={{ color: '#3b82f6' }}>{currentFrame.activeCol || '-'}</strong></div>
-                    <div>spaces (s): <strong style={{ color: '#fb923c' }}>{currentFrame.spaces || 0}</strong></div>
-                    <div>symbol: <strong style={{ color: '#10b981' }}>{currentFrame.activeChar || '-'}</strong></div>
+                    <div>pattern: <strong style={{ color: 'var(--accent-secondary, #7c3aed)' }}>{selectedPattern}</strong></div>
+                    <div>row (i): <strong style={{ color: 'var(--accent-secondary, #db2777)' }}>{currentFrame.activeRow || '-'}</strong></div>
+                    <div>col (j): <strong style={{ color: 'var(--accent-primary, #2563eb)' }}>{currentFrame.activeCol || '-'}</strong></div>
+                    <div>spaces (s): <strong style={{ color: 'var(--warning, #d97706)' }}>{currentFrame.spaces || 0}</strong></div>
+                    <div>symbol: <strong style={{ color: 'var(--success, #059669)' }}>{currentFrame.activeChar || '-'}</strong></div>
                   </div>
                 </div>
 
@@ -1248,8 +1294,8 @@ const PatternsVisualizer = ({ onBack, openSettings, onCopyCode, onCodeChange, fo
                 />
 
                 {/* Chronological steps */}
-                <div style={{ flex: 1, display: 'flex', flexDirection: 'column', overflow: 'hidden' }}>
-                  <div style={{ padding: '4px 8px', fontSize: '0.72rem', color: 'var(--text-secondary)', fontWeight: 600, borderBottom: '1px solid rgba(255, 255, 255, 0.08)' }}>
+                <div style={{ flex: 1, display: 'flex', flexDirection: 'column', overflow: 'hidden', background: 'var(--panel-inner-bg, rgba(0,0,0,0.02))' }}>
+                  <div style={{ padding: '4px 8px', fontSize: '0.72rem', color: 'var(--text-secondary)', fontWeight: 600, borderBottom: '1px solid var(--glass-border)' }}>
                     Trace Log
                   </div>
                   <div ref={logContainerRef} style={{ flex: 1, overflowY: 'auto', padding: '8px', display: 'flex', flexDirection: 'column', gap: '4px' }}>
@@ -1272,7 +1318,7 @@ const PatternsVisualizer = ({ onBack, openSettings, onCopyCode, onCodeChange, fo
               </div>
 
               {/* Visual step highlight at bottom of log panel */}
-              <div style={{ background: 'rgba(0,0,0,0.2)', padding: '6px 12px', borderTop: '1px solid rgba(255, 255, 255, 0.08)', fontSize: '0.75rem', color: '#fbbf24', fontWeight: 600, minHeight: '26px' }}>
+              <div style={{ background: 'var(--panel-inner-bg, rgba(0,0,0,0.04))', borderTop: '1px solid var(--glass-border)', padding: '6px 12px', fontSize: '0.75rem', color: 'var(--warning, #d97706)', fontWeight: 600, minHeight: '26px' }}>
                 💡 {currentFrame.msg || 'Ready to analyze.'}
               </div>
 
@@ -1316,14 +1362,49 @@ const PatternsVisualizer = ({ onBack, openSettings, onCopyCode, onCodeChange, fo
               </button>
             </div>
 
-            <div style={{ fontSize: '0.85rem', color: 'var(--text-secondary)', display: 'flex', alignItems: 'center', gap: '15px' }}>
-              <span style={{ fontWeight: 600, color: 'var(--text-primary)' }}>Frame {timeline.length > 0 ? currentStep + 1 : 0} / {timeline.length}</span>
-              <div style={{ width: '120px', height: '6px', background: 'rgba(255,255,255,0.05)', borderRadius: '3px', overflow: 'hidden' }}>
-                <div style={{ width: `${progress}%`, height: '100%', background: 'linear-gradient(to right, var(--accent-primary), var(--accent-secondary))', transition: 'width 0.15s ease' }}></div>
-              </div>
+            {/* Center Step Status Bar */}
+            <div style={{ flex: 1, display: 'flex', alignItems: 'center', justifyContent: 'center', padding: '0 15px', overflow: 'hidden' }}>
+              <span style={{
+                fontSize: '0.86rem',
+                color: 'var(--text-primary)',
+                fontWeight: 600,
+                background: 'var(--panel-inner-bg, rgba(0,0,0,0.04))',
+                padding: '4px 16px',
+                borderRadius: '20px',
+                border: '1px solid var(--glass-border)',
+                whiteSpace: 'nowrap',
+                overflow: 'hidden',
+                textOverflow: 'ellipsis',
+                maxWidth: '100%',
+                boxShadow: '0 2px 8px rgba(0,0,0,0.06)'
+              }} title={currentFrame.msg || 'Ready'}>
+                💡 {currentFrame.msg || 'Ready to trace.'}
+              </span>
+            </div>
+
+            <div style={{ fontSize: '0.85rem', color: 'var(--text-secondary)', display: 'flex', alignItems: 'center', gap: '12px', flexShrink: 0 }}>
+              <span style={{ fontWeight: 600, color: 'var(--text-primary)', whiteSpace: 'nowrap' }}>Frame {timeline.length > 0 ? currentStep + 1 : 0} / {timeline.length}</span>
+              <input 
+                type="range"
+                min={0}
+                max={Math.max(0, timeline.length - 1)}
+                value={currentStep}
+                disabled={timeline.length === 0}
+                onChange={e => {
+                  setIsPlaying(false);
+                  setCurrentStep(Number(e.target.value));
+                }}
+                style={{
+                  width: '120px',
+                  accentColor: 'var(--accent-primary)',
+                  cursor: timeline.length > 0 ? 'pointer' : 'default',
+                  height: '6px'
+                }}
+                title={`Step scrubber: Jump to frame ${timeline.length ? currentStep + 1 : 0} / ${timeline.length}`}
+              />
               
               {/* Inverted Speed Slider placed in the bottom bar on the right */}
-              <div style={{ display: 'flex', alignItems: 'center', gap: '8px', marginLeft: '10px' }}>
+              <div style={{ display: 'flex', alignItems: 'center', gap: '8px', marginLeft: '6px' }}>
                 <span style={{ fontSize: '0.82rem', color: 'var(--text-secondary)', whiteSpace: 'nowrap' }}>Speed ({speed}ms)</span>
                 <input 
                   type="range" min={50} max={1500} step={50} 
@@ -1341,14 +1422,14 @@ const PatternsVisualizer = ({ onBack, openSettings, onCopyCode, onCodeChange, fo
 
 
         {/* CODE PANELS / MULTI-LANGUAGE SYNTAX TEMPLATE ON RIGHT */}
-        {showCode && (
-          <div style={{ width: `${codeWidth}px`, borderLeft: '1px solid var(--glass-border)', display: 'flex', flexDirection: 'column', background: 'var(--bg-secondary)', flexShrink: 0, position: 'relative' }}>
+        {showCode && (!isMobile || mobileTab === 'code') && (
+          <div style={{ width: isMobile ? '100%' : `${codeWidth}px`, borderLeft: isMobile ? 'none' : '1px solid var(--glass-border)', display: 'flex', flexDirection: 'column', background: 'var(--bg-secondary)', flexShrink: 0, position: 'relative' }}>
             
             {/* Header controls — sticky so always visible while code scrolls */}
             <div style={{ flexShrink: 0, borderBottom: '1px solid var(--glass-border)', background: 'var(--bg-secondary)', position: 'sticky', top: 0, zIndex: 2 }}>
               {/* Row 1: Language selector */}
-              <div style={{ padding: '8px 12px', display: 'flex', alignItems: 'center', gap: '6px', borderBottom: '1px solid rgba(255,255,255,0.05)', flexWrap: 'wrap' }}>
-                <span style={{ fontSize: '0.78rem', fontWeight: 700, color: 'var(--text-secondary)', whiteSpace: 'nowrap' }}>🌐 Lang:</span>
+              <div style={{ padding: '8px 12px', display: 'flex', alignItems: 'center', gap: '6px', borderBottom: '1px solid var(--glass-border)', flexWrap: 'wrap' }}>
+                <span style={{ fontSize: '0.78rem', fontWeight: 700, color: 'var(--text-primary)', whiteSpace: 'nowrap' }}>🌐 Lang:</span>
                 {['Java','Python','C','JavaScript'].map(lang => (
                   <button
                     key={lang}
@@ -1358,10 +1439,10 @@ const PatternsVisualizer = ({ onBack, openSettings, onCopyCode, onCodeChange, fo
                       fontSize: '0.74rem',
                       borderRadius: '5px',
                       border: selectedLanguage === lang ? '1.5px solid var(--accent-primary)' : '1px solid var(--glass-border)',
-                      background: selectedLanguage === lang ? 'var(--accent-primary)' : 'transparent',
-                      color: selectedLanguage === lang ? '#fff' : 'var(--text-secondary)',
+                      background: selectedLanguage === lang ? 'var(--accent-primary)' : 'var(--panel-inner-bg, rgba(0,0,0,0.04))',
+                      color: selectedLanguage === lang ? '#fff' : 'var(--text-primary)',
                       cursor: 'pointer',
-                      fontWeight: selectedLanguage === lang ? 700 : 400,
+                      fontWeight: selectedLanguage === lang ? 700 : 500,
                       transition: 'all 0.15s'
                     }}
                   >{lang}</button>

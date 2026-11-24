@@ -104,7 +104,7 @@ const highlightTokens = (line) => {
     }
   }
 
-  const tokenRegex = /("[^"]*"|'[^']*'|`[^`]*`|\b(?:class|public|private|protected|static|final|void|return|int|float|double|char|boolean|bool|long|short|byte|size_t|for|while|do|if|else|continue|break|switch|case|default|new|def|const|let|var|function|using|namespace|include|vector|sizeof|memset|import|package|struct|from|in|is|as|try|catch|throw|finally)\b|\b(?:String|BitmaskTSPEngine|Main|Arrays|System|Math|vector|Dinic|DinicEngine|EditDistanceEngine|KMPMatcher|RabinKarpEngine|ZAlgorithm|VertexCover2Approx|MillerRabinEngine|BlellochParallelEngine|InfixToPostfix|SieveOfEratosthenes|deque|Infinity|Number|Object|Array)\b|\b\d+(\.\d+)?[fFlLuU]?\b|[a-zA-Z_]\w*(?=\s*\()|<<|>>|&&|\|\||==|!=|<=|>=|[&|~^+\-*\/=<>!%])/g;
+  const tokenRegex = /("[^"]*"|'[^']*'|`[^`]*`|\b(?:class|public|private|protected|static|final|void|return|int|float|double|char|boolean|bool|long|short|byte|size_t|for|while|do|if|else|continue|break|switch|case|default|new|def|const|let|var|function|using|namespace|include|vector|sizeof|memset|import|package|struct|from|in|is|as|try|catch|throw|finally)\b|\b(?:String|BitmaskTSPEngine|Main|Arrays|System|Math|vector|Dinic|DinicEngine|EditDistanceEngine|KMPMatcher|RabinKarpEngine|ZAlgorithm|VertexCover2Approx|MillerRabinEngine|BlellochParallelEngine|InfixToPostfix|SieveOfEratosthenes|deque|Infinity|Number|Object|Array)\b|\b\d+(\.\d+)?[fFlLuU]?\b|[a-zA-Z_]\w*(?=\s*\()|<<|>>|&&|\|\||==|!=|<=|>=|[&|~^+\-*\/=<>!%]|[()[\]{};,?:])/g;
 
   const tokens = [];
   let lastIndex = 0;
@@ -126,6 +126,8 @@ const highlightTokens = (line) => {
       tokens.push({ type: 'builtin_class', val: token });
     } else if (/^(<<|>>|&&|\|\||==|!=|<=|>=|[&|~^+\-*\/=<>!%])$/.test(token)) {
       tokens.push({ type: 'op', val: token });
+    } else if (/^[()[\]{};,?:]$/.test(token)) {
+      tokens.push({ type: 'punct', val: token });
     } else {
       tokens.push({ type: 'fn', val: token });
     }
@@ -154,40 +156,43 @@ const HighlightedCodeLine = ({ lineText, isWordWrap = false }) => {
       minWidth: 0 
     }}>
       {tokens.map((tok, tIdx) => {
-        let color = '#f8fafc'; // Crisp clean white default
-        let fontWeight = 450;
+        let color = 'var(--syntax-text, var(--text-primary, #0f172a))'; // Theme-adaptive primary text
+        let fontWeight = 500;
         let fontStyle = 'normal';
 
         if (tok.type === 'comment') {
-          color = '#94a3b8'; // Clean italic slate gray
+          color = 'var(--syntax-comment, var(--text-secondary, #64748b))';
           fontStyle = 'italic';
           fontWeight = 400;
         } else if (tok.type === 'preprocessor') {
-          color = '#38bdf8'; // Vibrant cyan for #include, #define
+          color = 'var(--syntax-preprocessor, #0284c7)';
           fontWeight = 700;
         } else if (tok.type === 'header') {
-          color = '#4ade80'; // Emerald green for <stdio.h>, <iostream>
+          color = 'var(--syntax-header, #15803d)';
           fontWeight = 600;
         } else if (tok.type === 'type') {
-          color = '#60a5fa'; // Crisp sky blue for types (int, float, const)
+          color = 'var(--syntax-type, #2563eb)';
           fontWeight = 600;
         } else if (tok.type === 'keyword') {
-          color = '#c084fc'; // Vibrant purple for keywords (return, for, while)
-          fontWeight = 600;
+          color = 'var(--syntax-keyword, #7c3aed)';
+          fontWeight = 700;
         } else if (tok.type === 'builtin_class') {
-          color = '#fbbf24'; // Warm amber for classes (Main, String, Arrays)
+          color = 'var(--syntax-builtin, #b45309)';
           fontWeight = 600;
         } else if (tok.type === 'fn') {
-          color = '#34d399'; // Emerald green for functions (printf, solveTSP)
+          color = 'var(--syntax-fn, #059669)';
           fontWeight = 600;
         } else if (tok.type === 'string') {
-          color = '#a3e635'; // Lime green for strings ("Score: %d\n")
+          color = 'var(--syntax-string, #166534)';
         } else if (tok.type === 'number') {
-          color = '#fb923c'; // Vibrant orange for numbers (100, 150, 3.14159)
+          color = 'var(--syntax-number, #c2410c)';
           fontWeight = 600;
         } else if (tok.type === 'op') {
-          color = '#22d3ee'; // Bright cyan for operators (=, +, *)
+          color = 'var(--syntax-op, #0284c7)';
           fontWeight = 600;
+        } else if (tok.type === 'punct') {
+          color = 'var(--syntax-punct, var(--text-secondary, #334155))';
+          fontWeight = 500;
         }
 
         return (
@@ -488,9 +493,9 @@ const highlightLogText = (text) => {
     const regex = /(\b\d+(?:\.\d+)?\b)/g;
     const parts = str.split(regex);
     return (
-      <span style={{ color: '#f87171', fontWeight: 'bold' }}>
+      <span style={{ color: 'var(--danger, #ef4444)', fontWeight: 'bold' }}>
         {parts.map((p, i) => 
-          regex.test(p) ? <span key={i} style={{ color: '#fbbf24', textShadow: '0 0 8px rgba(251,191,36,0.3)' }}>{p}</span> : p
+          regex.test(p) ? <span key={i} style={{ color: 'var(--warning, #b45309)' }}>{p}</span> : p
         )}
       </span>
     );
@@ -513,9 +518,9 @@ const highlightLogText = (text) => {
     const regex = /(\b\d+(?:\.\d+)?\b)/g;
     const parts = str.split(regex);
     return (
-      <span style={{ color: '#34d399', fontWeight: 'bold' }}>
+      <span style={{ color: 'var(--success, #10b981)', fontWeight: 'bold' }}>
         {parts.map((p, i) => 
-          regex.test(p) ? <span key={i} style={{ color: '#fbbf24' }}>{p}</span> : p
+          regex.test(p) ? <span key={i} style={{ color: 'var(--warning, #b45309)' }}>{p}</span> : p
         )}
       </span>
     );
@@ -537,9 +542,9 @@ const highlightLogText = (text) => {
     const regex = /(\b\d+(?:\.\d+)?\b)/g;
     const parts = str.split(regex);
     return (
-      <span style={{ color: '#fb923c', fontWeight: 600 }}>
+      <span style={{ color: 'var(--accent-primary, #0284c7)', fontWeight: 600 }}>
         {parts.map((p, i) => 
-          regex.test(p) ? <span key={i} style={{ color: '#fbbf24', fontWeight: 'bold' }}>{p}</span> : p
+          regex.test(p) ? <span key={i} style={{ color: 'var(--warning, #b45309)', fontWeight: 'bold' }}>{p}</span> : p
         )}
       </span>
     );
@@ -547,8 +552,12 @@ const highlightLogText = (text) => {
   
   const regex = /(\b\d+(?:\.\d+)?\b)/g;
   const parts = str.split(regex);
-  return parts.map((p, i) => 
-    /^\d+(?:\.\d+)?$/.test(p) ? <strong key={i} style={{ color: '#fbbf24' }}>{p}</strong> : p
+  return (
+    <span style={{ color: 'var(--text-primary)' }}>
+      {parts.map((p, i) => 
+        /^\d+(?:\.\d+)?$/.test(p) ? <strong key={i} style={{ color: 'var(--warning, #b45309)' }}>{p}</strong> : p
+      )}
+    </span>
   );
 };
 
@@ -5078,6 +5087,14 @@ const DSANotesVisualizer = ({
   const [codeHeightMode, setCodeHeightMode] = useState('all'); // 'all' (all lines visible) | 'scroll' (bounded 420px with smooth scrollbar)
   const [isWordWrap, setIsWordWrap] = useState(false);
   const [isFocusMode, setIsFocusMode] = useState(false);
+  const [isMobile, setIsMobile] = useState(typeof window !== 'undefined' ? window.innerWidth < 1024 : false);
+  const [mobileTab, setMobileTab] = useState('vis'); // 'vis' | 'code'
+
+  useEffect(() => {
+    const handleResize = () => setIsMobile(window.innerWidth < 1024);
+    window.addEventListener('resize', handleResize);
+    return () => window.removeEventListener('resize', handleResize);
+  }, []);
 
   useEffect(() => {
     if (initialTopicKey) {
@@ -5334,18 +5351,18 @@ const DSANotesVisualizer = ({
 
       return (
         <svg viewBox={`0 0 ${width} ${height}`} width="100%" height="100%" style={{ overflow: 'visible' }}>
-          <text x={20} y={35} fill="var(--text-secondary)" fontSize="12" fontWeight="bold">INPUT ARRAY (arr)</text>
+          <text x={20} y={35} fill="var(--text-primary)" fontSize="13" fontWeight="bold">INPUT ARRAY (arr)</text>
           {arr.map((num, idx) => {
             const isCurr = (idx === currentI);
             const isMax = (num === maxVal);
             return (
               <g key={idx} transform={`translate(${40 + idx * 75}, 50)`}>
                 <rect x={0} y={0} width={65} height={45} rx={8} 
-                  fill={isMax ? 'rgba(52,211,153,0.2)' : isCurr ? 'rgba(251,191,36,0.2)' : 'rgba(255,255,255,0.05)'} 
-                  stroke={isMax ? '#34d399' : isCurr ? '#fbbf24' : 'rgba(255,255,255,0.1)'} 
+                  fill={isMax ? 'rgba(52,211,153,0.25)' : isCurr ? 'rgba(217,119,6,0.18)' : 'var(--glass-bg)'} 
+                  stroke={isMax ? '#34d399' : isCurr ? 'var(--warning, #b45309)' : 'var(--glass-border)'} 
                   strokeWidth="2"
                 />
-                <text x={32.5} y={28} fill="#ffffff" textAnchor="middle" fontSize="16" fontWeight="bold">{num}</text>
+                <text x={32.5} y={28} fill={isMax ? '#34d399' : isCurr ? 'var(--warning, #b45309)' : 'var(--text-primary)'} textAnchor="middle" fontSize="16" fontWeight="bold">{num}</text>
                 <text x={32.5} y={60} fill="var(--text-secondary)" textAnchor="middle" fontSize="11">idx {idx}</text>
                 {isCurr && <text x={32.5} y={-10} fill="#fb923c" textAnchor="middle" fontSize="16">👇 i</text>}
               </g>
@@ -5353,11 +5370,11 @@ const DSANotesVisualizer = ({
           })}
 
           {/* Active Variable State */}
-          <text x={20} y={150} fill="var(--text-secondary)" fontSize="12" fontWeight="bold">STATE VARIABLE</text>
+          <text x={20} y={150} fill="var(--text-primary)" fontSize="13" fontWeight="bold">STATE VARIABLE</text>
           <g transform="translate(20, 160)">
-            <rect width={220} height={45} rx={8} fill="rgba(0,0,0,0.2)" stroke="rgba(255,255,255,0.05)" />
-            <text x={15} y={26} fill="var(--text-secondary)" fontSize="14">maxVal = </text>
-            <text x={90} y={28} fill={updated ? '#34d399' : '#fbbf24'} fontSize="18" fontWeight="bold">{maxVal}</text>
+            <rect width={220} height={45} rx={10} fill="var(--glass-bg)" stroke="var(--glass-border)" strokeWidth="1.5" />
+            <text x={15} y={27} fill="var(--text-primary)" fontSize="14" fontWeight="600">maxVal = </text>
+            <text x={90} y={28} fill={updated ? '#34d399' : 'var(--warning, #b45309)'} fontSize="18" fontWeight="bold">{maxVal}</text>
             {updated && <text x={140} y={26} fill="#34d399" fontSize="11" fontWeight="bold">✦ UPDATED</text>}
           </g>
         </svg>
@@ -5373,18 +5390,18 @@ const DSANotesVisualizer = ({
 
       return (
         <svg viewBox={`0 0 ${width} ${height}`} width="100%" height="100%" style={{ overflow: 'visible' }}>
-          <text x={20} y={35} fill="var(--text-secondary)" fontSize="12" fontWeight="bold">INPUT ARRAY (arr)</text>
+          <text x={20} y={35} fill="var(--text-primary)" fontSize="13" fontWeight="bold">INPUT ARRAY (arr)</text>
           {arr.map((num, idx) => {
             const isCurr = (idx === currentI);
             const isProcessedEven = (idx < currentI && num % 2 === 0) || (isCurr && matched);
             return (
               <g key={idx} transform={`translate(${40 + idx * 75}, 50)`}>
                 <rect x={0} y={0} width={65} height={45} rx={8} 
-                  fill={isProcessedEven ? 'rgba(52,211,153,0.15)' : isCurr ? 'rgba(251,191,36,0.2)' : 'rgba(255,255,255,0.05)'} 
-                  stroke={isProcessedEven ? '#34d399' : isCurr ? (matched ? '#34d399' : isOdd ? '#ef4444' : '#fbbf24') : 'rgba(255,255,255,0.1)'} 
+                  fill={isProcessedEven ? 'rgba(52,211,153,0.2)' : isCurr ? 'rgba(217,119,6,0.18)' : 'var(--glass-bg)'} 
+                  stroke={isProcessedEven ? '#34d399' : isCurr ? (matched ? '#34d399' : isOdd ? '#ef4444' : 'var(--warning, #b45309)') : 'var(--glass-border)'} 
                   strokeWidth="2"
                 />
-                <text x={32.5} y={28} fill="#ffffff" textAnchor="middle" fontSize="16" fontWeight="bold">{num}</text>
+                <text x={32.5} y={28} fill={isProcessedEven ? '#34d399' : isCurr ? 'var(--warning, #b45309)' : 'var(--text-primary)'} textAnchor="middle" fontSize="16" fontWeight="bold">{num}</text>
                 <text x={32.5} y={60} fill="var(--text-secondary)" textAnchor="middle" fontSize="11">idx {idx}</text>
                 {isCurr && <text x={32.5} y={-10} fill="#fb923c" textAnchor="middle" fontSize="16">👇 i</text>}
               </g>
@@ -5392,10 +5409,10 @@ const DSANotesVisualizer = ({
           })}
 
           {/* Active Variable State */}
-          <text x={20} y={150} fill="var(--text-secondary)" fontSize="12" fontWeight="bold">STATE VARIABLE</text>
+          <text x={20} y={150} fill="var(--text-primary)" fontSize="13" fontWeight="bold">STATE VARIABLE</text>
           <g transform="translate(20, 160)">
-            <rect width={220} height={45} rx={8} fill="rgba(0,0,0,0.2)" stroke="rgba(255,255,255,0.05)" />
-            <text x={15} y={26} fill="var(--text-secondary)" fontSize="14">evenCount = </text>
+            <rect width={220} height={45} rx={10} fill="var(--glass-bg)" stroke="var(--glass-border)" strokeWidth="1.5" />
+            <text x={15} y={27} fill="var(--text-primary)" fontSize="14" fontWeight="600">evenCount = </text>
             <text x={120} y={28} fill="#34d399" fontSize="18" fontWeight="bold">{count}</text>
             {matched && <text x={160} y={26} fill="#34d399" fontSize="11" fontWeight="bold">✦ +1 EVEN</text>}
           </g>
@@ -5423,7 +5440,7 @@ const DSANotesVisualizer = ({
                     stroke={isReturning ? '#34d399' : '#38bdf8'} 
                     strokeWidth="1.5" 
                   />
-                  <text x={15} y={17} fill="#ffffff" fontSize="12" fontWeight="bold">{frame.label}</text>
+                  <text x={15} y={17} fill="var(--text-primary)" fontSize="12" fontWeight="bold">{frame.label}</text>
                   <text x={140} y={16} fill="var(--text-secondary)" fontSize="11">
                     {isReturning ? `returns ${frame.returnVal}` : 'active frame'}
                   </text>
@@ -5444,7 +5461,7 @@ const DSANotesVisualizer = ({
             <text x={150} y={40} fill="#38bdf8" fontSize="16" fontWeight="bold">{stack.length}</text>
             
             <text x={20} y={80} fill="var(--text-secondary)" fontSize="13">Current N:</text>
-            <text x={150} y={80} fill="#fbbf24" fontSize="16" fontWeight="bold">{activeFrame.variables.n ?? '-'}</text>
+            <text x={150} y={80} fill="var(--warning, #b45309)" fontSize="16" fontWeight="bold">{activeFrame.variables.n ?? '-'}</text>
             
             {returnVal !== undefined && (
               <g transform="translate(0, 100)">
@@ -5467,18 +5484,18 @@ const DSANotesVisualizer = ({
       return (
         <svg viewBox={`0 0 ${width} ${height}`} width="100%" height="100%" style={{ overflow: 'visible' }}>
           {/* Numbers Array */}
-          <text x={20} y={35} fill="var(--text-secondary)" fontSize="12" fontWeight="bold">INPUT ARRAY (nums)</text>
+          <text x={20} y={35} fill="var(--text-primary)" fontSize="13" fontWeight="bold">INPUT ARRAY (nums)</text>
           {nums && nums.map((num, idx) => {
             const isH = highlightIdx.includes(idx) || pair.includes(idx);
             const isComplement = (idx === map[comp]);
             return (
               <g key={idx} transform={`translate(${40 + idx * 60}, 50)`}>
                 <rect x={0} y={0} width={50} height={45} rx={8} 
-                  fill={isComplement ? 'rgba(52,211,153,0.2)' : isH ? 'rgba(251,191,36,0.2)' : 'rgba(255,255,255,0.05)'} 
-                  stroke={isComplement ? '#34d399' : isH ? '#fbbf24' : 'rgba(255,255,255,0.1)'} 
+                  fill={isComplement ? 'rgba(52,211,153,0.25)' : isH ? 'rgba(217,119,6,0.18)' : 'var(--glass-bg)'} 
+                  stroke={isComplement ? '#34d399' : isH ? 'var(--warning, #b45309)' : 'var(--glass-border)'} 
                   strokeWidth="2"
                 />
-                <text x={25} y={28} fill="#ffffff" textAnchor="middle" fontSize="16" fontWeight="bold">{num}</text>
+                <text x={25} y={28} fill={isComplement ? '#34d399' : isH ? 'var(--warning, #b45309)' : 'var(--text-primary)'} textAnchor="middle" fontSize="16" fontWeight="bold">{num}</text>
                 <text x={25} y={60} fill="var(--text-secondary)" textAnchor="middle" fontSize="11">idx {idx}</text>
                 {i === idx && <text x={25} y={-10} fill="#fb923c" textAnchor="middle" fontSize="16">👇 i</text>}
               </g>
@@ -5486,9 +5503,9 @@ const DSANotesVisualizer = ({
           })}
 
           {/* Hash Map View */}
-          <text x={340} y={35} fill="var(--text-secondary)" fontSize="12" fontWeight="bold">HASH MAP (value ➔ index)</text>
+          <text x={340} y={35} fill="var(--text-primary)" fontSize="13" fontWeight="bold">HASH MAP (value ➔ index)</text>
           <g transform="translate(340, 50)">
-            <rect width={240} height={120} rx={12} fill="rgba(0,0,0,0.25)" stroke="rgba(255,255,255,0.08)" />
+            <rect width={240} height={120} rx={12} fill="var(--glass-bg)" stroke="var(--glass-border)" strokeWidth="1.5" />
             {map && Object.entries(map).map(([k, valIdx], mi) => (
               <g key={k} transform={`translate(15, ${20 + mi * 25})`}>
                 <text x={0} y={15} fill="#38bdf8" fontSize="13" fontWeight="bold">{k}</text>
@@ -5527,11 +5544,11 @@ const DSANotesVisualizer = ({
               <g key={idx}>
                 {/* Node Circle */}
                 <circle cx={x} cy={y} r={22} 
-                  fill={isCurr ? 'rgba(251,191,36,0.25)' : isPrev ? 'rgba(52,211,153,0.25)' : isNext ? 'rgba(56,189,248,0.2)' : 'rgba(255,255,255,0.06)'} 
-                  stroke={isCurr ? '#fbbf24' : isPrev ? '#34d399' : isNext ? '#38bdf8' : 'rgba(255,255,255,0.15)'}
+                  fill={isCurr ? 'rgba(251,191,36,0.25)' : isPrev ? 'rgba(52,211,153,0.25)' : isNext ? 'rgba(56,189,248,0.2)' : 'var(--glass-bg)'} 
+                  stroke={isCurr ? 'var(--warning, #d97706)' : isPrev ? '#34d399' : isNext ? '#38bdf8' : 'var(--glass-border)'}
                   strokeWidth="2.5"
                 />
-                <text cx={x} cy={y} x={x} y={y + 5} fill="#ffffff" textAnchor="middle" fontSize="16" fontWeight="bold">{val}</text>
+                <text cx={x} cy={y} x={x} y={y + 5} fill="var(--text-primary)" textAnchor="middle" fontSize="16" fontWeight="bold">{val}</text>
                 
                 {/* Connection Line */}
                 {idx < arr.length - 1 && (
@@ -5567,7 +5584,7 @@ const DSANotesVisualizer = ({
                     </>
                   ) : (
                     <>
-                      {isCurr && <text x={0} y={0} fill="#fbbf24" textAnchor="middle" fontSize="11" fontWeight="bold">curr</text>}
+                      {isCurr && <text x={0} y={0} fill="var(--warning, #b45309)" textAnchor="middle" fontSize="11" fontWeight="bold">curr</text>}
                       {isPrev && <text x={0} y={12} fill="#34d399" textAnchor="middle" fontSize="11" fontWeight="bold">prev</text>}
                       {isNext && <text x={0} y={24} fill="#38bdf8" textAnchor="middle" fontSize="11" fontWeight="bold">next</text>}
                     </>
@@ -5599,11 +5616,11 @@ const DSANotesVisualizer = ({
             return (
               <g key={idx} transform={`translate(${40 + idx * 45}, 50)`}>
                 <rect width={36} height={36} rx={6} 
-                  fill={isH ? 'rgba(251,191,36,0.2)' : 'rgba(255,255,255,0.04)'} 
-                  stroke={isH ? '#fbbf24' : 'rgba(255,255,255,0.08)'} 
+                  fill={isH ? 'rgba(251,191,36,0.2)' : 'var(--glass-bg)'} 
+                  stroke={isH ? 'var(--warning, #d97706)' : 'var(--glass-border)'} 
                   strokeWidth="1.5" 
                 />
-                <text x={18} y={23} fill="#ffffff" textAnchor="middle" fontSize="16" fontWeight="bold">{ch}</text>
+                <text x={18} y={23} fill={isH ? 'var(--warning, #d97706)' : 'var(--text-primary)'} textAnchor="middle" fontSize="16" fontWeight="bold">{ch}</text>
               </g>
             );
           })}
@@ -5612,12 +5629,12 @@ const DSANotesVisualizer = ({
           <text x={400} y={35} fill="var(--text-secondary)" fontSize="12" fontWeight="bold">STACK (LIFO)</text>
           <g transform="translate(400, 50)">
             {/* Stack container frame */}
-            <path d="M 20 0 L 20 120 L 100 120 L 100 0" fill="none" stroke="rgba(255,255,255,0.2)" strokeWidth="3" />
+            <path d="M 20 0 L 20 120 L 100 120 L 100 0" fill="none" stroke="var(--glass-border)" strokeWidth="3" />
             
             {stack && stack.map((stChar, stIdx) => (
               <g key={stIdx} transform={`translate(25, ${95 - stIdx * 25})`}>
                 <rect width={50} height={20} rx={4} fill="rgba(56,189,248,0.25)" stroke="#38bdf8" strokeWidth="1" />
-                <text x={25} y={15} fill="#ffffff" textAnchor="middle" fontSize="13" fontWeight="bold">{stChar}</text>
+                <text x={25} y={15} fill="var(--text-primary)" textAnchor="middle" fontSize="13" fontWeight="bold">{stChar}</text>
               </g>
             ))}
             {(!stack || stack.length === 0) && (
@@ -5640,11 +5657,11 @@ const DSANotesVisualizer = ({
             return (
               <g key={idx} transform={`translate(${40 + idx * 75}, 60)`}>
                 <rect width={60} height={50} rx={8} 
-                  fill={isActive ? 'rgba(251,191,36,0.2)' : isBase ? 'rgba(56,189,248,0.12)' : 'rgba(255,255,255,0.04)'} 
-                  stroke={isActive ? '#fbbf24' : isBase ? '#38bdf8' : 'rgba(255,255,255,0.1)'} 
+                  fill={isActive ? 'rgba(251,191,36,0.2)' : isBase ? 'rgba(56,189,248,0.12)' : 'var(--glass-bg)'} 
+                  stroke={isActive ? 'var(--warning, #d97706)' : isBase ? '#38bdf8' : 'var(--glass-border)'} 
                   strokeWidth="2"
                 />
-                <text x={30} y={30} fill="#ffffff" textAnchor="middle" fontSize="18" fontWeight="bold">{val}</text>
+                <text x={30} y={30} fill="var(--text-primary)" textAnchor="middle" fontSize="18" fontWeight="bold">{val}</text>
                 <text x={30} y={65} fill="var(--text-secondary)" textAnchor="middle" fontSize="12">dp[{idx}]</text>
               </g>
             );
@@ -5658,32 +5675,32 @@ const DSANotesVisualizer = ({
       return (
         <svg viewBox={`0 0 ${width} ${height}`} width="100%" height="100%" style={{ overflow: 'visible' }}>
           {/* List 1 */}
-          <text x={20} y={25} fill="var(--text-secondary)" fontSize="11" fontWeight="bold">LIST 1 (l1)</text>
+          <text x={20} y={25} fill="var(--text-primary)" fontSize="12" fontWeight="bold">LIST 1 (l1)</text>
           {l1 && l1.map((val, idx) => (
             <g key={idx} transform={`translate(${40 + idx * 60}, 35)`}>
-              <circle cx={20} cy={15} r={14} fill="rgba(56,189,248,0.15)" stroke="#38bdf8" strokeWidth="1.5" />
-              <text x={20} y={19} fill="#fff" textAnchor="middle" fontSize="12" fontWeight="bold">{val}</text>
+              <circle cx={20} cy={15} r={15} fill="rgba(56,189,248,0.2)" stroke="#38bdf8" strokeWidth="2" />
+              <text x={20} y={20} fill="var(--text-primary)" textAnchor="middle" fontSize="13" fontWeight="bold">{val}</text>
             </g>
           ))}
           {l1 && l1.length === 0 && <text x={40} y={45} fill="var(--text-secondary)" fontSize="13" fontStyle="italic">null</text>}
 
           {/* List 2 */}
-          <text x={20} y={85} fill="var(--text-secondary)" fontSize="11" fontWeight="bold">LIST 2 (l2)</text>
+          <text x={20} y={85} fill="var(--text-primary)" fontSize="12" fontWeight="bold">LIST 2 (l2)</text>
           {l2 && l2.map((val, idx) => (
             <g key={idx} transform={`translate(${40 + idx * 60}, 95)`}>
-              <circle cx={20} cy={15} r={14} fill="rgba(236,72,153,0.15)" stroke="#ec4899" strokeWidth="1.5" />
-              <text x={20} y={19} fill="#fff" textAnchor="middle" fontSize="12" fontWeight="bold">{val}</text>
+              <circle cx={20} cy={15} r={15} fill="rgba(236,72,153,0.2)" stroke="#ec4899" strokeWidth="2" />
+              <text x={20} y={20} fill="var(--text-primary)" textAnchor="middle" fontSize="13" fontWeight="bold">{val}</text>
             </g>
           ))}
           {l2 && l2.length === 0 && <text x={40} y={105} fill="var(--text-secondary)" fontSize="13" fontStyle="italic">null</text>}
 
           {/* Merged */}
-          <text x={360} y={25} fill="var(--text-secondary)" fontSize="11" fontWeight="bold">MERGED TAIL</text>
+          <text x={360} y={25} fill="var(--text-primary)" fontSize="12" fontWeight="bold">MERGED TAIL</text>
           <g transform="translate(360, 35)">
             {merged && merged.map((val, idx) => (
               <g key={idx} transform={`translate(0, ${idx * 28})`}>
-                <rect width={160} height={22} rx={6} fill="rgba(52,211,153,0.15)" stroke="#34d399" strokeWidth="1" />
-                <text x={80} y={15} fill="#fff" textAnchor="middle" fontSize="12" fontWeight="bold">{val}</text>
+                <rect width={160} height={24} rx={6} fill="rgba(52,211,153,0.2)" stroke="#34d399" strokeWidth="1.5" />
+                <text x={80} y={17} fill="var(--text-primary)" textAnchor="middle" fontSize="13" fontWeight="bold">{val}</text>
               </g>
             ))}
             {(!merged || merged.length === 0) && (
@@ -5699,7 +5716,7 @@ const DSANotesVisualizer = ({
       const highlightIdx = activeFrame.highlightIdx || [];
       return (
         <svg viewBox={`0 0 ${width} ${height}`} width="100%" height="100%" style={{ overflow: 'visible' }}>
-          <text x={20} y={35} fill="var(--text-secondary)" fontSize="12" fontWeight="bold">ARRAY SEARCH CANVAS</text>
+          <text x={20} y={35} fill="var(--text-primary)" fontSize="13" fontWeight="bold">ARRAY SEARCH CANVAS</text>
           {arr && arr.map((num, idx) => {
             const isL = (low === idx);
             const isH = (high === idx);
@@ -5709,19 +5726,19 @@ const DSANotesVisualizer = ({
             return (
               <g key={idx} transform={`translate(${40 + idx * 70}, 60)`}>
                 <rect width={55} height={45} rx={8} 
-                  fill={isM ? 'rgba(251,191,36,0.22)' : isExcluded ? 'rgba(255,255,255,0.02)' : 'rgba(255,255,255,0.06)'} 
-                  stroke={isM ? '#fbbf24' : isExcluded ? 'rgba(255,255,255,0.04)' : 'rgba(255,255,255,0.15)'} 
+                  fill={isM ? 'rgba(217,119,6,0.18)' : isExcluded ? 'rgba(0,0,0,0.04)' : 'var(--glass-bg)'} 
+                  stroke={isM ? 'var(--warning, #b45309)' : isExcluded ? 'rgba(128,128,128,0.1)' : 'var(--glass-border)'} 
                   strokeWidth="2"
-                  opacity={isExcluded ? 0.4 : 1}
+                  opacity={isExcluded ? 0.35 : 1}
                 />
-                <text x={27} y={28} fill="#ffffff" textAnchor="middle" fontSize="16" fontWeight="bold">{num}</text>
+                <text x={27} y={28} fill={isM ? 'var(--warning, #b45309)' : 'var(--text-primary)'} textAnchor="middle" fontSize="16" fontWeight="bold">{num}</text>
                 <text x={27} y={60} fill="var(--text-secondary)" textAnchor="middle" fontSize="11">idx {idx}</text>
                 
                 {/* Pointer tags */}
                 <g transform="translate(27, -10)">
-                  {isL && <text x={-15} y={0} fill="#10b981" fontSize="10" fontWeight="bold">low</text>}
-                  {isM && <text x={0} y={-10} fill="#fb923c" textAnchor="middle" fontSize="12">👇 mid</text>}
-                  {isH && <text x={15} y={0} fill="#ef4444" fontSize="10" fontWeight="bold">high</text>}
+                  {isL && <text x={-15} y={0} fill="#10b981" fontSize="11" fontWeight="bold">low</text>}
+                  {isM && <text x={0} y={-10} fill="#fb923c" textAnchor="middle" fontSize="13" fontWeight="bold">👇 mid</text>}
+                  {isH && <text x={15} y={0} fill="#ef4444" fontSize="11" fontWeight="bold">high</text>}
                 </g>
               </g>
             );
@@ -5734,17 +5751,17 @@ const DSANotesVisualizer = ({
       const { nums, maxSoFar, maxEndingHere, i } = activeFrame.variables;
       return (
         <svg viewBox={`0 0 ${width} ${height}`} width="100%" height="100%" style={{ overflow: 'visible' }}>
-          <text x={20} y={35} fill="var(--text-secondary)" fontSize="12" fontWeight="bold">KADANE'S RUNNING WINDOW</text>
+          <text x={20} y={35} fill="var(--text-primary)" fontSize="13" fontWeight="bold">KADANE'S RUNNING WINDOW</text>
           {nums && nums.map((num, idx) => {
             const isActive = (i === idx);
             return (
               <g key={idx} transform={`translate(${30 + idx * 58}, 55)`}>
-                <rect width={48} height={40} rx={6} 
-                  fill={isActive ? 'rgba(251,191,36,0.2)' : 'rgba(255,255,255,0.04)'} 
-                  stroke={isActive ? '#fbbf24' : 'rgba(255,255,255,0.08)'} 
-                  strokeWidth="1.5"
+                <rect width={48} height={40} rx={8} 
+                  fill={isActive ? 'rgba(251,191,36,0.25)' : 'var(--glass-bg)'} 
+                  stroke={isActive ? 'var(--warning, #d97706)' : 'var(--glass-border)'} 
+                  strokeWidth={isActive ? 2.5 : 1.5}
                 />
-                <text x={24} y={25} fill="#ffffff" textAnchor="middle" fontSize="15" fontWeight="bold">{num}</text>
+                <text x={24} y={25} fill={isActive ? 'var(--warning, #d97706)' : 'var(--text-primary)'} textAnchor="middle" fontSize="15" fontWeight="bold">{num}</text>
                 <text x={24} y={55} fill="var(--text-secondary)" textAnchor="middle" fontSize="11">[{idx}]</text>
                 {isActive && <text x={24} y={-10} fill="#fb923c" textAnchor="middle" fontSize="14">👇 i</text>}
               </g>
@@ -5753,12 +5770,12 @@ const DSANotesVisualizer = ({
 
           {/* Kadane state box */}
           <g transform="translate(30, 140)">
-            <rect width={540} height={50} rx={8} fill="rgba(0,0,0,0.2)" stroke="rgba(255,255,255,0.06)" />
-            <text x={30} y={30} fill="var(--text-secondary)" fontSize="13">maxEndingHere (current sub-sum):</text>
-            <text x={250} y={31} fill="#fb923c" fontSize="15" fontWeight="bold">{maxEndingHere}</text>
+            <rect width={540} height={50} rx={10} fill="var(--glass-bg)" stroke="var(--glass-border)" strokeWidth="1.5" />
+            <text x={30} y={30} fill="var(--text-primary)" fontSize="13" fontWeight="bold">maxEndingHere (current sub-sum):</text>
+            <text x={255} y={31} fill="#ea580c" fontSize="16" fontWeight="bold">{maxEndingHere}</text>
 
-            <text x={320} y={30} fill="var(--text-secondary)" fontSize="13">maxSoFar (global max):</text>
-            <text x={490} y={31} fill="#34d399" fontSize="15" fontWeight="bold">{maxSoFar}</text>
+            <text x={330} y={30} fill="var(--text-primary)" fontSize="13" fontWeight="bold">maxSoFar (global max):</text>
+            <text x={500} y={31} fill="#10b981" fontSize="16" fontWeight="bold">{maxSoFar}</text>
           </g>
         </svg>
       );
@@ -5800,22 +5817,22 @@ const DSANotesVisualizer = ({
             return (
               <g key={n.id} transform={`translate(${n.x}, ${n.y})`}>
                 <circle r={16} 
-                  fill={isActive ? 'rgba(251,191,36,0.22)' : isVisited ? 'rgba(52,211,153,0.18)' : 'rgba(255,255,255,0.05)'} 
-                  stroke={isActive ? '#fbbf24' : isVisited ? '#34d399' : 'rgba(255,255,255,0.15)'}
+                  fill={isActive ? 'rgba(251,191,36,0.22)' : isVisited ? 'rgba(52,211,153,0.18)' : 'var(--glass-bg)'} 
+                  stroke={isActive ? 'var(--warning, #d97706)' : isVisited ? '#34d399' : 'var(--glass-border)'}
                   strokeWidth="2"
                 />
-                <text y={4} fill="#ffffff" textAnchor="middle" fontSize="12" fontWeight="bold">{n.val}</text>
+                <text y={4} fill="var(--text-primary)" textAnchor="middle" fontSize="12" fontWeight="bold">{n.val}</text>
               </g>
             );
           })}
 
           <text x={350} y={25} fill="var(--text-secondary)" fontSize="12" fontWeight="bold">RECURSION STACK</text>
           <g transform="translate(350, 40)">
-            <path d="M 10 0 L 10 130 L 110 130 L 110 0" fill="none" stroke="rgba(255,255,255,0.2)" strokeWidth="2" />
+            <path d="M 10 0 L 10 130 L 110 130 L 110 0" fill="none" stroke="var(--glass-border)" strokeWidth="2" />
             {stack && stack.map((call, idx) => (
               <g key={idx} transform={`translate(15, ${105 - idx * 22})`}>
                 <rect width={80} height={18} rx={4} fill="rgba(251,146,60,0.22)" stroke="#fb923c" strokeWidth="1" />
-                <text x={40} y={13} fill="#fff" textAnchor="middle" fontSize="10" fontWeight="bold">{call}</text>
+                <text x={40} y={13} fill="var(--text-primary)" textAnchor="middle" fontSize="10" fontWeight="bold">{call}</text>
               </g>
             ))}
           </g>
@@ -5841,7 +5858,7 @@ const DSANotesVisualizer = ({
 
       return (
         <svg viewBox={`0 0 ${width} ${height}`} width="100%" height="100%" style={{ overflow: 'visible' }}>
-          <text x={20} y={35} fill="var(--text-secondary)" fontSize="12" fontWeight="bold">SORTED ARRAY (numbers)</text>
+          <text x={20} y={35} fill="var(--text-primary)" fontSize="13" fontWeight="bold">SORTED ARRAY (numbers)</text>
           {arr.map((num, idx) => {
             const isLeft = (idx === pointers.left);
             const isRight = (idx === pointers.right);
@@ -5849,11 +5866,11 @@ const DSANotesVisualizer = ({
             return (
               <g key={idx} transform={`translate(${40 + idx * 80}, 55)`}>
                 <rect x={0} y={0} width={70} height={48} rx={8} 
-                  fill={matched && isSelected ? 'rgba(52,211,153,0.25)' : isSelected ? 'rgba(251,191,36,0.2)' : 'rgba(255,255,255,0.05)'} 
-                  stroke={matched && isSelected ? '#34d399' : isSelected ? '#fbbf24' : 'rgba(255,255,255,0.1)'} 
+                  fill={matched && isSelected ? 'rgba(52,211,153,0.25)' : isSelected ? 'rgba(217,119,6,0.18)' : 'var(--glass-bg)'} 
+                  stroke={matched && isSelected ? '#34d399' : isSelected ? 'var(--warning, #b45309)' : 'var(--glass-border)'} 
                   strokeWidth="2"
                 />
-                <text x={35} y={30} fill="#ffffff" textAnchor="middle" fontSize="16" fontWeight="bold">{num}</text>
+                <text x={35} y={30} fill={matched && isSelected ? '#34d399' : isSelected ? 'var(--warning, #b45309)' : 'var(--text-primary)'} textAnchor="middle" fontSize="16" fontWeight="bold">{num}</text>
                 <text x={35} y={64} fill="var(--text-secondary)" textAnchor="middle" fontSize="11">idx {idx + 1}</text>
                 {isLeft && <text x={35} y={-10} fill="#38bdf8" textAnchor="middle" fontSize="13" fontWeight="bold">👆 Left</text>}
                 {isRight && <text x={35} y={-10} fill="#f472b6" textAnchor="middle" fontSize="13" fontWeight="bold">👆 Right</text>}
@@ -5862,11 +5879,11 @@ const DSANotesVisualizer = ({
           })}
 
           {/* Active Variable State */}
-          <text x={20} y={160} fill="var(--text-secondary)" fontSize="12" fontWeight="bold">POINTER SUM CALCULATION</text>
+          <text x={20} y={160} fill="var(--text-primary)" fontSize="13" fontWeight="bold">POINTER SUM CALCULATION</text>
           <g transform="translate(20, 170)">
-            <rect width={280} height={50} rx={8} fill="rgba(0,0,0,0.25)" stroke="rgba(255,255,255,0.06)" />
-            <text x={15} y={30} fill="var(--text-secondary)" fontSize="13">Current Sum = </text>
-            <text x={115} y={31} fill={matched ? '#34d399' : '#fbbf24'} fontSize="18" fontWeight="bold">{currentSum}</text>
+            <rect width={280} height={50} rx={10} fill="var(--glass-bg)" stroke="var(--glass-border)" strokeWidth="1.5" />
+            <text x={15} y={30} fill="var(--text-primary)" fontSize="13" fontWeight="600">Current Sum = </text>
+            <text x={115} y={31} fill={matched ? '#34d399' : 'var(--warning, #b45309)'} fontSize="18" fontWeight="bold">{currentSum}</text>
             {matched && <text x={160} y={30} fill="#34d399" fontSize="11" fontWeight="bold">✦ TARGET MATCHED!</text>}
           </g>
         </svg>
@@ -5882,17 +5899,17 @@ const DSANotesVisualizer = ({
 
       return (
         <svg viewBox={`0 0 ${width} ${height}`} width="100%" height="100%" style={{ overflow: 'visible' }}>
-          <text x={20} y={35} fill="var(--text-secondary)" fontSize="12" fontWeight="bold">ARRAY & SLIDING WINDOW [K = 3]</text>
+          <text x={20} y={35} fill="var(--text-primary)" fontSize="13" fontWeight="bold">ARRAY & SLIDING WINDOW [K = 3]</text>
           {arr.map((num, idx) => {
             const inWindow = (idx >= wL && idx <= wR);
             return (
               <g key={idx} transform={`translate(${40 + idx * 75}, 55)`}>
                 <rect x={0} y={0} width={65} height={45} rx={8} 
-                  fill={inWindow ? 'rgba(56,189,248,0.22)' : 'rgba(255,255,255,0.05)'} 
-                  stroke={inWindow ? '#38bdf8' : 'rgba(255,255,255,0.1)'} 
+                  fill={inWindow ? 'rgba(56,189,248,0.22)' : 'var(--glass-bg)'} 
+                  stroke={inWindow ? '#38bdf8' : 'var(--glass-border)'} 
                   strokeWidth={inWindow ? "2.5" : "1"}
                 />
-                <text x={32.5} y={28} fill="#ffffff" textAnchor="middle" fontSize="16" fontWeight="bold">{num}</text>
+                <text x={32.5} y={28} fill={inWindow ? '#38bdf8' : 'var(--text-primary)'} textAnchor="middle" fontSize="16" fontWeight="bold">{num}</text>
                 <text x={32.5} y={60} fill="var(--text-secondary)" textAnchor="middle" fontSize="11">idx {idx}</text>
                 {idx === wL && <text x={32.5} y={-10} fill="#38bdf8" textAnchor="middle" fontSize="12" fontWeight="bold">L</text>}
                 {idx === wR && <text x={32.5} y={-10} fill="#38bdf8" textAnchor="middle" fontSize="12" fontWeight="bold">R</text>}
@@ -5901,14 +5918,14 @@ const DSANotesVisualizer = ({
           })}
 
           {/* Active Variable State */}
-          <text x={20} y={160} fill="var(--text-secondary)" fontSize="12" fontWeight="bold">WINDOW METRICS</text>
+          <text x={20} y={160} fill="var(--text-primary)" fontSize="13" fontWeight="bold">WINDOW METRICS</text>
           <g transform="translate(20, 170)">
-            <rect width={320} height={50} rx={8} fill="rgba(0,0,0,0.25)" stroke="rgba(255,255,255,0.06)" />
-            <text x={15} y={30} fill="var(--text-secondary)" fontSize="13">Window Sum: </text>
+            <rect width={320} height={50} rx={10} fill="var(--glass-bg)" stroke="var(--glass-border)" strokeWidth="1.5" />
+            <text x={15} y={30} fill="var(--text-primary)" fontSize="13" fontWeight="600">Window Sum: </text>
             <text x={105} y={31} fill="#38bdf8" fontSize="16" fontWeight="bold">{windowSum}</text>
             
-            <text x={160} y={30} fill="var(--text-secondary)" fontSize="13">Max Sum: </text>
-            <text x={235} y={31} fill={updated ? '#34d399' : '#fbbf24'} fontSize="16" fontWeight="bold">{maxSum}</text>
+            <text x={160} y={30} fill="var(--text-primary)" fontSize="13" fontWeight="600">Max Sum: </text>
+            <text x={235} y={31} fill={updated ? '#34d399' : 'var(--warning, #b45309)'} fontSize="16" fontWeight="bold">{maxSum}</text>
           </g>
         </svg>
       );
@@ -5920,13 +5937,13 @@ const DSANotesVisualizer = ({
 
       return (
         <svg viewBox={`0 0 ${width} ${height}`} width="100%" height="100%" style={{ overflow: 'visible' }}>
-          <text x={20} y={35} fill="var(--text-secondary)" fontSize="12" fontWeight="bold">DUTCH NATIONAL FLAG (0s, 1s, 2s)</text>
+          <text x={20} y={35} fill="var(--text-primary)" fontSize="13" fontWeight="bold">DUTCH NATIONAL FLAG (0s, 1s, 2s)</text>
           {arr.map((num, idx) => {
             const isLow = (idx === pointers.low);
             const isMid = (idx === pointers.mid);
             const isHigh = (idx === pointers.high);
             const colorBg = num === 0 ? 'rgba(239, 68, 68, 0.25)' : num === 1 ? 'rgba(255, 255, 255, 0.2)' : 'rgba(59, 130, 246, 0.25)';
-            const colorStroke = num === 0 ? '#ef4444' : num === 1 ? '#e2e8f0' : '#3b82f6';
+            const colorStroke = num === 0 ? '#ef4444' : num === 1 ? '#94a3b8' : '#3b82f6';
             return (
               <g key={idx} transform={`translate(${40 + idx * 75}, 55)`}>
                 <rect x={0} y={0} width={65} height={45} rx={8} 
@@ -5934,20 +5951,20 @@ const DSANotesVisualizer = ({
                   stroke={colorStroke} 
                   strokeWidth="2"
                 />
-                <text x={32.5} y={28} fill="#ffffff" textAnchor="middle" fontSize="16" fontWeight="bold">{num}</text>
+                <text x={32.5} y={28} fill="var(--text-primary)" textAnchor="middle" fontSize="16" fontWeight="bold">{num}</text>
                 <text x={32.5} y={60} fill="var(--text-secondary)" textAnchor="middle" fontSize="11">idx {idx}</text>
                 {isLow && <text x={32.5} y={-10} fill="#ef4444" textAnchor="middle" fontSize="11" fontWeight="bold">Low</text>}
-                {isMid && <text x={32.5} y={-24} fill="#fbbf24" textAnchor="middle" fontSize="11" fontWeight="bold">Mid</text>}
+                {isMid && <text x={32.5} y={-24} fill="var(--warning, #b45309)" textAnchor="middle" fontSize="11" fontWeight="bold">Mid</text>}
                 {isHigh && <text x={32.5} y={-10} fill="#3b82f6" textAnchor="middle" fontSize="11" fontWeight="bold">High</text>}
               </g>
             );
           })}
 
-          <text x={20} y={160} fill="var(--text-secondary)" fontSize="12" fontWeight="bold">COLOR PARTITIONS</text>
+          <text x={20} y={160} fill="var(--text-primary)" fontSize="13" fontWeight="bold">COLOR PARTITIONS</text>
           <g transform="translate(20, 170)">
-            <rect width={340} height={45} rx={8} fill="rgba(0,0,0,0.25)" stroke="rgba(255,255,255,0.06)" />
+            <rect width={340} height={45} rx={10} fill="var(--glass-bg)" stroke="var(--glass-border)" strokeWidth="1.5" />
             <text x={15} y={28} fill="#ef4444" fontSize="13" fontWeight="bold">🔴 0s: [0...Low-1]</text>
-            <text x={135} y={28} fill="#e2e8f0" fontSize="13" fontWeight="bold">⚪ 1s: [Low...Mid-1]</text>
+            <text x={135} y={28} fill="var(--text-primary)" fontSize="13" fontWeight="bold">⚪ 1s: [Low...Mid-1]</text>
             <text x={255} y={28} fill="#3b82f6" fontSize="13" fontWeight="bold">🔵 2s: [High+1...N]</text>
           </g>
         </svg>
@@ -5964,8 +5981,8 @@ const DSANotesVisualizer = ({
           <text x={20} y={25} fill="var(--text-secondary)" fontSize="12" fontWeight="bold">ORIGINAL ARRAY (nums)</text>
           {arr.map((num, idx) => (
             <g key={idx} transform={`translate(${30 + idx * 65}, 35)`}>
-              <rect x={0} y={0} width={55} height={35} rx={6} fill="rgba(255,255,255,0.05)" stroke="rgba(255,255,255,0.15)" />
-              <text x={27.5} y={23} fill="#ffffff" textAnchor="middle" fontSize="14" fontWeight="bold">{num}</text>
+              <rect x={0} y={0} width={55} height={35} rx={6} fill="var(--glass-bg)" stroke="var(--glass-border)" />
+              <text x={27.5} y={23} fill="var(--text-primary)" textAnchor="middle" fontSize="14" fontWeight="bold">{num}</text>
               <text x={27.5} y={48} fill="var(--text-secondary)" textAnchor="middle" fontSize="10">i={idx}</text>
             </g>
           ))}
@@ -5981,7 +5998,7 @@ const DSANotesVisualizer = ({
                   stroke={isR ? '#34d399' : isLMinus1 ? '#ef4444' : '#38bdf8'} 
                   strokeWidth="1.5"
                 />
-                <text x={27.5} y={23} fill="#ffffff" textAnchor="middle" fontSize="14" fontWeight="bold">{pVal}</text>
+                <text x={27.5} y={23} fill="var(--text-primary)" textAnchor="middle" fontSize="14" fontWeight="bold">{pVal}</text>
                 {isR && <text x={27.5} y={48} fill="#34d399" textAnchor="middle" fontSize="10" fontWeight="bold">Prefix[R]</text>}
                 {isLMinus1 && <text x={27.5} y={48} fill="#ef4444" textAnchor="middle" fontSize="10" fontWeight="bold">Prefix[L-1]</text>}
               </g>
@@ -6021,12 +6038,12 @@ const DSANotesVisualizer = ({
                   <g key={`${r}-${c}`} transform={`translate(${c * tileSize}, ${r * tileSize})`}>
                     <rect 
                       width={tileSize} height={tileSize} 
-                      fill={isTesting && conflict ? 'rgba(239,68,68,0.35)' : isTesting ? 'rgba(251,191,36,0.35)' : isDark ? 'rgba(255,255,255,0.06)' : 'rgba(255,255,255,0.12)'} 
-                      stroke={isTesting && conflict ? '#ef4444' : isTesting ? '#fbbf24' : 'rgba(255,255,255,0.15)'}
+                      fill={isTesting && conflict ? 'rgba(239,68,68,0.35)' : isTesting ? 'rgba(217,119,6,0.2)' : isDark ? 'rgba(255,255,255,0.06)' : 'rgba(255,255,255,0.12)'} 
+                      stroke={isTesting && conflict ? '#ef4444' : isTesting ? 'var(--warning, #b45309)' : 'rgba(255,255,255,0.15)'}
                       strokeWidth={isTesting ? "2" : "1"}
                     />
                     {hasQueen && (
-                      <text x={tileSize / 2} y={tileSize / 2 + 7} fill="#fbbf24" textAnchor="middle" fontSize="22">
+                      <text x={tileSize / 2} y={tileSize / 2 + 7} fill="var(--warning, #b45309)" textAnchor="middle" fontSize="22">
                         👑
                       </text>
                     )}
@@ -6046,7 +6063,7 @@ const DSANotesVisualizer = ({
             <rect width={320} height={170} rx={10} fill="rgba(0,0,0,0.25)" stroke="rgba(255,255,255,0.08)" />
             <text x={20} y={30} fill="var(--text-secondary)" fontSize="12" fontWeight="bold">BACKTRACKING STATE</text>
             <text x={20} y={60} fill="var(--text-primary)" fontSize="13">Current Row: <tspan fill="#38bdf8" fontWeight="bold">{row < N ? row : 'Done (4/4)'}</tspan></text>
-            <text x={20} y={85} fill="var(--text-primary)" fontSize="13">Tested Col: <tspan fill="#fbbf24" fontWeight="bold">{col >= 0 ? col : '-'}</tspan></text>
+            <text x={20} y={85} fill="var(--text-primary)" fontSize="13">Tested Col: <tspan fill="var(--warning, #b45309)" fontWeight="bold">{col >= 0 ? col : '-'}</tspan></text>
             <text x={20} y={110} fill="var(--text-primary)" fontSize="13">Status: <tspan fill={conflict ? '#ef4444' : '#34d399'} fontWeight="bold">{conflict ? '⚠️ Attack Conflict' : '✅ Placement Safe'}</tspan></text>
             <text x={20} y={140} fill="var(--text-secondary)" fontSize="12">Queens: <tspan fill="#34d399" fontWeight="bold">[{board.map(c => c >= 0 ? c : '_').join(', ')}]</tspan></text>
           </g>
@@ -6067,12 +6084,12 @@ const DSANotesVisualizer = ({
             return (
               <g key={idx} transform={`translate(${30 + idx * 36}, 38)`}>
                 <rect width={30} height={30} rx={6} 
-                  fill={isCurr ? 'rgba(251,191,36,0.25)' : 'rgba(255,255,255,0.05)'} 
-                  stroke={isCurr ? '#fbbf24' : 'rgba(255,255,255,0.1)'} 
+                  fill={isCurr ? 'rgba(251,191,36,0.25)' : 'var(--glass-bg)'} 
+                  stroke={isCurr ? 'var(--warning, #d97706)' : 'var(--glass-border)'} 
                   strokeWidth={isCurr ? "2" : "1"}
                 />
-                <text x={15} y={20} fill="#fff" textAnchor="middle" fontSize="14" fontWeight="bold">{tok}</text>
-                {isCurr && <text x={15} y={-6} fill="#fbbf24" textAnchor="middle" fontSize="12">👇</text>}
+                <text x={15} y={20} fill={isCurr ? 'var(--warning, #d97706)' : 'var(--text-primary)'} textAnchor="middle" fontSize="14" fontWeight="bold">{tok}</text>
+                {isCurr && <text x={15} y={-6} fill="var(--warning, #d97706)" textAnchor="middle" fontSize="12">👇</text>}
               </g>
             );
           })}
@@ -6080,11 +6097,11 @@ const DSANotesVisualizer = ({
           {/* Operator Stack */}
           <text x={30} y={105} fill="var(--text-secondary)" fontSize="12" fontWeight="bold">OPERATOR STACK</text>
           <g transform="translate(30, 115)">
-            <rect width={160} height={100} rx={8} fill="rgba(0,0,0,0.25)" stroke="rgba(255,255,255,0.08)" />
+            <rect width={160} height={100} rx={8} fill="var(--glass-bg)" stroke="var(--glass-border)" />
             {stack && stack.map((op, idx) => (
               <g key={idx} transform={`translate(15, ${65 - idx * 25})`}>
                 <rect width={130} height={20} rx={4} fill="rgba(56,189,248,0.2)" stroke="#38bdf8" />
-                <text x={65} y={14} fill="#fff" textAnchor="middle" fontSize="12" fontWeight="bold">{op}</text>
+                <text x={65} y={14} fill="var(--text-primary)" textAnchor="middle" fontSize="12" fontWeight="bold">{op}</text>
               </g>
             ))}
             {(!stack || stack.length === 0) && (
@@ -6124,11 +6141,11 @@ const DSANotesVisualizer = ({
               return (
                 <g key={num} transform={`translate(${col * 42}, ${row * 38})`}>
                   <rect width={36} height={32} rx={6}
-                    fill={isCurrent ? 'rgba(251,191,36,0.3)' : isPrime ? 'rgba(52,211,153,0.25)' : isCrossed ? 'rgba(239,68,68,0.15)' : 'rgba(255,255,255,0.05)'}
-                    stroke={isCurrent ? '#fbbf24' : isPrime ? '#34d399' : isCrossed ? '#ef4444' : 'rgba(255,255,255,0.1)'}
+                    fill={isCurrent ? 'rgba(217,119,6,0.18)' : isPrime ? 'rgba(52,211,153,0.25)' : isCrossed ? 'rgba(239,68,68,0.15)' : 'var(--glass-bg)'}
+                    stroke={isCurrent ? 'var(--warning, #b45309)' : isPrime ? '#34d399' : isCrossed ? '#ef4444' : 'var(--glass-border)'}
                     strokeWidth={isCurrent || isPrime ? "2" : "1"}
                   />
-                  <text x={18} y={21} fill={isCrossed ? '#94a3b8' : '#fff'} textAnchor="middle" fontSize="13" fontWeight="bold" textDecoration={isCrossed ? 'line-through' : 'none'}>
+                  <text x={18} y={21} fill={isCrossed ? '#94a3b8' : 'var(--text-primary)'} textAnchor="middle" fontSize="13" fontWeight="bold" textDecoration={isCrossed ? 'line-through' : 'none'}>
                     {num}
                   </text>
                 </g>
@@ -6138,13 +6155,13 @@ const DSANotesVisualizer = ({
 
           {/* Sieve Legend */}
           <g transform="translate(370, 32)">
-            <rect width={210} height={150} rx={8} fill="rgba(0,0,0,0.25)" stroke="rgba(255,255,255,0.08)" />
+            <rect width={210} height={150} rx={8} fill="var(--glass-bg)" stroke="var(--glass-border)" />
             <text x={15} y={25} fill="var(--text-secondary)" fontSize="11" fontWeight="bold">PRIME NUMBERS IDENTIFIED</text>
             <text x={15} y={55} fill="#34d399" fontSize="13" fontWeight="bold">Primes:</text>
             <text x={70} y={55} fill="#34d399" fontSize="13" fontWeight="bold">{primes ? primes.join(', ') : '-'}</text>
             
             <text x={15} y={90} fill="var(--text-secondary)" fontSize="12">Current Prime p:</text>
-            <text x={130} y={90} fill="#fbbf24" fontSize="15" fontWeight="bold">{currentP || 'Complete'}</text>
+            <text x={130} y={90} fill="var(--warning, #b45309)" fontSize="15" fontWeight="bold">{currentP || 'Complete'}</text>
 
             <text x={15} y={125} fill="var(--text-secondary)" fontSize="11">Time Complexity: O(N log log N)</text>
           </g>
@@ -6164,14 +6181,14 @@ const DSANotesVisualizer = ({
     const nextFrame = timeline[currentStep + 1] || null;
 
     return (
-      <div className="code-box" style={{ flex: 1, overflow: 'auto', padding: '1rem', borderRadius: '8px', background: 'var(--bg-secondary)', display: 'flex', flexDirection: 'column' }}>
+      <div className="code-box" style={{ flex: 1, overflow: 'auto', padding: '1rem', borderRadius: '8px', background: 'var(--panel-code-bg, rgba(0,0,0,0.04))', border: '1px solid var(--glass-border)', display: 'flex', flexDirection: 'column' }}>
         {/* Execution Line Legend */}
-        <div style={{ display: 'flex', alignItems: 'center', gap: '10px', fontSize: '0.74rem', marginBottom: '10px', paddingBottom: '8px', borderBottom: '1px solid rgba(255,255,255,0.06)', flexWrap: 'wrap' }}>
-          <div style={{ display: 'flex', alignItems: 'center', gap: '4px', background: 'rgba(16, 185, 129, 0.15)', border: '1px solid rgba(16, 185, 129, 0.35)', padding: '2px 8px', borderRadius: '6px', color: '#34d399', fontWeight: 600 }}>
+        <div style={{ display: 'flex', alignItems: 'center', gap: '10px', fontSize: '0.74rem', marginBottom: '10px', paddingBottom: '8px', borderBottom: '1px solid var(--glass-border)', flexWrap: 'wrap' }}>
+          <div style={{ display: 'flex', alignItems: 'center', gap: '5px', background: 'var(--badge-exec-bg, rgba(16, 185, 129, 0.16))', border: '1.5px solid var(--badge-exec-border, #059669)', padding: '3px 10px', borderRadius: '6px', color: 'var(--badge-exec-color, #047857)', fontWeight: 700 }}>
             <span>🟢 ➔</span>
             <span>Line that just executed</span>
           </div>
-          <div style={{ display: 'flex', alignItems: 'center', gap: '4px', background: 'rgba(239, 68, 68, 0.15)', border: '1px solid rgba(239, 68, 68, 0.35)', padding: '2px 8px', borderRadius: '6px', color: '#f87171', fontWeight: 600 }}>
+          <div style={{ display: 'flex', alignItems: 'center', gap: '5px', background: 'var(--badge-next-bg, rgba(239, 68, 68, 0.16))', border: '1.5px solid var(--badge-next-border, #dc2626)', padding: '3px 10px', borderRadius: '6px', color: 'var(--badge-next-color, #b91c1c)', fontWeight: 700 }}>
             <span>🔴 ➔</span>
             <span>Next line to execute</span>
           </div>
@@ -6195,13 +6212,13 @@ const DSANotesVisualizer = ({
             let indicator = null;
 
             if (isJustExecuted) {
-              rowBg = 'rgba(16, 185, 129, 0.22)';
-              rowBorder = '4px solid #10b981';
-              indicator = <span style={{ color: '#10b981', fontWeight: 'bold', fontSize: '0.78rem', marginRight: '6px' }}>🟢 ➔</span>;
+              rowBg = 'var(--badge-exec-bg, rgba(16, 185, 129, 0.22))';
+              rowBorder = '4px solid var(--badge-exec-border, #10b981)';
+              indicator = <span style={{ color: 'var(--badge-exec-color, #047857)', fontWeight: 'bold', fontSize: '0.78rem', marginRight: '6px' }}>🟢 ➔</span>;
             } else if (isNextToExecute) {
-              rowBg = 'rgba(239, 68, 68, 0.22)';
-              rowBorder = '4px solid #ef4444';
-              indicator = <span style={{ color: '#ef4444', fontWeight: 'bold', fontSize: '0.78rem', marginRight: '6px' }}>🔴 ➔</span>;
+              rowBg = 'var(--badge-next-bg, rgba(239, 68, 68, 0.22))';
+              rowBorder = '4px solid var(--badge-next-border, #ef4444)';
+              indicator = <span style={{ color: 'var(--badge-next-color, #b91c1c)', fontWeight: 'bold', fontSize: '0.78rem', marginRight: '6px' }}>🔴 ➔</span>;
             }
 
             return (
@@ -6227,9 +6244,9 @@ const DSANotesVisualizer = ({
                   userSelect: 'none',
                   textAlign: 'right',
                   paddingRight: '14px',
-                  color: isJustExecuted ? '#10b981' : isNextToExecute ? '#ef4444' : 'var(--text-secondary)',
-                  background: isJustExecuted ? 'rgba(6, 40, 25, 0.98)' : isNextToExecute ? 'rgba(40, 10, 15, 0.98)' : 'var(--bg-secondary)',
-                  borderRight: '1px solid rgba(255, 255, 255, 0.08)',
+                  color: isJustExecuted ? 'var(--badge-exec-color, #047857)' : isNextToExecute ? 'var(--badge-next-color, #b91c1c)' : 'var(--text-secondary)',
+                  background: isJustExecuted ? 'var(--badge-exec-bg, rgba(16, 185, 129, 0.2))' : isNextToExecute ? 'var(--badge-next-bg, rgba(239, 68, 68, 0.2))' : 'var(--panel-inner-bg, rgba(0,0,0,0.03))',
+                  borderRight: '1px solid var(--glass-border)',
                   marginRight: '8px',
                   fontFamily: "'Fira Code', 'Cascadia Code', monospace",
                   fontSize: '0.85em',
@@ -6252,13 +6269,16 @@ const DSANotesVisualizer = ({
     <div style={{ display: 'flex', flexDirection: 'column', height: '100dvh', minHeight: '100vh', maxHeight: '100dvh', background: 'var(--bg-primary)', position: 'relative', overflow: 'hidden' }}>
       
       {/* HEADER BAR */}
-      <header style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', padding: '10px 20px', background: 'var(--bg-secondary)', borderBottom: '1px solid var(--glass-border)', flexShrink: 0, zIndex: 10 }}>
+      <header style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', flexWrap: 'wrap', gap: '10px', padding: '10px 20px', background: 'var(--bg-secondary)', borderBottom: '1px solid var(--glass-border)', flexShrink: 0, zIndex: 10 }}>
         <div style={{ display: 'flex', alignItems: 'center', gap: '15px' }}>
           <button className="btn btn-clear" onClick={onBack} style={{ display: 'flex', alignItems: 'center', gap: '6px' }}>
             <span>🔙</span> Back to Home
           </button>
-          <h2 style={{ fontSize: '1.15rem', color: 'var(--text-primary)', fontWeight: 'bold', margin: 0 }}>
-            DSA Study & Solved Problems Studio
+          <h2 style={{ fontSize: '1.15rem', color: 'var(--text-primary)', fontWeight: 'bold', margin: 0, display: 'flex', alignItems: 'center', gap: '8px', flexWrap: 'wrap' }}>
+            <span>DSA Study & Solved Problems Studio</span>
+            <span style={{ fontSize: '0.72rem', background: 'rgba(56, 189, 248, 0.15)', border: '1px solid rgba(56, 189, 248, 0.35)', color: '#38bdf8', padding: '2px 8px', borderRadius: '12px', fontWeight: 600 }}>
+              KLEF Y25 B.Tech Curriculum
+            </span>
           </h2>
         </div>
         <div style={{ display: 'flex', gap: '8px', alignItems: 'center' }}>
@@ -6306,54 +6326,54 @@ const DSANotesVisualizer = ({
 
           return (
             <>
-              <optgroup label="Foundational Programming Lessons">
+              <optgroup label="DSA-1 (ESC25SC1204ECASE) — Foundational Programming">
                 {foundational.map(([key, l]) => (
                   <option key={key} value={key}>{l.title}</option>
                 ))}
               </optgroup>
               {mod1.length > 0 && (
-                <optgroup label="Advanced Engine Architecture & Question Bank">
+                <optgroup label="DSA-3 (PCC25CS2103ECASE) — Mod 1: Engine Architecture & Zero-Utility">
                   {mod1.map(([key, l]) => (
                     <option key={key} value={key}>{l.title}</option>
                   ))}
                 </optgroup>
               )}
               {mod2.length > 0 && (
-                <optgroup label="String Algorithms">
+                <optgroup label="DSA-3 (PCC25CS2103ECASE) — Mod 2: String Algorithms">
                   {mod2.map(([key, l]) => (
                     <option key={key} value={key}>{l.title}</option>
                   ))}
                 </optgroup>
               )}
               {mod3.length > 0 && (
-                <optgroup label="Advanced Dynamic Programming">
+                <optgroup label="DSA-3 (PCC25CS2103ECASE) — Mod 3: Advanced Dynamic Programming">
                   {mod3.map(([key, l]) => (
                     <option key={key} value={key}>{l.title}</option>
                   ))}
                 </optgroup>
               )}
               {mod4.length > 0 && (
-                <optgroup label="Network Flow Algorithms">
+                <optgroup label="DSA-3 (PCC25CS2103ECASE) — Mod 4: Network Flow Algorithms">
                   {mod4.map(([key, l]) => (
                     <option key={key} value={key}>{l.title}</option>
                   ))}
                 </optgroup>
               )}
               {mod5.length > 0 && (
-                <optgroup label="NP-Completeness & Approximation">
+                <optgroup label="DSA-3 (PCC25CS2103ECASE) — Mod 5: NP-Completeness & Approximation">
                   {mod5.map(([key, l]) => (
                     <option key={key} value={key}>{l.title}</option>
                   ))}
                 </optgroup>
               )}
               {mod6.length > 0 && (
-                <optgroup label="Randomised & Parallel Algorithms">
+                <optgroup label="DSA-3 (PCC25CS2103ECASE) — Mod 6: Randomised & Parallel Algorithms">
                   {mod6.map(([key, l]) => (
                     <option key={key} value={key}>{l.title}</option>
                   ))}
                 </optgroup>
               )}
-              <optgroup label="Classic DSA Solved Sums">
+              <optgroup label="DSA-2 (ESC25SC1305ECASE) — Classic Solved Sums">
                 {solved.map(([key, prob]) => (
                   <option key={key} value={key}>{prob.title}</option>
                 ))}
@@ -6367,10 +6387,10 @@ const DSANotesVisualizer = ({
 
           const codeCardContent = (
             <div style={{ 
-              background: '#040711', 
+              background: 'var(--bg-secondary)', 
               borderRadius: '16px', 
-              border: '1.5px solid rgba(56, 189, 248, 0.25)', 
-              boxShadow: '0 8px 32px rgba(0,0,0,0.5)', 
+              border: '1.5px solid var(--glass-border)', 
+              boxShadow: '0 8px 32px rgba(0,0,0,0.2)', 
               overflow: 'hidden',
               display: 'flex',
               flexDirection: 'column',
@@ -6382,13 +6402,13 @@ const DSANotesVisualizer = ({
                 display: 'flex', 
                 justifyContent: 'space-between', 
                 alignItems: 'center', 
-                borderBottom: '1px solid rgba(255, 255, 255, 0.08)', 
+                borderBottom: '1px solid var(--glass-border)', 
                 flexWrap: 'wrap', 
                 gap: '8px', 
-                background: 'rgba(11, 17, 32, 0.95)' 
+                background: 'var(--bg-secondary)' 
               }}>
                 <div style={{ display: 'flex', alignItems: 'center', gap: '6px', flexWrap: 'wrap' }}>
-                  <span style={{ fontSize: '0.82rem', fontWeight: 700, color: 'var(--text-secondary)', whiteSpace: 'nowrap' }}>💻 Lang:</span>
+                  <span style={{ fontSize: '0.82rem', fontWeight: 700, color: 'var(--text-primary)', whiteSpace: 'nowrap' }}>💻 Lang:</span>
                   {['C++', 'Java', 'Python', 'JS', 'C'].map(lang => (
                     <button key={lang} onClick={() => setActiveLang(lang)}
                       style={{
@@ -6396,17 +6416,17 @@ const DSANotesVisualizer = ({
                         fontSize: '0.78rem',
                         borderRadius: '6px',
                         border: activeLang === lang ? '1.5px solid var(--accent-primary)' : '1px solid var(--glass-border)',
-                        background: activeLang === lang ? 'var(--accent-primary)' : 'transparent',
-                        color: activeLang === lang ? '#fff' : 'var(--text-secondary)',
+                        background: activeLang === lang ? 'var(--accent-primary)' : 'var(--panel-inner-bg, rgba(0,0,0,0.04))',
+                        color: activeLang === lang ? '#fff' : 'var(--text-primary)',
                         cursor: 'pointer',
-                        fontWeight: activeLang === lang ? 700 : 400,
+                        fontWeight: activeLang === lang ? 700 : 500,
                         transition: 'all 0.15s'
                       }}
                     >{lang === 'JS' ? 'JavaScript' : lang}</button>
                   ))}
                   
                   {/* Full Program vs Snippet Toggle */}
-                  <div style={{ display: 'flex', background: 'rgba(0,0,0,0.3)', borderRadius: '6px', padding: '2px', border: '1px solid var(--glass-border)', marginLeft: '4px' }}>
+                  <div style={{ display: 'flex', background: 'var(--panel-inner-bg, rgba(0,0,0,0.05))', borderRadius: '6px', padding: '2px', border: '1px solid var(--glass-border)', marginLeft: '4px' }}>
                     <button 
                       onClick={() => setCodeViewMode('full')}
                       style={{
@@ -6415,9 +6435,9 @@ const DSANotesVisualizer = ({
                         borderRadius: '4px',
                         border: 'none',
                         background: codeViewMode === 'full' ? 'var(--accent-primary)' : 'transparent',
-                        color: codeViewMode === 'full' ? '#fff' : 'var(--text-secondary)',
+                        color: codeViewMode === 'full' ? '#fff' : 'var(--text-primary)',
                         cursor: 'pointer',
-                        fontWeight: codeViewMode === 'full' ? 700 : 500
+                        fontWeight: codeViewMode === 'full' ? 700 : 600
                       }}
                       title="Display full complete runnable program with imports and main()"
                     >
@@ -6431,9 +6451,9 @@ const DSANotesVisualizer = ({
                         borderRadius: '4px',
                         border: 'none',
                         background: codeViewMode === 'snippet' ? 'var(--accent-primary)' : 'transparent',
-                        color: codeViewMode === 'snippet' ? '#fff' : 'var(--text-secondary)',
+                        color: codeViewMode === 'snippet' ? '#fff' : 'var(--text-primary)',
                         cursor: 'pointer',
-                        fontWeight: codeViewMode === 'snippet' ? 700 : 500
+                        fontWeight: codeViewMode === 'snippet' ? 700 : 600
                       }}
                       title="Display core snippet only"
                     >
@@ -6460,19 +6480,19 @@ const DSANotesVisualizer = ({
 
                   {/* Font size */}
                   <div style={{ display: 'flex', alignItems: 'center', gap: '4px', marginLeft: '4px' }}>
-                    <button onClick={() => setLocalFontSize(prev => Math.max(13, prev - 1))} style={{ background: 'rgba(255,255,255,0.06)', border: '1px solid var(--glass-border)', borderRadius: '4px', color: 'var(--text-primary)', fontSize: '0.74rem', padding: '2px 7px', cursor: 'pointer' }} title="Decrease font size">A−</button>
-                    <span style={{ fontSize: '0.74rem', color: '#38bdf8', minWidth: '28px', textAlign: 'center', fontWeight: 600 }}>{localFontSize}px</span>
-                    <button onClick={() => setLocalFontSize(prev => Math.min(28, prev + 1))} style={{ background: 'rgba(255,255,255,0.06)', border: '1px solid var(--glass-border)', borderRadius: '4px', color: 'var(--text-primary)', fontSize: '0.74rem', padding: '2px 7px', cursor: 'pointer' }} title="Increase font size">A+</button>
+                    <button onClick={() => setLocalFontSize(prev => Math.max(13, prev - 1))} style={{ background: 'var(--panel-inner-bg, rgba(0,0,0,0.04))', border: '1px solid var(--glass-border)', borderRadius: '4px', color: 'var(--text-primary)', fontSize: '0.74rem', padding: '2px 7px', cursor: 'pointer', fontWeight: 600 }} title="Decrease font size">A−</button>
+                    <span style={{ fontSize: '0.74rem', color: 'var(--accent-primary, #0284c7)', minWidth: '28px', textAlign: 'center', fontWeight: 700 }}>{localFontSize}px</span>
+                    <button onClick={() => setLocalFontSize(prev => Math.min(28, prev + 1))} style={{ background: 'var(--panel-inner-bg, rgba(0,0,0,0.04))', border: '1px solid var(--glass-border)', borderRadius: '4px', color: 'var(--text-primary)', fontSize: '0.74rem', padding: '2px 7px', cursor: 'pointer', fontWeight: 600 }} title="Increase font size">A+</button>
                   </div>
 
                   {/* Word Wrap Toggle */}
                   <button 
                     onClick={() => setIsWordWrap(prev => !prev)}
                     style={{
-                      background: isWordWrap ? 'rgba(56, 189, 248, 0.2)' : 'rgba(255,255,255,0.06)',
-                      border: isWordWrap ? '1px solid #38bdf8' : '1px solid var(--glass-border)',
+                      background: isWordWrap ? 'rgba(56, 189, 248, 0.2)' : 'var(--panel-inner-bg, rgba(0,0,0,0.04))',
+                      border: isWordWrap ? '1px solid var(--accent-primary, #0284c7)' : '1px solid var(--glass-border)',
                       borderRadius: '4px',
-                      color: isWordWrap ? '#38bdf8' : 'var(--text-secondary)',
+                      color: isWordWrap ? 'var(--accent-primary, #0284c7)' : 'var(--text-primary)',
                       fontSize: '0.74rem',
                       padding: '2px 8px',
                       cursor: 'pointer',
@@ -6488,10 +6508,10 @@ const DSANotesVisualizer = ({
                   <button 
                     onClick={() => setCodeHeightMode(prev => prev === 'all' ? 'scroll' : 'all')}
                     style={{
-                      background: codeHeightMode === 'all' ? 'rgba(16, 185, 129, 0.18)' : 'rgba(255,255,255,0.06)',
+                      background: codeHeightMode === 'all' ? 'rgba(16, 185, 129, 0.18)' : 'var(--panel-inner-bg, rgba(0,0,0,0.04))',
                       border: codeHeightMode === 'all' ? '1px solid #10b981' : '1px solid var(--glass-border)',
                       borderRadius: '4px',
-                      color: codeHeightMode === 'all' ? '#34d399' : 'var(--text-secondary)',
+                      color: codeHeightMode === 'all' ? 'var(--badge-exec-color, #047857)' : 'var(--text-primary)',
                       fontSize: '0.74rem',
                       padding: '2px 8px',
                       cursor: 'pointer',
@@ -6510,11 +6530,11 @@ const DSANotesVisualizer = ({
                       background: isFocusMode ? 'rgba(239, 68, 68, 0.2)' : 'rgba(56, 189, 248, 0.12)',
                       border: isFocusMode ? '1px solid #ef4444' : '1px solid rgba(56, 189, 248, 0.4)',
                       borderRadius: '4px',
-                      color: isFocusMode ? '#f87171' : '#38bdf8',
+                      color: isFocusMode ? '#ef4444' : 'var(--accent-primary, #0284c7)',
                       fontSize: '0.74rem',
                       padding: '2px 8px',
                       cursor: 'pointer',
-                      fontWeight: 600,
+                      fontWeight: 700,
                       marginLeft: '4px'
                     }}
                     title={isFocusMode ? "Exit fullscreen focus" : "Maximize code editor to full screen"}
@@ -6545,8 +6565,8 @@ const DSANotesVisualizer = ({
               <pre style={{
                 margin: 0,
                 padding: '16px 20px',
-                background: '#040711',
-                color: '#f8fafc',
+                background: 'var(--panel-code-bg, rgba(0,0,0,0.04))',
+                color: 'var(--text-primary)',
                 fontFamily: "'JetBrains Mono', 'Fira Code', 'Cascadia Code', 'Source Code Pro', Consolas, Menlo, Monaco, monospace",
                 fontSize: `${localFontSize}px`,
                 lineHeight: '1.65',
@@ -6562,7 +6582,7 @@ const DSANotesVisualizer = ({
                 overscrollBehavior: 'contain',
                 scrollbarWidth: 'thin',
                 scrollbarColor: '#38bdf8 rgba(15, 23, 42, 0.8)',
-                borderTop: '1px solid rgba(255, 255, 255, 0.08)'
+                borderTop: '1px solid var(--glass-border)'
               }}>
                 {displayLines.map((lineText, idx) => (
                   <div key={idx} style={{
@@ -6586,13 +6606,13 @@ const DSANotesVisualizer = ({
                       userSelect: 'none',
                       textAlign: 'right',
                       paddingRight: '14px',
-                      color: '#94a3b8',
+                      color: 'var(--text-secondary)',
                       fontSize: '0.88em',
                       flexShrink: 0,
-                      borderRight: '1.5px solid rgba(56, 189, 248, 0.25)',
+                      borderRight: '1.5px solid var(--glass-border)',
                       marginRight: '14px',
                       fontWeight: 600,
-                      background: '#040711'
+                      background: 'var(--panel-inner-bg, rgba(0,0,0,0.03))'
                     }}>
                       {idx + 1}
                     </span>
@@ -6604,22 +6624,22 @@ const DSANotesVisualizer = ({
               {/* Status Footer */}
               <div style={{
                 padding: '8px 18px',
-                background: '#080d1a',
-                borderTop: '1px solid rgba(255, 255, 255, 0.08)',
+                background: 'var(--panel-inner-bg, rgba(0,0,0,0.02))',
+                borderTop: '1px solid var(--glass-border)',
                 display: 'flex',
                 justifyContent: 'space-between',
                 alignItems: 'center',
                 flexWrap: 'wrap',
                 gap: '8px',
                 fontSize: '0.76rem',
-                color: '#94a3b8'
+                color: 'var(--text-secondary)'
               }}>
                 <div style={{ display: 'flex', alignItems: 'center', gap: '8px', flexWrap: 'wrap' }}>
-                  <span style={{ color: '#38bdf8', fontWeight: 600 }}>● {displayLines.length} lines total</span>
-                  <span style={{ color: 'rgba(255, 255, 255, 0.2)' }}>|</span>
-                  <span>Language: <strong style={{ color: '#f1f5f9' }}>{activeLang === 'JS' ? 'JavaScript' : activeLang}</strong></span>
-                  <span style={{ color: 'rgba(255, 255, 255, 0.2)' }}>|</span>
-                  <span>Mode: <strong style={{ color: '#f1f5f9' }}>{codeViewMode === 'full' ? 'Complete Runnable Program' : 'Core Snippet'}</strong></span>
+                  <span style={{ color: 'var(--accent-primary, #0284c7)', fontWeight: 600 }}>● {displayLines.length} lines total</span>
+                  <span style={{ color: 'var(--glass-border)' }}>|</span>
+                  <span>Language: <strong style={{ color: 'var(--text-primary)' }}>{activeLang === 'JS' ? 'JavaScript' : activeLang}</strong></span>
+                  <span style={{ color: 'var(--glass-border)' }}>|</span>
+                  <span>Mode: <strong style={{ color: 'var(--text-primary)' }}>{codeViewMode === 'full' ? 'Complete Runnable Program' : 'Core Snippet'}</strong></span>
                 </div>
                 <div style={{ display: 'flex', alignItems: 'center', gap: '6px', color: '#10b981', fontWeight: 600 }}>
                   <span>✓</span>
@@ -6695,7 +6715,7 @@ const DSANotesVisualizer = ({
                 </div>
 
                 {/* View Switcher Tabs: Code First (Default) | Concept & Analogy | Combined */}
-                <div style={{ display: 'flex', gap: '4px', background: 'rgba(15, 23, 42, 0.7)', padding: '3px', borderRadius: '10px', border: '1px solid var(--glass-border)' }}>
+                <div style={{ display: 'flex', gap: '4px', background: 'var(--panel-inner-bg, rgba(0, 0, 0, 0.05))', padding: '3px', borderRadius: '10px', border: '1px solid var(--glass-border)' }}>
                   <button 
                     onClick={() => setNotesViewMode('code')}
                     style={{
@@ -6771,8 +6791,8 @@ const DSANotesVisualizer = ({
                     gap: '8px',
                     fontSize: '0.82rem'
                   }}>
-                    <span style={{ color: '#cbd5e1' }}>
-                      <strong style={{ color: '#38bdf8' }}>💡 Quick Intuition: </strong>
+                    <span style={{ color: 'var(--text-primary)' }}>
+                      <strong style={{ color: 'var(--accent-primary, #0284c7)' }}>💡 Quick Intuition: </strong>
                       {lesson.desc.length > 110 ? lesson.desc.slice(0, 110) + '...' : lesson.desc}
                     </span>
                     <button 
@@ -6780,10 +6800,10 @@ const DSANotesVisualizer = ({
                       style={{
                         background: 'transparent',
                         border: 'none',
-                        color: '#38bdf8',
+                        color: 'var(--accent-primary, #0284c7)',
                         cursor: 'pointer',
                         fontSize: '0.78rem',
-                        fontWeight: 600,
+                        fontWeight: 700,
                         padding: 0
                       }}
                     >
@@ -6867,7 +6887,7 @@ const DSANotesVisualizer = ({
               </div>
 
               {/* View Switcher Tabs: Code First (Default) | Concept & Analogy | Combined */}
-              <div style={{ display: 'flex', gap: '4px', background: 'rgba(15, 23, 42, 0.7)', padding: '3px', borderRadius: '10px', border: '1px solid var(--glass-border)' }}>
+              <div style={{ display: 'flex', gap: '4px', background: 'var(--panel-inner-bg, rgba(0, 0, 0, 0.05))', padding: '3px', borderRadius: '10px', border: '1px solid var(--glass-border)' }}>
                 <button 
                   onClick={() => setNotesViewMode('code')}
                   style={{
@@ -6943,8 +6963,8 @@ const DSANotesVisualizer = ({
                   gap: '8px',
                   fontSize: '0.82rem'
                 }}>
-                  <span style={{ color: '#cbd5e1' }}>
-                    <strong style={{ color: '#38bdf8' }}>💡 Problem Summary: </strong>
+                  <span style={{ color: 'var(--text-primary)' }}>
+                    <strong style={{ color: 'var(--accent-primary, #0284c7)' }}>💡 Problem Summary: </strong>
                     {problem.notes.desc.length > 110 ? problem.notes.desc.slice(0, 110) + '...' : problem.notes.desc}
                   </span>
                   <button 
@@ -6952,10 +6972,10 @@ const DSANotesVisualizer = ({
                     style={{
                       background: 'transparent',
                       border: 'none',
-                      color: '#38bdf8',
+                      color: 'var(--accent-primary, #0284c7)',
                       cursor: 'pointer',
                       fontSize: '0.78rem',
-                      fontWeight: 600,
+                      fontWeight: 700,
                       padding: 0
                     }}
                   >
@@ -7032,66 +7052,88 @@ const DSANotesVisualizer = ({
 
       {/* INTERACTIVE SOLVED SUMS TAB */}
       {activeTab === 'solved' && (
-        <div style={{ display: 'flex', flex: 1, overflow: 'hidden', position: 'relative' }}>
+        <div style={{ display: 'flex', flexDirection: isMobile ? 'column' : 'row', flex: 1, overflow: 'hidden', position: 'relative' }}>
+          {isMobile && (
+            <div style={{ display: 'flex', background: 'var(--glass-bg)', padding: '4px', margin: '0.25rem 0.5rem', gap: '4px', border: '1px solid var(--glass-border)', borderRadius: '10px' }}>
+              <button className={`btn btn-clear ${mobileTab === 'vis' ? 'active' : ''}`} style={{ flex: 1, padding: '6px', fontSize: '0.8rem', background: mobileTab === 'vis' ? 'var(--accent-primary)' : 'transparent', color: mobileTab === 'vis' ? '#fff' : 'var(--text-secondary)' }} onClick={() => setMobileTab('vis')}>📊 Visual Trace</button>
+              <button className={`btn btn-clear ${mobileTab === 'code' ? 'active' : ''}`} style={{ flex: 1, padding: '6px', fontSize: '0.8rem', background: mobileTab === 'code' ? 'var(--accent-primary)' : 'transparent', color: mobileTab === 'code' ? '#fff' : 'var(--text-secondary)' }} onClick={() => setMobileTab('code')}>💻 Solution & Code</button>
+            </div>
+          )}
           
           {/* Main Visualizer Area */}
-          <div style={{ flex: 1, display: 'flex', flexDirection: 'column', overflow: 'hidden' }}>
+          <div style={{ display: (isMobile && mobileTab !== 'vis') ? 'none' : 'flex', flex: 1, flexDirection: 'column', overflow: 'hidden' }}>
             
             {/* INPUT PANEL AND CONTROLS */}
-            <div style={{ display: 'flex', padding: '10px 20px', background: 'rgba(15, 23, 42, 0.3)', borderBottom: '1px solid var(--glass-border)', alignItems: 'center', justifyContent: 'space-between', gap: '15px', flexShrink: 0 }}>
-              <div style={{ display: 'flex', gap: '12px', alignItems: 'center', flexWrap: 'wrap' }}>
-                <span style={{ fontSize: '0.82rem', color: 'var(--text-secondary)' }}>Solved Sum:</span>
-                <select className="styled-select" style={{ padding: '5px 25px 5px 10px', fontSize: '0.85rem' }} value={selectedProbKey} onChange={e => setSelectedProbKey(e.target.value)}>
-                  {Object.entries(PROBLEMS).map(([key, prob]) => (
-                    <option key={key} value={key}>{prob.title}</option>
-                  ))}
-                </select>
+            <div style={{ 
+              display: 'flex', 
+              flexDirection: isMobile ? 'column' : 'row',
+              padding: isMobile ? '8px 12px' : '10px 20px', 
+              background: 'var(--panel-inner-bg, rgba(0, 0, 0, 0.03))', 
+              borderBottom: '1px solid var(--glass-border)', 
+              alignItems: isMobile ? 'stretch' : 'center', 
+              justifyContent: 'space-between', 
+              gap: isMobile ? '8px' : '15px', 
+              flexShrink: 0 
+            }}>
+              <div style={{ display: 'flex', gap: isMobile ? '8px' : '12px', alignItems: 'center', flexWrap: 'wrap', justifyContent: isMobile ? 'space-between' : 'flex-start' }}>
+                <div style={{ display: 'flex', gap: '6px', alignItems: 'center' }}>
+                  <span style={{ fontSize: '0.82rem', color: 'var(--text-secondary)' }}>Sum:</span>
+                  <select className="styled-select" style={{ padding: '4px 22px 4px 8px', fontSize: isMobile ? '0.78rem' : '0.85rem', maxWidth: isMobile ? '210px' : 'none' }} value={selectedProbKey} onChange={e => setSelectedProbKey(e.target.value)}>
+                    {Object.entries(PROBLEMS).map(([key, prob]) => (
+                      <option key={key} value={key}>{prob.title}</option>
+                    ))}
+                  </select>
+                </div>
                 
-                <span style={{ fontSize: '0.82rem', color: 'var(--text-secondary)', marginLeft: '10px' }}>Difficulty:</span>
-                <span style={{ 
-                  fontSize: '0.75rem', 
-                  fontWeight: 'bold', 
-                  color: problem.difficulty === 'Easy' ? '#34d399' : '#fb923c',
-                  background: problem.difficulty === 'Easy' ? 'rgba(52,211,153,0.15)' : 'rgba(251,146,96,0.15)',
-                  padding: '2px 8px',
-                  borderRadius: '4px'
-                }}>
-                  {problem.difficulty}
-                </span>
+                <div style={{ display: 'flex', gap: '4px', alignItems: 'center' }}>
+                  <span style={{ fontSize: '0.78rem', color: 'var(--text-secondary)' }}>Difficulty:</span>
+                  <span style={{ 
+                    fontSize: '0.75rem', 
+                    fontWeight: 'bold', 
+                    color: problem.difficulty === 'Easy' ? '#34d399' : '#fb923c',
+                    background: problem.difficulty === 'Easy' ? 'rgba(52,211,153,0.15)' : 'rgba(251,146,96,0.15)',
+                    padding: '2px 8px',
+                    borderRadius: '4px'
+                  }}>
+                    {problem.difficulty}
+                  </span>
+                </div>
               </div>
               
-              {/* Play controls */}
-              <div style={{ display: 'flex', alignItems: 'center', gap: '6px' }}>
-                <button className="btn btn-clear" style={{ padding: '0.4rem 0.8rem' }} onClick={() => { setIsPlaying(false); setCurrentStep(0); }} disabled={currentStep === 0}>⏮ First</button>
-                <button className="btn btn-clear" style={{ padding: '0.4rem 0.8rem' }} onClick={() => { setIsPlaying(false); setCurrentStep(p => Math.max(0, p - 1)); }} disabled={currentStep === 0}>◀ Prev</button>
-                <button className="btn btn-clear" style={{ border: 'none', background: isPlaying ? 'rgba(59,130,246,0.5)' : 'var(--accent-primary)', color: 'white', fontWeight: 'bold', boxShadow: '0 4px 10px rgba(59,130,246,0.4)' }} onClick={() => setIsPlaying(!isPlaying)}>
-                  {isPlaying ? '⏸' : '▶ Play'}
-                </button>
-                <button className="btn btn-clear" style={{ padding: '0.4rem 0.8rem' }} onClick={() => { setIsPlaying(false); setCurrentStep(p => Math.min(timeline.length - 1, p + 1)); }} disabled={currentStep === timeline.length - 1}>Next ▶</button>
-                <button className="btn btn-clear" style={{ padding: '0.4rem 0.8rem' }} onClick={() => { setIsPlaying(false); setCurrentStep(timeline.length - 1); }} disabled={currentStep === timeline.length - 1}>Last ⏭</button>
-              </div>
+              <div style={{ display: 'flex', alignItems: 'center', justifyContent: isMobile ? 'space-between' : 'flex-end', flexWrap: 'wrap', gap: '6px' }}>
+                {/* Play controls */}
+                <div style={{ display: 'flex', alignItems: 'center', gap: isMobile ? '4px' : '6px', flexWrap: 'wrap' }}>
+                  <button className="btn btn-clear" style={{ padding: isMobile ? '0.35rem 0.55rem' : '0.4rem 0.8rem', fontSize: isMobile ? '0.75rem' : '0.82rem' }} onClick={() => { setIsPlaying(false); setCurrentStep(0); }} disabled={currentStep === 0}>⏮</button>
+                  <button className="btn btn-clear" style={{ padding: isMobile ? '0.35rem 0.55rem' : '0.4rem 0.8rem', fontSize: isMobile ? '0.75rem' : '0.82rem' }} onClick={() => { setIsPlaying(false); setCurrentStep(p => Math.max(0, p - 1)); }} disabled={currentStep === 0}>◀ Prev</button>
+                  <button className="btn btn-clear" style={{ border: 'none', background: isPlaying ? 'rgba(59,130,246,0.5)' : 'var(--accent-primary)', color: 'white', fontWeight: 'bold', padding: isMobile ? '0.35rem 0.65rem' : '0.4rem 0.8rem', fontSize: isMobile ? '0.75rem' : '0.82rem', boxShadow: '0 4px 10px rgba(59,130,246,0.4)' }} onClick={() => setIsPlaying(!isPlaying)}>
+                    {isPlaying ? '⏸' : '▶ Play'}
+                  </button>
+                  <button className="btn btn-clear" style={{ padding: isMobile ? '0.35rem 0.55rem' : '0.4rem 0.8rem', fontSize: isMobile ? '0.75rem' : '0.82rem' }} onClick={() => { setIsPlaying(false); setCurrentStep(p => Math.min(timeline.length - 1, p + 1)); }} disabled={currentStep === timeline.length - 1}>Next ▶</button>
+                  <button className="btn btn-clear" style={{ padding: isMobile ? '0.35rem 0.55rem' : '0.4rem 0.8rem', fontSize: isMobile ? '0.75rem' : '0.82rem' }} onClick={() => { setIsPlaying(false); setCurrentStep(timeline.length - 1); }} disabled={currentStep === timeline.length - 1}>⏭</button>
+                </div>
 
-              {/* Speed Slider */}
-              <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
-                <span style={{ color: 'var(--text-secondary)', fontSize: '0.8rem', fontWeight: 'bold', whiteSpace: 'nowrap' }}>Speed ({speed}ms)</span>
-                <input type="range" min={100} max={1500} step={50} value={1600 - speed} onChange={e => setSpeed(1600 - Number(e.target.value))} style={{ width: '100px', accentColor: 'var(--accent-primary)', cursor: 'pointer' }} />
+                {/* Speed Slider */}
+                <div style={{ display: 'flex', alignItems: 'center', gap: '6px' }}>
+                  <span style={{ color: 'var(--text-secondary)', fontSize: '0.75rem', fontWeight: 'bold', whiteSpace: 'nowrap' }}>Speed</span>
+                  <input type="range" min={100} max={1500} step={50} value={1600 - speed} onChange={e => setSpeed(1600 - Number(e.target.value))} style={{ width: isMobile ? '70px' : '100px', accentColor: 'var(--accent-primary)', cursor: 'pointer' }} />
+                </div>
               </div>
             </div>
 
             {/* SVG Visual Canvas Area */}
-            <div style={{ flex: 1, display: 'flex', alignItems: 'center', justifyContent: 'center', background: 'rgba(0,0,0,0.18)', padding: '20px', overflow: 'hidden' }}>
+            <div className="notes-canvas-container" style={{ flex: 1, display: 'flex', alignItems: 'center', justifyContent: 'center', background: 'var(--canvas-bg, var(--glass-bg))', padding: isMobile ? '10px 4px' : '20px', overflow: 'hidden' }}>
               {renderVisualCanvas()}
             </div>
           </div>
 
           {/* Right Column: Code & Line Highlighter */}
-          <div style={{ width: '490px', background: 'var(--glass-bg)', borderLeft: '1px solid var(--glass-border)', display: 'flex', flexDirection: 'column', overflow: 'hidden' }}>
+          <div style={{ display: (isMobile && mobileTab !== 'code') ? 'none' : 'flex', width: isMobile ? '100%' : '490px', background: 'var(--bg-secondary)', borderLeft: isMobile ? 'none' : '1px solid var(--glass-border)', flexDirection: 'column', overflow: 'hidden' }}>
             {/* Sticky 2-row header */}
             <div style={{ flexShrink: 0, borderBottom: '1px solid var(--glass-border)', background: 'var(--bg-secondary)' }}>
               {/* Row 1: Language pills */}
-              <div style={{ padding: '8px 12px', display: 'flex', justifyContent: 'space-between', alignItems: 'center', gap: '5px', borderBottom: '1px solid rgba(255,255,255,0.05)', flexWrap: 'wrap' }}>
+              <div style={{ padding: '8px 12px', display: 'flex', justifyContent: 'space-between', alignItems: 'center', gap: '5px', borderBottom: '1px solid var(--glass-border)', flexWrap: 'wrap' }}>
                 <div style={{ display: 'flex', alignItems: 'center', gap: '5px', flexWrap: 'wrap' }}>
-                  <span style={{ fontSize: '0.78rem', fontWeight: 700, color: 'var(--text-secondary)', whiteSpace: 'nowrap' }}>🌐 Lang:</span>
+                  <span style={{ fontSize: '0.78rem', fontWeight: 700, color: 'var(--text-primary)', whiteSpace: 'nowrap' }}>🌐 Lang:</span>
                   {['C++', 'Java', 'Python', 'JS', 'C'].map(lang => (
                     <button key={lang} onClick={() => setActiveLang(lang)}
                       style={{
@@ -7099,10 +7141,10 @@ const DSANotesVisualizer = ({
                         fontSize: '0.74rem',
                         borderRadius: '5px',
                         border: activeLang === lang ? '1.5px solid var(--accent-primary)' : '1px solid var(--glass-border)',
-                        background: activeLang === lang ? 'var(--accent-primary)' : 'transparent',
-                        color: activeLang === lang ? '#fff' : 'var(--text-secondary)',
+                        background: activeLang === lang ? 'var(--accent-primary)' : 'var(--panel-inner-bg, rgba(0,0,0,0.04))',
+                        color: activeLang === lang ? '#fff' : 'var(--text-primary)',
                         cursor: 'pointer',
-                        fontWeight: activeLang === lang ? 700 : 400,
+                        fontWeight: activeLang === lang ? 700 : 500,
                         transition: 'all 0.15s'
                       }}
                     >{lang === 'JS' ? 'JavaScript' : lang}</button>
@@ -7133,10 +7175,10 @@ const DSANotesVisualizer = ({
               </div>
               {/* Row 2: Utility actions */}
               <div style={{ padding: '6px 12px', display: 'flex', alignItems: 'center', gap: '6px', flexWrap: 'wrap' }}>
-                <h3 style={{ color: 'var(--text-secondary)', fontSize: '0.82rem', fontWeight: 600, margin: 0 }}>Solution</h3>
+                <h3 style={{ color: 'var(--text-primary)', fontSize: '0.82rem', fontWeight: 700, margin: 0 }}>Solution</h3>
                 
                 {/* Full Program vs Stepper Snippet Toggle */}
-                <div style={{ display: 'flex', background: 'rgba(0,0,0,0.3)', borderRadius: '6px', padding: '2px', border: '1px solid var(--glass-border)' }}>
+                <div style={{ display: 'flex', background: 'var(--panel-inner-bg, rgba(0,0,0,0.05))', borderRadius: '6px', padding: '2px', border: '1px solid var(--glass-border)' }}>
                   <button 
                     onClick={() => setCodeViewMode('full')}
                     style={{
@@ -7145,9 +7187,9 @@ const DSANotesVisualizer = ({
                       borderRadius: '4px',
                       border: 'none',
                       background: codeViewMode === 'full' ? 'var(--accent-primary)' : 'transparent',
-                      color: codeViewMode === 'full' ? '#fff' : 'var(--text-secondary)',
+                      color: codeViewMode === 'full' ? '#fff' : 'var(--text-primary)',
                       cursor: 'pointer',
-                      fontWeight: codeViewMode === 'full' ? 700 : 500
+                      fontWeight: codeViewMode === 'full' ? 700 : 600
                     }}
                     title="View full complete program with main() and drivers"
                   >
@@ -7161,9 +7203,9 @@ const DSANotesVisualizer = ({
                       borderRadius: '4px',
                       border: 'none',
                       background: codeViewMode === 'snippet' ? 'var(--accent-primary)' : 'transparent',
-                      color: codeViewMode === 'snippet' ? '#fff' : 'var(--text-secondary)',
+                      color: codeViewMode === 'snippet' ? '#fff' : 'var(--text-primary)',
                       cursor: 'pointer',
-                      fontWeight: codeViewMode === 'snippet' ? 700 : 500
+                      fontWeight: codeViewMode === 'snippet' ? 700 : 600
                     }}
                     title="View step-highlighted function"
                   >
@@ -7172,9 +7214,9 @@ const DSANotesVisualizer = ({
                 </div>
 
                 <div style={{ display: 'flex', alignItems: 'center', gap: '4px', marginLeft: 'auto' }}>
-                  <button onClick={() => setLocalFontSize(prev => Math.max(13, prev - 1))} style={{ background: 'rgba(255,255,255,0.06)', border: '1px solid var(--glass-border)', borderRadius: '4px', color: 'var(--text-primary)', fontSize: '0.75rem', padding: '2px 7px', cursor: 'pointer' }}>A−</button>
-                  <span style={{ fontSize: '0.75rem', color: '#38bdf8', minWidth: '32px', textAlign: 'center', fontWeight: 600 }}>{localFontSize}px</span>
-                  <button onClick={() => setLocalFontSize(prev => Math.min(32, prev + 1))} style={{ background: 'rgba(255,255,255,0.06)', border: '1px solid var(--glass-border)', borderRadius: '4px', color: 'var(--text-primary)', fontSize: '0.75rem', padding: '2px 7px', cursor: 'pointer' }}>A+</button>
+                  <button onClick={() => setLocalFontSize(prev => Math.max(13, prev - 1))} style={{ background: 'var(--panel-inner-bg, rgba(0,0,0,0.05))', border: '1px solid var(--glass-border)', borderRadius: '4px', color: 'var(--text-primary)', fontSize: '0.75rem', padding: '2px 7px', cursor: 'pointer' }}>A−</button>
+                  <span style={{ fontSize: '0.75rem', color: 'var(--accent-primary, #38bdf8)', minWidth: '32px', textAlign: 'center', fontWeight: 600 }}>{localFontSize}px</span>
+                  <button onClick={() => setLocalFontSize(prev => Math.min(32, prev + 1))} style={{ background: 'var(--panel-inner-bg, rgba(0,0,0,0.05))', border: '1px solid var(--glass-border)', borderRadius: '4px', color: 'var(--text-primary)', fontSize: '0.75rem', padding: '2px 7px', cursor: 'pointer' }}>A+</button>
                 </div>
               </div>
             </div>
@@ -7184,18 +7226,19 @@ const DSANotesVisualizer = ({
           {/* Draggable Execution Trace Log panel */}
           {showLogPanel && (
             <div 
+              className="floating-log-panel"
               style={{
                 position: 'absolute',
                 left: `${logPosition.x}px`,
                 top: `${logPosition.y}px`,
                 width: `${logSize.width}px`,
                 height: `${logSize.height}px`,
-                background: 'rgba(15, 23, 42, 0.45)',
-                backdropFilter: 'blur(16px) saturate(180%)',
-                WebkitBackdropFilter: 'blur(16px) saturate(180%)',
-                border: '1px solid rgba(255, 255, 255, 0.08)',
+                background: 'var(--glass-bg, #0d1527)',
+                backdropFilter: 'blur(16px)',
+                WebkitBackdropFilter: 'blur(16px)',
+                border: '1.5px solid var(--glass-border)',
                 borderRadius: '16px',
-                boxShadow: '0 20px 50px rgba(0,0,0,0.5)',
+                boxShadow: '0 25px 60px rgba(0,0,0,0.3)',
                 display: 'flex',
                 flexDirection: 'column',
                 overflow: 'hidden',
@@ -7208,8 +7251,8 @@ const DSANotesVisualizer = ({
                 onTouchStart={handleLogHeaderMouseDown}
                 style={{
                   padding: '8px 12px',
-                  background: 'rgba(255, 255, 255, 0.04)',
-                  borderBottom: '1px solid rgba(255, 255, 255, 0.08)',
+                  background: 'var(--panel-inner-bg, rgba(0, 0, 0, 0.05))',
+                  borderBottom: '1px solid var(--glass-border)',
                   display: 'flex',
                   justifyContent: 'space-between',
                   alignItems: 'center',
@@ -7218,10 +7261,10 @@ const DSANotesVisualizer = ({
                   cursor: 'move'
                 }}
               >
-                <span style={{ fontWeight: 600, fontSize: '0.8rem', color: 'var(--text-primary)', display: 'flex', alignItems: 'center', gap: '6px' }}>
+                <span style={{ fontWeight: 700, fontSize: '0.82rem', color: 'var(--text-primary)', display: 'flex', alignItems: 'center', gap: '6px' }}>
                   📋 Variable Inspector & Step Trace
                 </span>
-                <button onClick={() => setShowLogPanel(false)} style={{ background: 'transparent', border: 'none', color: 'var(--text-secondary)', cursor: 'pointer', fontSize: '1rem', lineHeight: 1 }}>×</button>
+                <button onClick={() => setShowLogPanel(false)} style={{ background: 'transparent', border: 'none', color: 'var(--text-secondary)', cursor: 'pointer', fontSize: '1.1rem', lineHeight: 1 }}>×</button>
               </div>
 
               {/* Content body */}
@@ -7230,24 +7273,23 @@ const DSANotesVisualizer = ({
                 {/* Left Column: Active Variables Inspector */}
                 <div style={{
                   width: `${activeStateWidth}px`,
-                  background: 'rgba(0, 0, 0, 0.25)',
+                  background: 'var(--panel-inner-bg, rgba(0, 0, 0, 0.03))',
                   borderRight: '1px solid var(--glass-border)',
-                  padding: '6px 8px',
+                  padding: '8px 10px',
                   display: 'flex',
                   flexDirection: 'column',
-                  gap: '4px',
-                  fontSize: '0.72rem',
-                  color: 'var(--text-secondary)',
+                  gap: '6px',
+                  fontSize: '0.74rem',
                   overflowY: 'auto',
                   flexShrink: 0
                 }}>
-                  <div style={{ fontSize: '0.72rem', color: 'var(--accent-primary)', textTransform: 'uppercase', fontWeight: 'bold', borderBottom: '1px solid rgba(255,255,255,0.06)', paddingBottom: '2px', marginBottom: '4px' }}>
+                  <div style={{ fontSize: '0.72rem', color: 'var(--accent-primary, #38bdf8)', textTransform: 'uppercase', fontWeight: 800, borderBottom: '1px solid var(--glass-border)', paddingBottom: '3px', marginBottom: '4px' }}>
                     Active Memory
                   </div>
                   {activeFrame.variables && Object.entries(activeFrame.variables).map(([name, val]) => (
-                    <div key={name} style={{ display: 'flex', justifyContent: 'space-between' }}>
-                      <span>{name}:</span>
-                      <strong style={{ color: '#fbbf24' }}>
+                    <div key={name} style={{ display: 'flex', justifyContent: 'space-between', gap: '4px' }}>
+                      <span style={{ color: 'var(--text-secondary)', fontWeight: 600 }}>{name}:</span>
+                      <strong style={{ color: 'var(--warning, #b45309)', wordBreak: 'break-all' }}>
                         {typeof val === 'object' ? JSON.stringify(val) : String(val)}
                       </strong>
                     </div>
@@ -7258,14 +7300,14 @@ const DSANotesVisualizer = ({
                 <div onMouseDown={handleActiveStateColDragStart} onTouchStart={handleActiveStateColDragStart} style={{ width: '4px', cursor: 'col-resize', background: 'transparent', zIndex: 5 }} />
 
                 {/* Right Column: Scrollable logs list */}
-                <div ref={logContainerRef} style={{ flex: 1, background: 'rgba(0,0,0,0.15)', padding: '10px 12px', overflowY: 'auto' }}>
-                  <div style={{ fontSize: '0.7rem', color: 'var(--text-secondary)', fontWeight: 'bold', textTransform: 'uppercase', marginBottom: '6px' }}>Chronological Step Logs</div>
+                <div ref={logContainerRef} style={{ flex: 1, background: 'var(--bg-secondary)', padding: '10px 14px', overflowY: 'auto' }}>
+                  <div style={{ fontSize: '0.72rem', color: 'var(--text-secondary)', fontWeight: 'bold', textTransform: 'uppercase', marginBottom: '8px' }}>Chronological Step Logs</div>
                   {timeline.slice(0, currentStep + 1).map((f, idx) => (
-                    <div key={idx} style={{ display: 'flex', alignItems: 'flex-start', gap: '8px', fontSize: '0.75rem', marginBottom: '6px', lineHeight: '1.4' }}>
+                    <div key={idx} style={{ display: 'flex', alignItems: 'flex-start', gap: '8px', fontSize: '0.78rem', marginBottom: '6px', lineHeight: '1.5' }}>
                       <span style={{ color: 'var(--text-secondary)', flexShrink: 0, width: '24px', textAlign: 'right', fontWeight: 'bold', userSelect: 'none' }}>
                         {idx === currentStep ? '➔' : `${idx + 1}.`}
                       </span>
-                      <span style={{ color: idx === currentStep ? 'var(--accent-primary)' : 'var(--text-primary)', wordBreak: 'break-word', flex: 1 }}>
+                      <span style={{ color: idx === currentStep ? 'var(--accent-primary)' : 'var(--text-primary)', wordBreak: 'break-word', flex: 1, fontWeight: idx === currentStep ? 700 : 400 }}>
                         {highlightLogText(f.msg)}
                       </span>
                     </div>
@@ -7275,7 +7317,7 @@ const DSANotesVisualizer = ({
               </div>
 
               {/* Visual active step highlight at bottom of log panel */}
-              <div style={{ background: 'rgba(0,0,0,0.2)', padding: '4px 12px', borderTop: '1px solid rgba(255, 255, 255, 0.08)', fontSize: '0.72rem', color: '#fbbf24', fontWeight: 600 }}>
+              <div style={{ background: 'var(--panel-inner-bg, rgba(0, 0, 0, 0.05))', padding: '6px 12px', borderTop: '1px solid var(--glass-border)', fontSize: '0.75rem', color: 'var(--warning, #d97706)', fontWeight: 600 }}>
                 💡 {activeFrame.msg || 'Ready.'}
               </div>
 

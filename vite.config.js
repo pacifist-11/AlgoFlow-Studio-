@@ -278,7 +278,7 @@ function apiDevServerPlugin() {
 // https://vite.dev/config/
 export default defineConfig({
   base: '/',
-  publicDir: resolve(__dirname, 'src', 'public'),
+  publicDir: resolve(__dirname, 'public'),
   plugins: [react(), generateSwPrecache(), apiDevServerPlugin()],
   define: {
     'process.env': {}

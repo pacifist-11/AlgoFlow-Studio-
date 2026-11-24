@@ -136,9 +136,9 @@ const highlightLogText = (text) => {
     const regex = /(\b\d+(?:\.\d+)?\b)/g;
     const parts = str.split(regex);
     return (
-      <span style={{ color: '#f87171', fontWeight: 'bold' }}>
+      <span style={{ color: 'var(--danger, #ef4444)', fontWeight: 'bold' }}>
         {parts.map((p, i) => 
-          regex.test(p) ? <span key={i} style={{ color: '#fbbf24', textShadow: '0 0 8px rgba(251,191,36,0.3)' }}>{p}</span> : p
+          regex.test(p) ? <span key={i} style={{ color: 'var(--warning, #d97706)' }}>{p}</span> : p
         )}
       </span>
     );
@@ -160,9 +160,9 @@ const highlightLogText = (text) => {
     const regex = /(\b\d+(?:\.\d+)?\b)/g;
     const parts = str.split(regex);
     return (
-      <span style={{ color: '#34d399', fontWeight: 'bold' }}>
+      <span style={{ color: 'var(--success, #10b981)', fontWeight: 'bold' }}>
         {parts.map((p, i) => 
-          regex.test(p) ? <span key={i} style={{ color: '#fbbf24' }}>{p}</span> : p
+          regex.test(p) ? <span key={i} style={{ color: 'var(--warning, #d97706)' }}>{p}</span> : p
         )}
       </span>
     );
@@ -183,9 +183,9 @@ const highlightLogText = (text) => {
     const regex = /(\b\d+(?:\.\d+)?\b)/g;
     const parts = str.split(regex);
     return (
-      <span style={{ color: '#fb923c', fontWeight: 600 }}>
+      <span style={{ color: 'var(--accent-primary)', fontWeight: 600 }}>
         {parts.map((p, i) => 
-          regex.test(p) ? <span key={i} style={{ color: '#fbbf24', fontWeight: 'bold' }}>{p}</span> : p
+          regex.test(p) ? <span key={i} style={{ color: 'var(--warning, #d97706)', fontWeight: 'bold' }}>{p}</span> : p
         )}
       </span>
     );
@@ -194,7 +194,7 @@ const highlightLogText = (text) => {
   const regex = /(\b\d+(?:\.\d+)?\b)/g;
   const parts = str.split(regex);
   return parts.map((p, i) => 
-    /^\d+(?:\.\d+)?$/.test(p) ? <strong key={i} style={{ color: '#fbbf24' }}>{p}</strong> : p
+    /^\d+(?:\.\d+)?$/.test(p) ? <strong key={i} style={{ color: 'var(--warning, #d97706)' }}>{p}</strong> : p
   );
 };
 
@@ -467,6 +467,22 @@ const THEMES = {
     bodyBg: 'radial-gradient(circle at 10% 20%, rgba(236,72,153,0.16), transparent 40%), radial-gradient(circle at 90% 80%, rgba(251,113,133,0.14), transparent 40%)',
     type: 'dark'
   },
+  'High Contrast Light': {
+    '--bg-primary': '#ffffff',
+    '--bg-secondary': '#f1f5f9',
+    '--accent-primary': '#2563eb',
+    '--accent-secondary': '#92400e',
+    '--text-primary': '#000000',
+    '--text-secondary': '#1e293b',
+    '--warning': '#92400e',
+    '--glass-bg': 'rgba(255, 255, 255, 0.95)',
+    '--glass-border': 'rgba(37, 99, 235, 0.3)',
+    '--node-fill-1': '#2563eb',
+    '--node-fill-2': '#0284c7',
+    '--edge-color': 'rgba(37, 99, 235, 0.8)',
+    bodyBg: 'radial-gradient(circle at 20% 20%, rgba(37,99,235,0.05), transparent 50%), radial-gradient(circle at 80% 80%, rgba(217,119,6,0.05), transparent 50%)',
+    type: 'light'
+  },
   'Arctic Frost': {
     '--bg-primary': '#f8fafc',
     '--bg-secondary': '#ffffff',
@@ -616,25 +632,39 @@ const THEMES = {
     '--edge-color': 'rgba(225, 29, 72, 0.7)',
     bodyBg: 'radial-gradient(circle at 10% 20%, rgba(225,29,72,0.08), transparent 40%), radial-gradient(circle at 90% 80%, rgba(249,115,22,0.08), transparent 40%)',
     type: 'light'
-  },
-  'High Contrast Light': {
-    '--bg-primary': '#ffffff',
-    '--bg-secondary': '#f1f5f9',
-    '--accent-primary': '#2563eb',
-    '--accent-secondary': '#d97706',
-    '--text-primary': '#000000',
-    '--text-secondary': '#1e293b',
-    '--glass-bg': 'rgba(255, 255, 255, 0.95)',
-    '--glass-border': 'rgba(37, 99, 235, 0.3)',
-    '--node-fill-1': '#2563eb',
-    '--node-fill-2': '#0284c7',
-    '--edge-color': 'rgba(37, 99, 235, 0.8)',
-    bodyBg: 'radial-gradient(circle at 20% 20%, rgba(37,99,235,0.05), transparent 50%), radial-gradient(circle at 80% 80%, rgba(217,119,6,0.05), transparent 50%)',
-    type: 'light'
   }
 };
 
 // ─── Enhanced AI ChatBot (Powered by RAG & Gemini) ─────────────────────────
+// Ensure dynamic canvas & inner-panel backgrounds for all themes
+Object.entries(THEMES).forEach(([name, theme]) => {
+  const isLight = theme.type === 'light';
+  if (!theme['--panel']) {
+    theme['--panel'] = isLight ? '#ffffff' : 'rgba(14, 23, 40, 0.82)';
+  }
+  if (!theme['--canvas-bg']) {
+    theme['--canvas-bg'] = isLight ? '#ffffff' : 'rgba(15, 23, 42, 0.45)';
+  }
+  if (!theme['--panel-inner-bg']) {
+    theme['--panel-inner-bg'] = isLight ? '#f8fafc' : 'rgba(0, 0, 0, 0.25)';
+  }
+  if (!theme['--panel-code-bg']) {
+    theme['--panel-code-bg'] = isLight ? '#f1f5f9' : 'rgba(0, 0, 0, 0.35)';
+  }
+  if (!theme['--warning']) {
+    theme['--warning'] = isLight ? '#b45309' : '#fbbf24';
+  }
+  if (!theme['--success']) {
+    theme['--success'] = isLight ? '#059669' : '#34d399';
+  }
+  if (!theme['--node-glow']) {
+    theme['--node-glow'] = isLight ? 'rgba(0, 0, 0, 0.12)' : 'rgba(0, 229, 255, 0.6)';
+  }
+  if (!theme['--card-shadow']) {
+    theme['--card-shadow'] = isLight ? '0 10px 30px -5px rgba(0, 0, 0, 0.12), 0 4px 6px -4px rgba(0, 0, 0, 0.08)' : '0 20px 50px rgba(0, 0, 0, 0.5)';
+  }
+});
+
 const ChatBot = (props) => {
   return <FloatingAiBot {...props} />;
 };
@@ -1327,13 +1357,35 @@ function App() {
   const [currentTheme,  setCurrentTheme]  = useState(() => {
     return safeLocalStorage.getItem('algoflow_theme') || 'Neon Cyberpunk';
   });
-  const [isMobile, setIsMobile] = useState(typeof window !== 'undefined' ? window.innerWidth < 768 : false);
+  const [isMobile, setIsMobile] = useState(typeof window !== 'undefined' ? window.innerWidth < 1024 : false);
   const [mobileTab, setMobileTab] = useState('vis'); // 'vis' | 'code' | 'log'
   const [showMobileOptions, setShowMobileOptions] = useState(false);
+  const [toasts, setToasts] = useState([]);
+
+  const showToast = useCallback((message, type = 'info', duration = 3500) => {
+    const id = Date.now() + Math.random().toString(36).substring(2, 6);
+    setToasts(prev => [...prev, { id, message, type }]);
+    setTimeout(() => {
+      setToasts(prev => prev.filter(t => t.id !== id));
+    }, duration);
+  }, []);
+
+  const removeToast = useCallback((id) => {
+    setToasts(prev => prev.filter(t => t.id !== id));
+  }, []);
+
+  useEffect(() => {
+    window.showAlgoToast = (msg, type = 'info', duration = 3500) => {
+      showToast(msg, type, duration);
+    };
+    return () => {
+      delete window.showAlgoToast;
+    };
+  }, [showToast]);
 
   useEffect(() => {
     const handleResize = () => {
-      setIsMobile(window.innerWidth < 768);
+      setIsMobile(window.innerWidth < 1024);
     };
     window.addEventListener('resize', handleResize);
     return () => window.removeEventListener('resize', handleResize);
@@ -1527,11 +1579,44 @@ function App() {
   });
   const [adminErrorMessage, setAdminErrorMessage] = useState('');
   const [adminFeedbacksList, setAdminFeedbacksList] = useState([]);
-  const [adminActiveTab, setAdminActiveTab] = useState('feedbacks'); // 'feedbacks' | 'deactivations'
+  const [adminActiveTab, setAdminActiveTab] = useState('feedbacks'); // 'feedbacks' | 'deactivations' | 'crack_attempts'
+  const [adminCrackAttemptsList, setAdminCrackAttemptsList] = useState([]);
+  const [crackSearchQuery, setCrackSearchQuery] = useState('');
+  const [crackActionLoading, setCrackActionLoading] = useState(false);
   const [adminDeactivationsList, setAdminDeactivationsList] = useState([]);
+  const [adminUsersList, setAdminUsersList] = useState([]);
+  const [deactivationsSubTab, setDeactivationsSubTab] = useState('requests'); // 'requests' | 'users'
   const [adminDeactivationsStats, setAdminDeactivationsStats] = useState({ total: 0, pending: 0, approved: 0, autoDeleted: 0, cancelled: 0, rejected: 0 });
   const [deactivationSearchQuery, setDeactivationSearchQuery] = useState('');
   const [deactivationActionLoading, setDeactivationActionLoading] = useState(null);
+  const [adminSuccessNotice, setAdminSuccessNotice] = useState('');
+  const [activeUserInfoPopup, setActiveUserInfoPopup] = useState(null);
+
+  // Helper for computing relative time calculations from now
+  const formatRelativeTime = (dateInput) => {
+    if (!dateInput) return 'Never';
+    const date = new Date(dateInput);
+    if (isNaN(date.getTime())) return 'Invalid date';
+    const diffMs = Date.now() - date.getTime();
+    if (diffMs < 0) return 'Just now';
+
+    const diffSeconds = Math.floor(diffMs / 1000);
+    const diffMinutes = Math.floor(diffSeconds / 60);
+    const diffHours = Math.floor(diffMinutes / 60);
+    const diffDays = Math.floor(diffHours / 24);
+    const diffWeeks = Math.floor(diffDays / 7);
+    const diffMonths = Math.floor(diffDays / 30);
+    const diffYears = Math.floor(diffDays / 365);
+
+    if (diffSeconds < 45) return 'Just now';
+    if (diffMinutes < 60) return `${diffMinutes}m ago`;
+    if (diffHours < 24) return `${diffHours}h ago`;
+    if (diffDays < 7) return `${diffDays} day${diffDays === 1 ? '' : 's'} ago`;
+    if (diffDays < 14) return `1 week ago (${diffDays} days ago)`;
+    if (diffWeeks < 8) return `${diffWeeks} weeks ago (${diffDays} days ago)`;
+    if (diffMonths < 12) return `${diffMonths} month${diffMonths === 1 ? '' : 's'} ago (${diffDays} days ago)`;
+    return `${diffYears} year${diffYears === 1 ? '' : 's'} ago`;
+  };
 
   // Helper for safe API requests to handle connection errors and invalid/empty responses
   const safeFetchJson = async (url, options = {}) => {
@@ -2122,13 +2207,58 @@ function App() {
       await safeFetchJson('/api/admin/verify-pin', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ pin: adminPinInput.trim() })
+        body: JSON.stringify({ 
+          pin: adminPinInput.trim(),
+          email: activeUser?.email || '',
+          name: activeUser?.name || ''
+        })
       });
       setIsAdminAuthenticated(true);
       fetchAdminFeedbacks(adminPinInput.trim());
       fetchAdminDeactivations(adminPinInput.trim());
+      fetchAdminCrackAttempts(adminPinInput.trim());
     } catch (err) {
       setAdminErrorMessage(err.message);
+    }
+  };
+
+  const fetchAdminCrackAttempts = async (pinCode) => {
+    try {
+      const data = await safeFetchJson('/api/admin/verify-pin', {
+        method: 'GET',
+        headers: { 'Authorization': pinCode }
+      });
+      if (data && data.attempts) {
+        setAdminCrackAttemptsList(Array.isArray(data.attempts) ? data.attempts : []);
+      }
+    } catch (err) {
+      console.error("Failed to fetch crack attempts from Neon:", err);
+    }
+  };
+
+  const handleDeleteCrackAttempt = async (id = null) => {
+    const pin = adminPinInput.trim() || 'Irctc@11';
+    const confirmPrompt = id 
+      ? "Delete this crack attempt record from history?"
+      : "Are you sure you want to clear ALL developer crack attempt logs?";
+    if (!window.confirm(confirmPrompt)) return;
+
+    setCrackActionLoading(true);
+    try {
+      await safeFetchJson(`/api/admin/verify-pin${id ? `?id=${id}` : ''}`, {
+        method: 'DELETE',
+        headers: { 
+          'Authorization': pin,
+          'Content-Type': 'application/json'
+        },
+        body: JSON.stringify(id ? { id } : {})
+      });
+      setAdminSuccessNotice(id ? "Crack attempt log removed." : "All crack attempt logs cleared.");
+      fetchAdminCrackAttempts(pin);
+    } catch (err) {
+      setAdminErrorMessage(err.message);
+    } finally {
+      setCrackActionLoading(false);
     }
   };
 
@@ -2156,20 +2286,30 @@ function App() {
           setAdminDeactivationsStats(data.stats);
         }
       }
+      if (data && data.users) {
+        setAdminUsersList(Array.isArray(data.users) ? data.users : []);
+      }
     } catch (err) {
       console.error("Failed to fetch database deactivations:", err);
     }
   };
 
-  const handleAdminDeactivationAction = async (id, email, action) => {
-    const isApprove = action === 'approve';
-    const confirmPrompt = isApprove
-      ? `⚡ APPROVE IMMEDIATE DELETION\n\nAre you sure you want to approve immediate deactivation for ${email}?\n\nThis will immediately and permanently delete this user account and credentials from the database!`
-      : `✕ REJECT DEACTIVATION\n\nAre you sure you want to reject deactivation for ${email}?\n\nThis will restore the account to active status.`;
+  const handleAdminDeactivationAction = async (id, email, action, extraPayload = {}) => {
+    let confirmPrompt = '';
+    if (action === 'approve') {
+      confirmPrompt = `⚡ APPROVE IMMEDIATE DELETION\n\nAre you sure you want to approve immediate deactivation for ${email}?\n\nThis will permanently delete this user account and all credentials from the database immediately!`;
+    } else if (action === 'reject') {
+      confirmPrompt = `✕ REJECT DEACTIVATION\n\nAre you sure you want to restore ${email} to active status?`;
+    } else if (action === 'delete_log') {
+      confirmPrompt = `🗑️ DELETE HISTORY LOG\n\nRemove this deactivation entry from the history log?`;
+    } else if (action === 'mark_pending') {
+      confirmPrompt = `🔄 RESET TO PENDING\n\nReset status for ${email} back to Pending Approval with a 7-day timer?`;
+    }
+    // Note: 'force_deactivate' runs automatically without blocking confirm prompt!
 
-    if (!window.confirm(confirmPrompt)) return;
+    if (confirmPrompt && !window.confirm(confirmPrompt)) return;
 
-    setDeactivationActionLoading(id);
+    setDeactivationActionLoading(id || email);
     try {
       const res = await safeFetchJson('/api/admin/deactivations', {
         method: 'POST',
@@ -2177,10 +2317,16 @@ function App() {
           'Content-Type': 'application/json',
           'Authorization': adminPinInput.trim() || 'Irctc@11'
         },
-        body: JSON.stringify({ action, id, email })
+        body: JSON.stringify({ action, id, email, ...extraPayload })
       });
-      alert(res.message || `Action "${action}" completed successfully!`);
+      const msg = res.message || `Action "${action}" completed successfully!`;
+      setAdminSuccessNotice(msg);
+      setTimeout(() => setAdminSuccessNotice(''), 7000);
       await fetchAdminDeactivations(adminPinInput.trim() || 'Irctc@11');
+      if (action === 'force_deactivate') {
+        // Automatically switch to requests view so the admin immediately inspects the recorded details
+        setDeactivationsSubTab('requests');
+      }
     } catch (err) {
       alert(err.message || `Failed to ${action} deactivation.`);
     } finally {
@@ -2208,6 +2354,18 @@ function App() {
 
 
 
+  // Secret admin console shortcut: Ctrl + Shift + A
+  useEffect(() => {
+    const handleKeyDown = (e) => {
+      if ((e.ctrlKey || e.metaKey) && e.shiftKey && (e.key === 'A' || e.key === 'a')) {
+        e.preventDefault();
+        setIsAdminFeedbackOpen(prev => !prev);
+      }
+    };
+    window.addEventListener('keydown', handleKeyDown);
+    return () => window.removeEventListener('keydown', handleKeyDown);
+  }, []);
+
   const handleCopyTrigger = (code, lang) => {
     setCopyModalData({ isOpen: true, code, language: lang });
   };
@@ -2233,9 +2391,24 @@ function App() {
 
   // Synchronize Live Screen State to Centralized Telemetry Bridge
   useEffect(() => {
-    let title = 'AlgoFlow Studio';
-    let algo = 'General';
-    let dataSum = '';
+    if (!appMode) {
+      setScreenContext({
+        screenTitle: 'Home Dashboard',
+        activeAlgo: 'None',
+        currentStep: 0,
+        totalSteps: 0,
+        currentStepMessage: 'Home Dashboard active.',
+        recentLogs: [],
+        screenDataSummary: 'AlgoFlow Studio Home Dashboard active.',
+        lastErrorOrIssue: null
+      });
+      document.title = 'AlgoFlow Studio - Interactive Algorithm & Data Structure Visualizer';
+      return;
+    }
+
+    let title = 'Home Dashboard';
+    let algo = 'None';
+    let dataSum = 'AlgoFlow Studio Home Dashboard active.';
 
     if (appMode === 'GRAPH_VIS') {
       title = 'Graph Visualizer';
@@ -2269,6 +2442,18 @@ function App() {
       title = 'DSA Notes & Interview Problems';
       algo = 'Interview Preparation';
       dataSum = 'Solved problems and conceptual notes.';
+    } else if (appMode === 'JAVA_OOP_VIS') {
+      title = 'Patterns Visualizer Studio';
+      algo = 'Loop Patterns';
+      dataSum = 'Loop patterns and shapes visualizer.';
+    } else if (appMode === 'AI_RAG_MENTOR_VIS') {
+      title = 'AI RAG Mentor Studio';
+      algo = 'AI Mentor';
+      dataSum = 'Interactive AI Mentor and career guidance studio.';
+    } else if (appMode === '404') {
+      title = '404 - Page Not Found';
+      algo = '404';
+      dataSum = 'Requested page or visualizer was not found.';
     }
 
     setScreenContext({
@@ -2276,6 +2461,12 @@ function App() {
       activeAlgo: algo,
       screenDataSummary: dataSum
     });
+
+    if (appMode) {
+      document.title = `${title} | AlgoFlow Studio`;
+    } else {
+      document.title = 'AlgoFlow Studio - Interactive Algorithm & Data Structure Visualizer';
+    }
   }, [appMode, treeType, globalDsType, globalDsVariety, globalSort, globalSearch, globalSortSearchTab, globalGraphAlgo, globalDpTab, insertedValues.length, codeLang]);
 
   // Apply theme
@@ -2283,6 +2474,7 @@ function App() {
     const theme = THEMES[currentTheme] || THEMES['Neon Cyberpunk'];
     if (!theme) return;
     const root = document.documentElement;
+    root.setAttribute('data-theme-type', theme.type);
     Object.entries(theme).forEach(([k, v]) => {
       if (k !== 'bodyBg' && k !== 'type') {
         root.style.setProperty(k, v);
@@ -2541,17 +2733,20 @@ function App() {
   useEffect(() => {
     const handleHashChange = () => {
       const hash = window.location.hash.replace('#', '').replace(/^\//, '').trim();
-      const validModes = ['BEGINNER_101_VIS', 'GENERAL_DSA_VIS', 'SORT_SEARCH_VIS', 'MAIN_VIS', 'GRAPH_VIS', 'DP_GREEDY_VIS', 'JAVA_OOP_VIS', 'DSA_NOTES_VIS', 'DSA_STUDY_VIS', 'DSA_SUMS_VIS', 'LINE_BY_LINE_VIS', 'CODE_VAL_VIS'];
-      if (validModes.includes(hash)) {
+      const validModes = ['BEGINNER_101_VIS', 'GENERAL_DSA_VIS', 'SORT_SEARCH_VIS', 'MAIN_VIS', 'GRAPH_VIS', 'DP_GREEDY_VIS', 'JAVA_OOP_VIS', 'DSA_NOTES_VIS', 'DSA_STUDY_VIS', 'DSA_SUMS_VIS', 'LINE_BY_LINE_VIS', 'CODE_VAL_VIS', 'AI_RAG_MENTOR_VIS'];
+      if (!hash) {
+        setAppMode(null);
+      } else if (validModes.includes(hash)) {
         setAppMode(hash);
         if (hash === 'LINE_BY_LINE_VIS') {
           setSetupComplete(isLineDebuggerSupported(codeLang));
         } else {
-          const isStandalone = ['BEGINNER_101_VIS', 'GENERAL_DSA_VIS', 'SORT_SEARCH_VIS', 'GRAPH_VIS', 'DP_GREEDY_VIS', 'JAVA_OOP_VIS', 'DSA_NOTES_VIS', 'DSA_STUDY_VIS', 'DSA_SUMS_VIS'].includes(hash);
+          const isStandalone = ['BEGINNER_101_VIS', 'GENERAL_DSA_VIS', 'SORT_SEARCH_VIS', 'GRAPH_VIS', 'DP_GREEDY_VIS', 'JAVA_OOP_VIS', 'DSA_NOTES_VIS', 'DSA_STUDY_VIS', 'DSA_SUMS_VIS', 'CODE_VAL_VIS', 'AI_RAG_MENTOR_VIS'].includes(hash);
           if (isStandalone) setSetupComplete(true);
         }
       } else {
-        setAppMode(null);
+        setAppMode('404');
+        setSetupComplete(true);
       }
     };
     window.addEventListener('hashchange', handleHashChange);
@@ -3366,7 +3561,7 @@ function App() {
     if (treeType === 'BST' || treeType === 'AVL') {
       frames = simulateBSTDelete(prev.root, val, prev.logs);
     } else {
-      alert('Deletion is currently supported for BST, AVL, Heap, and Fenwick trees.');
+      showToast('Deletion is currently supported for BST, AVL, Heap, and Fenwick trees.', 'error');
       return;
     }
 
@@ -3380,7 +3575,7 @@ function App() {
   const handleFenwickQuery = (targetK) => {
     const k = targetK !== undefined ? parseInt(targetK) : parseInt(fenwickQueryIdx || inputValue);
     if (isNaN(k) || k < 1 || k > insertedValues.length) {
-      alert(`Please enter a valid index between 1 and ${insertedValues.length}.`);
+      showToast(`Please enter a valid index between 1 and ${insertedValues.length}.`, 'error');
       return;
     }
     const prev = timeline.length > 0 ? timeline[timeline.length - 1] : new Frame(null, [], null, null);
@@ -3393,7 +3588,7 @@ function App() {
     const l = customL !== undefined ? parseInt(customL) : parseInt(fenwickRangeL);
     const r = customR !== undefined ? parseInt(customR) : parseInt(fenwickRangeR);
     if (isNaN(l) || isNaN(r) || l < 1 || r > insertedValues.length || l > r) {
-      alert(`Please enter valid indices with 1 <= L <= R <= ${insertedValues.length}.`);
+      showToast(`Please enter valid indices with 1 <= L <= R <= ${insertedValues.length}.`, 'error');
       return;
     }
     const prev = timeline.length > 0 ? timeline[timeline.length - 1] : new Frame(null, [], null, null);
@@ -3406,7 +3601,7 @@ function App() {
     const idx = customIdx !== undefined ? parseInt(customIdx) : parseInt(fenwickUpdateIdx);
     const delta = customDelta !== undefined ? parseInt(customDelta) : parseInt(fenwickUpdateVal);
     if (isNaN(idx) || isNaN(delta) || idx < 1 || idx > insertedValues.length) {
-      alert(`Please enter a valid index (1..${insertedValues.length}) and delta value.`);
+      showToast(`Please enter a valid index (1..${insertedValues.length}) and delta value.`, 'error');
       return;
     }
     const prev = timeline.length > 0 ? timeline[timeline.length - 1] : new Frame(null, [], null, null);
@@ -3841,7 +4036,7 @@ function App() {
             const isBT  = node.keys?.length > 0 && !node.range && node.value === undefined;
             const isSeg = !!node.range && treeType !== 'FENWICK_TREE';
             const fill  = isHL ? 'url(#nhl)' : node._color === 'RED' ? 'url(#rbr)' : node._color === 'BLACK' ? 'url(#rbb)' : (isSeg || treeType === 'FENWICK_TREE') ? 'url(#sg)' : 'url(#ng)';
-            const glow  = isHL ? 'rgba(245,158,11,0.55)' : 'rgba(99,102,241,0.4)';
+            const glow  = isHL ? 'rgba(245,158,11,0.55)' : (themeMode === 'light' ? 'rgba(0,0,0,0.14)' : 'rgba(99,102,241,0.4)');
 
             if (isBT) {
               const kw = Math.max(70, node.keys.length * 42 + 20);
@@ -3906,7 +4101,7 @@ function App() {
                     Range: {node.range}
                   </text>
                   {showBits && (
-                    <text x={0} y={23} textAnchor="middle" dominantBaseline="central" fontSize="10" fontWeight="bold" fill="#fde047" fontFamily="monospace">
+                    <text x={0} y={23} textAnchor="middle" dominantBaseline="central" fontSize="10" fontWeight="bold" fill="var(--warning, #b45309)" fontFamily="monospace">
                       ({node.bitRep})₂ · LSB:{node.index & -node.index}
                     </text>
                   )}
@@ -3933,7 +4128,7 @@ function App() {
             return <g key={key} transform={`translate(${node.x}, ${node.y})`}>
               <circle cx={0} cy={0} r={isHL ? NODE_R * 1.12 : NODE_R} fill={fill} stroke={isHL?'rgba(245,158,11,0.85)':'rgba(255,255,255,0.18)'} strokeWidth="1.5" style={{filter:`drop-shadow(0 3px 14px ${glow})`, transition: 'r 0.3s ease'}}/>
               <text x={0} y={1} textAnchor="middle" dominantBaseline="central" fontSize={String(node.value??'').length > 3 ? '12' : String(node.value??'').length > 2 ? '14' : '17'} fontWeight="900" fill="#ffffff" fontFamily="sans-serif" style={{ pointerEvents: 'none', filter: 'drop-shadow(0 2px 4px rgba(0,0,0,0.95))' }}>{String(node.value??'')}</text>
-              {treeType==='AVL'&&<text x={0} y={-NODE_R-7} textAnchor="middle" fontSize="10" fill="#a78bfa" fontFamily="monospace">BF:{getBalance(node)}</text>}
+              {treeType==='AVL'&&<text x={0} y={-NODE_R-7} textAnchor="middle" fontSize="10" fill="var(--accent-secondary, #7c3aed)" fontWeight="700" fontFamily="monospace">BF:{getBalance(node)}</text>}
               {treeType==='RB_TREE'&&node._color&&<circle cx={NODE_R-7} cy={-NODE_R+7} r={5} fill={node._color==='RED'?'#ef4444':'#1f2937'} stroke="white" strokeWidth="1"/>}
               {isRightRot && (
                 <g>
@@ -3955,6 +4150,40 @@ function App() {
   };
 
   // ── Settings Modal ─────────────────────────────────────────────────────
+  const isStandaloneRunning = typeof window !== 'undefined' && (
+    window.matchMedia('(display-mode: standalone)').matches ||
+    window.navigator.standalone === true
+  );
+
+  const handleDirectInstall = async () => {
+    const promptEvent = deferredPrompt || (typeof window !== 'undefined' ? window.deferredPrompt : null);
+    if (promptEvent) {
+      try {
+        promptEvent.prompt();
+        const { outcome } = await promptEvent.userChoice;
+        if (outcome === 'accepted') {
+          setDeferredPrompt(null);
+          if (typeof window !== 'undefined') window.deferredPrompt = null;
+          setIsInstallable(false);
+        }
+      } catch (err) {
+        console.warn('Install error:', err);
+      }
+    } else if (isStandaloneRunning) {
+      alert('✓ AlgoFlow Studio is already installed and running in native standalone mode on your device!');
+    } else {
+      const isIOS = typeof navigator !== 'undefined' && /iPad|iPhone|iPod/.test(navigator.userAgent) && !window.MSStream;
+      const isAndroid = typeof navigator !== 'undefined' && /Android/.test(navigator.userAgent);
+      if (isIOS) {
+        alert('📲 To install AlgoFlow on iOS (iPhone/iPad):\n\n1. Tap the Safari Share icon (⎋ with arrow up)\n2. Scroll down and tap "Add to Home Screen" ➕\n3. Tap "Add" in top-right to install!');
+      } else if (isAndroid) {
+        alert('📲 Direct Install for Android:\n\nIf the prompt did not pop up automatically, tap Chrome’s 3 dots (⋮) in the top-right and select "Install app" or "Add to Home screen".');
+      } else {
+        alert('📲 Direct Install for Desktop (PC / Mac):\n\nClick the Install icon (⊕ or 📥) in your browser’s URL address bar to install AlgoFlow Studio as a desktop app.');
+      }
+    }
+  };
+
   const renderSettingsModal = () => {
     const filteredThemes = Object.entries(THEMES).filter(([_, th]) => th.type === themeMode);
 
@@ -4082,7 +4311,7 @@ function App() {
                 onClick={() => {
                   setThemeMode('light');
                   if (THEMES[currentTheme]?.type !== 'light') {
-                    setCurrentTheme('Arctic Frost');
+                    setCurrentTheme('High Contrast Light');
                   }
                 }}
                 style={{
@@ -4140,7 +4369,7 @@ function App() {
             <label style={{ fontWeight: 700, fontSize: '0.95rem', color: 'var(--text-primary)', display: 'block', marginBottom: '6px' }}>
               📥 Install Application (PWA)
             </label>
-            {(typeof window !== 'undefined' && (window.matchMedia('(display-mode: standalone)').matches || window.navigator.standalone)) ? (
+            {isStandaloneRunning ? (
               <div style={{
                 padding: '0.65rem 0.85rem', borderRadius: '10px',
                 background: 'rgba(16, 185, 129, 0.15)', border: '1px solid rgba(16, 185, 129, 0.3)',
@@ -4152,20 +4381,10 @@ function App() {
             ) : (
               <div>
                 <button 
-                  onClick={async () => {
-                    if (deferredPrompt) {
-                      deferredPrompt.prompt();
-                      const { outcome } = await deferredPrompt.userChoice;
-                      if (outcome === 'accepted') {
-                        setDeferredPrompt(null);
-                        setIsInstallable(false);
-                      }
-                    } else {
-                      alert("To install AlgoFlow Studio as a desktop/mobile app:\n\n1. Look for the Install icon (📥 or ⊕) in your browser's address bar or menu.\n2. Click 'Install' or 'Add to Home Screen'.");
-                    }
-                  }}
+                  type="button"
+                  onClick={handleDirectInstall}
                   style={{
-                    width: '100%', padding: '0.7rem', borderRadius: '10px', 
+                    width: '100%', padding: '0.75rem', borderRadius: '10px', 
                     border: 'none', background: 'linear-gradient(135deg, #10b981, #059669)',
                     color: 'white', cursor: 'pointer', fontWeight: 700, transition: 'all 0.2s', fontSize: '0.9rem',
                     display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '8px',
@@ -4176,43 +4395,45 @@ function App() {
                   <span>Install AlgoFlow Studio App</span>
                 </button>
                 <div style={{ fontSize: '0.75rem', color: 'var(--text-secondary)', marginTop: '6px', textAlign: 'center' }}>
-                  Install for quick desktop access, offline support &amp; native performance
+                  Install directly for fast desktop/phone access, offline support &amp; native performance
                 </div>
               </div>
             )}
           </div>
 
-          {/* Developer Console Link in Settings */}
-          <div style={{ marginTop: '0.8rem', borderTop: '1px solid var(--glass-border)', paddingTop: '0.8rem' }}>
-            <button
-              type="button"
-              onClick={() => {
-                setIsSettingsOpen(false);
-                setIsAdminFeedbackOpen(true);
-              }}
-              style={{
-                width: '100%',
-                padding: '0.65rem',
-                borderRadius: '10px',
-                background: 'rgba(56, 189, 248, 0.08)',
-                border: '1px solid rgba(56, 189, 248, 0.3)',
-                color: 'var(--accent-primary, #38bdf8)',
-                fontSize: '0.85rem',
-                fontWeight: '700',
-                cursor: 'pointer',
-                display: 'flex',
-                alignItems: 'center',
-                justifyContent: 'center',
-                gap: '8px',
-                transition: 'all 0.2s'
-              }}
-              onMouseEnter={e => e.currentTarget.style.background = 'rgba(56, 189, 248, 0.16)'}
-              onMouseLeave={e => e.currentTarget.style.background = 'rgba(56, 189, 248, 0.08)'}
-            >
-              <span>🛠️</span>
-              <span>Open Developer &amp; Deactivations Console</span>
-            </button>
-          </div>
+          {/* Developer Console Link in Settings - Only visible for Admin or with ?admin=true */}
+          {(activeUser?.role === 'admin' || new URLSearchParams(window.location.search).get('dev') === 'true' || new URLSearchParams(window.location.search).get('admin') === 'true') && (
+            <div style={{ marginTop: '0.8rem', borderTop: '1px solid var(--glass-border)', paddingTop: '0.8rem' }}>
+              <button
+                type="button"
+                onClick={() => {
+                  setIsSettingsOpen(false);
+                  setIsAdminFeedbackOpen(true);
+                }}
+                style={{
+                  width: '100%',
+                  padding: '0.65rem',
+                  borderRadius: '10px',
+                  background: 'rgba(56, 189, 248, 0.08)',
+                  border: '1px solid rgba(56, 189, 248, 0.3)',
+                  color: 'var(--accent-primary, #38bdf8)',
+                  fontSize: '0.85rem',
+                  fontWeight: '700',
+                  cursor: 'pointer',
+                  display: 'flex',
+                  alignItems: 'center',
+                  justifyContent: 'center',
+                  gap: '8px',
+                  transition: 'all 0.2s'
+                }}
+                onMouseEnter={e => e.currentTarget.style.background = 'rgba(56, 189, 248, 0.16)'}
+                onMouseLeave={e => e.currentTarget.style.background = 'rgba(56, 189, 248, 0.08)'}
+              >
+                <span>🛠️</span>
+                <span>Open Developer &amp; Deactivations Console</span>
+              </button>
+            </div>
+          )}
 
           <button className="btn btn-start" style={{ marginTop: '0.75rem', padding: '0.75rem' }} onClick={() => setIsSettingsOpen(false)}>Save &amp; Close</button>
         </div>
@@ -4293,14 +4514,18 @@ function App() {
   useEffect(() => {
     const handler = (e) => {
       e.preventDefault();
+      window.deferredPrompt = e;
       setDeferredPrompt(e);
       setIsInstallable(true);
+      window.dispatchEvent(new CustomEvent('algoflow_pwa_installable', { detail: e }));
     };
     window.addEventListener('beforeinstallprompt', handler);
     
     const installedHandler = () => {
+      window.deferredPrompt = null;
       setDeferredPrompt(null);
       setIsInstallable(false);
+      window.dispatchEvent(new CustomEvent('algoflow_pwa_installed'));
     };
     window.addEventListener('appinstalled', installedHandler);
 
@@ -4320,26 +4545,6 @@ function App() {
       {/* Home Screen */}
       <div style={{ display: !appMode ? 'block' : 'none', position: 'relative' }}>
         <div style={{ position: 'absolute', top: '20px', right: '20px', zIndex: 50, display: 'flex', gap: '10px', alignItems: 'center', flexWrap: 'wrap' }}>
-          {isInstallable && (
-            <button 
-              className="btn btn-clear" 
-              onClick={async () => {
-                if (deferredPrompt) {
-                  deferredPrompt.prompt();
-                  const { outcome } = await deferredPrompt.userChoice;
-                  if (outcome === 'accepted') {
-                    setDeferredPrompt(null);
-                    setIsInstallable(false);
-                  }
-                }
-              }}
-              style={{ display: 'flex', alignItems: 'center', gap: '8px', padding: '0.6rem 1.2rem', borderRadius: '12px', background: 'linear-gradient(135deg, #10b981, #059669)', border: 'none', color: '#fff', cursor: 'pointer', transition: 'all 0.25s', fontWeight: 'bold', boxShadow: '0 4px 14px rgba(16, 185, 129, 0.3)' }}
-              onMouseEnter={e => e.currentTarget.style.transform = 'scale(1.05)'}
-              onMouseLeave={e => e.currentTarget.style.transform = 'scale(1)'}
-            >
-              📥 Install App
-            </button>
-          )}
           <UserProfileBadge 
             onOpenConnectModal={() => setIsConnectModalOpen(true)} 
             onOpenSettings={() => setIsSettingsOpen(true)} 
@@ -4356,16 +4561,18 @@ function App() {
               display: 'flex',
               alignItems: 'center',
               justifyContent: 'space-between',
+              flexWrap: 'wrap',
+              gap: '12px',
               backdropFilter: 'blur(8px)',
               boxShadow: '0 8px 32px 0 rgba(139, 92, 246, 0.1)',
               animation: 'fadeIn 0.5s ease'
             }}>
               <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
-                <span style={{ fontSize: '1.3rem' }}>⏳</span>
+                <span style={{ fontSize: '1.3rem' }}>⚡</span>
                 <div>
-                  <h4 style={{ margin: 0, color: 'var(--text-primary)', fontSize: '0.95rem', fontWeight: 700 }}>Unsaved Session Detected</h4>
-                  <p style={{ margin: 0, color: 'var(--text-secondary)', fontSize: '0.8rem' }}>
-                    You were recently working on <strong>{
+                  <h4 style={{ margin: 0, color: 'var(--text-primary)', fontSize: '0.95rem', fontWeight: 700 }}>Pick Up Where You Left Off</h4>
+                  <p style={{ margin: 0, color: 'var(--text-secondary)', fontSize: '0.82rem' }}>
+                    You were recently exploring <strong>{
                       lastActiveMode === 'BEGINNER_101_VIS' ? 'Beginner 101' :
                       lastActiveMode === 'GENERAL_DSA_VIS' ? 'General DSA' :
                       lastActiveMode === 'SORT_SEARCH_VIS' ? 'Sort & Search' :
@@ -4382,13 +4589,13 @@ function App() {
                   </p>
                 </div>
               </div>
-              <div style={{ display: 'flex', gap: '8px' }}>
-                <button className="btn btn-start" style={{ padding: '0.4rem 1rem', fontSize: '0.85rem', margin: 0 }} onClick={() => {
+              <div style={{ display: 'flex', gap: '8px', alignItems: 'center' }}>
+                <button className="btn btn-start" style={{ padding: '0.45rem 1.1rem', fontSize: '0.85rem', margin: 0 }} onClick={() => {
                   setAppMode(lastActiveMode);
                   setSetupComplete(lastSetupComplete);
                   window.location.hash = lastActiveMode;
-                }}>Resume Session</button>
-                <button className="btn btn-clear" style={{ padding: '0.4rem 0.8rem', fontSize: '0.85rem', margin: 0 }} onClick={() => {
+                }}>Continue Learning →</button>
+                <button className="btn btn-clear" style={{ padding: '0.45rem 0.8rem', fontSize: '0.85rem', margin: 0 }} onClick={() => {
                   setLastActiveMode(null);
                   setLastSetupComplete(false);
                 }}>Dismiss</button>
@@ -4472,13 +4679,7 @@ function App() {
                 { id: 'LINE_BY_LINE_VIS', icon: '🐞', title: 'Line-by-Line Debugger', desc: 'PythonTutor-style execution tracing. Step through code, track variables, frames, and output.' },
                 { id: 'CODE_VAL_VIS', icon: '💻', title: 'Code Validator & Runner', desc: 'Write or paste code in 5 languages. Enhanced syntax validation, error detection, and native cloud execution.' }
               ].map(card => (
-                <div key={card.id} className="option-card" onClick={() => {
-                  if (card.id === 'CODE_VAL_VIS') {
-                    setIsUpcomingOpen(true);
-                  } else {
-                    enterMode(card.id);
-                  }
-                }} onMouseEnter={e => gsap.to(e.currentTarget, { scale: 1.05, duration: 0.2 })} onMouseLeave={e => gsap.to(e.currentTarget, { scale: 1, duration: 0.2 })}>
+                <div key={card.id} className="option-card" onClick={() => enterMode(card.id)} onMouseEnter={e => gsap.to(e.currentTarget, { scale: 1.05, duration: 0.2 })} onMouseLeave={e => gsap.to(e.currentTarget, { scale: 1, duration: 0.2 })}>
                   <div className="option-icon">{card.icon}</div>
                   <h3>{card.title}</h3>
                   <p>{card.desc}</p>
@@ -4603,6 +4804,7 @@ function App() {
       {/* Sort Search Visualizer */}
       <div style={{ display: appMode === 'SORT_SEARCH_VIS' ? 'block' : 'none' }}>
         <SortSearchVisualizer 
+          isActive={appMode === 'SORT_SEARCH_VIS'}
           onBack={goBack} 
           openSettings={() => setIsSettingsOpen(true)} 
           initialTab={globalSortSearchTab} 
@@ -4642,6 +4844,7 @@ function App() {
       {/* Graph Visualizer Studio */}
       <div style={{ display: appMode === 'GRAPH_VIS' ? 'block' : 'none' }}>
         <GraphVisualizer 
+          isActive={appMode === 'GRAPH_VIS'}
           onBack={goBack} 
           openSettings={() => setIsSettingsOpen(true)} 
           initialAlgo={globalGraphAlgo} 
@@ -4926,6 +5129,55 @@ function App() {
           </div>
         </div>
       )}
+
+      {/* Custom 404 Page */}
+      {appMode === '404' && (
+        <div className="app-container" style={{ minHeight: '100vh', display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', padding: '2rem', textAlign: 'center', background: 'radial-gradient(circle at center, rgba(96, 165, 250, 0.08) 0%, transparent 70%)' }}>
+          <div style={{ maxWidth: '580px', width: '100%', background: 'var(--glass-bg)', border: '1px solid var(--glass-border)', borderRadius: '24px', padding: '2.5rem 2rem', boxShadow: '0 25px 50px -12px rgba(0, 0, 0, 0.5)', backdropFilter: 'blur(16px)' }}>
+            <div style={{ fontSize: '4.8rem', fontWeight: 900, lineHeight: 1, letterSpacing: '-0.05em', background: 'linear-gradient(135deg, #60a5fa, #f472b6)', WebkitBackgroundClip: 'text', WebkitTextFillColor: 'transparent', marginBottom: '0.8rem' }}>
+              404
+            </div>
+            <h2 style={{ fontSize: '1.6rem', color: 'var(--text-primary)', marginBottom: '0.8rem' }}>Page or Visualizer Not Found</h2>
+            <p style={{ color: 'var(--text-secondary)', fontSize: '0.95rem', lineHeight: '1.6', marginBottom: '1.8rem' }}>
+              The algorithm path or hash you requested does not exist or has been relocated. Choose a visualizer below or return to the main studio.
+            </p>
+            <div style={{ display: 'flex', flexWrap: 'wrap', gap: '8px', justifyContent: 'center', marginBottom: '2rem' }}>
+              {[
+                { id: 'SORT_SEARCH_VIS', label: '📊 Sort & Search' },
+                { id: 'MAIN_VIS', label: '🌳 Trees' },
+                { id: 'GRAPH_VIS', label: '🕸️ Graphs' },
+                { id: 'DP_GREEDY_VIS', label: '🧠 DP & Greedy' },
+                { id: 'CODE_VAL_VIS', label: '💻 Code Runner' },
+                { id: 'BEGINNER_101_VIS', label: '🌱 Beginner 101' },
+                { id: 'DSA_NOTES_VIS', label: '📚 DSA Notes' }
+              ].map(item => (
+                <button
+                  key={item.id}
+                  onClick={() => {
+                    window.location.hash = item.id;
+                    setAppMode(item.id);
+                    setSetupComplete(true);
+                  }}
+                  className="btn btn-clear"
+                  style={{ fontSize: '0.82rem', padding: '6px 14px', borderRadius: '20px', background: 'rgba(255,255,255,0.05)', border: '1px solid var(--glass-border)', cursor: 'pointer' }}
+                >
+                  {item.label}
+                </button>
+              ))}
+            </div>
+            <button 
+              className="btn btn-start" 
+              style={{ width: '100%', padding: '0.75rem 1.5rem', fontSize: '1rem', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '8px', cursor: 'pointer' }}
+              onClick={() => {
+                window.location.hash = '';
+                setAppMode(null);
+              }}
+            >
+              <span>🏠</span> Return to AlgoFlow Home
+            </button>
+          </div>
+        </div>
+      )}
       {/* Code Validator Visualizer */}
       <div style={{ display: appMode === 'CODE_VAL_VIS' && setupComplete ? 'block' : 'none' }}>
         {mountedModes['CODE_VAL_VIS'] && (
@@ -4937,7 +5189,8 @@ function App() {
               <div className="controls-glass">
                 <button 
                   onClick={() => {
-                    setIsUpcomingOpen(true);
+                    setRunnerCode(customCode);
+                    setIsRunnerOpen(true);
                   }}
                   className="btn btn-clear" 
                   style={{ background: 'rgba(16,185,129,0.15)', color: '#059669', display: 'inline-flex', alignItems: 'center', fontWeight: 'bold' }}
@@ -5064,7 +5317,7 @@ function App() {
                           type="number" 
                           className="styled-input" 
                           style={{ width: isMobile ? '80px' : '100px', opacity: isPlaying ? 0.7 : 1 }} 
-                          placeholder="Val…" 
+                          placeholder="Value" 
                           value={inputValue} 
                           onChange={e => setInputValue(e.target.value)} 
                           onKeyDown={e => e.key === 'Enter' && !isPlaying && inputValue.trim() && handleInsert()} 
@@ -5158,7 +5411,7 @@ function App() {
                           type="number" 
                           className="styled-input" 
                           style={{ width: '75px', opacity: isPlaying ? 0.7 : 1 }} 
-                          placeholder="±Delta" 
+                          placeholder="± Value" 
                           value={fenwickUpdateVal} 
                           onChange={e => setFenwickUpdateVal(e.target.value)} 
                           onKeyDown={e => e.key === 'Enter' && !isPlaying && handleFenwickUpdate()} 
@@ -5178,7 +5431,7 @@ function App() {
                   <>
                     {/* Always show main operation inputs */}
                     {treeType !== 'MIN_HEAP' && treeType !== 'MAX_HEAP' && (
-                      <input type={treeType === 'BFS_TREE' || treeType === 'DFS_TREE' ? "text" : "number"} className="styled-input" style={{ width: isMobile ? '80px' : (treeType === 'BFS_TREE' || treeType === 'DFS_TREE' ? '150px' : '115px'), opacity: isPlaying ? 0.7 : 1 }} placeholder={isPlaying ? "Wait..." : "Val…"} value={inputValue} onChange={e => setInputValue(e.target.value)} onKeyDown={e => e.key === 'Enter' && !isPlaying && inputValue.trim() && handleInsert()} />
+                      <input type={treeType === 'BFS_TREE' || treeType === 'DFS_TREE' ? "text" : "number"} className="styled-input" style={{ width: isMobile ? '80px' : (treeType === 'BFS_TREE' || treeType === 'DFS_TREE' ? '150px' : '115px'), opacity: isPlaying ? 0.7 : 1 }} placeholder={isPlaying ? "Wait..." : "Value"} value={inputValue} onChange={e => setInputValue(e.target.value)} onKeyDown={e => e.key === 'Enter' && !isPlaying && inputValue.trim() && handleInsert()} />
                     )}
                     {treeType !== 'MIN_HEAP' && treeType !== 'MAX_HEAP' ? (
                       <button className="btn btn-insert" onClick={handleInsert} disabled={isPlaying || !inputValue.trim()}>
@@ -5186,7 +5439,7 @@ function App() {
                       </button>
                     ) : (
                       <div style={{ display: 'flex', gap: '5px', alignItems: 'center' }}>
-                        <input type="number" className="styled-input" style={{ width: '80px', opacity: isPlaying ? 0.7 : 1 }} placeholder="Val…" value={inputValue} onChange={e => setInputValue(e.target.value)} onKeyDown={e => e.key === 'Enter' && !isPlaying && inputValue.trim() && handleInsert()} />
+                        <input type="number" className="styled-input" style={{ width: '80px', opacity: isPlaying ? 0.7 : 1 }} placeholder="Value" value={inputValue} onChange={e => setInputValue(e.target.value)} onKeyDown={e => e.key === 'Enter' && !isPlaying && inputValue.trim() && handleInsert()} />
                         <button className="btn btn-insert" onClick={handleInsert} disabled={isPlaying || !inputValue.trim()}>Insert</button>
                       </div>
                     )}
@@ -5216,7 +5469,7 @@ function App() {
                 )}
 
                 {/* Secondary settings / Playbacks */}
-                {(!isMobile || showMobileOptions) && (
+                {isMobile && showMobileOptions && (
                   <>
                     <div style={{ display: 'flex', alignItems: 'center', gap: '4px', background: 'var(--glass-bg)', padding: '0.4rem 0.6rem', borderRadius: '10px', border: '1px solid var(--glass-border)' }}>
                       <button className="btn btn-clear" style={{ padding: '0.4rem 0.6rem', border: 'none' }} onClick={() => { setIsPlaying(false); setCurrentStep(0); }} disabled={!timeline.length||currentStep===0}>⏮ First</button>
@@ -5231,6 +5484,11 @@ function App() {
                       <span style={{ fontSize: '0.78rem', color: 'var(--accent-primary)', fontWeight: 600, whiteSpace: 'nowrap' }}>⚡ Speed ({animationSpeed}ms)</span>
                       <input type="range" min={80} max={1200} step={50} value={animationSpeed} onChange={e => setAnimationSpeed(Number(e.target.value))} style={{ width: '85px', accentColor: 'var(--accent-primary)', cursor: 'pointer' }} title={`Speed: ${animationSpeed}ms delay`} />
                     </div>
+                  </>
+                )}
+
+                {(!isMobile || showMobileOptions) && (
+                  <>
 
                     {(treeType === 'B_TREE' || treeType === 'B_PLUS_TREE') && (
                       <>
@@ -5294,7 +5552,7 @@ function App() {
               </div>
             </header>
 
-            <div style={{ height: '3px', background: 'rgba(255,255,255,0.05)' }}>
+            <div style={{ height: '5px', background: 'var(--panel-inner-bg, rgba(0,0,0,0.05))', overflow: 'hidden' }}>
               <div style={{ height: '100%', width: `${progress}%`, background: 'linear-gradient(90deg, var(--accent-primary), var(--accent-secondary))', transition: 'width 0.25s' }} />
             </div>
 
@@ -5317,7 +5575,7 @@ function App() {
                   zIndex: 20 
                 }}>
                   <div><span style={{color: 'var(--accent-primary)', fontWeight: 'bold'}}>Inorder:</span> <span style={{fontFamily: 'monospace', color: 'var(--text-primary)', wordBreak: isMobile ? 'normal' : 'break-all'}}>{travs.inorder || 'None'}</span></div>
-                  <div><span style={{color: '#a78bfa', fontWeight: 'bold'}}>Preorder:</span> <span style={{fontFamily: 'monospace', color: 'var(--text-primary)', wordBreak: isMobile ? 'normal' : 'break-all'}}>{travs.preorder || 'None'}</span></div>
+                  <div><span style={{color: 'var(--accent-secondary, #7c3aed)', fontWeight: 'bold'}}>Preorder:</span> <span style={{fontFamily: 'monospace', color: 'var(--text-primary)', wordBreak: isMobile ? 'normal' : 'break-all'}}>{travs.preorder || 'None'}</span></div>
                   <div><span style={{color: '#f43f5e', fontWeight: 'bold'}}>Postorder:</span> <span style={{fontFamily: 'monospace', color: 'var(--text-primary)', wordBreak: isMobile ? 'normal' : 'break-all'}}>{travs.postorder || 'None'}</span></div>
                 </div>
               );
@@ -5344,7 +5602,7 @@ function App() {
               }
 
               return (
-                <div style={{ background: 'rgba(15,23,42,0.88)', backdropFilter: 'blur(12px)', borderBottom: '1px solid var(--glass-border)', padding: '8px 16px', display: 'flex', flexDirection: isMobile ? 'column' : 'row', alignItems: isMobile ? 'flex-start' : 'center', gap: '16px', fontSize: '0.85rem', flexShrink: 0, overflowX: 'auto', zIndex: 20 }}>
+                <div style={{ background: 'var(--glass-bg)', backdropFilter: 'blur(12px)', borderBottom: '1px solid var(--glass-border)', padding: '8px 16px', display: 'flex', flexDirection: isMobile ? 'column' : 'row', alignItems: isMobile ? 'flex-start' : 'center', gap: '16px', fontSize: '0.85rem', flexShrink: 0, overflowX: 'auto', zIndex: 20 }}>
                   {/* Original Array A */}
                   <div style={{ display: 'flex', alignItems: 'center', gap: '8px', flexShrink: 0 }}>
                     <span style={{ color: 'var(--accent-primary)', fontWeight: 'bold', whiteSpace: 'nowrap' }}>Array A[1..{n}]:</span>
@@ -5418,20 +5676,48 @@ function App() {
               </div>
             )}
 
-            <div style={{ display: 'flex', flexDirection: isMobile ? 'column' : 'row', flex: 1, padding: isMobile ? '0.25rem' : '0.75rem', gap: '0.75rem', overflow: 'hidden' }}>
-              <div style={{ display: (isMobile && mobileTab !== 'vis') ? 'none' : 'flex', flexDirection: 'column', flex: 1, overflow: 'hidden' }}>
+            <div style={{ display: 'flex', flexDirection: isMobile ? 'column' : 'row', flex: 1, padding: isMobile ? '0.25rem' : '0.75rem', gap: '0.75rem', overflow: 'hidden', minHeight: 0 }}>
+              <div style={{ display: (isMobile && mobileTab !== 'vis') ? 'none' : 'flex', flexDirection: 'column', flex: 1, overflow: 'hidden', minHeight: 0 }}>
+                {/* Active Step Status Banner (mobile fallback) */}
+                {isMobile && (() => {
+                  const latestLog = frame?.logs && frame.logs.length > 0 ? frame.logs[frame.logs.length - 1].text : null;
+                  const stepMsg = frame?.rotation ? `⚡ ${frame.rotation}` : (latestLog || (frame?.highlight !== undefined && frame?.highlight !== null ? `Node ${frame.highlight} active` : 'Binary Search Tree Ready. Insert a value to start.'));
+                  return (
+                    <div style={{ display: 'flex', justifyContent: 'center', marginBottom: '0.4rem', flexShrink: 0 }}>
+                      <span style={{
+                        fontSize: '0.92rem',
+                        color: 'var(--text-primary)',
+                        fontWeight: 'bold',
+                        background: 'var(--glass-bg)',
+                        padding: '6px 20px',
+                        borderRadius: '24px',
+                        border: '1px solid var(--glass-border)',
+                        boxShadow: '0 4px 20px rgba(0,0,0,0.12)',
+                        transition: 'all 0.3s ease',
+                        textAlign: 'center',
+                        maxWidth: '90%',
+                        overflow: 'hidden',
+                        textOverflow: 'ellipsis',
+                        whiteSpace: 'nowrap'
+                      }}>
+                        💡 {stepMsg}
+                      </span>
+                    </div>
+                  );
+                })()}
+
                 <div className="tree-container" ref={containerRef} style={{ 
                   flex: 1, 
-                  background: 'rgba(15,23,42,0.5)', 
+                  background: 'var(--canvas-bg, var(--glass-bg))', 
                   borderRadius: '14px', 
                   border: '1px solid var(--glass-border)', 
                   position: 'relative', 
                   overflow: 'auto', 
                   WebkitOverflowScrolling: 'touch',
                   touchAction: 'pan-x pan-y',
-                  minHeight: isMobile ? '340px' : '260px', 
+                  minHeight: 0, 
                   padding: isMobile ? '16px 12px 60px 12px' : '16px 16px 30px 16px',
-                  marginBottom: isMobile ? '0.4rem' : '0.75rem', 
+                  marginBottom: isMobile ? '0.4rem' : '0.5rem', 
                   display: 'flex', 
                   flexDirection: 'column' 
                 }}>
@@ -5452,7 +5738,7 @@ function App() {
                           top: '12px',
                           right: '12px',
                           zIndex: 10,
-                          background: 'rgba(15, 23, 42, 0.85)',
+                          background: 'var(--glass-bg)',
                           backdropFilter: 'blur(12px)',
                           border: '1px solid var(--glass-border)',
                           borderRadius: '12px',
@@ -5497,10 +5783,94 @@ function App() {
                   </div>
                 </div>
 
+                {/* Desktop Dedicated Playback & Step Status Bar */}
+                {!isMobile && (
+                  <div style={{
+                    background: 'var(--glass-bg)',
+                    backdropFilter: 'blur(16px)',
+                    WebkitBackdropFilter: 'blur(16px)',
+                    border: '1px solid var(--glass-border)',
+                    borderRadius: '14px',
+                    padding: '8px 18px',
+                    display: 'flex',
+                    justifyContent: 'space-between',
+                    alignItems: 'center',
+                    gap: '12px',
+                    flexShrink: 0,
+                    marginTop: 'auto',
+                    marginBottom: '0.25rem',
+                    boxShadow: '0 4px 15px rgba(0,0,0,0.06)'
+                  }}>
+                    {/* Playback Controls */}
+                    <div style={{ display: 'flex', alignItems: 'center', gap: '6px' }}>
+                      <button className="btn btn-clear" style={{ padding: '5px 10px', fontWeight: 'bold' }} onClick={() => { setIsPlaying(false); setCurrentStep(0); }} disabled={!timeline.length || currentStep === 0}>⏮ First</button>
+                      <button className="btn btn-clear" style={{ padding: '5px 10px', fontWeight: 'bold' }} onClick={() => { setIsPlaying(false); setCurrentStep(p => Math.max(0, p - 1)); }} disabled={!timeline.length || currentStep === 0}>◀ Prev</button>
+                      <button className="btn btn-clear" style={{ padding: '5px 16px', border: 'none', background: isPlaying ? 'rgba(59,130,246,0.6)' : 'var(--accent-primary)', color: 'white', fontWeight: 'bold', boxShadow: '0 4px 10px rgba(59,130,246,0.4)' }} onClick={() => setIsPlaying(p => !p)} disabled={!timeline.length}>
+                        {isPlaying ? '⏸ Pause' : '▶ Play'}
+                      </button>
+                      <button className="btn btn-clear" style={{ padding: '5px 10px', fontWeight: 'bold' }} onClick={() => { setIsPlaying(false); setCurrentStep(p => Math.min(timeline.length - 1, p + 1)); }} disabled={!timeline.length || currentStep === timeline.length - 1}>Next ▶</button>
+                      <button className="btn btn-clear" style={{ padding: '5px 10px', fontWeight: 'bold' }} onClick={() => { setIsPlaying(false); setCurrentStep(timeline.length - 1); }} disabled={!timeline.length || currentStep === timeline.length - 1}>Last ⏭</button>
+                    </div>
+
+                    {/* Center Step Status Bar */}
+                    {(() => {
+                      const latestLog = frame?.logs && frame.logs.length > 0 ? frame.logs[frame.logs.length - 1].text : null;
+                      const stepMsg = frame?.rotation ? `⚡ ${frame.rotation}` : (latestLog || (frame?.highlight !== undefined && frame?.highlight !== null ? `Node ${frame.highlight} active` : 'Binary Search Tree Ready.'));
+                      return (
+                        <div style={{ flex: 1, display: 'flex', alignItems: 'center', justifyContent: 'center', padding: '0 12px', overflow: 'hidden' }}>
+                          <span style={{
+                            fontSize: '0.86rem',
+                            color: 'var(--text-primary)',
+                            fontWeight: 600,
+                            background: 'var(--panel-inner-bg, rgba(0,0,0,0.04))',
+                            padding: '4px 16px',
+                            borderRadius: '20px',
+                            border: '1px solid var(--glass-border)',
+                            whiteSpace: 'nowrap',
+                            overflow: 'hidden',
+                            textOverflow: 'ellipsis',
+                            maxWidth: '100%',
+                            boxShadow: '0 2px 8px rgba(0,0,0,0.06)'
+                          }} title={stepMsg}>
+                            💡 {stepMsg}
+                          </span>
+                        </div>
+                      );
+                    })()}
+
+                    {/* Scrubber + Counter + Speed */}
+                    <div style={{ display: 'flex', alignItems: 'center', gap: '10px', flexShrink: 0 }}>
+                      <span style={{ fontSize: '0.85rem', color: 'var(--text-secondary)', fontWeight: 'bold', fontFamily: 'monospace', whiteSpace: 'nowrap' }}>Step: {timeline.length ? currentStep + 1 : 0}/{timeline.length}</span>
+                      <input 
+                        type="range"
+                        min={0}
+                        max={Math.max(0, timeline.length - 1)}
+                        value={currentStep}
+                        disabled={timeline.length === 0}
+                        onChange={e => {
+                          setIsPlaying(false);
+                          setCurrentStep(Number(e.target.value));
+                        }}
+                        style={{
+                          width: '110px',
+                          accentColor: 'var(--accent-primary)',
+                          cursor: timeline.length > 0 ? 'pointer' : 'default',
+                          height: '6px'
+                        }}
+                        title={`Step scrubber: Jump to step ${timeline.length ? currentStep + 1 : 0} / ${timeline.length}`}
+                      />
+                      <div style={{ display: 'flex', alignItems: 'center', gap: '6px', marginLeft: '6px' }}>
+                        <span style={{ color: 'var(--text-secondary)', fontWeight: 600, fontSize: '0.82rem', whiteSpace: 'nowrap' }}>Speed ({animationSpeed}ms)</span>
+                        <input type="range" min={80} max={1200} step={50} value={animationSpeed} onChange={e => setAnimationSpeed(Number(e.target.value))} style={{ width: '100px', accentColor: 'var(--accent-primary)', cursor: 'pointer' }} title={`Speed: ${animationSpeed}ms`} />
+                      </div>
+                    </div>
+                  </div>
+                )}
+
                 {/* Mobile Dedicated Playback & Speed Bar */}
                 {isMobile && (
                   <div style={{
-                    background: 'rgba(15, 23, 42, 0.92)',
+                    background: 'var(--glass-bg)',
                     backdropFilter: 'blur(16px)',
                     border: '1px solid var(--glass-border)',
                     borderRadius: '12px',
@@ -5527,6 +5897,26 @@ function App() {
                         Step {timeline.length ? currentStep + 1 : 0} / {timeline.length}
                       </span>
                     </div>
+
+                    {/* Step Scrubber Slider */}
+                    <input 
+                      type="range"
+                      min={0}
+                      max={Math.max(0, timeline.length - 1)}
+                      value={currentStep}
+                      disabled={timeline.length === 0}
+                      onChange={e => {
+                        setIsPlaying(false);
+                        setCurrentStep(Number(e.target.value));
+                      }}
+                      style={{
+                        width: '100%',
+                        accentColor: 'var(--accent-primary)',
+                        cursor: timeline.length > 0 ? 'pointer' : 'default',
+                        height: '6px'
+                      }}
+                      title={`Step scrubber: Jump to step ${timeline.length ? currentStep + 1 : 0} / ${timeline.length}`}
+                    />
 
                     {/* Speed Slider & Fast/Med/Slow Presets */}
                     <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: '8px', borderTop: '1px solid rgba(255,255,255,0.06)', paddingTop: '6px' }}>
@@ -5573,17 +5963,18 @@ function App() {
 
                 {showTreeLogPanel && !isMobile && (
                   <div
+                    className="floating-log-panel"
                     style={{
                       position: 'fixed',
                       left: `${Math.max(0, Math.min(treeLogPosition.x, window.innerWidth - treeLogSize.width))}px`,
                       top: `${Math.max(0, Math.min(treeLogPosition.y, window.innerHeight - treeLogSize.height))}px`,
                       width: `${treeLogSize.width}px`,
                       height: `${treeLogSize.height}px`,
-                      background: 'rgba(15, 23, 42, 0.95)',
+                      background: 'var(--glass-bg)',
                       backdropFilter: 'blur(12px)',
                       border: '1px solid var(--glass-border)',
                       borderRadius: '12px',
-                      boxShadow: '0 15px 30px rgba(0,0,0,0.5)',
+                      boxShadow: 'var(--card-shadow, 0 15px 30px rgba(0,0,0,0.5))',
                       display: 'flex',
                       flexDirection: 'column',
                       zIndex: 99,
@@ -5633,7 +6024,7 @@ function App() {
                       {/* Left Column: Stats & Operations Details */}
                       <div style={{ 
                         width: `${activeStateWidth}px`, 
-                        background: 'rgba(0,0,0,0.25)', 
+                        background: 'var(--panel-inner-bg, rgba(0,0,0,0.04))', 
                         borderRight: '1px solid var(--glass-border)',
                         padding: '10px 12px', 
                         display: 'flex', 
@@ -5644,7 +6035,7 @@ function App() {
                         overflowY: 'auto',
                         flexShrink: 0
                       }}>
-                        <div style={{ fontSize: '0.75rem', color: 'var(--accent-primary)', textTransform: 'uppercase', fontWeight: 'bold', borderBottom: '1px solid rgba(255,255,255,0.06)', paddingBottom: '4px' }}>
+                        <div style={{ fontSize: '0.75rem', color: 'var(--accent-primary)', textTransform: 'uppercase', fontWeight: 'bold', borderBottom: '1px solid var(--glass-border)', paddingBottom: '4px' }}>
                           Active State
                         </div>
                         
@@ -5653,8 +6044,8 @@ function App() {
                           <span style={{ 
                             fontSize: '0.9rem', 
                             fontWeight: 'bold', 
-                            color: frame.highlight !== undefined && frame.highlight !== null ? '#fbbf24' : 'var(--text-primary)',
-                            background: frame.highlight !== undefined && frame.highlight !== null ? 'rgba(251,191,36,0.15)' : 'rgba(255,255,255,0.04)',
+                            color: frame.highlight !== undefined && frame.highlight !== null ? 'var(--warning, #b45309)' : 'var(--text-primary)',
+                            background: frame.highlight !== undefined && frame.highlight !== null ? 'rgba(217,119,6,0.15)' : 'rgba(255,255,255,0.04)',
                             padding: '2px 8px',
                             borderRadius: '4px'
                           }}>
@@ -5687,7 +6078,8 @@ function App() {
                           <div style={{ 
                             flex: 1, 
                             overflowY: 'auto', 
-                            background: 'rgba(0,0,0,0.12)', 
+                            background: 'var(--panel-code-bg, rgba(0,0,0,0.06))', 
+                            border: '1px solid var(--glass-border)',
                             borderRadius: '6px', 
                             padding: '4px 6px',
                             fontSize: '0.75rem',
@@ -5724,15 +6116,15 @@ function App() {
                       {/* Right Column: Scrolling Logs */}
                       <div style={{ 
                         flex: 1, 
-                        background: 'rgba(0,0,0,0.15)', 
+                        background: 'var(--panel-inner-bg, rgba(0,0,0,0.02))', 
                         borderRadius: '10px', 
                         padding: '0.75rem 1rem', 
                         overflowY: 'auto',
-                        border: '1px solid rgba(255,255,255,0.03)',
+                        border: '1px solid var(--glass-border)',
                         display: 'flex',
                         flexDirection: 'column'
                       }}>
-                        <div style={{ fontSize: '0.78rem', color: 'var(--text-secondary)', textTransform: 'uppercase', fontWeight: 'bold', borderBottom: '1px solid rgba(255,255,255,0.05)', paddingBottom: '4px', marginBottom: '8px' }}>
+                        <div style={{ fontSize: '0.78rem', color: 'var(--text-secondary)', textTransform: 'uppercase', fontWeight: 'bold', borderBottom: '1px solid var(--glass-border)', paddingBottom: '4px', marginBottom: '8px' }}>
                           Simulation Steps Log
                         </div>
                         <div style={{ flex: 1, overflowY: 'auto' }}>
@@ -5776,14 +6168,14 @@ function App() {
                     </span>
                   </div>
                   <div style={{ display: 'flex', flex: 1, flexDirection: 'column', overflow: 'hidden', gap: '10px', marginTop: '10px' }}>
-                    <div style={{ background: 'rgba(0,0,0,0.25)', border: '1px solid var(--glass-border)', borderRadius: '8px', padding: '10px 12px', display: 'flex', flexDirection: 'column', gap: '8px', fontSize: '0.8rem', color: 'var(--text-secondary)' }}>
-                      <div style={{ fontSize: '0.75rem', color: 'var(--accent-primary)', textTransform: 'uppercase', fontWeight: 'bold', borderBottom: '1px solid rgba(255,255,255,0.06)', paddingBottom: '4px' }}>
+                    <div style={{ background: 'var(--panel-inner-bg, rgba(0,0,0,0.04))', border: '1px solid var(--glass-border)', borderRadius: '8px', padding: '10px 12px', display: 'flex', flexDirection: 'column', gap: '8px', fontSize: '0.8rem', color: 'var(--text-secondary)' }}>
+                      <div style={{ fontSize: '0.75rem', color: 'var(--accent-primary)', textTransform: 'uppercase', fontWeight: 'bold', borderBottom: '1px solid var(--glass-border)', paddingBottom: '4px' }}>
                         Active State
                       </div>
                       
                       <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
                         <span>Target Value:</span>
-                        <span style={{ fontSize: '0.9rem', fontWeight: 'bold', color: frame.highlight !== undefined && frame.highlight !== null ? '#fbbf24' : 'var(--text-primary)', background: frame.highlight !== undefined && frame.highlight !== null ? 'rgba(251,191,36,0.15)' : 'rgba(255,255,255,0.04)', padding: '2px 8px', borderRadius: '4px' }}>
+                        <span style={{ fontSize: '0.9rem', fontWeight: 'bold', color: frame.highlight !== undefined && frame.highlight !== null ? 'var(--warning, #b45309)' : 'var(--text-primary)', background: frame.highlight !== undefined && frame.highlight !== null ? 'rgba(217,119,6,0.15)' : 'rgba(255,255,255,0.04)', padding: '2px 8px', borderRadius: '4px' }}>
                           {frame.highlight !== undefined && frame.highlight !== null ? String(frame.highlight) : 'None'}
                         </span>
                       </div>
@@ -5802,14 +6194,14 @@ function App() {
                       
                       <div>
                         <div style={{ fontSize: '0.72rem', color: 'var(--text-secondary)', marginBottom: '4px' }}>Timeline Nodes History:</div>
-                        <div style={{ overflowY: 'auto', background: 'rgba(0,0,0,0.12)', borderRadius: '6px', padding: '4px 6px', fontSize: '0.75rem', color: 'var(--text-secondary)', maxHeight: '60px', wordBreak: 'break-all' }}>
+                        <div style={{ overflowY: 'auto', background: 'var(--panel-code-bg, rgba(0,0,0,0.06))', border: '1px solid var(--glass-border)', borderRadius: '6px', padding: '4px 6px', fontSize: '0.75rem', color: 'var(--text-secondary)', maxHeight: '60px', wordBreak: 'break-all' }}>
                           {insertedValues.length > 0 ? insertedValues.join(', ') : 'No nodes inserted yet'}
                         </div>
                       </div>
                     </div>
                     
-                    <div style={{ flex: 1, background: 'rgba(0,0,0,0.15)', borderRadius: '10px', padding: '0.75rem 1rem', overflowY: 'auto', border: '1px solid rgba(255,255,255,0.03)', display: 'flex', flexDirection: 'column' }}>
-                      <div style={{ fontSize: '0.78rem', color: 'var(--text-secondary)', textTransform: 'uppercase', fontWeight: 'bold', borderBottom: '1px solid rgba(255,255,255,0.05)', paddingBottom: '4px', marginBottom: '8px', flexShrink: 0 }}>
+                    <div style={{ flex: 1, background: 'var(--panel-inner-bg, rgba(0,0,0,0.02))', borderRadius: '10px', padding: '0.75rem 1rem', overflowY: 'auto', border: '1px solid var(--glass-border)', display: 'flex', flexDirection: 'column' }}>
+                      <div style={{ fontSize: '0.78rem', color: 'var(--text-secondary)', textTransform: 'uppercase', fontWeight: 'bold', borderBottom: '1px solid var(--glass-border)', paddingBottom: '4px', marginBottom: '8px', flexShrink: 0 }}>
                         Simulation Steps Log
                       </div>
                       <div style={{ flex: 1, overflowY: 'auto' }}>
@@ -5860,8 +6252,8 @@ function App() {
                       </div>
                       
                   {/* Row 1: Language pills */}
-                  <div style={{ display: 'flex', alignItems: 'center', gap: '5px', flexWrap: 'wrap', paddingBottom: '6px', borderBottom: '1px solid rgba(255,255,255,0.05)' }}>
-                    <span style={{ fontSize: '0.78rem', fontWeight: 700, color: 'var(--text-secondary)', whiteSpace: 'nowrap' }}>🌐 Lang:</span>
+                  <div style={{ display: 'flex', alignItems: 'center', gap: '5px', flexWrap: 'wrap', paddingBottom: '6px', borderBottom: '1px solid var(--glass-border)' }}>
+                    <span style={{ fontSize: '0.78rem', fontWeight: 700, color: 'var(--text-primary)', whiteSpace: 'nowrap' }}>🌐 Lang:</span>
                     {['C','Java','Python','JS'].map(lang => (
                       <button key={lang} onClick={() => setCodeLang(lang)}
                         style={{
@@ -5869,10 +6261,10 @@ function App() {
                           fontSize: '0.74rem',
                           borderRadius: '5px',
                           border: codeLang === lang ? '1.5px solid var(--accent-primary)' : '1px solid var(--glass-border)',
-                          background: codeLang === lang ? 'var(--accent-primary)' : 'transparent',
-                          color: codeLang === lang ? '#fff' : 'var(--text-secondary)',
+                          background: codeLang === lang ? 'var(--accent-primary)' : 'var(--panel-inner-bg, rgba(0,0,0,0.04))',
+                          color: codeLang === lang ? '#fff' : 'var(--text-primary)',
                           cursor: 'pointer',
-                          fontWeight: codeLang === lang ? 700 : 400,
+                          fontWeight: codeLang === lang ? 700 : 500,
                           transition: 'all 0.15s'
                         }}
                       >{lang === 'JS' ? 'JavaScript' : lang}</button>
@@ -5944,9 +6336,9 @@ function App() {
                 style={{ width: '100%', padding: '0.8rem', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '8px', fontSize: '0.95rem' }}
                 onClick={() => {
                   copyToClipboard(copyModalData.code).then(() => {
-                    alert("✨ Copied clean code template optimized for online visualizers (like PythonTutor or VisuAlgo)!");
+                    showToast("✨ Copied clean code template optimized for online visualizers!", "success");
                   }).catch(() => {
-                    alert("❌ Failed to copy to clipboard.");
+                    showToast("❌ Failed to copy to clipboard.", "error");
                   });
                   setCopyModalData(prev => ({ ...prev, isOpen: false }));
                 }}
@@ -5977,9 +6369,9 @@ function App() {
                   }
                   
                   copyToClipboard(formattedCode).then(() => {
-                    alert(`Formatted code copied to clipboard for ${targetIDE}!`);
+                    showToast(`Formatted code copied to clipboard for ${targetIDE}!`, "success");
                   }).catch(() => {
-                    alert("❌ Failed to copy to clipboard.");
+                    showToast("❌ Failed to copy to clipboard.", "error");
                   });
                   setCopyModalData(prev => ({ ...prev, isOpen: false }));
                 }}
@@ -6003,9 +6395,9 @@ function App() {
                     vscodeCode = `// VS Code Node.js Compatibility Code\n// Run with: node <filename>.js\n\n` + copyModalData.code;
                   }
                   copyToClipboard(vscodeCode).then(() => {
-                    alert("💻 Formatted code copied to clipboard for VS Code!");
+                    showToast("💻 Formatted code copied to clipboard for VS Code!", "success");
                   }).catch(() => {
-                    alert("❌ Failed to copy to clipboard.");
+                    showToast("❌ Failed to copy to clipboard.", "error");
                   });
                   setCopyModalData(prev => ({ ...prev, isOpen: false }));
                 }}
@@ -6316,7 +6708,7 @@ function App() {
                   <input 
                     type="text" 
                     className="styled-input" 
-                    style={{ width: '100%', textAlign: 'center', letterSpacing: '8px', fontSize: '1.6rem', fontWeight: 'bold', fontFamily: 'monospace', padding: '0.65rem', borderRadius: '10px', background: 'rgba(0,0,0,0.3)', border: '1.5px solid var(--accent-primary)', color: '#fbbf24' }} 
+                    style={{ width: '100%', textAlign: 'center', letterSpacing: '8px', fontSize: '1.6rem', fontWeight: 'bold', fontFamily: 'monospace', padding: '0.65rem', borderRadius: '10px', background: 'var(--panel-inner-bg, rgba(0,0,0,0.3))', border: '1.5px solid var(--accent-primary)', color: 'var(--warning, #b45309)' }} 
                     placeholder="------" 
                     maxLength={6}
                     value={feedbackOtpCode} 
@@ -6368,147 +6760,207 @@ function App() {
       {/* Developer Management & Deactivation Console Modal */}
       {isAdminFeedbackOpen && (
         <div className="modal-overlay" style={{ zIndex: 1001 }}>
-          <div className="modal-content" style={{ maxWidth: '750px', width: '92%', position: 'relative', overflow: 'hidden', padding: '2rem', maxHeight: '88vh', display: 'flex', flexDirection: 'column' }}>
+          <div className="modal-content" style={{ maxWidth: !isAdminAuthenticated ? '420px' : '750px', width: '92%', position: 'relative', overflow: 'hidden', padding: '1.2rem 1.4rem', maxHeight: '88vh', display: 'flex', flexDirection: 'column', transition: 'max-width 0.2s ease' }}>
             <button style={{ position: 'absolute', right: '15px', top: '15px', background: 'transparent', border: 'none', color: 'var(--text-secondary)', fontSize: '1.2rem', cursor: 'pointer' }} onClick={() => setIsAdminFeedbackOpen(false)}>✕</button>
             
             {!isAdminAuthenticated ? (
               <>
-                <div style={{ display: 'flex', alignItems: 'center', gap: '10px', marginBottom: '0.5rem', borderBottom: '1px solid var(--glass-border)', paddingBottom: '0.75rem' }}>
-                  <span style={{ fontSize: '1.8rem' }}>🛠️</span>
-                  <h2 className="title-gradient" style={{ margin: 0, fontSize: '1.7rem', fontWeight: 'bold' }}>Developer Authentication</h2>
+                <div style={{ display: 'flex', alignItems: 'center', gap: '8px', marginBottom: '0.4rem', borderBottom: '1px solid var(--glass-border)', paddingBottom: '0.6rem' }}>
+                  <span style={{ fontSize: '1.4rem' }}>🛠️</span>
+                  <h2 className="title-gradient" style={{ margin: 0, fontSize: '1.3rem', fontWeight: 'bold' }}>Developer Console</h2>
                 </div>
-                <p style={{ color: 'var(--text-secondary)', fontSize: '0.9rem', lineHeight: '1.5', margin: '0 0 1.2rem 0' }}>
-                  Access to the persistent feedback and account deactivation management console is restricted. Please verify your Developer PIN to unlock logs.
+                <p style={{ color: 'var(--text-secondary)', fontSize: '0.82rem', lineHeight: '1.4', margin: '0 0 0.85rem 0' }}>
+                  Enter Developer PIN to continue.
                 </p>
 
-                <div className="select-group" style={{ marginBottom: '1.2rem' }}>
-                  <label style={{ fontSize: '0.95rem', color: 'var(--text-primary)', fontWeight: 600, display: 'block', marginBottom: '6px' }}>Developer Security PIN</label>
+                <div className="select-group" style={{ marginBottom: '0.85rem' }}>
                   <input 
                     type="password" 
                     className="styled-input" 
-                    style={{ width: '100%', padding: '0.65rem 0.85rem', fontSize: '1rem', borderRadius: '8px', border: '1px solid var(--glass-border)', background: 'var(--glass-bg)', color: 'var(--text-primary)', textAlign: 'center', letterSpacing: '4px' }} 
-                    placeholder="••••" 
+                    style={{ width: '100%', padding: '0.65rem 0.8rem', fontSize: '1rem', borderRadius: '8px', border: '1px solid var(--glass-border)', background: 'var(--glass-bg)', color: 'var(--text-primary)', textAlign: 'center', letterSpacing: '4px' }} 
+                    placeholder="Enter PIN" 
                     value={adminPinInput} 
                     onChange={e => setAdminPinInput(e.target.value)} 
                     onKeyDown={e => e.key === 'Enter' && loginAdminConsole()}
+                    autoFocus
                   />
                 </div>
 
                 {adminErrorMessage && (
-                  <p style={{ color: '#ef4444', fontSize: '0.85rem', fontWeight: 'bold', margin: '0 0 12px 0' }}>
+                  <p style={{ color: '#ef4444', fontSize: '0.85rem', fontWeight: 'bold', margin: '0 0 10px 0', textAlign: 'center' }}>
                     ⚠️ {adminErrorMessage}
                   </p>
                 )}
 
                 <button 
                   className="btn btn-start" 
-                  style={{ width: '100%', padding: '0.85rem', borderRadius: '12px', fontSize: '1rem', fontWeight: 'bold', background: 'linear-gradient(135deg, var(--accent-primary), var(--accent-secondary))' }} 
+                  style={{ width: '100%', padding: '0.7rem', borderRadius: '10px', fontSize: '0.92rem', fontWeight: 'bold', background: 'linear-gradient(135deg, var(--accent-primary), var(--accent-secondary))' }} 
                   onClick={loginAdminConsole}
                 >
-                  Unlock Developer Console
+                  Unlock Console
                 </button>
               </>
             ) : (
-              <>
-                <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: '10px', marginBottom: '0.4rem', flexWrap: 'wrap' }}>
-                  <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
-                    <span style={{ fontSize: '1.8rem' }}>🛠️</span>
-                    <h2 className="title-gradient" style={{ margin: 0, fontSize: '1.7rem', fontWeight: 'bold' }}>Developer Management Console</h2>
+              <div style={{ flex: 1, minHeight: 0, display: 'flex', flexDirection: 'column' }}>
+                {/* Fixed Top Header */}
+                <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: '8px', marginBottom: '0.2rem', flexShrink: 0 }}>
+                  <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+                    <span style={{ fontSize: '1.4rem' }}>🛠️</span>
+                    <h2 className="title-gradient" style={{ margin: 0, fontSize: '1.35rem', fontWeight: 'bold' }}>Developer Management Console</h2>
                   </div>
-                  <span style={{ fontSize: '0.75rem', background: 'rgba(34, 197, 94, 0.15)', color: '#4ade80', border: '1px solid rgba(34, 197, 94, 0.3)', padding: '3px 10px', borderRadius: '12px', fontWeight: 'bold' }}>
+                  <span style={{ fontSize: '0.72rem', background: 'rgba(34, 197, 94, 0.15)', color: '#4ade80', border: '1px solid rgba(34, 197, 94, 0.3)', padding: '2px 8px', borderRadius: '10px', fontWeight: 'bold' }}>
                     ● PostgreSQL Connected
                   </span>
                 </div>
                 
-                <p style={{ color: 'var(--text-secondary)', fontSize: '0.84rem', margin: '0 0 0.8rem 0' }}>
+                <p style={{ color: 'var(--text-secondary)', fontSize: '0.78rem', margin: '0 0 0.35rem 0', flexShrink: 0 }}>
                   Monitor user feedbacks, inspect bug reports, and approve/manage 7-day account deactivations.
                 </p>
 
-                {/* Navigation Tabs (Feedbacks vs Deactivations) */}
-                <div style={{ display: 'flex', gap: '8px', borderBottom: '1px solid var(--glass-border)', paddingBottom: '8px', marginBottom: '0.9rem' }}>
-                  <button
-                    onClick={() => setAdminActiveTab('feedbacks')}
-                    style={{
-                      padding: '7px 14px',
-                      borderRadius: '8px',
-                      border: adminActiveTab === 'feedbacks' ? '1px solid var(--accent-primary)' : '1px solid transparent',
-                      background: adminActiveTab === 'feedbacks' ? 'rgba(56, 189, 248, 0.15)' : 'transparent',
-                      color: adminActiveTab === 'feedbacks' ? 'var(--accent-primary)' : 'var(--text-secondary)',
-                      fontSize: '0.88rem',
-                      fontWeight: '700',
-                      cursor: 'pointer',
-                      display: 'flex',
-                      alignItems: 'center',
-                      gap: '6px',
-                      transition: 'all 0.2s'
-                    }}
-                  >
-                    <span>💬 User Feedbacks</span>
-                    <span style={{ fontSize: '0.75rem', background: 'rgba(255,255,255,0.1)', padding: '1px 6px', borderRadius: '10px' }}>
-                      {adminFeedbacksList.length}
-                    </span>
-                  </button>
+                {/* Unified Scroll Container: Starts right below Developer Console text */}
+                <div 
+                  onClick={() => setActiveUserInfoPopup(null)}
+                  style={{ flex: 1, overflowY: 'auto', minHeight: 0, paddingRight: '4px', display: 'flex', flexDirection: 'column' }}
+                >
 
-                  <button
-                    onClick={() => {
-                      setAdminActiveTab('deactivations');
-                      fetchAdminDeactivations(adminPinInput.trim() || 'Irctc@11');
-                    }}
-                    style={{
-                      padding: '7px 14px',
-                      borderRadius: '8px',
-                      border: adminActiveTab === 'deactivations' ? '1px solid #ef4444' : '1px solid transparent',
-                      background: adminActiveTab === 'deactivations' ? 'rgba(239, 68, 68, 0.15)' : 'transparent',
-                      color: adminActiveTab === 'deactivations' ? '#f87171' : 'var(--text-secondary)',
-                      fontSize: '0.88rem',
-                      fontWeight: '700',
-                      cursor: 'pointer',
-                      display: 'flex',
-                      alignItems: 'center',
-                      gap: '6px',
-                      transition: 'all 0.2s'
-                    }}
-                  >
-                    <span>⚠️ Deactivations</span>
-                    {adminDeactivationsStats.pending > 0 ? (
-                      <span style={{ fontSize: '0.72rem', background: '#dc2626', color: '#fff', padding: '1px 7px', borderRadius: '10px', fontWeight: '800', animation: 'pulse 2s infinite' }}>
-                        {adminDeactivationsStats.pending} PENDING
+                  {/* Navigation Tabs (Feedbacks vs Deactivations) - scrolls up right up to Developer Console text */}
+                  <div style={{ display: 'flex', gap: '6px', borderBottom: '1px solid var(--glass-border)', paddingBottom: '4px', marginBottom: '0.4rem', flexShrink: 0 }}>
+                    <button
+                      onClick={() => setAdminActiveTab('feedbacks')}
+                      style={{
+                        padding: '5px 12px',
+                        borderRadius: '6px',
+                        border: adminActiveTab === 'feedbacks' ? '1px solid var(--accent-primary)' : '1px solid transparent',
+                        background: adminActiveTab === 'feedbacks' ? 'rgba(56, 189, 248, 0.15)' : 'transparent',
+                        color: adminActiveTab === 'feedbacks' ? 'var(--accent-primary)' : 'var(--text-secondary)',
+                        fontSize: '0.82rem',
+                        fontWeight: '700',
+                        cursor: 'pointer',
+                        display: 'flex',
+                        alignItems: 'center',
+                        gap: '5px',
+                        transition: 'all 0.2s'
+                      }}
+                    >
+                      <span>💬 User Feedbacks</span>
+                      <span style={{ fontSize: '0.72rem', background: 'rgba(255,255,255,0.1)', padding: '1px 5px', borderRadius: '8px' }}>
+                        {adminFeedbacksList.length}
                       </span>
-                    ) : (
-                      <span style={{ fontSize: '0.75rem', background: 'rgba(255,255,255,0.1)', padding: '1px 6px', borderRadius: '10px' }}>
-                        {adminDeactivationsList.length}
-                      </span>
-                    )}
-                  </button>
-                </div>
+                    </button>
 
-                {/* TAB 1: FEEDBACK LOGS */}
-                {adminActiveTab === 'feedbacks' && (
-                  <>
-                    {/* Filter / Search Bar */}
-                    <div style={{ display: 'flex', gap: '0.5rem', marginBottom: '0.9rem', flexShrink: 0 }}>
-                      <input 
-                        type="text" 
-                        className="styled-input" 
-                        style={{ flex: 1, padding: '0.5rem 0.85rem', fontSize: '0.88rem', borderRadius: '8px' }}
-                        placeholder="Search by email or comment details..."
-                        value={feedbackSearchQuery}
-                        onChange={e => setFeedbackSearchQuery(e.target.value)}
-                      />
-                      {feedbackSearchQuery && (
-                        <button className="btn btn-clear" style={{ padding: '0.5rem 1rem', fontSize: '0.85rem' }} onClick={() => setFeedbackSearchQuery('')}>Clear</button>
+                    <button
+                      onClick={() => {
+                        setAdminActiveTab('deactivations');
+                        fetchAdminDeactivations(adminPinInput.trim() || 'Irctc@11');
+                      }}
+                      style={{
+                        padding: '5px 12px',
+                        borderRadius: '6px',
+                        border: adminActiveTab === 'deactivations' ? '1px solid #ef4444' : '1px solid transparent',
+                        background: adminActiveTab === 'deactivations' ? 'rgba(239, 68, 68, 0.15)' : 'transparent',
+                        color: adminActiveTab === 'deactivations' ? '#f87171' : 'var(--text-secondary)',
+                        fontSize: '0.82rem',
+                        fontWeight: '700',
+                        cursor: 'pointer',
+                        display: 'flex',
+                        alignItems: 'center',
+                        gap: '5px',
+                        transition: 'all 0.2s'
+                      }}
+                    >
+                      <span>⚠️ Deactivations</span>
+                      {adminDeactivationsStats.pending > 0 ? (
+                        <span style={{ fontSize: '0.7rem', background: '#dc2626', color: '#fff', padding: '1px 6px', borderRadius: '8px', fontWeight: '800', animation: 'pulse 2s infinite' }}>
+                          {adminDeactivationsStats.pending} PENDING
+                        </span>
+                      ) : (
+                        <span style={{ fontSize: '0.72rem', background: 'rgba(255,255,255,0.1)', padding: '1px 5px', borderRadius: '8px' }}>
+                          {adminDeactivationsList.length}
+                        </span>
                       )}
-                      <button 
-                        className="btn btn-clear" 
-                        style={{ padding: '0.5rem 1.2rem', fontSize: '0.85rem', borderColor: 'var(--accent-primary)', color: 'var(--accent-primary)', background: 'rgba(59,130,246,0.08)', display: 'flex', alignItems: 'center', gap: '5px' }} 
-                        onClick={() => fetchAdminFeedbacks(adminPinInput.trim() || 'Irctc@11')}
-                      >
-                        🔄 Refresh
-                      </button>
-                    </div>
+                    </button>
 
-                    {/* Scrollable list of feedback logs */}
-                    <div style={{ flex: 1, overflowY: 'auto', display: 'flex', flexDirection: 'column', gap: '0.75rem', paddingRight: '4px', minHeight: '220px' }}>
+                    <button
+                      onClick={() => {
+                        setAdminActiveTab('crack_attempts');
+                        fetchAdminCrackAttempts(adminPinInput.trim() || 'Irctc@11');
+                      }}
+                      style={{
+                        padding: '5px 12px',
+                        borderRadius: '6px',
+                        border: adminActiveTab === 'crack_attempts' ? '1px solid #f59e0b' : '1px solid transparent',
+                        background: adminActiveTab === 'crack_attempts' ? 'rgba(245, 158, 11, 0.18)' : 'transparent',
+                        color: adminActiveTab === 'crack_attempts' ? 'var(--warning, #b45309)' : 'var(--text-secondary)',
+                        fontSize: '0.82rem',
+                        fontWeight: '700',
+                        cursor: 'pointer',
+                        display: 'flex',
+                        alignItems: 'center',
+                        gap: '5px',
+                        transition: 'all 0.2s'
+                      }}
+                    >
+                      <span>🚨 Crack Attempts</span>
+                      {adminCrackAttemptsList.length > 0 ? (
+                        <span style={{ fontSize: '0.7rem', background: '#d97706', color: '#fff', padding: '1px 6px', borderRadius: '8px', fontWeight: '800' }}>
+                          {adminCrackAttemptsList.length}
+                        </span>
+                      ) : (
+                        <span style={{ fontSize: '0.72rem', background: 'rgba(255,255,255,0.1)', padding: '1px 5px', borderRadius: '8px' }}>
+                          0
+                        </span>
+                      )}
+                    </button>
+                  </div>
+
+                  {/* Success notice banner if an action was automatically executed */}
+                  {adminSuccessNotice && (
+                    <div style={{ 
+                      background: 'rgba(34, 197, 94, 0.15)', 
+                      border: '1px solid rgba(34, 197, 94, 0.35)', 
+                      color: '#4ade80', 
+                      padding: '6px 10px', 
+                      borderRadius: '6px', 
+                      fontSize: '0.82rem', 
+                      fontWeight: '600',
+                      marginBottom: '0.4rem', 
+                      display: 'flex', 
+                      justifyContent: 'space-between', 
+                      alignItems: 'center',
+                      flexShrink: 0
+                    }}>
+                      <span>✓ {adminSuccessNotice}</span>
+                      <button onClick={() => setAdminSuccessNotice('')} style={{ background: 'none', border: 'none', color: '#4ade80', cursor: 'pointer', fontSize: '0.9rem' }}>✕</button>
+                    </div>
+                  )}
+
+                  {/* TAB 1: FEEDBACK LOGS */}
+                  {adminActiveTab === 'feedbacks' && (
+                    <div style={{ display: 'flex', flexDirection: 'column', flex: 1 }}>
+                      {/* Filter / Search Bar */}
+                      <div style={{ display: 'flex', gap: '4px', marginBottom: '0.45rem', flexShrink: 0 }}>
+                        <input 
+                          type="text" 
+                          className="styled-input" 
+                          style={{ flex: 1, padding: '0.42rem 0.75rem', fontSize: '0.84rem', borderRadius: '6px' }}
+                          placeholder="Search by email or comment details..."
+                          value={feedbackSearchQuery}
+                          onChange={e => setFeedbackSearchQuery(e.target.value)}
+                        />
+                        {feedbackSearchQuery && (
+                          <button className="btn btn-clear" style={{ padding: '0.42rem 0.75rem', fontSize: '0.8rem' }} onClick={() => setFeedbackSearchQuery('')}>Clear</button>
+                        )}
+                        <button 
+                          className="btn btn-clear" 
+                          style={{ padding: '0.42rem 0.9rem', fontSize: '0.8rem', borderColor: 'var(--accent-primary)', color: 'var(--accent-primary)', background: 'rgba(59,130,246,0.08)', display: 'flex', alignItems: 'center', gap: '4px' }} 
+                          onClick={() => fetchAdminFeedbacks(adminPinInput.trim() || 'Irctc@11')}
+                        >
+                          🔄 Refresh
+                        </button>
+                      </div>
+
+                      {/* List of feedback logs */}
+                      <div style={{ display: 'flex', flexDirection: 'column', gap: '0.6rem', paddingBottom: '0.5rem' }}>
                       {(() => {
                         const filtered = adminFeedbacksList.filter(log => 
                           !feedbackSearchQuery.trim() || 
@@ -6557,19 +7009,944 @@ function App() {
                         ));
                       })()}
                     </div>
+                  </div>
+                )}
 
-                    {/* Bottom Admin Control actions */}
-                    <div style={{ display: 'flex', gap: '0.75rem', marginTop: '1.2rem', paddingTop: '1rem', borderTop: '1px solid var(--glass-border)', flexShrink: 0 }}>
+                {/* TAB 2: DEACTIVATION REQUESTS */}
+                {adminActiveTab === 'deactivations' && (
+                  <div style={{ display: 'flex', flexDirection: 'column', flex: 1 }}>
+                    {/* Metrics Summary Row - Compact */}
+                    <div style={{ display: 'grid', gridTemplateColumns: 'repeat(4, 1fr)', gap: '6px', marginBottom: '0.35rem', flexShrink: 0 }}>
+                      <div style={{ background: 'var(--glass-bg)', border: '1px solid var(--glass-border)', padding: '5px 8px', borderRadius: '6px', textAlign: 'center' }}>
+                        <div style={{ fontSize: '0.68rem', color: 'var(--text-secondary)' }}>Total Requests</div>
+                        <div style={{ fontSize: '1rem', fontWeight: '800', color: 'var(--text-primary)' }}>{adminDeactivationsStats.total}</div>
+                      </div>
+                      <div style={{ background: 'rgba(239, 68, 68, 0.1)', border: '1px solid rgba(239, 68, 68, 0.3)', padding: '5px 8px', borderRadius: '6px', textAlign: 'center' }}>
+                        <div style={{ fontSize: '0.68rem', color: '#f87171' }}>⏳ Pending</div>
+                        <div style={{ fontSize: '1rem', fontWeight: '800', color: '#ef4444' }}>{adminDeactivationsStats.pending}</div>
+                      </div>
+                      <div style={{ background: 'rgba(34, 197, 94, 0.1)', border: '1px solid rgba(34, 197, 94, 0.3)', padding: '5px 8px', borderRadius: '6px', textAlign: 'center' }}>
+                        <div style={{ fontSize: '0.68rem', color: '#4ade80' }}>⚡ Approved</div>
+                        <div style={{ fontSize: '1rem', fontWeight: '800', color: '#22c55e' }}>{adminDeactivationsStats.approved}</div>
+                      </div>
+                      <div style={{ background: 'rgba(168, 85, 247, 0.1)', border: '1px solid rgba(168, 85, 247, 0.3)', padding: '5px 8px', borderRadius: '6px', textAlign: 'center' }}>
+                        <div style={{ fontSize: '0.68rem', color: '#c084fc' }}>🕒 Auto-Deleted</div>
+                        <div style={{ fontSize: '1rem', fontWeight: '800', color: '#a855f7' }}>{adminDeactivationsStats.autoDeleted}</div>
+                      </div>
+                    </div>
+
+                    {/* STICKY HEADER UNIT: Sub-Tabs Directly Above Search (Minimized gap, clearly visible above search) */}
+                    <div style={{ 
+                      position: 'sticky', 
+                      top: 0, 
+                      zIndex: 10, 
+                      background: 'var(--bg-primary, #0f172a)', 
+                      paddingTop: '2px', 
+                      paddingBottom: '4px',
+                      display: 'flex',
+                      flexDirection: 'column',
+                      gap: '4px',
+                      marginBottom: '0.35rem',
+                      flexShrink: 0 
+                    }}>
+                      {/* Sub-Tabs: Requests vs Registered Users (Clearly Visible Above Search) */}
+                      <div style={{ display: 'flex', gap: '4px', background: 'rgba(255,255,255,0.03)', padding: '3px', borderRadius: '6px', border: '1px solid var(--glass-border)' }}>
+                        <button
+                          onClick={() => setDeactivationsSubTab('requests')}
+                          style={{
+                            flex: 1,
+                            padding: '5px 8px',
+                            borderRadius: '5px',
+                            border: deactivationsSubTab === 'requests' ? '1px solid #ef4444' : 'none',
+                            background: deactivationsSubTab === 'requests' ? 'rgba(239, 68, 68, 0.2)' : 'transparent',
+                            color: deactivationsSubTab === 'requests' ? '#f87171' : 'var(--text-secondary)',
+                            fontSize: '0.8rem',
+                            fontWeight: '700',
+                            cursor: 'pointer',
+                            display: 'flex',
+                            alignItems: 'center',
+                            justifyContent: 'center',
+                            gap: '5px'
+                          }}
+                        >
+                          <span>📋 Deactivation Requests</span>
+                          <span style={{ fontSize: '0.7rem', background: 'rgba(255,255,255,0.1)', padding: '1px 5px', borderRadius: '8px' }}>
+                            {adminDeactivationsList.length}
+                          </span>
+                        </button>
+
+                        <button
+                          onClick={() => setDeactivationsSubTab('users')}
+                          style={{
+                            flex: 1,
+                            padding: '5px 8px',
+                            borderRadius: '5px',
+                            border: deactivationsSubTab === 'users' ? '1px solid var(--accent-primary)' : 'none',
+                            background: deactivationsSubTab === 'users' ? 'rgba(56, 189, 248, 0.2)' : 'transparent',
+                            color: deactivationsSubTab === 'users' ? 'var(--accent-primary)' : 'var(--text-secondary)',
+                            fontSize: '0.8rem',
+                            fontWeight: '700',
+                            cursor: 'pointer',
+                            display: 'flex',
+                            alignItems: 'center',
+                            justifyContent: 'center',
+                            gap: '5px'
+                          }}
+                        >
+                          <span>👥 Registered DB Users</span>
+                          <span style={{ fontSize: '0.7rem', background: 'rgba(255,255,255,0.1)', padding: '1px 5px', borderRadius: '8px' }}>
+                            {adminUsersList.length}
+                          </span>
+                        </button>
+                      </div>
+
+                      {/* Filter & Refresh - Search Bar directly below sub-tabs */}
+                      <div style={{ display: 'flex', gap: '4px' }}>
+                        <input 
+                          type="text" 
+                          className="styled-input" 
+                          style={{ flex: 1, padding: '0.42rem 0.75rem', fontSize: '0.84rem', borderRadius: '6px' }}
+                          placeholder={deactivationsSubTab === 'requests' ? "Search deactivations by email, name, or reason..." : "Search registered users by email or name..."}
+                          value={deactivationSearchQuery}
+                          onChange={e => setDeactivationSearchQuery(e.target.value)}
+                        />
+                        {deactivationSearchQuery && (
+                          <button className="btn btn-clear" style={{ padding: '0.42rem 0.75rem', fontSize: '0.8rem' }} onClick={() => setDeactivationSearchQuery('')}>Clear</button>
+                        )}
+                        <button 
+                          className="btn btn-clear" 
+                          style={{ padding: '0.42rem 0.9rem', fontSize: '0.8rem', borderColor: '#ef4444', color: '#ef4444', background: 'rgba(239,68,68,0.08)', display: 'flex', alignItems: 'center', gap: '4px' }} 
+                          onClick={() => fetchAdminDeactivations(adminPinInput.trim() || 'Irctc@11')}
+                        >
+                          🔄 Refresh
+                        </button>
+                      </div>
+                    </div>
+
+                      {/* SUB-VIEW 1: DEACTIVATION REQUESTS */}
+                      {deactivationsSubTab === 'requests' && (
+                        <div style={{ display: 'flex', flexDirection: 'column', gap: '0.75rem', paddingBottom: '0.5rem' }}>
+                        {(() => {
+                          const filtered = adminDeactivationsList.filter(item => 
+                            !deactivationSearchQuery.trim() || 
+                            (item.email || '').toLowerCase().includes(deactivationSearchQuery.toLowerCase()) ||
+                            (item.name || '').toLowerCase().includes(deactivationSearchQuery.toLowerCase()) ||
+                            (item.reason || '').toLowerCase().includes(deactivationSearchQuery.toLowerCase())
+                          );
+
+                          if (filtered.length === 0) {
+                            return (
+                              <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', height: '100%', minHeight: '200px', color: 'var(--text-secondary)', gap: '10px' }}>
+                                <span style={{ fontSize: '2.5rem' }}>🛡️</span>
+                                <p style={{ fontSize: '0.9rem', fontStyle: 'italic' }}>
+                                  {adminDeactivationsList.length === 0 ? 'No account deactivation requests recorded yet.' : 'No deactivations match your search query.'}
+                                </p>
+                              </div>
+                            );
+                          }
+
+                          return filtered.map((item, idx) => {
+                            const isPending = item.status === 'pending_deletion';
+                            const scheduledTime = item.scheduled_deletion_at ? new Date(item.scheduled_deletion_at).getTime() : 0;
+                            const diffMs = scheduledTime - Date.now();
+                            const daysLeft = Math.max(0, Math.floor(diffMs / (1000 * 60 * 60 * 24)));
+                            const hoursLeft = Math.max(0, Math.floor((diffMs % (1000 * 60 * 60 * 24)) / (1000 * 60 * 60)));
+                            const countdownStr = diffMs > 0 
+                              ? `Auto-deletes in ${daysLeft}d ${hoursLeft}h if not approved` 
+                              : `7-day window elapsed (auto-deletes on next refresh)`;
+
+                            const matchingUser = adminUsersList.find(u => (u.email || '').toLowerCase() === (item.email || '').toLowerCase());
+                            const reqKey = `req-${item.id || item.email || idx}`;
+                            const isReqInfoOpen = activeUserInfoPopup === reqKey;
+                            const reqLastLogin = matchingUser?.last_login;
+                            const reqLastLoginTime = reqLastLogin ? new Date(reqLastLogin).getTime() : 0;
+                            const isReqOffline = !reqLastLoginTime || (Date.now() - reqLastLoginTime) > (14 * 24 * 60 * 60 * 1000);
+
+                            return (
+                              <div 
+                                key={item.id || idx} 
+                                style={{ 
+                                  background: isPending ? 'rgba(239, 68, 68, 0.04)' : 'var(--glass-bg)', 
+                                  border: isPending ? '1.5px solid rgba(239, 68, 68, 0.35)' : '1px solid var(--glass-border)', 
+                                  borderRadius: '10px', 
+                                  padding: '1rem', 
+                                  display: 'flex', 
+                                  flexDirection: 'column', 
+                                  gap: '0.6rem' 
+                                }}
+                              >
+                                <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', flexWrap: 'wrap', gap: '6px' }}>
+                                  <div>
+                                    <div style={{ display: 'flex', alignItems: 'center', gap: '6px', position: 'relative' }}>
+                                      <span style={{ fontSize: '0.92rem', color: 'var(--text-primary)', fontWeight: 'bold' }}>
+                                        {item.name || 'Anonymous User'}
+                                      </span>
+
+                                      <button
+                                        type="button"
+                                        onClick={(e) => {
+                                          e.stopPropagation();
+                                          setActiveUserInfoPopup(isReqInfoOpen ? null : reqKey);
+                                        }}
+                                        title="Click to view Account Timeline: Account Opened, Last Login, Deactivation Option"
+                                        style={{
+                                          width: '18px',
+                                          height: '18px',
+                                          borderRadius: '50%',
+                                          border: isReqInfoOpen ? '1.5px solid #38bdf8' : '1px solid rgba(56, 189, 248, 0.45)',
+                                          background: isReqInfoOpen ? 'rgba(56, 189, 248, 0.35)' : 'rgba(56, 189, 248, 0.12)',
+                                          color: '#38bdf8',
+                                          fontSize: '0.72rem',
+                                          fontWeight: '800',
+                                          cursor: 'pointer',
+                                          display: 'inline-flex',
+                                          alignItems: 'center',
+                                          justifyContent: 'center',
+                                          padding: 0,
+                                          lineHeight: 1,
+                                          boxShadow: isReqInfoOpen ? '0 0 8px rgba(56, 189, 248, 0.6)' : 'none',
+                                          transition: 'all 0.15s ease',
+                                          outline: 'none'
+                                        }}
+                                      >
+                                        ⓘ
+                                      </button>
+
+                                      {/* 3 DETAILS POPUP */}
+                                      {isReqInfoOpen && (
+                                        <div
+                                          onClick={(e) => e.stopPropagation()}
+                                          style={{
+                                            position: 'absolute',
+                                            top: '24px',
+                                            left: '0',
+                                            zIndex: 50,
+                                            width: '320px',
+                                            maxWidth: '92vw',
+                                            background: '#090f1f',
+                                            border: '1px solid rgba(56, 189, 248, 0.45)',
+                                            borderRadius: '8px',
+                                            padding: '10px 12px',
+                                            boxShadow: '0 12px 30px rgba(0, 0, 0, 0.85), 0 0 14px rgba(56, 189, 248, 0.25)',
+                                            display: 'flex',
+                                            flexDirection: 'column',
+                                            gap: '8px',
+                                            fontSize: '0.78rem',
+                                            lineHeight: 1.45,
+                                            textAlign: 'left'
+                                          }}
+                                        >
+                                          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', borderBottom: '1px solid rgba(255,255,255,0.1)', paddingBottom: '4px' }}>
+                                            <span style={{ fontWeight: '700', color: '#38bdf8', fontSize: '0.8rem', display: 'flex', alignItems: 'center', gap: '4px' }}>
+                                              ℹ️ User Account Details
+                                            </span>
+                                            <button 
+                                              type="button"
+                                              onClick={() => setActiveUserInfoPopup(null)}
+                                              style={{ background: 'none', border: 'none', color: '#94a3b8', cursor: 'pointer', fontSize: '0.85rem', padding: '0 4px', lineHeight: 1 }}
+                                            >
+                                              ✕
+                                            </button>
+                                          </div>
+
+                                          {/* Detail 1: Account Opened */}
+                                          <div>
+                                            <div style={{ color: 'var(--text-secondary)', fontSize: '0.7rem', fontWeight: '700', textTransform: 'uppercase', letterSpacing: '0.5px' }}>
+                                              📅 1. Account Opened
+                                            </div>
+                                            <div style={{ color: 'var(--text-primary)', fontWeight: '600', marginTop: '1px' }}>
+                                              {matchingUser?.created_at ? new Date(matchingUser.created_at).toLocaleString() : 'Registered User'}
+                                            </div>
+                                            {matchingUser?.created_at && (
+                                              <div style={{ color: 'var(--accent-primary)', fontSize: '0.72rem' }}>
+                                                Account age: {formatRelativeTime(matchingUser.created_at)}
+                                              </div>
+                                            )}
+                                          </div>
+
+                                          {/* Detail 2: Last Login */}
+                                          <div>
+                                            <div style={{ color: 'var(--text-secondary)', fontSize: '0.7rem', fontWeight: '700', textTransform: 'uppercase', letterSpacing: '0.5px' }}>
+                                              🕒 2. Last Login
+                                            </div>
+                                            <div style={{ color: isReqOffline ? '#94a3b8' : '#4ade80', fontWeight: '600', marginTop: '1px' }}>
+                                              {reqLastLogin ? new Date(reqLastLogin).toLocaleString() : 'Never logged in'}
+                                            </div>
+                                            {reqLastLogin ? (
+                                              <div style={{ fontSize: '0.72rem', color: isReqOffline ? '#94a3b8' : '#22c55e', marginTop: '1px' }}>
+                                                <span>{formatRelativeTime(reqLastLogin)}</span>
+                                                <span style={{ marginLeft: '4px', fontWeight: 'bold' }}>
+                                                  ({isReqOffline ? 'Offline · >2 weeks ago' : 'Active · <2 weeks ago'})
+                                                </span>
+                                              </div>
+                                            ) : (
+                                              <div style={{ fontSize: '0.72rem', color: '#94a3b8' }}>Offline (No recorded sessions)</div>
+                                            )}
+                                          </div>
+
+                                          {/* Detail 3: When this option choosed */}
+                                          <div>
+                                            <div style={{ color: 'var(--text-secondary)', fontSize: '0.7rem', fontWeight: '700', textTransform: 'uppercase', letterSpacing: '0.5px' }}>
+                                              ⚠️ 3. Deactivation Option Chosen
+                                            </div>
+                                            <div style={{ color: '#f87171', fontWeight: '600', marginTop: '1px' }}>
+                                              {new Date(item.requested_at).toLocaleString()}
+                                            </div>
+                                            <div style={{ fontSize: '0.72rem', color: 'var(--text-secondary)' }}>
+                                              Chosen: {formatRelativeTime(item.requested_at)}
+                                            </div>
+                                            {item.scheduled_deletion_at && (
+                                              <div style={{ fontSize: '0.72rem', color: '#f59e0b', marginTop: '2px', fontWeight: '600' }}>
+                                                Auto-wipe date: {new Date(item.scheduled_deletion_at).toLocaleString()}
+                                              </div>
+                                            )}
+                                          </div>
+                                        </div>
+                                      )}
+                                    </div>
+                                    <div style={{ fontSize: '0.82rem', color: 'var(--accent-primary)', fontFamily: 'monospace', marginTop: '2px' }}>
+                                      ✉ {item.email}
+                                    </div>
+                                  </div>
+                                  <span style={{ fontSize: '0.74rem', color: 'var(--text-secondary)' }}>
+                                    Requested: {new Date(item.requested_at).toLocaleString()}{' '}
+                                    <span style={{ color: 'var(--accent-primary)', fontWeight: '600' }}>
+                                      ({formatRelativeTime(item.requested_at)})
+                                    </span>
+                                  </span>
+                                </div>
+
+                                <div style={{ fontSize: '0.82rem', color: 'var(--text-secondary)', background: 'var(--glass-bg)', padding: '6px 10px', borderRadius: '6px' }}>
+                                  <strong>Reason:</strong> {item.reason || 'None specified'}
+                                </div>
+
+                                {/* Status Badge & Countdown */}
+                                <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', flexWrap: 'wrap', gap: '8px' }}>
+                                  <div>
+                                    {item.status === 'pending_deletion' && (
+                                      <span style={{ display: 'inline-flex', alignItems: 'center', gap: '5px', fontSize: '0.78rem', background: 'rgba(239,68,68,0.15)', color: '#ef4444', border: '1px solid rgba(239,68,68,0.4)', padding: '3px 9px', borderRadius: '12px', fontWeight: 'bold' }}>
+                                        ⏳ Pending Admin Approval
+                                      </span>
+                                    )}
+                                    {(item.status === 'approved_by_admin' || item.status === 'deactivated') && (
+                                      <span style={{ display: 'inline-flex', alignItems: 'center', gap: '5px', fontSize: '0.78rem', background: 'rgba(34,197,94,0.15)', color: '#4ade80', border: '1px solid rgba(34,197,94,0.4)', padding: '3px 9px', borderRadius: '12px', fontWeight: 'bold' }}>
+                                        ⚡ Approved &amp; Deleted by Admin
+                                      </span>
+                                    )}
+                                    {item.status === 'auto_deleted_7_days' && (
+                                      <span style={{ display: 'inline-flex', alignItems: 'center', gap: '5px', fontSize: '0.78rem', background: 'rgba(168,85,247,0.15)', color: '#c084fc', border: '1px solid rgba(168,85,247,0.4)', padding: '3px 9px', borderRadius: '12px', fontWeight: 'bold' }}>
+                                        🕒 Auto-Deleted (7 Days Elapsed)
+                                      </span>
+                                    )}
+                                    {(item.status === 'cancelled' || item.status === 'cancelled_by_user') && (
+                                      <span style={{ display: 'inline-flex', alignItems: 'center', gap: '5px', fontSize: '0.78rem', background: 'rgba(56,189,248,0.15)', color: '#38bdf8', border: '1px solid rgba(56,189,248,0.4)', padding: '3px 9px', borderRadius: '12px', fontWeight: 'bold' }}>
+                                        🔄 Cancelled by User (Signed in)
+                                      </span>
+                                    )}
+                                    {item.status === 'rejected_by_admin' && (
+                                      <span style={{ display: 'inline-flex', alignItems: 'center', gap: '5px', fontSize: '0.78rem', background: 'rgba(148,163,184,0.15)', color: '#94a3b8', border: '1px solid rgba(148,163,184,0.4)', padding: '3px 9px', borderRadius: '12px', fontWeight: 'bold' }}>
+                                        ✕ Rejected by Admin (Restored)
+                                      </span>
+                                    )}
+                                  </div>
+
+                                  {isPending && (
+                                    <span style={{ fontSize: '0.75rem', color: '#f59e0b', fontWeight: '600' }}>
+                                      📅 {countdownStr}
+                                    </span>
+                                  )}
+                                </div>
+
+                                {/* Action Buttons for this request */}
+                                <div style={{ display: 'flex', gap: '8px', marginTop: '4px', paddingTop: '8px', borderTop: '1px dashed rgba(255,255,255,0.1)', flexWrap: 'wrap' }}>
+                                  {isPending ? (
+                                    <>
+                                      <button
+                                        onClick={() => handleAdminDeactivationAction(item.id, item.email, 'approve')}
+                                        disabled={deactivationActionLoading === item.id}
+                                        style={{
+                                          flex: 1.5,
+                                          padding: '7px 12px',
+                                          borderRadius: '8px',
+                                          background: 'linear-gradient(135deg, #dc2626, #b91c1c)',
+                                          border: 'none',
+                                          color: '#ffffff',
+                                          fontSize: '0.82rem',
+                                          fontWeight: '700',
+                                          cursor: deactivationActionLoading === item.id ? 'not-allowed' : 'pointer',
+                                          display: 'flex',
+                                          alignItems: 'center',
+                                          justifyContent: 'center',
+                                          gap: '6px',
+                                          boxShadow: '0 2px 8px rgba(220, 38, 38, 0.3)'
+                                        }}
+                                      >
+                                        <span>⚡</span>
+                                        <span>{deactivationActionLoading === item.id ? 'Processing...' : 'Approve & Delete Now'}</span>
+                                      </button>
+
+                                      <button
+                                        onClick={() => handleAdminDeactivationAction(item.id, item.email, 'reject')}
+                                        disabled={deactivationActionLoading === item.id}
+                                        style={{
+                                          flex: 1,
+                                          padding: '7px 12px',
+                                          borderRadius: '8px',
+                                          background: 'var(--glass-bg)',
+                                          border: '1px solid var(--glass-border)',
+                                          color: 'var(--text-secondary)',
+                                          fontSize: '0.82rem',
+                                          fontWeight: '600',
+                                          cursor: deactivationActionLoading === item.id ? 'not-allowed' : 'pointer',
+                                          display: 'flex',
+                                          alignItems: 'center',
+                                          justifyContent: 'center',
+                                          gap: '5px'
+                                        }}
+                                      >
+                                        <span>✕</span>
+                                        <span>Reject</span>
+                                      </button>
+                                    </>
+                                  ) : (
+                                    <>
+                                      <button
+                                        onClick={() => handleAdminDeactivationAction(item.id, item.email, 'mark_pending')}
+                                        disabled={deactivationActionLoading === item.id}
+                                        style={{
+                                          flex: 1,
+                                          padding: '6px 10px',
+                                          borderRadius: '8px',
+                                          background: 'rgba(56, 189, 248, 0.12)',
+                                          border: '1px solid rgba(56, 189, 248, 0.3)',
+                                          color: '#38bdf8',
+                                          fontSize: '0.78rem',
+                                          fontWeight: '600',
+                                          cursor: deactivationActionLoading === item.id ? 'not-allowed' : 'pointer'
+                                        }}
+                                      >
+                                        🔄 Reset to Pending
+                                      </button>
+                                    </>
+                                  )}
+
+                                  <button
+                                    onClick={() => handleAdminDeactivationAction(item.id, item.email, 'delete_log')}
+                                    disabled={deactivationActionLoading === item.id}
+                                    style={{
+                                      padding: '6px 10px',
+                                      borderRadius: '8px',
+                                      background: 'rgba(239, 68, 68, 0.08)',
+                                      border: '1px solid rgba(239, 68, 68, 0.25)',
+                                      color: '#f87171',
+                                      fontSize: '0.78rem',
+                                      fontWeight: '600',
+                                      cursor: deactivationActionLoading === item.id ? 'not-allowed' : 'pointer'
+                                    }}
+                                    title="Remove this log entry from history"
+                                  >
+                                    🗑️ Delete Log
+                                  </button>
+                                </div>
+                              </div>
+                            );
+                          });
+                        })()}
+                      </div>
+                    )}
+
+                    {/* SUB-VIEW 2: REGISTERED USERS DIRECT MANAGEMENT */}
+                    {deactivationsSubTab === 'users' && (
+                      <div style={{ display: 'flex', flexDirection: 'column', gap: '0.75rem', paddingBottom: '0.5rem' }}>
+                        {(() => {
+                          const filteredUsers = adminUsersList.filter(u =>
+                            !deactivationSearchQuery.trim() ||
+                            (u.email || '').toLowerCase().includes(deactivationSearchQuery.toLowerCase()) ||
+                            (u.name || '').toLowerCase().includes(deactivationSearchQuery.toLowerCase())
+                          );
+
+                          if (filteredUsers.length === 0) {
+                            return (
+                              <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', height: '100%', minHeight: '200px', color: 'var(--text-secondary)', gap: '10px' }}>
+                                <span style={{ fontSize: '2.5rem' }}>👥</span>
+                                <p style={{ fontSize: '0.9rem', fontStyle: 'italic' }}>
+                                  {adminUsersList.length === 0 ? 'No registered users found in PostgreSQL database.' : 'No users match your search query.'}
+                                </p>
+                              </div>
+                            );
+                          }
+
+                          return filteredUsers.map((u, idx) => {
+                            const isUserPending = u.status === 'pending_deletion';
+                            const TWO_WEEKS_MS = 14 * 24 * 60 * 60 * 1000;
+                            const lastLoginTime = u.last_login ? new Date(u.last_login).getTime() : 0;
+                            const isOffline = !lastLoginTime || (Date.now() - lastLoginTime) > TWO_WEEKS_MS;
+                            const userKey = u.email || `user-${u.id || idx}`;
+                            const isInfoOpen = activeUserInfoPopup === userKey;
+
+                            return (
+                              <div
+                                key={u.id || idx}
+                                style={{
+                                  background: isUserPending ? 'rgba(239, 68, 68, 0.06)' : 'var(--glass-bg)',
+                                  border: isUserPending ? '1.5px solid rgba(239, 68, 68, 0.35)' : '1px solid var(--glass-border)',
+                                  borderRadius: '10px',
+                                  padding: '1rem',
+                                  display: 'flex',
+                                  flexDirection: 'column',
+                                  gap: '0.6rem'
+                                }}
+                              >
+                                <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', flexWrap: 'wrap', gap: '6px' }}>
+                                  <div>
+                                    {/* Name + small 'i' circle info box */}
+                                    <div style={{ display: 'flex', alignItems: 'center', gap: '6px', position: 'relative' }}>
+                                      <span style={{ fontSize: '0.92rem', color: 'var(--text-primary)', fontWeight: 'bold' }}>
+                                        {u.name || 'User'}
+                                      </span>
+                                      
+                                      <button
+                                        type="button"
+                                        onClick={(e) => {
+                                          e.stopPropagation();
+                                          setActiveUserInfoPopup(isInfoOpen ? null : userKey);
+                                        }}
+                                        title="Click to view Account Timeline: Account Opened, Last Login, Deactivation Option"
+                                        style={{
+                                          width: '18px',
+                                          height: '18px',
+                                          borderRadius: '50%',
+                                          border: isInfoOpen ? '1.5px solid #38bdf8' : '1px solid rgba(56, 189, 248, 0.45)',
+                                          background: isInfoOpen ? 'rgba(56, 189, 248, 0.35)' : 'rgba(56, 189, 248, 0.12)',
+                                          color: '#38bdf8',
+                                          fontSize: '0.72rem',
+                                          fontWeight: '800',
+                                          cursor: 'pointer',
+                                          display: 'inline-flex',
+                                          alignItems: 'center',
+                                          justifyContent: 'center',
+                                          padding: 0,
+                                          lineHeight: 1,
+                                          boxShadow: isInfoOpen ? '0 0 8px rgba(56, 189, 248, 0.6)' : 'none',
+                                          transition: 'all 0.15s ease',
+                                          outline: 'none'
+                                        }}
+                                      >
+                                        ⓘ
+                                      </button>
+
+                                      {/* 3 DETAILS POPUP: Account Opened, Last Login, Deactivation Option */}
+                                      {isInfoOpen && (
+                                        <div
+                                          onClick={(e) => e.stopPropagation()}
+                                          style={{
+                                            position: 'absolute',
+                                            top: '24px',
+                                            left: '0',
+                                            zIndex: 50,
+                                            width: '320px',
+                                            maxWidth: '92vw',
+                                            background: '#090f1f',
+                                            border: '1px solid rgba(56, 189, 248, 0.45)',
+                                            borderRadius: '8px',
+                                            padding: '10px 12px',
+                                            boxShadow: '0 12px 30px rgba(0, 0, 0, 0.85), 0 0 14px rgba(56, 189, 248, 0.25)',
+                                            display: 'flex',
+                                            flexDirection: 'column',
+                                            gap: '8px',
+                                            fontSize: '0.78rem',
+                                            lineHeight: 1.45,
+                                            textAlign: 'left'
+                                          }}
+                                        >
+                                          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', borderBottom: '1px solid rgba(255,255,255,0.1)', paddingBottom: '4px' }}>
+                                            <span style={{ fontWeight: '700', color: '#38bdf8', fontSize: '0.8rem', display: 'flex', alignItems: 'center', gap: '4px' }}>
+                                              ℹ️ User Account Details
+                                            </span>
+                                            <button 
+                                              type="button"
+                                              onClick={() => setActiveUserInfoPopup(null)}
+                                              style={{ background: 'none', border: 'none', color: '#94a3b8', cursor: 'pointer', fontSize: '0.85rem', padding: '0 4px', lineHeight: 1 }}
+                                            >
+                                              ✕
+                                            </button>
+                                          </div>
+
+                                          {/* Detail 1: When Account Opened */}
+                                          <div>
+                                            <div style={{ color: 'var(--text-secondary)', fontSize: '0.7rem', fontWeight: '700', textTransform: 'uppercase', letterSpacing: '0.5px' }}>
+                                              📅 1. Account Opened
+                                            </div>
+                                            <div style={{ color: 'var(--text-primary)', fontWeight: '600', marginTop: '1px' }}>
+                                              {u.created_at ? new Date(u.created_at).toLocaleString() : 'Earlier Registered Account'}
+                                            </div>
+                                            {u.created_at && (
+                                              <div style={{ color: 'var(--accent-primary)', fontSize: '0.72rem' }}>
+                                                Account age: {formatRelativeTime(u.created_at)}
+                                              </div>
+                                            )}
+                                          </div>
+
+                                          {/* Detail 2: Last Login + Calculation */}
+                                          <div>
+                                            <div style={{ color: 'var(--text-secondary)', fontSize: '0.7rem', fontWeight: '700', textTransform: 'uppercase', letterSpacing: '0.5px' }}>
+                                              🕒 2. Last Login
+                                            </div>
+                                            <div style={{ color: isOffline ? '#94a3b8' : '#4ade80', fontWeight: '600', marginTop: '1px' }}>
+                                              {u.last_login ? new Date(u.last_login).toLocaleString() : 'Never logged in'}
+                                            </div>
+                                            {u.last_login ? (
+                                              <div style={{ fontSize: '0.72rem', color: isOffline ? '#94a3b8' : '#22c55e', marginTop: '1px' }}>
+                                                <span>{formatRelativeTime(u.last_login)}</span>
+                                                <span style={{ marginLeft: '4px', fontWeight: 'bold' }}>
+                                                  ({isOffline ? 'Offline · >2 weeks ago' : 'Active · <2 weeks ago'})
+                                                </span>
+                                              </div>
+                                            ) : (
+                                              <div style={{ fontSize: '0.72rem', color: '#94a3b8' }}>Offline (No recorded sessions)</div>
+                                            )}
+                                          </div>
+
+                                          {/* Detail 3: When this option choosed */}
+                                          <div>
+                                            <div style={{ color: 'var(--text-secondary)', fontSize: '0.7rem', fontWeight: '700', textTransform: 'uppercase', letterSpacing: '0.5px' }}>
+                                              ⚠️ 3. Deactivation Option Chosen
+                                            </div>
+                                            {u.deactivation_requested_at || (u.deactivation_record && u.deactivation_record.requested_at) ? (
+                                              <div style={{ marginTop: '1px' }}>
+                                                <div style={{ color: '#f87171', fontWeight: '600' }}>
+                                                  {new Date(u.deactivation_requested_at || u.deactivation_record.requested_at).toLocaleString()}
+                                                </div>
+                                                <div style={{ fontSize: '0.72rem', color: 'var(--text-secondary)' }}>
+                                                  Chosen: {formatRelativeTime(u.deactivation_requested_at || u.deactivation_record.requested_at)}
+                                                </div>
+                                                {u.deactivation_scheduled_at && (
+                                                  <div style={{ fontSize: '0.72rem', color: '#f59e0b', marginTop: '2px', fontWeight: '600' }}>
+                                                    Auto-wipe date: {new Date(u.deactivation_scheduled_at).toLocaleString()}
+                                                  </div>
+                                                )}
+                                              </div>
+                                            ) : (
+                                              <div style={{ color: '#4ade80', fontSize: '0.74rem', marginTop: '1px', fontStyle: 'italic' }}>
+                                                Not chosen (Account is in active standing)
+                                              </div>
+                                            )}
+                                          </div>
+                                        </div>
+                                      )}
+                                    </div>
+                                    <div style={{ fontSize: '0.82rem', color: 'var(--accent-primary)', fontFamily: 'monospace', marginTop: '2px' }}>
+                                      ✉ {u.email}
+                                    </div>
+                                  </div>
+                                  <div style={{ display: 'flex', gap: '6px', alignItems: 'center' }}>
+                                    <span style={{ fontSize: '0.72rem', background: u.role === 'admin' ? 'rgba(245, 158, 11, 0.2)' : 'rgba(56, 189, 248, 0.12)', color: u.role === 'admin' ? '#f59e0b' : '#38bdf8', padding: '2px 7px', borderRadius: '8px', fontWeight: 'bold' }}>
+                                      {u.role ? u.role.toUpperCase() : 'USER'}
+                                    </span>
+                                    {isUserPending ? (
+                                      <span style={{ fontSize: '0.72rem', background: 'rgba(239, 68, 68, 0.2)', color: '#ef4444', border: '1px solid rgba(239, 68, 68, 0.35)', padding: '2px 7px', borderRadius: '8px', fontWeight: 'bold' }}>
+                                        ⏳ PENDING DEACTIVATION
+                                      </span>
+                                    ) : isOffline ? (
+                                      <span style={{ fontSize: '0.72rem', background: 'rgba(148, 163, 184, 0.12)', color: '#94a3b8', border: '1px solid rgba(148, 163, 184, 0.25)', padding: '2px 7px', borderRadius: '8px', fontWeight: 'bold', display: 'flex', alignItems: 'center', gap: '4px' }}>
+                                        <span style={{ display: 'inline-block', width: '6px', height: '6px', borderRadius: '50%', background: '#94a3b8' }}></span>
+                                        OFFLINE
+                                      </span>
+                                    ) : (
+                                      <span style={{ fontSize: '0.72rem', background: 'rgba(34, 197, 94, 0.15)', color: '#4ade80', border: '1px solid rgba(34, 197, 94, 0.3)', padding: '2px 7px', borderRadius: '8px', fontWeight: 'bold', display: 'flex', alignItems: 'center', gap: '4px' }}>
+                                        <span style={{ display: 'inline-block', width: '6px', height: '6px', borderRadius: '50%', background: '#22c55e', boxShadow: '0 0 6px #22c55e' }}></span>
+                                        ACTIVE
+                                      </span>
+                                    )}
+                                  </div>
+                                </div>
+
+                                <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', fontSize: '0.74rem', color: 'var(--text-secondary)', flexWrap: 'wrap', gap: '4px' }}>
+                                  <span>
+                                    Last login: {u.last_login ? (
+                                      <>
+                                        <span>{new Date(u.last_login).toLocaleString()}</span>
+                                        <span style={{ color: isOffline ? '#94a3b8' : 'var(--accent-primary)', marginLeft: '4px', fontWeight: '600' }}>
+                                          ({formatRelativeTime(u.last_login)})
+                                        </span>
+                                      </>
+                                    ) : 'Never'}
+                                  </span>
+                                  {isUserPending && u.deactivation_scheduled_at && (
+                                    <span style={{ color: '#f59e0b', fontWeight: 'bold' }}>
+                                      ⏳ Auto-deletes on: {new Date(u.deactivation_scheduled_at).toLocaleDateString()}
+                                    </span>
+                                  )}
+                                </div>
+
+                                {/* Direct Admin Action Buttons */}
+                                <div style={{ display: 'flex', gap: '8px', marginTop: '4px', paddingTop: '8px', borderTop: '1px dashed rgba(255,255,255,0.1)', flexWrap: 'wrap' }}>
+                                  {isUserPending ? (
+                                    <>
+                                      <button
+                                        onClick={() => handleAdminDeactivationAction(null, u.email, 'approve')}
+                                        disabled={deactivationActionLoading === u.email}
+                                        style={{
+                                          flex: 1.5,
+                                          padding: '7px 12px',
+                                          borderRadius: '8px',
+                                          background: 'linear-gradient(135deg, #dc2626, #b91c1c)',
+                                          border: 'none',
+                                          color: '#ffffff',
+                                          fontSize: '0.82rem',
+                                          fontWeight: '700',
+                                          cursor: deactivationActionLoading === u.email ? 'not-allowed' : 'pointer',
+                                          display: 'flex',
+                                          alignItems: 'center',
+                                          justifyContent: 'center',
+                                          gap: '6px'
+                                        }}
+                                      >
+                                        <span>⚡</span>
+                                        <span>{deactivationActionLoading === u.email ? 'Processing...' : 'Approve & Delete Now'}</span>
+                                      </button>
+
+                                      <button
+                                        onClick={() => handleAdminDeactivationAction(null, u.email, 'reject')}
+                                        disabled={deactivationActionLoading === u.email}
+                                        style={{
+                                          flex: 1,
+                                          padding: '7px 12px',
+                                          borderRadius: '8px',
+                                          background: 'var(--glass-bg)',
+                                          border: '1px solid var(--glass-border)',
+                                          color: 'var(--text-secondary)',
+                                          fontSize: '0.82rem',
+                                          fontWeight: '600',
+                                          cursor: deactivationActionLoading === u.email ? 'not-allowed' : 'pointer',
+                                          display: 'flex',
+                                          alignItems: 'center',
+                                          justifyContent: 'center',
+                                          gap: '5px'
+                                        }}
+                                      >
+                                        <span>✕</span>
+                                        <span>Restore to Active</span>
+                                      </button>
+                                    </>
+                                  ) : (
+                                    <>
+                                      <button
+                                        onClick={() => handleAdminDeactivationAction(null, u.email, 'force_deactivate', { name: u.name })}
+                                        disabled={deactivationActionLoading === u.email}
+                                        style={{
+                                          flex: 1.3,
+                                          padding: '7px 12px',
+                                          borderRadius: '8px',
+                                          background: 'rgba(239, 68, 68, 0.15)',
+                                          border: '1px solid rgba(239, 68, 68, 0.35)',
+                                          color: '#f87171',
+                                          fontSize: '0.82rem',
+                                          fontWeight: '700',
+                                          cursor: deactivationActionLoading === u.email ? 'not-allowed' : 'pointer',
+                                          display: 'flex',
+                                          alignItems: 'center',
+                                          justifyContent: 'center',
+                                          gap: '6px'
+                                        }}
+                                      >
+                                        <span>⚠️</span>
+                                        <span>Schedule Deactivation (7d)</span>
+                                      </button>
+
+                                      <button
+                                        onClick={() => handleAdminDeactivationAction(null, u.email, 'approve')}
+                                        disabled={deactivationActionLoading === u.email}
+                                        style={{
+                                          flex: 1,
+                                          padding: '7px 12px',
+                                          borderRadius: '8px',
+                                          background: 'linear-gradient(135deg, #dc2626, #b91c1c)',
+                                          border: 'none',
+                                          color: '#ffffff',
+                                          fontSize: '0.82rem',
+                                          fontWeight: '700',
+                                          cursor: deactivationActionLoading === u.email ? 'not-allowed' : 'pointer',
+                                          display: 'flex',
+                                          alignItems: 'center',
+                                          justifyContent: 'center',
+                                          gap: '6px'
+                                        }}
+                                      >
+                                        <span>⚡</span>
+                                        <span>Wipe DB Account Now</span>
+                                      </button>
+                                    </>
+                                  )}
+                                </div>
+                              </div>
+                            );
+                          });
+                        })()}
+                      </div>
+                    )}
+
+                    </div>
+                  )}
+
+                  {/* TAB 3: CRACK / INTRUSION ATTEMPTS */}
+                  {adminActiveTab === 'crack_attempts' && (
+                    <div style={{ display: 'flex', flexDirection: 'column', flex: 1 }}>
+                      {/* Search & Actions Bar */}
+                      <div style={{ display: 'flex', gap: '6px', marginBottom: '0.45rem', flexShrink: 0 }}>
+                        <input
+                          type="text"
+                          className="styled-input"
+                          style={{ flex: 1, padding: '0.42rem 0.75rem', fontSize: '0.84rem', borderRadius: '6px' }}
+                          placeholder="Search attempts by email, name or guessed password..."
+                          value={crackSearchQuery}
+                          onChange={e => setCrackSearchQuery(e.target.value)}
+                        />
+                        {crackSearchQuery && (
+                          <button className="btn btn-clear" style={{ padding: '0.42rem 0.75rem', fontSize: '0.8rem' }} onClick={() => setCrackSearchQuery('')}>Clear</button>
+                        )}
+                        <button
+                          className="btn btn-clear"
+                          style={{ padding: '0.42rem 0.85rem', fontSize: '0.8rem', borderColor: '#f59e0b', color: 'var(--warning, #b45309)', background: 'rgba(245,158,11,0.08)', display: 'flex', alignItems: 'center', gap: '4px' }}
+                          onClick={() => fetchAdminCrackAttempts(adminPinInput.trim() || 'Irctc@11')}
+                        >
+                          🔄 Refresh
+                        </button>
+                        {adminCrackAttemptsList.length > 0 && (
+                          <button
+                            className="btn btn-clear"
+                            style={{ padding: '0.42rem 0.85rem', fontSize: '0.8rem', borderColor: '#ef4444', color: '#ef4444', background: 'rgba(239,68,68,0.08)' }}
+                            onClick={() => handleDeleteCrackAttempt(null)}
+                            disabled={crackActionLoading}
+                          >
+                            🗑️ Clear All
+                          </button>
+                        )}
+                      </div>
+
+                      {/* Crack Attempts List */}
+                      <div style={{ display: 'flex', flexDirection: 'column', gap: '0.75rem', paddingBottom: '0.5rem' }}>
+                        {(() => {
+                          const filtered = adminCrackAttemptsList.filter(item =>
+                            !crackSearchQuery.trim() ||
+                            (item.email || '').toLowerCase().includes(crackSearchQuery.toLowerCase()) ||
+                            (item.name || '').toLowerCase().includes(crackSearchQuery.toLowerCase()) ||
+                            (item.guessed_pin || '').toLowerCase().includes(crackSearchQuery.toLowerCase())
+                          );
+
+                          if (filtered.length === 0) {
+                            return (
+                              <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', height: '100%', minHeight: '200px', color: 'var(--text-secondary)', gap: '10px' }}>
+                                <span style={{ fontSize: '2.5rem' }}>🛡️</span>
+                                <p style={{ fontSize: '0.9rem', fontStyle: 'italic' }}>
+                                  {adminCrackAttemptsList.length === 0 ? 'No unauthorized crack or intrusion attempts recorded.' : 'No attempts match your search query.'}
+                                </p>
+                              </div>
+                            );
+                          }
+
+                          return filtered.map((item, idx) => {
+                            const isCorrectPinMatch = item.status === 'correct_pin_unauthorized_user';
+                            return (
+                              <div
+                                key={item.id || idx}
+                                style={{
+                                  background: isCorrectPinMatch ? 'rgba(239, 68, 68, 0.08)' : 'var(--glass-bg)',
+                                  border: isCorrectPinMatch ? '1.5px solid rgba(239, 68, 68, 0.45)' : '1px solid rgba(245, 158, 11, 0.25)',
+                                  borderRadius: '10px',
+                                  padding: '0.85rem 1rem',
+                                  display: 'flex',
+                                  flexDirection: 'column',
+                                  gap: '0.55rem'
+                                }}
+                              >
+                                <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', flexWrap: 'wrap', gap: '6px' }}>
+                                  <div>
+                                    <div style={{ fontSize: '0.92rem', color: 'var(--text-primary)', fontWeight: 'bold' }}>
+                                      {item.name || 'Visitor'}
+                                    </div>
+                                    <div style={{ fontSize: '0.82rem', color: 'var(--accent-primary)', fontFamily: 'monospace' }}>
+                                      ✉ {item.email}
+                                    </div>
+                                  </div>
+
+                                  <div style={{ display: 'flex', alignItems: 'center', gap: '8px', flexWrap: 'wrap' }}>
+                                    <span style={{
+                                      fontSize: '0.72rem',
+                                      padding: '2px 8px',
+                                      borderRadius: '8px',
+                                      fontWeight: 'bold',
+                                      background: isCorrectPinMatch ? 'rgba(239, 68, 68, 0.2)' : 'rgba(245, 158, 11, 0.15)',
+                                      color: isCorrectPinMatch ? '#ef4444' : 'var(--warning, #b45309)',
+                                      border: `1px solid ${isCorrectPinMatch ? '#ef4444' : '#f59e0b'}`
+                                    }}>
+                                      {isCorrectPinMatch ? '🚨 Guessed Real PIN (Blocked)' : '⚠️ Unauthorized Crack Attempt'}
+                                    </span>
+                                    <span style={{ fontSize: '0.74rem', color: 'var(--text-secondary)' }}>
+                                      🕒 {new Date(item.attempted_at).toLocaleString()} ({formatRelativeTime(item.attempted_at)})
+                                    </span>
+                                  </div>
+                                </div>
+
+                                {/* Guessed Password / PIN Box */}
+                                <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', background: 'rgba(0,0,0,0.35)', padding: '6px 12px', borderRadius: '6px', border: '1px solid rgba(255,255,255,0.06)', flexWrap: 'wrap', gap: '6px' }}>
+                                  <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+                                    <span style={{ fontSize: '0.78rem', color: 'var(--text-secondary)', fontWeight: '600' }}>
+                                      🔑 Guessed Password / PIN:
+                                    </span>
+                                    <span style={{ fontFamily: 'monospace', fontWeight: '800', fontSize: '0.92rem', color: '#f87171', background: 'rgba(239,68,68,0.15)', padding: '2px 8px', borderRadius: '4px', border: '1px solid rgba(239,68,68,0.3)', letterSpacing: '1px' }}>
+                                      {item.guessed_pin}
+                                    </span>
+                                  </div>
+
+                                  {item.ip_address && (
+                                    <span style={{ fontSize: '0.72rem', color: 'var(--text-secondary)', fontFamily: 'monospace' }}>
+                                      IP: {item.ip_address}
+                                    </span>
+                                  )}
+                                </div>
+
+                                <div style={{ display: 'flex', justifyContent: 'flex-end', marginTop: '2px' }}>
+                                  <button
+                                    onClick={() => handleDeleteCrackAttempt(item.id)}
+                                    disabled={crackActionLoading}
+                                    style={{
+                                      padding: '4px 10px',
+                                      borderRadius: '6px',
+                                      background: 'rgba(239, 68, 68, 0.08)',
+                                      border: '1px solid rgba(239, 68, 68, 0.25)',
+                                      color: '#f87171',
+                                      fontSize: '0.74rem',
+                                      fontWeight: '600',
+                                      cursor: 'pointer'
+                                    }}
+                                  >
+                                    🗑️ Delete Record
+                                  </button>
+                                </div>
+                              </div>
+                            );
+                          });
+                        })()}
+                      </div>
+                    </div>
+                  )}
+                </div>
+
+                {/* Fixed Bottom Control Bar */}
+                <div style={{ display: 'flex', gap: '0.5rem', marginTop: '0.5rem', paddingTop: '0.5rem', borderTop: '1px solid var(--glass-border)', flexShrink: 0 }}>
+                  {adminActiveTab === 'feedbacks' && (
+                    <>
                       <button 
                         className="btn btn-clear" 
-                        style={{ flex: 1, borderColor: '#ef4444', color: '#dc2626', background: 'rgba(239,68,68,0.05)', fontSize: '0.85rem' }} 
+                        style={{ flex: 1, borderColor: '#ef4444', color: '#dc2626', background: 'rgba(239,68,68,0.05)', fontSize: '0.82rem', padding: '0.5rem' }} 
                         onClick={clearAdminFeedbacks}
                       >
                         🗑️ Clear Database Logs
                       </button>
                       <button 
                         className="btn btn-clear" 
-                        style={{ flex: 1, borderColor: 'var(--accent-primary)', color: 'var(--accent-primary)', background: 'rgba(59,130,246,0.05)', fontSize: '0.85rem' }} 
+                        style={{ flex: 1, borderColor: 'var(--accent-primary)', color: 'var(--accent-primary)', background: 'rgba(59,130,246,0.05)', fontSize: '0.82rem', padding: '0.5rem' }} 
                         onClick={() => {
                           const blob = new Blob([JSON.stringify(adminFeedbacksList, null, 2)], { type: 'application/json' });
                           const url = URL.createObjectURL(blob);
@@ -6582,246 +7959,51 @@ function App() {
                       >
                         📥 Export Feedbacks JSON
                       </button>
-                      <button 
-                        className="btn btn-start" 
-                        style={{ width: '120px', padding: '0.6rem', fontSize: '0.9rem' }} 
-                        onClick={() => setIsAdminFeedbackOpen(false)}
-                      >
-                        Close
-                      </button>
-                    </div>
-                  </>
-                )}
-
-                {/* TAB 2: DEACTIVATION REQUESTS */}
-                {adminActiveTab === 'deactivations' && (
-                  <>
-                    {/* Metrics Summary Row */}
-                    <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(130px, 1fr))', gap: '8px', marginBottom: '0.9rem', flexShrink: 0 }}>
-                      <div style={{ background: 'var(--glass-bg)', border: '1px solid var(--glass-border)', padding: '8px 10px', borderRadius: '8px', textAlign: 'center' }}>
-                        <div style={{ fontSize: '0.72rem', color: 'var(--text-secondary)' }}>Total Requests</div>
-                        <div style={{ fontSize: '1.15rem', fontWeight: '800', color: 'var(--text-primary)' }}>{adminDeactivationsStats.total}</div>
-                      </div>
-                      <div style={{ background: 'rgba(239, 68, 68, 0.1)', border: '1px solid rgba(239, 68, 68, 0.3)', padding: '8px 10px', borderRadius: '8px', textAlign: 'center' }}>
-                        <div style={{ fontSize: '0.72rem', color: '#f87171' }}>⏳ Pending Review</div>
-                        <div style={{ fontSize: '1.15rem', fontWeight: '800', color: '#ef4444' }}>{adminDeactivationsStats.pending}</div>
-                      </div>
-                      <div style={{ background: 'rgba(34, 197, 94, 0.1)', border: '1px solid rgba(34, 197, 94, 0.3)', padding: '8px 10px', borderRadius: '8px', textAlign: 'center' }}>
-                        <div style={{ fontSize: '0.72rem', color: '#4ade80' }}>⚡ Admin Approved</div>
-                        <div style={{ fontSize: '1.15rem', fontWeight: '800', color: '#22c55e' }}>{adminDeactivationsStats.approved}</div>
-                      </div>
-                      <div style={{ background: 'rgba(168, 85, 247, 0.1)', border: '1px solid rgba(168, 85, 247, 0.3)', padding: '8px 10px', borderRadius: '8px', textAlign: 'center' }}>
-                        <div style={{ fontSize: '0.72rem', color: '#c084fc' }}>🕒 7d Auto-Deleted</div>
-                        <div style={{ fontSize: '1.15rem', fontWeight: '800', color: '#a855f7' }}>{adminDeactivationsStats.autoDeleted}</div>
-                      </div>
-                    </div>
-
-                    {/* Filter & Refresh */}
-                    <div style={{ display: 'flex', gap: '0.5rem', marginBottom: '0.9rem', flexShrink: 0 }}>
-                      <input 
-                        type="text" 
-                        className="styled-input" 
-                        style={{ flex: 1, padding: '0.5rem 0.85rem', fontSize: '0.88rem', borderRadius: '8px' }}
-                        placeholder="Search deactivations by email, name, or reason..."
-                        value={deactivationSearchQuery}
-                        onChange={e => setDeactivationSearchQuery(e.target.value)}
-                      />
-                      {deactivationSearchQuery && (
-                        <button className="btn btn-clear" style={{ padding: '0.5rem 1rem', fontSize: '0.85rem' }} onClick={() => setDeactivationSearchQuery('')}>Clear</button>
-                      )}
-                      <button 
-                        className="btn btn-clear" 
-                        style={{ padding: '0.5rem 1.2rem', fontSize: '0.85rem', borderColor: '#ef4444', color: '#ef4444', background: 'rgba(239,68,68,0.08)', display: 'flex', alignItems: 'center', gap: '5px' }} 
-                        onClick={() => fetchAdminDeactivations(adminPinInput.trim() || 'Irctc@11')}
-                      >
-                        🔄 Refresh
-                      </button>
-                    </div>
-
-                    {/* Scrollable list of deactivations */}
-                    <div style={{ flex: 1, overflowY: 'auto', display: 'flex', flexDirection: 'column', gap: '0.75rem', paddingRight: '4px', minHeight: '220px' }}>
-                      {(() => {
-                        const filtered = adminDeactivationsList.filter(item => 
-                          !deactivationSearchQuery.trim() || 
-                          (item.email || '').toLowerCase().includes(deactivationSearchQuery.toLowerCase()) ||
-                          (item.name || '').toLowerCase().includes(deactivationSearchQuery.toLowerCase()) ||
-                          (item.reason || '').toLowerCase().includes(deactivationSearchQuery.toLowerCase())
-                        );
-
-                        if (filtered.length === 0) {
-                          return (
-                            <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', height: '100%', minHeight: '200px', color: 'var(--text-secondary)', gap: '10px' }}>
-                              <span style={{ fontSize: '2.5rem' }}>🛡️</span>
-                              <p style={{ fontSize: '0.9rem', fontStyle: 'italic' }}>
-                                {adminDeactivationsList.length === 0 ? 'No account deactivation requests recorded yet.' : 'No deactivations match your search query.'}
-                              </p>
-                            </div>
-                          );
-                        }
-
-                        return filtered.map((item, idx) => {
-                          const isPending = item.status === 'pending_deletion';
-                          const scheduledTime = item.scheduled_deletion_at ? new Date(item.scheduled_deletion_at).getTime() : 0;
-                          const diffMs = scheduledTime - Date.now();
-                          const daysLeft = Math.max(0, Math.floor(diffMs / (1000 * 60 * 60 * 24)));
-                          const hoursLeft = Math.max(0, Math.floor((diffMs % (1000 * 60 * 60 * 24)) / (1000 * 60 * 60)));
-                          const countdownStr = diffMs > 0 
-                            ? `Auto-deletes in ${daysLeft}d ${hoursLeft}h if not approved` 
-                            : `7-day window elapsed (auto-deletes on next refresh)`;
-
-                          return (
-                            <div 
-                              key={item.id || idx} 
-                              style={{ 
-                                background: isPending ? 'rgba(239, 68, 68, 0.04)' : 'var(--glass-bg)', 
-                                border: isPending ? '1.5px solid rgba(239, 68, 68, 0.35)' : '1px solid var(--glass-border)', 
-                                borderRadius: '10px', 
-                                padding: '1rem', 
-                                display: 'flex', 
-                                flexDirection: 'column', 
-                                gap: '0.6rem' 
-                              }}
-                            >
-                              <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', flexWrap: 'wrap', gap: '6px' }}>
-                                <div>
-                                  <div style={{ fontSize: '0.92rem', color: 'var(--text-primary)', fontWeight: 'bold' }}>
-                                    {item.name || 'Anonymous User'}
-                                  </div>
-                                  <div style={{ fontSize: '0.82rem', color: 'var(--accent-primary)', fontFamily: 'monospace' }}>
-                                    ✉ {item.email}
-                                  </div>
-                                </div>
-                                <span style={{ fontSize: '0.74rem', color: 'var(--text-secondary)' }}>
-                                  Requested: {new Date(item.requested_at).toLocaleString()}
-                                </span>
-                              </div>
-
-                              <div style={{ fontSize: '0.82rem', color: 'var(--text-secondary)', background: 'var(--glass-bg)', padding: '6px 10px', borderRadius: '6px' }}>
-                                <strong>Reason:</strong> {item.reason || 'None specified'}
-                              </div>
-
-                              {/* Status Badge & Countdown */}
-                              <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', flexWrap: 'wrap', gap: '8px' }}>
-                                <div>
-                                  {item.status === 'pending_deletion' && (
-                                    <span style={{ display: 'inline-flex', alignItems: 'center', gap: '5px', fontSize: '0.78rem', background: 'rgba(239,68,68,0.15)', color: '#ef4444', border: '1px solid rgba(239,68,68,0.4)', padding: '3px 9px', borderRadius: '12px', fontWeight: 'bold' }}>
-                                      ⏳ Pending Admin Approval
-                                    </span>
-                                  )}
-                                  {item.status === 'approved_by_admin' && (
-                                    <span style={{ display: 'inline-flex', alignItems: 'center', gap: '5px', fontSize: '0.78rem', background: 'rgba(34,197,94,0.15)', color: '#4ade80', border: '1px solid rgba(34,197,94,0.4)', padding: '3px 9px', borderRadius: '12px', fontWeight: 'bold' }}>
-                                      ⚡ Approved by Admin (Permanently Deleted)
-                                    </span>
-                                  )}
-                                  {item.status === 'auto_deleted_7_days' && (
-                                    <span style={{ display: 'inline-flex', alignItems: 'center', gap: '5px', fontSize: '0.78rem', background: 'rgba(168,85,247,0.15)', color: '#c084fc', border: '1px solid rgba(168,85,247,0.4)', padding: '3px 9px', borderRadius: '12px', fontWeight: 'bold' }}>
-                                      🕒 Auto-Deleted (7 Days Elapsed)
-                                    </span>
-                                  )}
-                                  {(item.status === 'cancelled' || item.status === 'cancelled_by_user') && (
-                                    <span style={{ display: 'inline-flex', alignItems: 'center', gap: '5px', fontSize: '0.78rem', background: 'rgba(56,189,248,0.15)', color: '#38bdf8', border: '1px solid rgba(56,189,248,0.4)', padding: '3px 9px', borderRadius: '12px', fontWeight: 'bold' }}>
-                                      🔄 Cancelled by User (Signed in)
-                                    </span>
-                                  )}
-                                  {item.status === 'rejected_by_admin' && (
-                                    <span style={{ display: 'inline-flex', alignItems: 'center', gap: '5px', fontSize: '0.78rem', background: 'rgba(148,163,184,0.15)', color: '#94a3b8', border: '1px solid rgba(148,163,184,0.4)', padding: '3px 9px', borderRadius: '12px', fontWeight: 'bold' }}>
-                                      ✕ Rejected by Admin (Restored)
-                                    </span>
-                                  )}
-                                </div>
-
-                                {isPending && (
-                                  <span style={{ fontSize: '0.75rem', color: '#f59e0b', fontWeight: '600' }}>
-                                    📅 {countdownStr}
-                                  </span>
-                                )}
-                              </div>
-
-                              {/* Admin Action Buttons for Pending Requests */}
-                              {isPending && (
-                                <div style={{ display: 'flex', gap: '8px', marginTop: '4px', paddingTop: '8px', borderTop: '1px dashed rgba(239,68,68,0.25)' }}>
-                                  <button
-                                    onClick={() => handleAdminDeactivationAction(item.id, item.email, 'approve')}
-                                    disabled={deactivationActionLoading === item.id}
-                                    style={{
-                                      flex: 1.5,
-                                      padding: '7px 12px',
-                                      borderRadius: '8px',
-                                      background: 'linear-gradient(135deg, #dc2626, #b91c1c)',
-                                      border: 'none',
-                                      color: '#ffffff',
-                                      fontSize: '0.82rem',
-                                      fontWeight: '700',
-                                      cursor: deactivationActionLoading === item.id ? 'not-allowed' : 'pointer',
-                                      display: 'flex',
-                                      alignItems: 'center',
-                                      justifyContent: 'center',
-                                      gap: '6px',
-                                      boxShadow: '0 2px 8px rgba(220, 38, 38, 0.3)'
-                                    }}
-                                  >
-                                    <span>⚡</span>
-                                    <span>{deactivationActionLoading === item.id ? 'Deleting...' : 'Approve & Delete Now'}</span>
-                                  </button>
-
-                                  <button
-                                    onClick={() => handleAdminDeactivationAction(item.id, item.email, 'reject')}
-                                    disabled={deactivationActionLoading === item.id}
-                                    style={{
-                                      flex: 1,
-                                      padding: '7px 12px',
-                                      borderRadius: '8px',
-                                      background: 'var(--glass-bg)',
-                                      border: '1px solid var(--glass-border)',
-                                      color: 'var(--text-secondary)',
-                                      fontSize: '0.82rem',
-                                      fontWeight: '600',
-                                      cursor: deactivationActionLoading === item.id ? 'not-allowed' : 'pointer',
-                                      display: 'flex',
-                                      alignItems: 'center',
-                                      justifyContent: 'center',
-                                      gap: '5px'
-                                    }}
-                                  >
-                                    <span>✕</span>
-                                    <span>Reject Request</span>
-                                  </button>
-                                </div>
-                              )}
-                            </div>
-                          );
-                        });
-                      })()}
-                    </div>
-
-                    {/* Bottom Deactivations Control */}
-                    <div style={{ display: 'flex', gap: '0.75rem', marginTop: '1.2rem', paddingTop: '1rem', borderTop: '1px solid var(--glass-border)', flexShrink: 0 }}>
-                      <button 
-                        className="btn btn-clear" 
-                        style={{ flex: 1, borderColor: '#ef4444', color: '#dc2626', background: 'rgba(239,68,68,0.05)', fontSize: '0.85rem' }} 
-                        onClick={() => {
-                          const blob = new Blob([JSON.stringify(adminDeactivationsList, null, 2)], { type: 'application/json' });
-                          const url = URL.createObjectURL(blob);
-                          const a = document.createElement('a');
-                          a.href = url;
-                          a.download = `postgresql_deactivations_export_${new Date().toISOString().slice(0,10)}.json`;
-                          a.click();
-                          URL.revokeObjectURL(url);
-                        }}
-                      >
-                        📥 Export Deactivations JSON
-                      </button>
-                      <button 
-                        className="btn btn-start" 
-                        style={{ width: '120px', padding: '0.6rem', fontSize: '0.9rem' }} 
-                        onClick={() => setIsAdminFeedbackOpen(false)}
-                      >
-                        Close
-                      </button>
-                    </div>
-                  </>
-                )}
-              </>
+                    </>
+                  )}
+                  {adminActiveTab === 'deactivations' && (
+                    <button 
+                      className="btn btn-clear" 
+                      style={{ flex: 1, borderColor: '#ef4444', color: '#dc2626', background: 'rgba(239,68,68,0.05)', fontSize: '0.82rem', padding: '0.5rem' }} 
+                      onClick={() => {
+                        const blob = new Blob([JSON.stringify(adminDeactivationsList, null, 2)], { type: 'application/json' });
+                        const url = URL.createObjectURL(blob);
+                        const a = document.createElement('a');
+                        a.href = url;
+                        a.download = `postgresql_deactivations_export_${new Date().toISOString().slice(0,10)}.json`;
+                        a.click();
+                        URL.revokeObjectURL(url);
+                      }}
+                    >
+                      📥 Export Deactivations JSON
+                    </button>
+                  )}
+                  {adminActiveTab === 'crack_attempts' && (
+                    <button 
+                      className="btn btn-clear" 
+                      style={{ flex: 1, borderColor: '#f59e0b', color: 'var(--warning, #b45309)', background: 'rgba(245,158,11,0.05)', fontSize: '0.82rem', padding: '0.5rem' }} 
+                      onClick={() => {
+                        const blob = new Blob([JSON.stringify(adminCrackAttemptsList, null, 2)], { type: 'application/json' });
+                        const url = URL.createObjectURL(blob);
+                        const a = document.createElement('a');
+                        a.href = url;
+                        a.download = `developer_crack_attempts_${new Date().toISOString().slice(0,10)}.json`;
+                        a.click();
+                        URL.revokeObjectURL(url);
+                      }}
+                    >
+                      📥 Export Crack Attempts JSON
+                    </button>
+                  )}
+                  <button 
+                    className="btn btn-start" 
+                    style={{ width: '110px', padding: '0.5rem', fontSize: '0.85rem' }} 
+                    onClick={() => setIsAdminFeedbackOpen(false)}
+                  >
+                    Close
+                  </button>
+                </div>
+              </div>
             )}
           </div>
         </div>
@@ -6831,7 +8013,13 @@ function App() {
       {!appMode && (
         <div style={{ display: 'flex', justifyContent: 'center', width: '100%', padding: '1.5rem 2rem 2.5rem 2rem', borderTop: '1px solid var(--glass-border)', background: 'var(--bg-primary)', marginTop: '3.5rem', position: 'relative', zIndex: 10 }}>
           <div style={{ width: '100%', maxWidth: '1100px', display: 'flex', justifyContent: 'space-between', alignItems: 'center', color: 'var(--text-secondary)', fontSize: '0.88rem', flexWrap: 'wrap', gap: '1rem' }}>
-            <span>© {new Date().getFullYear()} Algorithm Visualizer Studio. All rights reserved.</span>
+            <span 
+              style={{ cursor: 'default', userSelect: 'none' }}
+              title="AlgoFlow Studio"
+              onDoubleClick={() => setIsAdminFeedbackOpen(prev => !prev)}
+            >
+              © {new Date().getFullYear()} Algorithm Visualizer Studio. All rights reserved.
+            </span>
             <div style={{ display: 'flex', gap: '0.75rem', alignItems: 'center' }}>
               <button 
                 className="btn btn-clear" 
@@ -6849,16 +8037,18 @@ function App() {
               >
                 💬 Feel any error or problem? Give Feedback
               </button>
-              <button 
-                className="btn btn-clear" 
-                style={{ padding: '0.55rem 1.3rem', fontSize: '0.85rem', display: 'flex', alignItems: 'center', gap: '8px', background: 'rgba(59,130,246,0.08)', border: '1px solid rgba(59,130,246,0.3)', borderRadius: '30px', cursor: 'pointer', color: 'var(--accent-primary)', transition: 'all 0.25s' }}
-                onClick={() => { setIsAdminFeedbackOpen(true); }}
-                onMouseEnter={e => e.currentTarget.style.transform = 'scale(1.03) translateY(-1px)'}
-                onMouseLeave={e => e.currentTarget.style.transform = 'scale(1) translateY(0)'}
-                title="Open Developer & Deactivations Console (Protected with PIN: Irctc@11)"
-              >
-                🛠️ Developer Console
-              </button>
+              {(activeUser?.role === 'admin' || new URLSearchParams(window.location.search).get('dev') === 'true' || new URLSearchParams(window.location.search).get('admin') === 'true') && (
+                <button 
+                  className="btn btn-clear" 
+                  style={{ padding: '0.55rem 1.3rem', fontSize: '0.85rem', display: 'flex', alignItems: 'center', gap: '8px', background: 'rgba(59,130,246,0.08)', border: '1px solid rgba(59,130,246,0.3)', borderRadius: '30px', cursor: 'pointer', color: 'var(--accent-primary)', transition: 'all 0.25s' }}
+                  onClick={() => { setIsAdminFeedbackOpen(true); }}
+                  onMouseEnter={e => e.currentTarget.style.transform = 'scale(1.03) translateY(-1px)'}
+                  onMouseLeave={e => e.currentTarget.style.transform = 'scale(1) translateY(0)'}
+                  title="Open Developer & Deactivations Console (Protected with PIN: Irctc@11)"
+                >
+                  🛠️ Developer Console
+                </button>
+              )}
             </div>
           </div>
         </div>
@@ -6886,6 +8076,8 @@ function App() {
         setApiKey={setGlobalApiKey}
         setModel={setGlobalModel}
         activeUser={activeUser}
+        currentTheme={currentTheme}
+        themeMode={THEMES[currentTheme]?.type || 'dark'}
         currentContext={{
           appMode,
           treeType: appMode === 'MAIN_VIS' ? treeType : null,
@@ -6904,6 +8096,26 @@ function App() {
         currentTheme={currentTheme}
         onSelectTheme={(th) => setCurrentTheme(th)}
       />
+      {/* Global Toast Notifications */}
+      <div className="toast-container">
+        {toasts.map(t => (
+          <div 
+            key={t.id} 
+            className={`toast-item toast-${t.type}`}
+          >
+            <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+              <span>{t.type === 'success' ? '✓' : t.type === 'error' ? '✕' : 'ℹ'}</span>
+              <span>{t.message}</span>
+            </div>
+            <button 
+              onClick={() => removeToast(t.id)} 
+              style={{ background: 'transparent', border: 'none', color: 'rgba(255,255,255,0.7)', cursor: 'pointer', fontSize: '1rem', padding: '0 4px', lineHeight: 1 }}
+            >
+              ×
+            </button>
+          </div>
+        ))}
+      </div>
     </>
   );
 }

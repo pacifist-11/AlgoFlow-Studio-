@@ -229,9 +229,9 @@ const highlightLogText = (text) => {
     const regex = /(\b\d+(?:\.\d+)?\b)/g;
     const parts = str.split(regex);
     return (
-      <span style={{ color: '#f87171', fontWeight: 'bold' }}>
+      <span style={{ color: 'var(--danger, #ef4444)', fontWeight: 'bold' }}>
         {parts.map((p, i) => 
-          regex.test(p) ? <span key={i} style={{ color: '#fbbf24', textShadow: '0 0 8px rgba(251,191,36,0.3)' }}>{p}</span> : p
+          regex.test(p) ? <span key={i} style={{ color: 'var(--warning, #d97706)' }}>{p}</span> : p
         )}
       </span>
     );
@@ -253,9 +253,9 @@ const highlightLogText = (text) => {
     const regex = /(\b\d+(?:\.\d+)?\b)/g;
     const parts = str.split(regex);
     return (
-      <span style={{ color: '#34d399', fontWeight: 'bold' }}>
+      <span style={{ color: 'var(--success, #10b981)', fontWeight: 'bold' }}>
         {parts.map((p, i) => 
-          regex.test(p) ? <span key={i} style={{ color: '#fbbf24' }}>{p}</span> : p
+          regex.test(p) ? <span key={i} style={{ color: 'var(--warning, #d97706)' }}>{p}</span> : p
         )}
       </span>
     );
@@ -280,9 +280,9 @@ const highlightLogText = (text) => {
     const regex = /(\b\d+(?:\.\d+)?\b)/g;
     const parts = str.split(regex);
     return (
-      <span style={{ color: '#fb923c', fontWeight: 600 }}>
+      <span style={{ color: 'var(--accent-primary)', fontWeight: 600 }}>
         {parts.map((p, i) => 
-          regex.test(p) ? <span key={i} style={{ color: '#fbbf24', fontWeight: 'bold' }}>{p}</span> : p
+          regex.test(p) ? <span key={i} style={{ color: 'var(--warning, #d97706)', fontWeight: 'bold' }}>{p}</span> : p
         )}
       </span>
     );
@@ -291,7 +291,7 @@ const highlightLogText = (text) => {
   const regex = /(\b\d+(?:\.\d+)?\b)/g;
   const parts = str.split(regex);
   return parts.map((p, i) => 
-    /^\d+(?:\.\d+)?$/.test(p) ? <strong key={i} style={{ color: '#fbbf24' }}>{p}</strong> : p
+    /^\d+(?:\.\d+)?$/.test(p) ? <strong key={i} style={{ color: 'var(--warning, #d97706)' }}>{p}</strong> : p
   );
 };
 
@@ -1743,7 +1743,7 @@ const GeneralDSVisualizer = ({ onBack, openSettings, initialType = 'HASH_TABLE',
         <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '15px', padding: '2rem', flexWrap: 'wrap' }}>
           {arr.map((val, idx) => (
             <div key={idx} style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: '8px' }}>
-              <div style={{ color: '#fbbf24', fontSize: '0.9rem', fontWeight: 'bold', height: '18px', textShadow: '0 0 5px rgba(251,191,36,0.5)' }}>
+              <div style={{ color: 'var(--warning, #b45309)', fontSize: '0.9rem', fontWeight: 'bold', height: '18px' }}>
                 {f === idx && r === idx ? 'F / R' : f === idx ? 'Front' : r === idx ? 'Rear' : ''}
               </div>
               <div style={{
@@ -1823,7 +1823,7 @@ const GeneralDSVisualizer = ({ onBack, openSettings, initialType = 'HASH_TABLE',
                   <line x1="0" y1="7.5" x2="40" y2="7.5" stroke="var(--text-secondary)" strokeWidth="2.5" markerEnd="url(#arrow)" />
                 </svg>
                 {dsVariety === 'LL_CIRCULAR' ? (
-                  <span style={{ fontSize: '0.85rem', color: '#fbbf24', fontStyle: 'italic', fontWeight: 700 }}>⤾ Loops to Head</span>
+                  <span style={{ fontSize: '0.85rem', color: 'var(--warning, #b45309)', fontStyle: 'italic', fontWeight: 700 }}>⤾ Loops to Head</span>
                 ) : <span style={{ fontFamily: 'monospace', fontSize: '1.1rem', background: 'rgba(255,255,255,0.1)', padding: '4px 8px', borderRadius: '4px' }}>null</span>}
               </div>
             )}
@@ -1845,7 +1845,7 @@ const GeneralDSVisualizer = ({ onBack, openSettings, initialType = 'HASH_TABLE',
             <div key={bIdx} ref={el => bucketRefs.current[bIdx] = el} style={{ display: 'flex', alignItems: 'center', width: '100%', maxWidth: '800px', background: bIdx === frame.activeBucket ? 'rgba(245,158,11,0.08)' : 'transparent', padding: '8px 12px', borderRadius: '12px', transition: 'background 0.3s' }}>
               <div style={{
                 width: '65px', height: '55px', background: 'rgba(255,255,255,0.03)', border: `2px solid ${bIdx === frame.activeBucket ? '#f59e0b' : 'var(--glass-border)'}`,
-                borderRadius: '10px', display: 'flex', alignItems: 'center', justifyContent: 'center', color: bIdx === frame.activeBucket ? '#fbbf24' : 'var(--text-secondary)', fontWeight: 'bold', fontSize: '1.3rem', flexShrink: 0,
+                borderRadius: '10px', display: 'flex', alignItems: 'center', justifyContent: 'center', color: bIdx === frame.activeBucket ? 'var(--warning, #b45309)' : 'var(--text-secondary)', fontWeight: 'bold', fontSize: '1.3rem', flexShrink: 0,
                 boxShadow: bIdx === frame.activeBucket ? '0 0 15px rgba(245,158,11,0.5)' : 'none', transition: 'all 0.3s'
               }}>
                 [{bIdx}]
@@ -1879,7 +1879,7 @@ const GeneralDSVisualizer = ({ onBack, openSettings, initialType = 'HASH_TABLE',
             const isTombstone = val === 'TOMBSTONE';
             return (
               <div key={bIdx} ref={el => bucketRefs.current[bIdx] = el} style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: '10px' }}>
-                <span style={{ color: bIdx === frame.activeBucket ? '#fbbf24' : 'var(--text-secondary)', fontWeight: 'bold', fontSize: '1.1rem', transition: 'color 0.3s' }}>[{bIdx}]</span>
+                <span style={{ color: bIdx === frame.activeBucket ? 'var(--warning, #b45309)' : 'var(--text-secondary)', fontWeight: 'bold', fontSize: '1.1rem', transition: 'color 0.3s' }}>[{bIdx}]</span>
                 <div style={{
                   width: '75px', height: '75px', 
                   background: val !== null ? (isTombstone ? 'rgba(239, 68, 68, 0.15)' : (bIdx === frame.activeBucket ? 'linear-gradient(135deg, #10b981, #059669)' : 'linear-gradient(135deg, var(--accent-primary), var(--accent-secondary))')) : 'rgba(255,255,255,0.02)',
@@ -2114,8 +2114,8 @@ const GeneralDSVisualizer = ({ onBack, openSettings, initialType = 'HASH_TABLE',
         </div>
       )}
 
-      <div style={{ flex: 1, display: 'flex', flexDirection: isMobile ? 'column' : 'row', overflow: 'hidden' }}>
-        <div style={{ display: (isMobile && mobileTab !== 'vis') ? 'none' : 'flex', flex: 1, flexDirection: 'column', padding: isMobile ? '0.35rem' : '1.5rem', overflow: 'hidden' }}>
+      <div style={{ flex: 1, display: 'flex', flexDirection: isMobile ? 'column' : 'row', overflow: 'hidden', minHeight: 0 }}>
+        <div style={{ display: (isMobile && mobileTab !== 'vis') ? 'none' : 'flex', flex: 1, flexDirection: 'column', padding: isMobile ? '0.35rem' : '1.2rem', overflow: 'hidden', minHeight: 0 }}>
           {(() => {
             const isCompleted = timeline.length > 0 && currentStep === timeline.length - 1;
             const comp = getComplexityInfo(dsType, dsVariety);
@@ -2148,8 +2148,8 @@ const GeneralDSVisualizer = ({ onBack, openSettings, initialType = 'HASH_TABLE',
               </div>
             );
           })()}
-          <div style={{ flex: 1, display: 'flex', flexDirection: 'column', gap: '1.5rem', overflow: 'hidden', width: '100%' }}>
-            <div style={{ flex: 1, display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', background: 'var(--glass-bg)', borderRadius: '16px', border: '1px solid var(--glass-border)', overflow: 'auto', position: 'relative', boxShadow: 'inset 0 0 40px rgba(0,0,0,0.2)', width: '100%', height: '100%' }}>
+          <div style={{ flex: 1, display: 'flex', flexDirection: 'column', gap: isMobile ? '0.5rem' : '0.85rem', overflow: 'hidden', width: '100%', minHeight: 0 }}>
+            <div className="general-ds-canvas-container" style={{ flex: 1, display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', background: 'var(--canvas-bg, var(--glass-bg))', borderRadius: '16px', border: '1px solid var(--glass-border)', overflow: 'auto', position: 'relative', width: '100%', height: '100%' }}>
             
             {/* Hash Table Size Suggestion Alert */}
             {dsType === 'HASH_TABLE' && tableSize > 10 && (
@@ -2165,7 +2165,7 @@ const GeneralDSVisualizer = ({ onBack, openSettings, initialType = 'HASH_TABLE',
                 backdropFilter: 'blur(8px)',
                 boxShadow: '0 4px 15px rgba(0,0,0,0.2)',
                 fontSize: '0.75rem',
-                color: '#fbbf24',
+                color: 'var(--warning, #b45309)',
                 display: 'flex',
                 alignItems: 'center',
                 gap: '8px',
@@ -2187,11 +2187,11 @@ const GeneralDSVisualizer = ({ onBack, openSettings, initialType = 'HASH_TABLE',
               const comp = getComplexityInfo(dsType, dsVariety);
               if (!comp) return null;
               return (
-                <div style={{
+                <div className="floating-complexity-card" style={{
                   position: 'absolute',
                   top: '15px',
                   right: '15px',
-                  background: 'rgba(15, 23, 42, 0.85)',
+                  background: 'var(--glass-bg)',
                   backdropFilter: 'blur(10px)',
                   border: '1px solid var(--glass-border)',
                   borderRadius: '12px',
@@ -2200,7 +2200,7 @@ const GeneralDSVisualizer = ({ onBack, openSettings, initialType = 'HASH_TABLE',
                   boxShadow: '0 8px 32px 0 rgba(0, 0, 0, 0.4)',
                   zIndex: 20,
                   transition: 'all 0.3s ease',
-                  color: 'white'
+                  color: 'var(--text-primary)'
                 }}>
                   <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', cursor: 'pointer' }} onClick={() => setShowComplexity(!showComplexity)}>
                     <span style={{ fontWeight: 'bold', fontSize: '0.85rem', display: 'flex', alignItems: 'center', gap: '6px', color: 'var(--accent-primary)' }}>
@@ -2211,7 +2211,7 @@ const GeneralDSVisualizer = ({ onBack, openSettings, initialType = 'HASH_TABLE',
                   {showComplexity && (
                     <table style={{ width: '100%', borderCollapse: 'collapse', marginTop: '10px', fontSize: '0.75rem' }}>
                       <thead>
-                        <tr style={{ borderBottom: '1px solid rgba(255,255,255,0.1)', color: 'var(--text-secondary)' }}>
+                        <tr style={{ borderBottom: '1px solid var(--glass-border)', color: 'var(--text-secondary)' }}>
                           <th style={{ textAlign: 'left', padding: '4px 0' }}>Operation</th>
                           <th style={{ textAlign: 'center', padding: '4px 0' }}>Time</th>
                           <th style={{ textAlign: 'center', padding: '4px 0' }}>Space</th>
@@ -2219,9 +2219,9 @@ const GeneralDSVisualizer = ({ onBack, openSettings, initialType = 'HASH_TABLE',
                       </thead>
                       <tbody>
                         {comp.operations.map((op, idx) => (
-                          <tr key={idx} style={{ borderBottom: idx < comp.operations.length - 1 ? '1px solid rgba(255,255,255,0.05)' : 'none' }}>
+                          <tr key={idx} style={{ borderBottom: idx < comp.operations.length - 1 ? '1px solid var(--glass-border)' : 'none' }}>
                             <td style={{ padding: '6px 0', fontWeight: 'bold', color: 'var(--text-primary)' }}>{op.op}</td>
-                            <td style={{ padding: '6px 0', textAlign: 'center', fontFamily: 'monospace', color: '#fbbf24' }}>{op.time}</td>
+                            <td style={{ padding: '6px 0', textAlign: 'center', fontFamily: 'monospace', color: 'var(--warning, #b45309)' }}>{op.time}</td>
                             <td style={{ padding: '6px 0', textAlign: 'center', fontFamily: 'monospace', color: '#60a5fa' }}>{op.space}</td>
                           </tr>
                         ))}
@@ -2234,18 +2234,19 @@ const GeneralDSVisualizer = ({ onBack, openSettings, initialType = 'HASH_TABLE',
             </div>
             {showLogPanel && !isMobile && (
             <div 
+              className="floating-log-panel"
               style={{
                 position: 'absolute',
                 left: `${logPosition.x}px`,
                 top: `${logPosition.y}px`,
                 width: `${logSize.width}px`,
                 height: `${logSize.height}px`,
-                background: 'rgba(15, 23, 42, 0.45)', // Translucent glassmorphism
+                background: 'var(--glass-bg)',
                 backdropFilter: 'blur(16px) saturate(180%)',
                 WebkitBackdropFilter: 'blur(16px) saturate(180%)',
-                border: '1px solid rgba(255, 255, 255, 0.08)',
+                border: '1px solid var(--glass-border)',
                 borderRadius: '16px',
-                boxShadow: '0 20px 50px rgba(0,0,0,0.5)',
+                boxShadow: 'var(--card-shadow, 0 10px 30px -5px rgba(0,0,0,0.12), 0 4px 6px -4px rgba(0,0,0,0.08))',
                 display: 'flex',
                 flexDirection: 'column',
                 overflow: 'hidden',
@@ -2258,8 +2259,8 @@ const GeneralDSVisualizer = ({ onBack, openSettings, initialType = 'HASH_TABLE',
                 onTouchStart={handleLogHeaderMouseDown}
                 style={{
                   padding: '8px 12px',
-                  background: 'rgba(255, 255, 255, 0.04)',
-                  borderBottom: '1px solid rgba(255, 255, 255, 0.08)',
+                  background: 'var(--panel-inner-bg, rgba(0, 0, 0, 0.03))',
+                  borderBottom: '1px solid var(--glass-border)',
                   display: 'flex',
                   justifyContent: 'space-between',
                   alignItems: 'center',
@@ -2321,7 +2322,7 @@ const GeneralDSVisualizer = ({ onBack, openSettings, initialType = 'HASH_TABLE',
                 <div
                   style={{
                     width: `${activeStateWidth}px`,
-                    background: 'rgba(0, 0, 0, 0.25)',
+                    background: 'var(--panel-inner-bg, rgba(0, 0, 0, 0.04))',
                     borderRight: '1px solid var(--glass-border)',
                     padding: '6px 8px',
                     display: 'flex',
@@ -2333,7 +2334,7 @@ const GeneralDSVisualizer = ({ onBack, openSettings, initialType = 'HASH_TABLE',
                     flexShrink: 0
                   }}
                 >
-                  <div style={{ fontSize: '0.72rem', color: 'var(--accent-primary)', textTransform: 'uppercase', fontWeight: 'bold', borderBottom: '1px solid rgba(255,255,255,0.06)', paddingBottom: '2px' }}>
+                  <div style={{ fontSize: '0.72rem', color: 'var(--accent-primary)', textTransform: 'uppercase', fontWeight: 'bold', borderBottom: '1px solid var(--glass-border)', paddingBottom: '2px' }}>
                     Active State
                   </div>
                   <div>
@@ -2350,15 +2351,15 @@ const GeneralDSVisualizer = ({ onBack, openSettings, initialType = 'HASH_TABLE',
                         <div>
                           <div style={{ marginBottom: '2px', fontSize: '0.7rem' }}>Elements:</div>
                           {frame.arr ? (
-                            <div style={{ background: 'rgba(0,0,0,0.18)', padding: '2px 4px', borderRadius: '4px', fontFamily: 'monospace', color: '#34d399', wordBreak: 'break-all', fontWeight: 'bold' }}>
+                            <div style={{ background: 'var(--panel-code-bg, rgba(0,0,0,0.06))', border: '1px solid var(--glass-border)', padding: '2px 4px', borderRadius: '4px', fontFamily: 'monospace', color: 'var(--success, #059669)', wordBreak: 'break-all', fontWeight: 'bold' }}>
                               [{frame.arr.join(', ')}]
                             </div>
                           ) : frame.cq && frame.cq.arr ? (
-                            <div style={{ background: 'rgba(0,0,0,0.18)', padding: '2px 4px', borderRadius: '4px', fontFamily: 'monospace', color: '#34d399', wordBreak: 'break-all', fontWeight: 'bold' }}>
+                            <div style={{ background: 'var(--panel-code-bg, rgba(0,0,0,0.06))', border: '1px solid var(--glass-border)', padding: '2px 4px', borderRadius: '4px', fontFamily: 'monospace', color: 'var(--success, #059669)', wordBreak: 'break-all', fontWeight: 'bold' }}>
                               [{frame.cq.arr.map((x) => x === null ? 'null' : x).join(', ')}]
                             </div>
                           ) : frame.ht ? (
-                            <div style={{ background: 'rgba(0,0,0,0.18)', padding: '2px 4px', borderRadius: '4px', fontFamily: 'monospace', color: '#34d399', fontSize: '0.72rem', overflowY: 'auto', maxHeight: '90px' }}>
+                            <div style={{ background: 'var(--panel-code-bg, rgba(0,0,0,0.06))', border: '1px solid var(--glass-border)', padding: '2px 4px', borderRadius: '4px', fontFamily: 'monospace', color: 'var(--success, #059669)', fontSize: '0.72rem', overflowY: 'auto', maxHeight: '90px' }}>
                               {frame.ht.map((bucket, bIdx) => (
                                 <div key={bIdx} style={{ whiteSpace: 'nowrap' }}>
                                   {bIdx}: {Array.isArray(bucket) ? (bucket.length > 0 ? bucket.join(' ➔ ') : 'empty') : (bucket === null ? 'empty' : bucket === 'TOMBSTONE' ? 'DEL' : bucket)}
@@ -2370,14 +2371,14 @@ const GeneralDSVisualizer = ({ onBack, openSettings, initialType = 'HASH_TABLE',
                           )}
                         </div>
 
-                        <div style={{ borderTop: '1px solid rgba(255,255,255,0.06)', paddingTop: '4px', marginTop: '2px' }}>
+                        <div style={{ borderTop: '1px solid var(--glass-border)', paddingTop: '4px', marginTop: '2px' }}>
                           <div style={{ fontSize: '0.7rem', textTransform: 'uppercase', fontWeight: 'bold', marginBottom: '2px', color: 'var(--accent-secondary)' }}>Trace Variables</div>
                           {dsType === 'HASH_TABLE' ? (
                             <div style={{ display: 'flex', flexDirection: 'column', gap: '2px' }}>
                               {frame.activeBucket !== undefined && frame.activeBucket !== -1 && (
                                 <div style={{ display: 'flex', justifyContent: 'space-between' }}>
                                   <span>Target Slot:</span>
-                                  <span style={{ color: '#fbbf24', fontWeight: 'bold', fontFamily: 'monospace' }}>
+                                  <span style={{ color: 'var(--warning, #d97706)', fontWeight: 'bold', fontFamily: 'monospace' }}>
                                     {frame.activeBucket}
                                   </span>
                                 </div>
@@ -2396,13 +2397,13 @@ const GeneralDSVisualizer = ({ onBack, openSettings, initialType = 'HASH_TABLE',
                             <div style={{ display: 'flex', flexDirection: 'column', gap: '2px' }}>
                               <div style={{ display: 'flex', justifyContent: 'space-between' }}>
                                 <span>Front Index:</span>
-                                <span style={{ color: '#fbbf24', fontWeight: 'bold', fontFamily: 'monospace' }}>
+                                <span style={{ color: 'var(--warning, #d97706)', fontWeight: 'bold', fontFamily: 'monospace' }}>
                                   {frame.cq && frame.cq.f !== -1 ? frame.cq.f : 'N/A'}
                                 </span>
                               </div>
                               <div style={{ display: 'flex', justifyContent: 'space-between' }}>
                                 <span>Rear Index:</span>
-                                <span style={{ color: '#60a5fa', fontWeight: 'bold', fontFamily: 'monospace' }}>
+                                <span style={{ color: 'var(--accent-primary, #2563eb)', fontWeight: 'bold', fontFamily: 'monospace' }}>
                                   {frame.cq && frame.cq.r !== -1 ? frame.cq.r : 'N/A'}
                                 </span>
                               </div>
@@ -2413,7 +2414,7 @@ const GeneralDSVisualizer = ({ onBack, openSettings, initialType = 'HASH_TABLE',
                                 <>
                                   <div style={{ display: 'flex', justifyContent: 'space-between' }}>
                                     <span>Active Val:</span>
-                                    <span style={{ color: '#fbbf24', fontWeight: 'bold' }}>
+                                    <span style={{ color: 'var(--warning, #d97706)', fontWeight: 'bold' }}>
                                       {frame.arr ? (frame.arr[frame.activeIdx] ?? 'N/A') : 'N/A'}
                                     </span>
                                   </div>
@@ -2443,7 +2444,7 @@ const GeneralDSVisualizer = ({ onBack, openSettings, initialType = 'HASH_TABLE',
                 />
 
                 {/* Operations/Timeline Log */}
-                <div ref={logContainerRef} style={{ flex: 1, background: 'rgba(0,0,0,0.15)', padding: '6px 8px', overflowY: 'auto', borderRight: '1px solid var(--glass-border)' }}>
+                <div ref={logContainerRef} style={{ flex: 1, background: 'var(--panel-inner-bg, rgba(0,0,0,0.02))', padding: '6px 8px', overflowY: 'auto', borderRight: '1px solid var(--glass-border)' }}>
                   <div style={{ fontSize: '0.7rem', color: 'var(--text-secondary)', fontWeight: 'bold', textTransform: 'uppercase', marginBottom: '4px' }}>Log Steps</div>
                   {timeline.length === 0 && (
                     <div style={{ color: 'var(--text-secondary)', fontStyle: 'italic', fontSize: '0.7rem' }}>
@@ -2464,8 +2465,8 @@ const GeneralDSVisualizer = ({ onBack, openSettings, initialType = 'HASH_TABLE',
 
                 {/* Popped/Removed Elements History */}
                 {showHistory && (
-                  <div style={{ flex: 1, background: 'rgba(0,0,0,0.15)', padding: '6px 8px', overflowY: 'auto' }}>
-                    <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', borderBottom: '1px solid rgba(255,255,255,0.06)', paddingBottom: '4px', marginBottom: '4px' }}>
+                  <div style={{ flex: 1, background: 'var(--panel-inner-bg, rgba(0,0,0,0.02))', padding: '6px 8px', overflowY: 'auto' }}>
+                    <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', borderBottom: '1px solid var(--glass-border)', paddingBottom: '4px', marginBottom: '4px' }}>
                       <span style={{ fontSize: '0.7rem', color: 'var(--text-secondary)', fontWeight: 'bold', textTransform: 'uppercase' }}>
                         {dsType === 'STACK' && '🗑️ Popped'}
                         {dsType === 'QUEUE' && '🗑️ Dequeued'}
@@ -2522,19 +2523,60 @@ const GeneralDSVisualizer = ({ onBack, openSettings, initialType = 'HASH_TABLE',
           )}
           </div>
           
-          <div style={{ display: 'flex', flexDirection: isMobile ? 'column' : 'row', justifyContent: 'space-between', alignItems: 'center', marginTop: '1.5rem', background: 'var(--glass-bg)', padding: isMobile ? '10px 14px' : '12px 24px', borderRadius: '16px', border: '1px solid var(--glass-border)', gap: '10px' }}>
+          <div style={{ display: 'flex', flexDirection: isMobile ? 'column' : 'row', justifyContent: 'space-between', alignItems: 'center', marginTop: isMobile ? '0.5rem' : '0.85rem', background: 'var(--glass-bg)', padding: isMobile ? '10px 14px' : '10px 20px', borderRadius: '16px', border: '1px solid var(--glass-border)', gap: '10px', flexShrink: 0, boxShadow: '0 4px 15px rgba(0,0,0,0.06)' }}>
             <div style={{ display: 'flex', alignItems: 'center', gap: isMobile ? '4px' : '8px', flexWrap: 'wrap', justifyContent: 'center' }}>
               <button className="btn btn-clear" style={{ padding: '0.5rem 1rem', fontWeight: 'bold' }} onClick={() => { setIsPlaying(false); setCurrentStep(0); }} disabled={!timeline.length||currentStep===0}>⏮ First</button>
               <button className="btn btn-clear" style={{ padding: '0.5rem 1rem', fontWeight: 'bold' }} onClick={() => { setIsPlaying(false); setCurrentStep(p => Math.max(0, p - 1)); }} disabled={!timeline.length||currentStep===0}>◀ Prev</button>
               <button className="btn btn-clear" style={{ padding: '0.5rem 1.5rem', border: 'none', background: isPlaying ? 'rgba(59,130,246,0.6)' : 'var(--accent-primary)', color: 'white', fontWeight: 'bold', boxShadow: '0 4px 10px rgba(59,130,246,0.4)' }} onClick={() => setIsPlaying(p => !p)} disabled={!timeline.length}>{isPlaying ? '⏸ Pause' : '▶ Play'}</button>
               <button className="btn btn-clear" style={{ padding: '0.5rem 1rem', fontWeight: 'bold' }} onClick={() => { setIsPlaying(false); setCurrentStep(p => Math.min(timeline.length - 1, p + 1)); }} disabled={!timeline.length||currentStep===timeline.length-1}>Next ▶</button>
               <button className="btn btn-clear" style={{ padding: '0.5rem 1rem', fontWeight: 'bold' }} onClick={() => { setIsPlaying(false); setCurrentStep(timeline.length - 1); }} disabled={!timeline.length||currentStep===timeline.length-1}>Last ⏭</button>
-              <span style={{ fontSize: '0.85rem', color: 'var(--text-secondary)', marginLeft: isMobile ? '5px' : '15px', fontWeight: 'bold', fontFamily: 'monospace' }}>Frame: {timeline.length ? currentStep + 1 : 0} / {timeline.length}</span>
             </div>
 
-            <div style={{ display: 'flex', alignItems: 'center', gap: '8px', width: isMobile ? '100%' : 'auto', justifyContent: 'center' }}>
-              <span style={{ color: 'var(--text-secondary)', fontWeight: 600, fontSize: '0.85rem', whiteSpace: 'nowrap' }}>Speed ({speed}ms)</span>
-              <input type="range" min={50} max={1500} step={50} value={1550 - speed} onChange={e => setSpeed(1550 - Number(e.target.value))} style={{ width: isMobile ? '100%' : '160px', accentColor: 'var(--accent-primary)', cursor: 'pointer' }} title={`Delay: ${speed}ms`}/>
+            {/* Center Step Status Bar */}
+            <div style={{ flex: 1, display: 'flex', alignItems: 'center', justifyContent: 'center', padding: '0 12px', overflow: 'hidden' }}>
+              <span style={{
+                fontSize: '0.86rem',
+                color: 'var(--text-primary)',
+                fontWeight: 600,
+                background: 'var(--panel-inner-bg, rgba(0,0,0,0.04))',
+                padding: '5px 16px',
+                borderRadius: '20px',
+                border: '1px solid var(--glass-border)',
+                whiteSpace: 'nowrap',
+                overflow: 'hidden',
+                textOverflow: 'ellipsis',
+                maxWidth: '100%',
+                boxShadow: '0 2px 8px rgba(0,0,0,0.06)'
+              }} title={frame.msg || 'Ready'}>
+                💡 {frame.msg || 'Select an operation to begin...'}
+              </span>
+            </div>
+
+            <div style={{ display: 'flex', alignItems: 'center', gap: '10px', flexShrink: 0 }}>
+              <span style={{ fontSize: '0.85rem', color: 'var(--text-secondary)', fontWeight: 'bold', fontFamily: 'monospace', whiteSpace: 'nowrap' }}>Frame: {timeline.length ? currentStep + 1 : 0} / {timeline.length}</span>
+              <input 
+                type="range"
+                min={0}
+                max={Math.max(0, timeline.length - 1)}
+                value={currentStep}
+                disabled={timeline.length === 0}
+                onChange={e => {
+                  setIsPlaying(false);
+                  setCurrentStep(Number(e.target.value));
+                }}
+                style={{
+                  width: '110px',
+                  accentColor: 'var(--accent-primary)',
+                  cursor: timeline.length > 0 ? 'pointer' : 'default',
+                  height: '6px'
+                }}
+                title={`Step scrubber: Jump to frame ${timeline.length ? currentStep + 1 : 0} / ${timeline.length}`}
+              />
+
+              <div style={{ display: 'flex', alignItems: 'center', gap: '8px', marginLeft: '6px' }}>
+                <span style={{ color: 'var(--text-secondary)', fontWeight: 600, fontSize: '0.85rem', whiteSpace: 'nowrap' }}>Speed ({speed}ms)</span>
+                <input type="range" min={50} max={1500} step={50} value={1550 - speed} onChange={e => setSpeed(1550 - Number(e.target.value))} style={{ width: isMobile ? '100%' : '130px', accentColor: 'var(--accent-primary)', cursor: 'pointer' }} title={`Delay: ${speed}ms`}/>
+              </div>
             </div>
           </div>
         </div>
@@ -2591,7 +2633,7 @@ const GeneralDSVisualizer = ({ onBack, openSettings, initialType = 'HASH_TABLE',
                       {frame.activeBucket !== undefined && frame.activeBucket !== -1 && (
                         <div style={{ display: 'flex', justifyContent: 'space-between' }}>
                           <span>Target Slot:</span>
-                          <span style={{ color: '#fbbf24', fontWeight: 'bold', fontFamily: 'monospace' }}>
+                          <span style={{ color: 'var(--warning, #b45309)', fontWeight: 'bold', fontFamily: 'monospace' }}>
                             {frame.activeBucket}
                           </span>
                         </div>
@@ -2610,7 +2652,7 @@ const GeneralDSVisualizer = ({ onBack, openSettings, initialType = 'HASH_TABLE',
                     <div style={{ display: 'flex', flexDirection: 'column', gap: '4px' }}>
                       <div style={{ display: 'flex', justifyContent: 'space-between' }}>
                         <span>Front Index:</span>
-                        <span style={{ color: '#fbbf24', fontWeight: 'bold', fontFamily: 'monospace' }}>
+                        <span style={{ color: 'var(--warning, #b45309)', fontWeight: 'bold', fontFamily: 'monospace' }}>
                           {frame.cq && frame.cq.f !== -1 ? frame.cq.f : 'N/A'}
                         </span>
                       </div>
@@ -2627,7 +2669,7 @@ const GeneralDSVisualizer = ({ onBack, openSettings, initialType = 'HASH_TABLE',
                         <>
                           <div style={{ display: 'flex', justifyContent: 'space-between' }}>
                             <span>Active Val:</span>
-                            <span style={{ color: '#fbbf24', fontWeight: 'bold' }}>
+                            <span style={{ color: 'var(--warning, #b45309)', fontWeight: 'bold' }}>
                               {frame.arr ? (frame.arr[frame.activeIdx] ?? 'N/A') : 'N/A'}
                             </span>
                           </div>
@@ -2647,7 +2689,7 @@ const GeneralDSVisualizer = ({ onBack, openSettings, initialType = 'HASH_TABLE',
               </div>
 
               {/* Operations/Timeline Log */}
-              <div style={{ flex: '1 0 150px', background: 'rgba(0,0,0,0.15)', borderRadius: '10px', padding: '0.75rem 1rem', overflowY: 'auto', border: '1px solid rgba(255,255,255,0.03)' }}>
+              <div style={{ flex: '1 0 150px', background: 'var(--panel-inner-bg, rgba(0,0,0,0.02))', borderRadius: '10px', padding: '0.75rem 1rem', overflowY: 'auto', border: '1px solid var(--glass-border)' }}>
                 <div style={{ fontSize: '0.75rem', color: 'var(--text-secondary)', fontWeight: 'bold', textTransform: 'uppercase', marginBottom: '8px' }}>Log Steps</div>
                 {timeline.length === 0 && (
                   <div style={{ color: 'var(--text-secondary)', fontStyle: 'italic', fontSize: '0.8rem' }}>
@@ -2668,8 +2710,8 @@ const GeneralDSVisualizer = ({ onBack, openSettings, initialType = 'HASH_TABLE',
 
               {/* Popped/Removed Elements History (under mobile Tab 3) */}
               {showHistory && (
-                <div style={{ flex: '1 0 150px', background: 'rgba(0,0,0,0.15)', borderRadius: '10px', padding: '0.75rem 1rem', overflowY: 'auto', border: '1px solid rgba(255,255,255,0.03)' }}>
-                  <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', borderBottom: '1px solid rgba(255,255,255,0.06)', paddingBottom: '4px', marginBottom: '8px' }}>
+                <div style={{ flex: '1 0 150px', background: 'var(--panel-inner-bg, rgba(0,0,0,0.02))', borderRadius: '10px', padding: '0.75rem 1rem', overflowY: 'auto', border: '1px solid var(--glass-border)' }}>
+                  <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', borderBottom: '1px solid var(--glass-border)', paddingBottom: '4px', marginBottom: '8px' }}>
                     <span style={{ fontSize: '0.75rem', color: 'var(--text-secondary)', fontWeight: 'bold', textTransform: 'uppercase' }}>
                       {dsType === 'STACK' && '🗑️ Popped'}
                       {dsType === 'QUEUE' && '🗑️ Dequeued'}
@@ -2724,8 +2766,8 @@ const GeneralDSVisualizer = ({ onBack, openSettings, initialType = 'HASH_TABLE',
             {/* Sticky 2-row header */}
             <div style={{ flexShrink: 0, borderBottom: '1px solid var(--glass-border)', background: 'var(--bg-secondary)' }}>
               {/* Row 1: Language pills */}
-              <div style={{ padding: '8px 12px', display: 'flex', alignItems: 'center', gap: '5px', borderBottom: '1px solid rgba(255,255,255,0.05)', flexWrap: 'wrap' }}>
-                <span style={{ fontSize: '0.78rem', fontWeight: 700, color: 'var(--text-secondary)', whiteSpace: 'nowrap' }}>🌐 Lang:</span>
+              <div style={{ padding: '8px 12px', display: 'flex', alignItems: 'center', gap: '5px', borderBottom: '1px solid var(--glass-border)', flexWrap: 'wrap' }}>
+                <span style={{ fontSize: '0.78rem', fontWeight: 700, color: 'var(--text-primary)', whiteSpace: 'nowrap' }}>🌐 Lang:</span>
                 {['C','Java','Python','JS'].map(lang => (
                   <button key={lang} onClick={() => setCodeLanguage(lang)}
                     style={{
@@ -2733,10 +2775,10 @@ const GeneralDSVisualizer = ({ onBack, openSettings, initialType = 'HASH_TABLE',
                       fontSize: '0.74rem',
                       borderRadius: '5px',
                       border: codeLanguage === lang ? '1.5px solid var(--accent-primary)' : '1px solid var(--glass-border)',
-                      background: codeLanguage === lang ? 'var(--accent-primary)' : 'transparent',
-                      color: codeLanguage === lang ? '#fff' : 'var(--text-secondary)',
+                      background: codeLanguage === lang ? 'var(--accent-primary)' : 'var(--panel-inner-bg, rgba(0,0,0,0.04))',
+                      color: codeLanguage === lang ? '#fff' : 'var(--text-primary)',
                       cursor: 'pointer',
-                      fontWeight: codeLanguage === lang ? 700 : 400,
+                      fontWeight: codeLanguage === lang ? 700 : 500,
                       transition: 'all 0.15s'
                     }}
                   >{lang === 'JS' ? 'JavaScript' : lang}</button>

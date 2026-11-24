@@ -4,6 +4,7 @@
 // Machine Learning, Embedded Systems, Operating Systems, Advanced Algorithms & German A1.
 
 import { EXPANDED_COURSES_KNOWLEDGE_BASE, findExpandedCoursesDirectResponse } from './expandedCurriculumData.js';
+import { KLEF_Y25_KNOWLEDGE_BASE, findKlefY25DirectResponse } from './klefY25CurriculumData.js';
 
 const BASE_CURRICULUM_KNOWLEDGE = [
   // ─────────────────────────────────────────────────────────────────────────────
@@ -1158,14 +1159,19 @@ const BASE_CURRICULUM_KNOWLEDGE = [
 
 export const CURRICULUM_KNOWLEDGE_BASE = [
   ...BASE_CURRICULUM_KNOWLEDGE,
-  ...EXPANDED_COURSES_KNOWLEDGE_BASE
+  ...EXPANDED_COURSES_KNOWLEDGE_BASE,
+  ...KLEF_Y25_KNOWLEDGE_BASE
 ];
 
 // ─── Direct Topic Resolver for Instant Expert Curriculum Answering ──────────
 export function findCurriculumDirectResponse(lower) {
   if (!lower) return null;
 
-  // 0. Check Expanded Curricula
+  // 0A. Check KLEF Y25 B.Tech Curriculum (y25btech.klef.in)
+  const klefRes = findKlefY25DirectResponse(lower);
+  if (klefRes) return klefRes;
+
+  // 0B. Check Expanded Curricula
   const expandedRes = findExpandedCoursesDirectResponse(lower);
   if (expandedRes) return expandedRes;
 

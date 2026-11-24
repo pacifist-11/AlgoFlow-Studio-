@@ -33,6 +33,7 @@ export async function ensureDeactivationTables() {
       await sql`ALTER TABLE users ADD COLUMN IF NOT EXISTS status VARCHAR(50) DEFAULT 'active'`;
       await sql`ALTER TABLE users ADD COLUMN IF NOT EXISTS deactivation_scheduled_at TIMESTAMP WITHOUT TIME ZONE`;
       await sql`ALTER TABLE users ADD COLUMN IF NOT EXISTS deactivation_requested_at TIMESTAMP WITHOUT TIME ZONE`;
+      await sql`ALTER TABLE users ADD COLUMN IF NOT EXISTS created_at TIMESTAMP WITHOUT TIME ZONE DEFAULT (NOW() AT TIME ZONE 'Asia/Kolkata')`;
     } catch {}
 
     tablesChecked = true;

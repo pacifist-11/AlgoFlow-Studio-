@@ -727,20 +727,23 @@ export function generateLocalRagResponse(userMessage, activeCode = '', activeLan
 
   if (isScreenQuery) {
     const screen = getScreenContext();
-    const hasError = screen.lastErrorOrIssue || (screen.runtimeErrors && screen.runtimeErrors.length > 0);
+    const isHome = !currentContext?.appMode || screen.screenTitle === 'Home Dashboard' || screen.screenTitle === 'AlgoFlow Studio';
+    const hasError = !isHome && (screen.lastErrorOrIssue || (screen.runtimeErrors && screen.runtimeErrors.length > 0));
     const activeErr = screen.lastErrorOrIssue || (screen.runtimeErrors ? screen.runtimeErrors[0] : null);
 
     let answer = `### 👁️ Live Screen Telemetry & Status Report\n\n`;
     answer += `I am actively monitoring your screen in real time. Here is what is currently on your display:\n\n`;
-    answer += `* 🖥️ **Active Visualizer / Studio:** ${screen.screenTitle || 'AlgoFlow Dashboard'}\n`;
-    answer += `* ⚙️ **Active Algorithm:** ${screen.activeAlgo || 'None'}\n`;
-    if (screen.totalSteps > 0) {
+    answer += `* 🖥️ **Active Visualizer / Studio:** ${isHome ? 'AlgoFlow Studio Home Dashboard' : (screen.screenTitle || 'AlgoFlow Dashboard')}\n`;
+    answer += `* ⚙️ **Active Algorithm:** ${isHome ? 'None (Browsing Visualizers)' : (screen.activeAlgo || 'None')}\n`;
+    if (!isHome && screen.totalSteps > 0) {
       answer += `* ⏱️ **Current Simulation Step:** Step ${screen.currentStep} of ${screen.totalSteps}\n`;
     }
-    if (screen.currentStepMessage) {
+    if (!isHome && screen.currentStepMessage) {
       answer += `* 📝 **Live Step Action:** "${screen.currentStepMessage}"\n`;
     }
-    if (screen.screenDataSummary) {
+    if (isHome) {
+      answer += `* 📊 **Canvas / Data Summary:** You are currently on the AlgoFlow Studio Home Dashboard. You can select any visualizer card (Sorting, Searching, Trees, Graphs, Dynamic Programming, or Data Structures) from the catalog to launch interactive animations.\n`;
+    } else if (screen.screenDataSummary) {
       answer += `* 📊 **Canvas / Data Summary:** ${screen.screenDataSummary}\n`;
     }
 
@@ -2483,6 +2486,7 @@ I am a calm, intelligent assistant built right into AlgoFlow Studio, designed wi
 
 **How I can support you:**
 * 🧠 Complete knowledge of all **16 B.Tech Engineering Branches**, **8 Programming Languages**, and **every AlgoFlow Visualizer**.
+* 🏛️ Authoritative grounding in the **KLEF Y25 B.Tech Academic Curriculum (y25btech.klef.in)**: DSA-1 (\`ESC25SC1204ECASE\`), DSA-2 (\`ESC25SC1305ECASE\`), and DSA-3 (\`PCC25CS2103ECASE\`).
 * ⚡ I run **100% offline directly in your browser** — instant, private, and always available.
 * 💧 You can adjust my window transparency anytime with the **💧 Opacity slider** to see code and graphs behind me!
 

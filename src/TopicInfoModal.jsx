@@ -7,19 +7,19 @@ const TopicInfoModal = ({ topicKey, customTitle, isOpen, onClose }) => {
 
   const info = TOPIC_INFO[topicKey] || {
     title: customTitle || topicKey || 'Topic Guide',
-    summary: 'An interactive data structure / algorithm visualizer module to help you learn step-by-step.',
-    formula: 'Result = Evaluate(Input, Parameters)',
+    summary: 'Master this algorithmic concept with step-by-step interactive animations, memory tracing, and complexity analysis.',
+    formula: 'Time Complexity: O(log N) to O(N) | Space Complexity: O(1) to O(N)',
     example: '1. Enter input values.\n2. Click Run/Insert to observe calculation steps.\n3. Verify output in visualizer.',
     realLife: [
-      'Used in software development for data processing and optimization.',
-      'Used in web servers, databases, and operating system modules.'
+      'Used in software systems for low-latency indexing and resource optimization.',
+      'Core foundation in database query engines and network routing tables.'
     ],
     howToUse: [
       'Use the input controls to perform operations (Insert, Delete, Search, Step).',
       'Observe the visual state changes and pointer movements step-by-step.',
       'Check the Operations Log panel to inspect the exact formula or logic evaluated.'
     ],
-    keyPoints: 'Designed for interactive pair programming and algorithm mastery.'
+    keyPoints: 'Designed for interactive algorithm mastery, pattern recognition, and technical interviews.'
   };
 
   return (
@@ -50,42 +50,46 @@ const TopicInfoModal = ({ topicKey, customTitle, isOpen, onClose }) => {
           width: '100%',
           maxHeight: '90vh',
           overflowY: 'auto',
-          padding: '1.8rem',
+          padding: 'clamp(1rem, 3vw, 1.8rem)',
           color: 'var(--text-primary)',
           position: 'relative',
           animation: 'fadeIn 0.2s ease-out'
         }}
         onClick={e => e.stopPropagation()}
       >
-        {/* Close Button */}
-        <button 
-          onClick={onClose} 
-          style={{
-            position: 'absolute',
-            top: '15px',
-            right: '18px',
-            background: 'var(--bg-primary, rgba(255,255,255,0.05))',
-            border: '1px solid var(--glass-border)',
-            color: 'var(--text-secondary)',
-            fontSize: '1.2rem',
-            cursor: 'pointer',
-            padding: '4px 10px',
-            borderRadius: '8px'
-          }}
-          title="Close"
-        >
-          ✕
-        </button>
-
-        {/* Modal Header */}
-        <div style={{ display: 'flex', alignItems: 'center', gap: '12px', marginBottom: '1.2rem', borderBottom: '1px solid var(--glass-border)', paddingBottom: '0.8rem' }}>
-          <span style={{ fontSize: '2rem' }}>ℹ️</span>
-          <div>
-            <h3 style={{ margin: 0, fontSize: '1.35rem', fontWeight: 800, background: 'linear-gradient(to right, var(--accent-primary), var(--accent-secondary))', WebkitBackgroundClip: 'text', WebkitTextFillColor: 'transparent' }}>
-              {info.title}
-            </h3>
-            <span style={{ fontSize: '0.8rem', color: 'var(--accent-primary, #60a5fa)', fontWeight: 600 }}>Beginner Guide & Real-Life Uses</span>
+        {/* Modal Header with Integrated Close Button */}
+        <div style={{ display: 'flex', alignItems: 'flex-start', justifyContent: 'space-between', gap: '12px', marginBottom: '1.2rem', borderBottom: '1px solid var(--glass-border)', paddingBottom: '0.8rem' }}>
+          <div style={{ display: 'flex', alignItems: 'center', gap: '12px', flex: 1, minWidth: 0 }}>
+            <span style={{ fontSize: '2rem', flexShrink: 0 }}>ℹ️</span>
+            <div style={{ minWidth: 0 }}>
+              <h3 style={{ margin: 0, fontSize: 'clamp(1.1rem, 2.5vw, 1.35rem)', fontWeight: 800, background: 'linear-gradient(to right, var(--accent-primary), var(--accent-secondary))', WebkitBackgroundClip: 'text', WebkitTextFillColor: 'transparent', wordBreak: 'break-word' }}>
+                {info.title}
+              </h3>
+              <span style={{ fontSize: '0.8rem', color: 'var(--accent-primary, #60a5fa)', fontWeight: 600 }}>Beginner Guide & Real-Life Uses</span>
+            </div>
           </div>
+          
+          <button 
+            onClick={onClose} 
+            style={{
+              background: 'var(--bg-primary, rgba(255,255,255,0.05))',
+              border: '1px solid var(--glass-border)',
+              color: 'var(--text-secondary)',
+              fontSize: '1.2rem',
+              cursor: 'pointer',
+              padding: '4px 10px',
+              borderRadius: '8px',
+              flexShrink: 0,
+              minWidth: '36px',
+              minHeight: '36px',
+              display: 'flex',
+              alignItems: 'center',
+              justifyContent: 'center'
+            }}
+            title="Close"
+          >
+            ✕
+          </button>
         </div>
 
         {/* What it is */}

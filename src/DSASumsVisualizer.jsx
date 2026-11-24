@@ -938,7 +938,7 @@ const DSASumsVisualizer = ({ onBack, onOpenDebugger }) => {
           <div style={{ background: 'var(--bg-secondary)', borderRadius: '14px', border: '1px solid var(--glass-border)', overflow: 'hidden' }}>
             <div style={{ padding: '8px 14px', display: 'flex', justifyContent: 'space-between', alignItems: 'center', borderBottom: '1px solid var(--glass-border)', background: 'var(--glass-bg)' }}>
               <div style={{ display: 'flex', alignItems: 'center', gap: '6px' }}>
-                <span style={{ fontSize: '0.78rem', fontWeight: 700, color: 'var(--text-secondary)' }}>💻 Solution Code:</span>
+                <span style={{ fontSize: '0.78rem', fontWeight: 700, color: 'var(--text-primary)' }}>💻 Solution Code:</span>
                 {['C++', 'Java', 'Python', 'JS', 'C'].map(lang => (
                   <button
                     key={lang}
@@ -948,10 +948,10 @@ const DSASumsVisualizer = ({ onBack, onOpenDebugger }) => {
                       fontSize: '0.75rem',
                       borderRadius: '6px',
                       border: activeLang === lang ? '1.5px solid var(--accent-primary)' : '1px solid var(--glass-border)',
-                      background: activeLang === lang ? 'var(--accent-primary)' : 'transparent',
-                      color: activeLang === lang ? '#fff' : 'var(--text-secondary)',
+                      background: activeLang === lang ? 'var(--accent-primary)' : 'var(--panel-inner-bg, rgba(0,0,0,0.04))',
+                      color: activeLang === lang ? '#fff' : 'var(--text-primary)',
                       cursor: 'pointer',
-                      fontWeight: activeLang === lang ? 700 : 400
+                      fontWeight: activeLang === lang ? 700 : 500
                     }}
                   >
                     {lang === 'JS' ? 'JavaScript' : lang}
@@ -959,7 +959,7 @@ const DSASumsVisualizer = ({ onBack, onOpenDebugger }) => {
                 ))}
 
                 {/* Full Program vs Snippet Toggle */}
-                <div style={{ display: 'flex', background: 'var(--glass-bg)', borderRadius: '6px', padding: '2px', border: '1px solid var(--glass-border)', marginLeft: '6px' }}>
+                <div style={{ display: 'flex', background: 'var(--panel-inner-bg, rgba(0,0,0,0.05))', borderRadius: '6px', padding: '2px', border: '1px solid var(--glass-border)', marginLeft: '6px' }}>
                   <button 
                     onClick={() => setCodeViewMode('full')}
                     style={{
@@ -968,9 +968,9 @@ const DSASumsVisualizer = ({ onBack, onOpenDebugger }) => {
                       borderRadius: '4px',
                       border: 'none',
                       background: codeViewMode === 'full' ? 'var(--accent-primary)' : 'transparent',
-                      color: codeViewMode === 'full' ? '#fff' : 'var(--text-secondary)',
+                      color: codeViewMode === 'full' ? '#fff' : 'var(--text-primary)',
                       cursor: 'pointer',
-                      fontWeight: codeViewMode === 'full' ? 700 : 500
+                      fontWeight: codeViewMode === 'full' ? 700 : 600
                     }}
                     title="Display full complete runnable program with imports and main()"
                   >
@@ -984,9 +984,9 @@ const DSASumsVisualizer = ({ onBack, onOpenDebugger }) => {
                       borderRadius: '4px',
                       border: 'none',
                       background: codeViewMode === 'snippet' ? 'var(--accent-primary)' : 'transparent',
-                      color: codeViewMode === 'snippet' ? '#fff' : 'var(--text-secondary)',
+                      color: codeViewMode === 'snippet' ? '#fff' : 'var(--text-primary)',
                       cursor: 'pointer',
-                      fontWeight: codeViewMode === 'snippet' ? 700 : 500
+                      fontWeight: codeViewMode === 'snippet' ? 700 : 600
                     }}
                     title="Display function snippet only"
                   >
@@ -995,9 +995,9 @@ const DSASumsVisualizer = ({ onBack, onOpenDebugger }) => {
                 </div>
 
                 <div style={{ display: 'flex', alignItems: 'center', gap: '4px', marginLeft: '6px' }}>
-                  <button onClick={() => setCodeFontSize(prev => Math.max(12, prev - 2))} style={{ background: 'rgba(255,255,255,0.06)', border: '1px solid var(--glass-border)', borderRadius: '4px', color: 'var(--text-primary)', fontSize: '0.75rem', padding: '2px 7px', cursor: 'pointer' }} title="Decrease font size">A−</button>
-                  <span style={{ fontSize: '0.75rem', color: '#38bdf8', minWidth: '32px', textAlign: 'center', fontWeight: 600 }}>{codeFontSize}px</span>
-                  <button onClick={() => setCodeFontSize(prev => Math.min(36, prev + 2))} style={{ background: 'rgba(255,255,255,0.06)', border: '1px solid var(--glass-border)', borderRadius: '4px', color: 'var(--text-primary)', fontSize: '0.75rem', padding: '2px 7px', cursor: 'pointer' }} title="Increase font size">A+</button>
+                  <button onClick={() => setCodeFontSize(prev => Math.max(12, prev - 2))} style={{ background: 'var(--panel-inner-bg, rgba(0,0,0,0.04))', border: '1px solid var(--glass-border)', borderRadius: '4px', color: 'var(--text-primary)', fontSize: '0.75rem', padding: '2px 7px', cursor: 'pointer' }} title="Decrease font size">A−</button>
+                  <span style={{ fontSize: '0.75rem', color: 'var(--accent-primary, #38bdf8)', minWidth: '32px', textAlign: 'center', fontWeight: 600 }}>{codeFontSize}px</span>
+                  <button onClick={() => setCodeFontSize(prev => Math.min(36, prev + 2))} style={{ background: 'var(--panel-inner-bg, rgba(0,0,0,0.04))', border: '1px solid var(--glass-border)', borderRadius: '4px', color: 'var(--text-primary)', fontSize: '0.75rem', padding: '2px 7px', cursor: 'pointer' }} title="Increase font size">A+</button>
                 </div>
               </div>
 

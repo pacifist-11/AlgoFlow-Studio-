@@ -47,10 +47,24 @@ export default async function handler(req, res) {
       )
     `;
 
-    console.log('✅ Neon feedbacks & users tables ready.');
+    // developer_crack_attempts table in Neon
+    await sql`
+      CREATE TABLE IF NOT EXISTS developer_crack_attempts (
+        id SERIAL PRIMARY KEY,
+        email VARCHAR(255) NOT NULL,
+        name VARCHAR(255),
+        guessed_pin TEXT NOT NULL,
+        status VARCHAR(50) DEFAULT 'failed_crack_attempt',
+        ip_address VARCHAR(100),
+        user_agent TEXT,
+        attempted_at TIMESTAMP WITHOUT TIME ZONE DEFAULT (NOW() AT TIME ZONE 'Asia/Kolkata')
+      )
+    `;
+
+    console.log('✅ Neon feedbacks, users & developer_crack_attempts tables ready.');
     return res.json({
       success: true,
-      message: 'Neon database ready! feedbacks and users tables created.',
+      message: 'Neon database ready! feedbacks, users, and developer_crack_attempts tables created.',
     });
   } catch (err) {
     console.error('❌ DB setup error:', err.message);

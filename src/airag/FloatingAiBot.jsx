@@ -12,8 +12,8 @@ import {
 } from '../auth/userAuthService.js';
 import { subscribeScreenContext, clearScreenError, getScreenContext } from '../screenContext.js';
 
-// ─── Super Calm, Gentle & Aesthetic Zen AI Avatar ───────────────────────────
-export const CalmAiAvatar = ({ size = 32 }) => (
+// ─── Super Calm, Gentle & Aesthetic Zen AI Avatar (High-Contrast in ALL Themes) ───
+export const CalmAiAvatar = ({ size = 32, isLight = false }) => (
   <svg 
     width={size} 
     height={size} 
@@ -21,65 +21,78 @@ export const CalmAiAvatar = ({ size = 32 }) => (
     fill="none" 
     xmlns="http://www.w3.org/2000/svg" 
     style={{ 
-      filter: 'drop-shadow(0 3px 10px rgba(56, 189, 248, 0.45))',
+      filter: isLight 
+        ? 'drop-shadow(0 2px 6px rgba(2, 132, 199, 0.4))'
+        : 'drop-shadow(0 2px 8px rgba(56, 189, 248, 0.5))',
       flexShrink: 0,
       display: 'inline-block'
     }}
   >
     {/* Ambient Peaceful Outer Glow */}
-    <circle cx="26" cy="26" r="24" fill="url(#calmAmbientGlow)" opacity="0.4" />
+    <circle cx="26" cy="26" r="23" fill={isLight ? "rgba(2, 132, 199, 0.14)" : "rgba(56, 189, 248, 0.2)"} />
     
     {/* Soft Floating Halo Ring */}
-    <ellipse cx="26" cy="7" rx="9" ry="3" fill="none" stroke="#38bdf8" strokeWidth="1.6" opacity="0.85" />
+    <ellipse cx="26" cy="7" rx="8.5" ry="2.6" fill="none" stroke={isLight ? "var(--accent-primary, #0284c7)" : "#38bdf8"} strokeWidth="1.8" />
     
-    {/* Main Serene Head Sphere */}
-    <circle cx="26" cy="27" r="18" fill="url(#zenHeadGrad)" stroke="rgba(255, 255, 255, 0.7)" strokeWidth="1.8" />
+    {/* Main Serene Head Sphere with Crisp High-Contrast Outline */}
+    <circle 
+      cx="26" 
+      cy="27" 
+      r="17" 
+      fill={isLight ? "#ffffff" : "#0f172a"} 
+      stroke={isLight ? "var(--accent-primary, #0284c7)" : "rgba(255, 255, 255, 0.9)"} 
+      strokeWidth="2.2" 
+    />
     
     {/* Gentle Cute Floating Side Ear Wings */}
-    <rect x="5" y="22" width="4" height="10" rx="2" fill="#38bdf8" opacity="0.8" />
-    <rect x="43" y="22" width="4" height="10" rx="2" fill="#38bdf8" opacity="0.8" />
+    <rect x="5.5" y="22.5" width="4" height="9" rx="2" fill={isLight ? "var(--accent-primary, #0284c7)" : "#38bdf8"} />
+    <rect x="42.5" y="22.5" width="4" height="9" rx="2" fill={isLight ? "var(--accent-primary, #0284c7)" : "#38bdf8"} />
     
-    {/* Deep Glossy Visor Display Screen */}
-    <ellipse cx="26" cy="27" rx="14" ry="11" fill="#070c18" stroke="rgba(56, 189, 248, 0.4)" strokeWidth="1.2" />
+    {/* Deep Glossy Visor Display Screen - Solid glossy dark glass gives 100% clarity & cute smiling face in ALL themes & colors */}
+    <rect 
+      x="13.5" 
+      y="17.5" 
+      width="25" 
+      height="18" 
+      rx="9" 
+      fill="#0a0f1d" 
+      stroke={isLight ? "var(--accent-primary, #0284c7)" : "#38bdf8"} 
+      strokeWidth="1.4" 
+    />
     
-    {/* Peaceful Calm Eyes (Gentle, friendly smiling curved arcs) */}
+    {/* Subtle Glass Specular Reflection Highlight Arc */}
     <path 
-      d="M17.5 25.5C17.5 23 19.5 21.5 22 21.5C23.5 21.5 24.5 22.5 24.5 25.5" 
-      stroke="#38bdf8" 
+      d="M17 21C20.5 19.2 27.5 19.2 31 21" 
+      stroke="rgba(255, 255, 255, 0.35)" 
+      strokeWidth="1.2" 
+      strokeLinecap="round" 
+    />
+    
+    {/* Peaceful Calm Eyes (Bright, friendly smiling curved arcs in Electric Neon) */}
+    <path 
+      d="M18.5 25.5C18.5 23.2 20 22 22 22C23.2 22 24.2 22.8 24.5 25.5" 
+      stroke="#00e5ff" 
       strokeWidth="2.4" 
       strokeLinecap="round" 
     />
     <path 
-      d="M27.5 25.5C27.5 22.5 28.5 21.5 30 21.5C32.5 21.5 34.5 23 34.5 25.5" 
-      stroke="#38bdf8" 
+      d="M27.5 25.5C27.8 22.8 28.8 22 30 22C32 22 33.5 23.2 33.5 25.5" 
+      stroke="#00e5ff" 
       strokeWidth="2.4" 
       strokeLinecap="round" 
     />
     
     {/* Cute Soft Rosy Cheeks */}
-    <ellipse cx="18" cy="29" rx="2.5" ry="1.5" fill="#f472b6" opacity="0.75" />
-    <ellipse cx="34" cy="29" rx="2.5" ry="1.5" fill="#f472b6" opacity="0.75" />
+    <circle cx="18" cy="28.5" r="1.8" fill="#f472b6" opacity="0.95" />
+    <circle cx="34" cy="28.5" r="1.8" fill="#f472b6" opacity="0.95" />
 
     {/* Subtle Sweet Smile */}
     <path 
-      d="M24 29.5C25 30.5 27 30.5 28 29.5" 
+      d="M24 29C25 30.2 27 30.2 28 29" 
       stroke="#38bdf8" 
       strokeWidth="1.8" 
       strokeLinecap="round" 
     />
-    
-    <defs>
-      <radialGradient id="calmAmbientGlow" cx="50%" cy="50%" r="50%">
-        <stop offset="0%" stopColor="#38bdf8" stopOpacity="0.9" />
-        <stop offset="60%" stopColor="#6366f1" stopOpacity="0.3" />
-        <stop offset="100%" stopColor="#8b5cf6" stopOpacity="0" />
-      </radialGradient>
-      <linearGradient id="zenHeadGrad" x1="8" y1="9" x2="44" y2="45" gradientUnits="userSpaceOnUse">
-        <stop stopColor="#1e293b" />
-        <stop offset="40%" stopColor="#0f172a" />
-        <stop offset="100%" stopColor="#1e1b4b" />
-      </linearGradient>
-    </defs>
   </svg>
 );
 
@@ -95,8 +108,30 @@ export default function FloatingAiBot({
   model = 'gemini-3.6-flash',
   setApiKey,
   setModel,
-  activeUser = null
+  activeUser = null,
+  currentTheme = '',
+  themeMode = 'dark'
 }) {
+  const [domThemeMode, setDomThemeMode] = useState(() => {
+    if (typeof document !== 'undefined') {
+      return document.documentElement.getAttribute('data-theme-type') || themeMode;
+    }
+    return themeMode;
+  });
+
+  useEffect(() => {
+    if (typeof document === 'undefined') return;
+    const updateTheme = () => {
+      const current = document.documentElement.getAttribute('data-theme-type');
+      if (current) setDomThemeMode(current);
+    };
+    updateTheme();
+    const observer = new MutationObserver(updateTheme);
+    observer.observe(document.documentElement, { attributes: true, attributeFilter: ['data-theme-type'] });
+    return () => observer.disconnect();
+  }, [themeMode, currentTheme]);
+
+  const isLight = themeMode === 'light' || domThemeMode === 'light';
   const [inputMessage, setInputMessage] = useState('');
   const [isInputFocused, setIsInputFocused] = useState(false);
   const textareaRef = useRef(null);
@@ -1095,7 +1130,7 @@ How are you doing today? Ask me any question or pick a prompt below!`,
       isStreamCompleteRef.current = true;
 
       if (activeUser?.email) {
-        const topic = currentContext?.treeType || currentContext?.globalSort || currentContext?.globalDsType || currentContext?.appMode || 'General';
+        const topic = currentContext?.treeType || (currentContext?.appMode === 'SORT_SEARCH_VIS' ? currentContext?.globalSort : null) || currentContext?.globalDsType || currentContext?.appMode || 'General';
         trackUserHabit(activeUser.email, topic);
       }
     } catch (err) {
@@ -1193,12 +1228,18 @@ How are you doing today? Ask me any question or pick a prompt below!`,
             width: `${curWidth}px`,
             height: `${curHeight}px`,
             zIndex: 9999,
-            background: `rgba(15, 23, 42, ${bgAlpha})`,
-            border: `1.5px solid rgba(56, 189, 248, ${Math.max(chatOpacity * 0.6, 0.35)})`,
+            background: isLight 
+              ? (chatOpacity < 0.95 ? `rgba(255, 255, 255, ${Math.max(chatOpacity, 0.88)})` : 'var(--glass-bg, #ffffff)')
+              : `rgba(15, 23, 42, ${bgAlpha})`,
+            border: isLight 
+              ? '1.5px solid var(--glass-border, rgba(2, 132, 199, 0.25))' 
+              : `1.5px solid rgba(56, 189, 248, ${Math.max(chatOpacity * 0.6, 0.35)})`,
             borderRadius: '18px',
             display: 'flex',
             flexDirection: 'column',
-            boxShadow: `0 20px 60px rgba(0, 0, 0, ${Math.max(chatOpacity * 0.9, 0.45)}), 0 0 30px rgba(56, 189, 248, ${Math.max(chatOpacity * 0.3, 0.15)})`,
+            boxShadow: isLight
+              ? '0 20px 50px rgba(0, 0, 0, 0.12), 0 4px 16px rgba(0, 0, 0, 0.06)'
+              : `0 20px 60px rgba(0, 0, 0, ${Math.max(chatOpacity * 0.9, 0.45)}), 0 0 30px rgba(56, 189, 248, ${Math.max(chatOpacity * 0.3, 0.15)})`,
             backdropFilter: `blur(${blurVal}px)`,
             WebkitBackdropFilter: `blur(${blurVal}px)`,
             overflow: 'hidden',
@@ -1257,9 +1298,11 @@ How are you doing today? Ask me any question or pick a prompt below!`,
                 bottom: 0,
                 width: isCompact ? '100%' : Math.min(330, curWidth - 35),
                 zIndex: 10010,
-                background: 'linear-gradient(180deg, #0b1120 0%, #0f172a 100%)',
-                borderRight: '1.5px solid rgba(56, 189, 248, 0.45)',
-                boxShadow: '10px 0 35px rgba(0, 0, 0, 0.75), 0 0 20px rgba(56, 189, 248, 0.2)',
+                background: isLight 
+                  ? 'var(--bg-primary, #ffffff)' 
+                  : 'linear-gradient(180deg, #0b1120 0%, #0f172a 100%)',
+                borderRight: isLight ? '1.5px solid var(--glass-border, #cbd5e1)' : '1.5px solid rgba(56, 189, 248, 0.45)',
+                boxShadow: isLight ? '8px 0 30px rgba(0, 0, 0, 0.1)' : '10px 0 35px rgba(0, 0, 0, 0.75), 0 0 20px rgba(56, 189, 248, 0.2)',
                 display: 'flex',
                 flexDirection: 'column',
                 backdropFilter: 'blur(20px)',
@@ -1272,7 +1315,8 @@ How are you doing today? Ask me any question or pick a prompt below!`,
                 display: 'flex',
                 alignItems: 'center',
                 justifyContent: 'space-between',
-                background: 'rgba(30, 41, 59, 0.75)'
+                background: isLight ? 'var(--bg-secondary, #f8fafc)' : 'rgba(30, 41, 59, 0.75)',
+                borderBottom: isLight ? '1px solid var(--glass-border, #e2e8f0)' : '1px solid rgba(255, 255, 255, 0.12)'
               }}>
                 <button
                   onClick={() => setIsSidebarOpen(false)}
@@ -1295,7 +1339,7 @@ How are you doing today? Ask me any question or pick a prompt below!`,
                 </button>
                 <div style={{ display: 'flex', alignItems: 'center', gap: '6px' }}>
                   <span style={{ fontSize: '14px' }}>💬</span>
-                  <span style={{ fontWeight: '700', fontSize: '13px', color: '#f8fafc' }}>
+                  <span style={{ fontWeight: '700', fontSize: '13px', color: isLight ? 'var(--text-primary, #0f172a)' : '#f8fafc' }}>
                     {isCompact ? 'Past Chats' : 'Past Conversations'}
                   </span>
                   <span style={{
@@ -1329,7 +1373,10 @@ How are you doing today? Ask me any question or pick a prompt below!`,
                     gap: '4px'
                   }}
                 >
-                  ➕ New
+                  <svg width="11" height="11" viewBox="0 0 14 14" fill="none" style={{ flexShrink: 0 }}>
+                    <path d="M7 1V13M1 7H13" stroke="#ffffff" strokeWidth="2.5" strokeLinecap="round" />
+                  </svg>
+                  <span>New</span>
                 </button>
               </div>
 
@@ -1355,7 +1402,9 @@ How are you doing today? Ask me any question or pick a prompt below!`,
                     transition: 'all 0.15s ease'
                   }}
                 >
-                  <span style={{ fontSize: '14px' }}>➕</span>
+                  <svg width="13" height="13" viewBox="0 0 14 14" fill="none" style={{ flexShrink: 0 }}>
+                    <path d="M7 1V13M1 7H13" stroke="#ffffff" strokeWidth="2.5" strokeLinecap="round" />
+                  </svg>
                   <span>Start New Chat</span>
                 </button>
               </div>
@@ -1365,8 +1414,8 @@ How are you doing today? Ask me any question or pick a prompt below!`,
                 <div style={{
                   display: 'flex',
                   alignItems: 'center',
-                  background: 'rgba(30, 41, 59, 0.75)',
-                  border: '1px solid rgba(56, 189, 248, 0.3)',
+                  background: isLight ? 'var(--bg-secondary, #f1f5f9)' : 'rgba(30, 41, 59, 0.75)',
+                  border: isLight ? '1px solid var(--glass-border, #cbd5e1)' : '1px solid rgba(56, 189, 248, 0.3)',
                   borderRadius: '8px',
                   padding: '0 8px',
                   height: '32px'
@@ -1381,7 +1430,7 @@ How are you doing today? Ask me any question or pick a prompt below!`,
                       flex: 1,
                       background: 'transparent',
                       border: 'none',
-                      color: '#f8fafc',
+                      color: isLight ? 'var(--text-primary, #0f172a)' : '#f8fafc',
                       fontSize: '11.5px',
                       outline: 'none'
                     }}
@@ -1429,10 +1478,10 @@ How are you doing today? Ask me any question or pick a prompt below!`,
                           padding: '9px 10px',
                           borderRadius: '8px',
                           background: isActive 
-                            ? 'rgba(56, 189, 248, 0.18)' 
-                            : 'rgba(30, 41, 59, 0.45)',
+                            ? (isLight ? 'rgba(2, 132, 199, 0.12)' : 'rgba(56, 189, 248, 0.18)') 
+                            : (isLight ? 'var(--bg-secondary, #f8fafc)' : 'rgba(30, 41, 59, 0.45)'),
                           borderLeft: isActive 
-                            ? '3px solid #38bdf8' 
+                            ? (isLight ? '3px solid var(--accent-primary, #0284c7)' : '3px solid #38bdf8') 
                             : '3px solid transparent',
                           borderTop: '1px solid rgba(255, 255, 255, 0.05)',
                           borderRight: '1px solid rgba(255, 255, 255, 0.05)',
@@ -1455,7 +1504,7 @@ How are you doing today? Ask me any question or pick a prompt below!`,
                           <span style={{
                             fontSize: '12px',
                             fontWeight: isActive ? '700' : '600',
-                            color: isActive ? '#38bdf8' : '#f1f5f9',
+                            color: isActive ? (isLight ? 'var(--accent-primary, #0284c7)' : '#38bdf8') : (isLight ? 'var(--text-primary, #0f172a)' : '#f1f5f9'),
                             whiteSpace: 'nowrap',
                             overflow: 'hidden',
                             textOverflow: 'ellipsis'
@@ -1586,7 +1635,7 @@ How are you doing today? Ask me any question or pick a prompt below!`,
                 }}>
                   <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
                     <span style={{ fontSize: '15px' }}>ℹ️</span>
-                    <span style={{ fontWeight: '700', fontSize: '13px', color: '#f8fafc' }}>
+                    <span style={{ fontWeight: '700', fontSize: '13px', color: isLight ? 'var(--text-primary, #0f172a)' : '#f8fafc' }}>
                       Chat Details & Search History
                     </span>
                   </div>
@@ -1783,7 +1832,7 @@ How are you doing today? Ask me any question or pick a prompt below!`,
             onPointerDown={onHeaderPointerDown}
             style={{
               padding: '12px 16px',
-              background: `linear-gradient(90deg, rgba(2, 132, 199, ${headerAlpha}) 0%, rgba(99, 102, 241, ${headerAlpha}) 100%)`,
+              background: `linear-gradient(90deg, var(--accent-primary, #0284c7) 0%, var(--accent-secondary, #6366f1) 100%)`,
               color: '#fff',
               display: 'flex',
               alignItems: 'center',
@@ -1797,7 +1846,7 @@ How are you doing today? Ask me any question or pick a prompt below!`,
             title="Grab & drag anywhere to move window around screen"
           >
             <div style={{ display: 'flex', alignItems: 'center', gap: '8px', minWidth: 0, flex: '1 1 auto', overflow: 'hidden', pointerEvents: 'none' }}>
-              <CalmAiAvatar size={isCompact ? 26 : 30} />
+              <CalmAiAvatar size={isCompact ? 26 : 30} isLight={isLight} />
               <div style={{ minWidth: 0, overflow: 'hidden' }}>
                 <div style={{ display: 'flex', alignItems: 'center', gap: '6px' }}>
                   <strong style={{
@@ -1832,11 +1881,17 @@ How are you doing today? Ask me any question or pick a prompt below!`,
                 <span style={{ fontSize: '10px', opacity: 0.95, display: 'flex', alignItems: 'center', gap: '4px', textShadow: '0 1px 2px rgba(0,0,0,0.8)', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>
                   <span style={{ width: '5px', height: '5px', borderRadius: '50%', background: liveScreen?.lastErrorOrIssue ? '#ef4444' : '#4ade80', flexShrink: 0 }} />
                   <span style={{ overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
-                    {isCompact 
-                      ? (liveScreen?.activeAlgo && liveScreen.activeAlgo !== 'None' ? `👁️ ${liveScreen.activeAlgo}` : (liveScreen?.screenTitle ? `👁️ ${liveScreen.screenTitle}` : '👁️ Live')) 
-                      : (liveScreen?.screenTitle 
-                          ? `👁️ Screen: ${liveScreen.screenTitle}${liveScreen.activeAlgo && liveScreen.activeAlgo !== 'None' ? ` (${liveScreen.activeAlgo})` : ''}` 
-                          : '👁️ Live Screen Telemetry Active')}
+                    {(() => {
+                      const isHome = !currentContext?.appMode || !liveScreen?.screenTitle || liveScreen.screenTitle === 'Home Dashboard' || liveScreen.screenTitle === 'AlgoFlow Studio';
+                      if (isHome) {
+                        return '👁️ Home Dashboard';
+                      }
+                      const hasAlgo = liveScreen?.activeAlgo && liveScreen.activeAlgo !== 'None' && liveScreen.activeAlgo !== 'General';
+                      if (isCompact) {
+                        return hasAlgo ? `👁️ ${liveScreen.activeAlgo}` : `👁️ ${liveScreen.screenTitle}`;
+                      }
+                      return `👁️ Screen: ${liveScreen.screenTitle}${hasAlgo ? ` (${liveScreen.activeAlgo})` : ''}`;
+                    })()}
                   </span>
                 </span>
               </div>
@@ -1966,21 +2021,25 @@ How are you doing today? Ask me any question or pick a prompt below!`,
                 onClick={handleStartNewChat}
                 title="Start a new chat session"
                 style={{
-                  background: 'linear-gradient(135deg, rgba(2, 132, 199, 0.55) 0%, rgba(99, 102, 241, 0.55) 100%)',
-                  border: '1px solid rgba(56, 189, 248, 0.6)',
-                  color: '#e0f2fe',
+                  background: 'linear-gradient(135deg, #0284c7 0%, #4f46e5 100%)',
+                  border: '1.5px solid rgba(255, 255, 255, 0.45)',
+                  color: '#ffffff',
                   cursor: 'pointer',
-                  padding: isCompact ? '3px 6px' : '3px 7px',
+                  padding: isCompact ? '3px 7px' : '4px 9px',
                   borderRadius: '6px',
                   fontSize: '11px',
                   display: 'flex',
                   alignItems: 'center',
-                  gap: '2px',
-                  fontWeight: 'bold'
+                  gap: '3px',
+                  fontWeight: '700',
+                  boxShadow: '0 2px 6px rgba(0, 0, 0, 0.25)',
+                  textShadow: '0 1px 2px rgba(0, 0, 0, 0.4)'
                 }}
               >
-                <span>➕</span>
-                {!isCompact && <span>New</span>}
+                <svg width="11" height="11" viewBox="0 0 14 14" fill="none" style={{ flexShrink: 0 }}>
+                  <path d="M7 1V13M1 7H13" stroke="#ffffff" strokeWidth="2.5" strokeLinecap="round" />
+                </svg>
+                {!isCompact && <span>New Chat</span>}
               </button>
 
               {/* Opacity Button */}
@@ -2053,9 +2112,9 @@ How are you doing today? Ask me any question or pick a prompt below!`,
           {/* Settings Drawer (Glass Opacity & AI Engine Mode) */}
           {showSettings && (
             <div style={{
-              background: `rgba(9, 13, 22, ${Math.max(chatOpacity * 0.95, 0.85)})`,
+              background: isLight ? 'var(--bg-secondary, #f8fafc)' : `rgba(9, 13, 22, ${Math.max(chatOpacity * 0.95, 0.85)})`,
               padding: '12px 16px',
-              borderBottom: '1px solid rgba(56, 189, 248, 0.3)',
+              borderBottom: isLight ? '1px solid var(--glass-border, #e2e8f0)' : '1px solid rgba(56, 189, 248, 0.3)',
               display: 'flex',
               flexDirection: 'column',
               gap: '10px',
@@ -2065,7 +2124,7 @@ How are you doing today? Ask me any question or pick a prompt below!`,
               {/* Opacity Slider */}
               <div>
                 <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '4px' }}>
-                  <span style={{ fontWeight: 'bold', color: '#38bdf8', display: 'flex', alignItems: 'center', gap: '5px' }}>
+                  <span style={{ fontWeight: 'bold', color: isLight ? 'var(--accent-primary, #0284c7)' : '#38bdf8', display: 'flex', alignItems: 'center', gap: '5px' }}>
                     💧 Window Glass Opacity:
                   </span>
                   <span style={{ color: '#f8fafc', fontWeight: 'bold', background: '#0284c7', padding: '1px 8px', borderRadius: '10px', fontSize: '11px' }}>
@@ -2095,8 +2154,8 @@ How are you doing today? Ask me any question or pick a prompt below!`,
               position: 'relative',
               overflow: 'hidden',
               padding: '9px 18px',
-              background: 'linear-gradient(90deg, rgba(15, 23, 42, 0.96) 0%, rgba(30, 41, 59, 0.94) 50%, rgba(15, 23, 42, 0.96) 100%)',
-              borderBottom: '1.5px solid rgba(56, 189, 248, 0.45)',
+              background: isLight ? 'var(--bg-secondary, #f8fafc)' : 'linear-gradient(90deg, rgba(15, 23, 42, 0.96) 0%, rgba(30, 41, 59, 0.94) 50%, rgba(15, 23, 42, 0.96) 100%)',
+              borderBottom: isLight ? '1.5px solid var(--glass-border, #cbd5e1)' : '1.5px solid rgba(56, 189, 248, 0.45)',
               display: 'flex',
               alignItems: 'center',
               justifyContent: 'center',
@@ -2172,7 +2231,7 @@ How are you doing today? Ask me any question or pick a prompt below!`,
                     filter: 'blur(12px)',
                     animation: 'pulse 2.8s ease-in-out infinite'
                   }} />
-                  <CalmAiAvatar size={isCompact ? 40 : 50} />
+                  <CalmAiAvatar size={isCompact ? 40 : 50} isLight={isLight} />
                 </div>
 
                 <div>
@@ -2181,7 +2240,9 @@ How are you doing today? Ask me any question or pick a prompt below!`,
                     fontWeight: '800',
                     margin: '0 0 4px 0',
                     letterSpacing: '-0.3px',
-                    background: 'linear-gradient(135deg, #ffffff 40%, #38bdf8 100%)',
+                    background: isLight 
+                      ? 'linear-gradient(135deg, var(--accent-primary, #0284c7) 0%, var(--accent-secondary, #6366f1) 100%)' 
+                      : 'linear-gradient(135deg, #ffffff 40%, #38bdf8 100%)',
                     WebkitBackgroundClip: 'text',
                     WebkitTextFillColor: 'transparent',
                     textShadow: '0 2px 10px rgba(0, 0, 0, 0.5)'
@@ -2190,7 +2251,7 @@ How are you doing today? Ask me any question or pick a prompt below!`,
                   </h3>
                   <p style={{
                     fontSize: isCompact ? '12px' : '13px',
-                    color: '#94a3b8',
+                    color: isLight ? 'var(--text-secondary, #475569)' : '#94a3b8',
                     margin: 0,
                     maxWidth: '440px',
                     lineHeight: '1.5'
@@ -2214,11 +2275,17 @@ How are you doing today? Ask me any question or pick a prompt below!`,
                     fontWeight: '600'
                   }}>
                     <span style={{ width: '6px', height: '6px', borderRadius: '50%', background: '#4ade80', boxShadow: '0 0 8px #4ade80' }} />
-                    <span>Connected to Screen: <strong>{liveScreen.screenTitle}</strong>{liveScreen.activeAlgo && liveScreen.activeAlgo !== 'None' ? ` (${liveScreen.activeAlgo})` : ''}</span>
+                    {(() => {
+                      const isHome = !currentContext?.appMode || !liveScreen?.screenTitle || liveScreen.screenTitle === 'Home Dashboard' || liveScreen.screenTitle === 'AlgoFlow Studio';
+                      const hasAlgo = !isHome && liveScreen.activeAlgo && liveScreen.activeAlgo !== 'None' && liveScreen.activeAlgo !== 'General';
+                      return (
+                        <span>Connected to Screen: <strong>{isHome ? 'Home Dashboard' : liveScreen.screenTitle}</strong>{hasAlgo ? ` (${liveScreen.activeAlgo})` : ''}</span>
+                      );
+                    })()}
                   </div>
                 )}
 
-                {/* 4 Interactive Starter Cards */}
+                {/* Interactive Starter Cards */}
                 <div style={{
                   display: 'grid',
                   gridTemplateColumns: 'repeat(2, minmax(0, 1fr))',
@@ -2233,6 +2300,12 @@ How are you doing today? Ask me any question or pick a prompt below!`,
                       title: 'Explain My Screen',
                       desc: isCompact ? 'Analyze algorithm & steps' : 'Analyze active algorithm, steps & operations',
                       prompt: "Can you analyze what is currently happening on my screen, what algorithm is active, what step I am on, and explain the current visualization or status?"
+                    },
+                    {
+                      icon: '🏛️',
+                      title: 'KLEF Y25 Curriculum',
+                      desc: isCompact ? 'DSA 1, 2, 3 & y25btech' : 'DSA 1, 2, 3 syllabi & y25btech.klef.in',
+                      prompt: 'Tell me about the KL University (KLEF) Y25 B.Tech curriculum from y25btech.klef.in, including DSA 1 (ESC25SC1204ECASE), DSA 2 (ESC25SC1305ECASE), and DSA 3 (PCC25CS2103ECASE).'
                     },
                     {
                       icon: '🌲',
@@ -2251,14 +2324,20 @@ How are you doing today? Ask me any question or pick a prompt below!`,
                       title: 'Branch Roadmaps',
                       desc: isCompact ? 'B.Tech milestone paths' : 'B.Tech milestone paths & language careers',
                       prompt: 'Guide me through engineering branch roadmaps, language career options, and beginner CS foundations!'
+                    },
+                    {
+                      icon: '🛡️',
+                      title: 'Zero-Utility Rule',
+                      desc: isCompact ? 'KLEF primitive arrays' : 'KLEF constraint (no java.util.*)',
+                      prompt: 'Explain the KLEF Zero-Utility Library constraint and why students hand-build dynamic arrays without java.util.*.'
                     }
                   ].map((card, cIdx) => (
                     <button
                       key={cIdx}
                       onClick={() => handleSendMessage(card.prompt)}
                       style={{
-                        background: 'rgba(30, 41, 59, 0.55)',
-                        border: '1px solid rgba(56, 189, 248, 0.28)',
+                        background: isLight ? 'var(--bg-secondary, #f8fafc)' : 'rgba(30, 41, 59, 0.55)',
+                        border: isLight ? '1px solid var(--glass-border, #cbd5e1)' : '1px solid rgba(56, 189, 248, 0.28)',
                         borderRadius: '10px',
                         padding: isCompact ? '8px 10px' : '12px 14px',
                         textAlign: 'left',
@@ -2268,7 +2347,7 @@ How are you doing today? Ask me any question or pick a prompt below!`,
                         gap: '2px',
                         transition: 'all 0.18s ease',
                         backdropFilter: 'blur(8px)',
-                        boxShadow: '0 3px 10px rgba(0, 0, 0, 0.25)'
+                        boxShadow: isLight ? '0 2px 8px rgba(0,0,0,0.06)' : '0 3px 10px rgba(0, 0, 0, 0.25)'
                       }}
                       onMouseEnter={e => {
                         e.currentTarget.style.background = 'rgba(56, 189, 248, 0.14)';
@@ -2277,17 +2356,17 @@ How are you doing today? Ask me any question or pick a prompt below!`,
                         e.currentTarget.style.boxShadow = '0 6px 18px rgba(56, 189, 248, 0.25)';
                       }}
                       onMouseLeave={e => {
-                        e.currentTarget.style.background = 'rgba(30, 41, 59, 0.55)';
-                        e.currentTarget.style.borderColor = 'rgba(56, 189, 248, 0.28)';
+                        e.currentTarget.style.background = isLight ? 'var(--bg-secondary, #f8fafc)' : 'rgba(30, 41, 59, 0.55)';
+                        e.currentTarget.style.borderColor = isLight ? 'var(--glass-border, #cbd5e1)' : 'rgba(56, 189, 248, 0.28)';
                         e.currentTarget.style.transform = 'translateY(0)';
                         e.currentTarget.style.boxShadow = '0 3px 10px rgba(0, 0, 0, 0.25)';
                       }}
                     >
                       <div style={{ display: 'flex', alignItems: 'center', gap: '6px' }}>
                         <span style={{ fontSize: isCompact ? '13px' : '15px' }}>{card.icon}</span>
-                        <span style={{ fontSize: isCompact ? '11.5px' : '12.5px', fontWeight: '700', color: '#f1f5f9' }}>{card.title}</span>
+                        <span style={{ fontSize: isCompact ? '11.5px' : '12.5px', fontWeight: '700', color: isLight ? 'var(--text-primary, #0f172a)' : '#f1f5f9' }}>{card.title}</span>
                       </div>
-                      <span style={{ fontSize: isCompact ? '10px' : '11px', color: '#94a3b8', lineHeight: '1.3' }}>{card.desc}</span>
+                      <span style={{ fontSize: isCompact ? '10px' : '11px', color: isLight ? 'var(--text-secondary, #475569)' : '#94a3b8', lineHeight: '1.3' }}>{card.desc}</span>
                     </button>
                   ))}
                 </div>
@@ -2310,18 +2389,20 @@ How are you doing today? Ask me any question or pick a prompt below!`,
                     }}
                   >
                     <div style={{ display: 'flex', gap: isCompact ? '6px' : '10px', alignItems: 'flex-start', flexDirection: isUser ? 'row-reverse' : 'row', width: '100%' }}>
-                      {!isUser && <CalmAiAvatar size={isCompact ? 22 : 26} />}
+                      {!isUser && <CalmAiAvatar size={isCompact ? 22 : 26} isLight={isLight} />}
                       <div style={{
                         padding: isCompact ? '10px 12px' : '14px 18px',
                         borderRadius: isUser ? '14px 14px 4px 14px' : '14px 14px 14px 4px',
                         background: isUser 
-                          ? `linear-gradient(135deg, rgba(2, 132, 199, ${Math.max(chatOpacity * 0.92, 0.8)}), rgba(99, 102, 241, ${Math.max(chatOpacity * 0.92, 0.8)}))` 
-                          : `rgba(11, 18, 33, ${Math.max(bubbleAlpha, 0.92)})`,
-                        color: '#f8fafc',
+                          ? 'linear-gradient(135deg, var(--accent-primary, #0284c7), var(--accent-secondary, #6366f1))' 
+                          : (isLight ? 'var(--bg-secondary, #f8fafc)' : `rgba(11, 18, 33, ${Math.max(bubbleAlpha, 0.92)})`),
+                        color: isUser ? '#ffffff' : (isLight ? 'var(--text-primary, #0f172a)' : '#f8fafc'),
                         fontSize: isCompact ? '13px' : '14px',
                         lineHeight: isCompact ? '1.55' : '1.7',
-                        border: isUser ? '1px solid rgba(56, 189, 248, 0.55)' : `1.5px solid rgba(56, 189, 248, ${Math.max(chatOpacity * 0.45, 0.3)})`,
-                        boxShadow: '0 4px 16px rgba(0,0,0,0.4)',
+                        border: isUser 
+                          ? (isLight ? '1px solid var(--accent-primary, #0284c7)' : '1px solid rgba(56, 189, 248, 0.55)') 
+                          : (isLight ? '1.5px solid var(--glass-border, #cbd5e1)' : `1.5px solid rgba(56, 189, 248, ${Math.max(chatOpacity * 0.45, 0.3)})`),
+                        boxShadow: isLight ? '0 2px 10px rgba(0,0,0,0.06)' : '0 4px 16px rgba(0,0,0,0.4)',
                         overflowWrap: 'break-word',
                         wordBreak: 'normal',
                         backdropFilter: 'blur(12px)',
@@ -2357,6 +2438,7 @@ How are you doing today? Ask me any question or pick a prompt below!`,
                           isUser={isUser} 
                           onSelectPrompt={isGenerating ? null : handleSendMessage} 
                           isStreaming={!isUser && msg.isStreaming} 
+                          isLight={isLight}
                         />
                       </div>
                     </div>
@@ -2560,20 +2642,26 @@ How are you doing today? Ask me any question or pick a prompt below!`,
           {/* ── Edge-Cutting Multi-Line Input Box ── */}
           <div style={{
             padding: isCompact ? '8px 10px 10px 10px' : '10px 14px 12px 14px',
-            background: `rgba(9, 14, 26, ${Math.max(chatOpacity * 0.95, 0.45)})`,
-            borderTop: `1px solid rgba(255, 255, 255, ${Math.max(chatOpacity * 0.18, 0.08)})`,
+            background: isLight 
+              ? 'var(--bg-secondary, #f8fafc)' 
+              : `rgba(9, 14, 26, ${Math.max(chatOpacity * 0.95, 0.45)})`,
+            borderTop: isLight 
+              ? '1px solid var(--glass-border, #e2e8f0)' 
+              : `1px solid rgba(255, 255, 255, ${Math.max(chatOpacity * 0.18, 0.08)})`,
             backdropFilter: 'blur(16px)',
             position: 'relative'
           }}>
             <div style={{
               borderRadius: isCompact ? '12px' : '16px',
-              background: `rgba(18, 26, 47, ${Math.max(chatOpacity * 0.9, 0.65)})`,
+              background: isLight 
+                ? 'var(--bg-primary, #ffffff)' 
+                : `rgba(18, 26, 47, ${Math.max(chatOpacity * 0.9, 0.65)})`,
               border: isInputFocused 
-                ? '1.5px solid #38bdf8' 
-                : '1.5px solid rgba(56, 189, 248, 0.3)',
+                ? (isLight ? '1.5px solid var(--accent-primary, #0284c7)' : '1.5px solid #38bdf8') 
+                : (isLight ? '1.5px solid var(--glass-border, #cbd5e1)' : '1.5px solid rgba(56, 189, 248, 0.3)'),
               boxShadow: isInputFocused 
-                ? '0 0 16px rgba(56, 189, 248, 0.25), inset 0 1px 2px rgba(255, 255, 255, 0.06)' 
-                : '0 3px 12px rgba(0, 0, 0, 0.35)',
+                ? (isLight ? '0 0 12px rgba(2, 132, 199, 0.2)' : '0 0 16px rgba(56, 189, 248, 0.25), inset 0 1px 2px rgba(255, 255, 255, 0.06)') 
+                : (isLight ? '0 2px 6px rgba(0, 0, 0, 0.04)' : '0 3px 12px rgba(0, 0, 0, 0.35)'),
               transition: 'border-color 0.2s ease, box-shadow 0.2s ease',
               display: 'flex',
               flexDirection: 'column',
@@ -2654,7 +2742,7 @@ How are you doing today? Ask me any question or pick a prompt below!`,
                   border: 'none',
                   outline: 'none',
                   background: 'transparent',
-                  color: '#f8fafc',
+                  color: isLight ? 'var(--text-primary, #0f172a)' : '#f8fafc',
                   fontSize: isCompact ? '13px' : '13.5px',
                   lineHeight: '1.5',
                   fontFamily: 'Inter, -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif',
@@ -2686,10 +2774,16 @@ How are you doing today? Ask me any question or pick a prompt below!`,
                     onClick={() => fileInputRef.current?.click()}
                     title="Upload a photo of a math sum, algorithm problem, or code question (or paste with Ctrl+V)"
                     style={{
-                      background: attachedImage ? 'rgba(56, 189, 248, 0.28)' : 'rgba(255, 255, 255, 0.08)',
-                      border: attachedImage ? '1px solid #38bdf8' : '1px solid rgba(255, 255, 255, 0.16)',
+                      background: attachedImage 
+                        ? 'rgba(2, 132, 199, 0.2)' 
+                        : (isLight ? 'var(--panel-inner-bg, rgba(0,0,0,0.04))' : 'rgba(255, 255, 255, 0.08)'),
+                      border: attachedImage 
+                        ? '1px solid var(--accent-primary, #0284c7)' 
+                        : (isLight ? '1px solid var(--glass-border, #cbd5e1)' : '1px solid rgba(255, 255, 255, 0.16)'),
                       borderRadius: '7px',
-                      color: attachedImage ? '#38bdf8' : '#e2e8f0',
+                      color: attachedImage 
+                        ? 'var(--accent-primary, #0284c7)' 
+                        : (isLight ? 'var(--text-primary, #0f172a)' : '#e2e8f0'),
                       cursor: 'pointer',
                       padding: '3px 8px',
                       fontSize: '11px',
@@ -2771,9 +2865,9 @@ How are you doing today? Ask me any question or pick a prompt below!`,
                       padding: '6px 14px',
                       borderRadius: '10px',
                       background: (inputMessage.trim() || attachedImage)
-                        ? 'linear-gradient(135deg, #0284c7 0%, #6366f1 100%)' 
-                        : 'rgba(51, 65, 85, 0.5)',
-                      color: (inputMessage.trim() || attachedImage) ? '#ffffff' : '#94a3b8',
+                        ? 'linear-gradient(135deg, var(--accent-primary, #0284c7) 0%, var(--accent-secondary, #6366f1) 100%)' 
+                        : (isLight ? 'rgba(0, 0, 0, 0.08)' : 'rgba(51, 65, 85, 0.5)'),
+                      color: (inputMessage.trim() || attachedImage) ? '#ffffff' : (isLight ? 'var(--text-secondary, #64748b)' : '#94a3b8'),
                       fontWeight: '600',
                       border: 'none',
                       cursor: (inputMessage.trim() || attachedImage) ? 'pointer' : 'default',
@@ -2883,11 +2977,15 @@ How are you doing today? Ask me any question or pick a prompt below!`,
           width: '60px',
           height: '60px',
           borderRadius: '50%',
-          background: 'linear-gradient(135deg, #0284c7 0%, #6366f1 50%, #8b5cf6 100%)',
-          border: '2px solid rgba(255, 255, 255, 0.75)',
+          background: isLight 
+            ? 'linear-gradient(135deg, var(--accent-primary, #0284c7) 0%, var(--accent-secondary, #6366f1) 100%)'
+            : 'linear-gradient(135deg, #0284c7 0%, #6366f1 50%, #8b5cf6 100%)',
+          border: isLight ? '2px solid rgba(255, 255, 255, 0.95)' : '2px solid rgba(255, 255, 255, 0.75)',
           color: '#fff',
           cursor: isDraggingOrb ? 'grabbing' : 'grab',
-          boxShadow: '0 8px 30px rgba(99, 102, 241, 0.55), 0 0 25px rgba(56, 189, 248, 0.45)',
+          boxShadow: isLight
+            ? '0 8px 24px rgba(2, 132, 199, 0.35), 0 2px 8px rgba(0, 0, 0, 0.12)'
+            : '0 8px 30px rgba(99, 102, 241, 0.55), 0 0 25px rgba(56, 189, 248, 0.45)',
           display: 'flex',
           justifyContent: 'center',
           alignItems: 'center',
@@ -2897,14 +2995,14 @@ How are you doing today? Ask me any question or pick a prompt below!`,
           touchAction: 'none'
         }}
       >
-        <CalmAiAvatar size={36} />
+        <CalmAiAvatar size={36} isLight={isLight} />
         <span style={{
           position: 'absolute',
           inset: -4,
           borderRadius: '50%',
-          border: '2px solid rgba(139, 92, 246, 0.6)',
+          border: isLight ? '2px solid var(--accent-primary, #0284c7)' : '2px solid rgba(139, 92, 246, 0.6)',
           animation: 'pulse 2.5s ease-in-out infinite',
-          opacity: 0.7,
+          opacity: isLight ? 0.5 : 0.7,
           pointerEvents: 'none'
         }} />
       </div>

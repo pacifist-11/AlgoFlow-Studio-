@@ -11,7 +11,25 @@ import React, { useState } from 'react';
  * - Glowing bullet diamonds and rounded number badges
  */
 
-export function ChatMessageRenderer({ text = '', isUser = false, onSelectPrompt = null, isStreaming = false }) {
+export function ChatMessageRenderer({ text = '', isUser = false, onSelectPrompt = null, isStreaming = false, isLight = false }) {
+  const [domThemeMode, setDomThemeMode] = useState(() => {
+    if (typeof document !== 'undefined') {
+      return document.documentElement.getAttribute('data-theme-type') || (isLight ? 'light' : 'dark');
+    }
+    return isLight ? 'light' : 'dark';
+  });
+
+  React.useEffect(() => {
+    if (typeof document === 'undefined') return;
+    const observer = new MutationObserver(() => {
+      const current = document.documentElement.getAttribute('data-theme-type');
+      if (current) setDomThemeMode(current);
+    });
+    observer.observe(document.documentElement, { attributes: true, attributeFilter: ['data-theme-type'] });
+    return () => observer.disconnect();
+  }, []);
+
+  const activeIsLight = isLight || domThemeMode === 'light';
   if (isUser) {
     return (
       <div style={{
@@ -38,7 +56,7 @@ export function ChatMessageRenderer({ text = '', isUser = false, onSelectPrompt 
       gap: '12px',
       lineHeight: '1.72',
       fontSize: '14px',
-      color: '#e2e8f0',
+      color: activeIsLight ? 'var(--text-primary, #0f172a)' : '#e2e8f0',
       fontFamily: 'Inter, -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif',
       position: 'relative',
       letterSpacing: '0.15px',
@@ -66,7 +84,7 @@ export function ChatMessageRenderer({ text = '', isUser = false, onSelectPrompt 
         }
       `}</style>
 
-      {renderBlocks(mainText, isStreaming)}
+      {renderBlocks(mainText, isStreaming, activeIsLight)}
 
       {isStreaming && (
         <span 
@@ -107,11 +125,11 @@ export function ChatMessageRenderer({ text = '', isUser = false, onSelectPrompt 
                 key={idx}
                 onClick={() => onSelectPrompt && onSelectPrompt(q)}
                 style={{
-                  background: 'rgba(30, 41, 59, 0.75)',
-                  border: '1px solid rgba(56, 189, 248, 0.35)',
+                  background: activeIsLight ? 'var(--bg-secondary, #f8fafc)' : 'rgba(30, 41, 59, 0.75)',
+                  border: activeIsLight ? '1px solid var(--glass-border, #cbd5e1)' : '1px solid rgba(56, 189, 248, 0.35)',
                   borderRadius: '16px',
                   padding: '5px 12px',
-                  color: '#f8fafc',
+                  color: activeIsLight ? 'var(--text-primary, #0f172a)' : '#f8fafc',
                   fontSize: '11.5px',
                   fontWeight: '600',
                   cursor: onSelectPrompt ? 'pointer' : 'default',
@@ -181,7 +199,7 @@ function extractSuggestedQuestions(rawText) {
   return { mainText: mainText || rawText, suggestions };
 }
 
-function renderBlocks(rawText, isStreaming = false) {
+function renderBlocks(rawText, isStreaming = false, activeIsLight = false) {
   if (!rawText) return null;
   const lines = rawText.split('\n');
   const elements = [];
@@ -246,7 +264,9 @@ function renderBlocks(rawText, isStreaming = false) {
         }}>
           <span style={{ color: '#38bdf8', fontSize: '15px' }}>✦</span>
           <span style={{
-            background: 'linear-gradient(135deg, #ffffff 30%, #93c5fd 100%)',
+            background: activeIsLight 
+              ? 'linear-gradient(135deg, var(--accent-primary, #0284c7) 0%, var(--accent-secondary, #6366f1) 100%)' 
+              : 'linear-gradient(135deg, #ffffff 30%, #93c5fd 100%)',
             WebkitBackgroundClip: 'text',
             WebkitTextFillColor: 'transparent'
           }}>
@@ -265,7 +285,7 @@ function renderBlocks(rawText, isStreaming = false) {
           margin: '14px 0 6px 0',
           fontSize: '15.5px',
           fontWeight: '700',
-          color: '#fbbf24', // Radiant warm amber
+          color: 'var(--warning, #b45309)', // Radiant warm amber
           display: 'flex',
           alignItems: 'center',
           gap: '7px',
@@ -287,7 +307,7 @@ function renderBlocks(rawText, isStreaming = false) {
           margin: '12px 0 4px 0',
           fontSize: '14px',
           fontWeight: '700',
-          color: '#38bdf8', // Electric cyan
+          color: activeIsLight ? 'var(--accent-primary, #0284c7)' : '#38bdf8',
           display: 'flex',
           alignItems: 'center',
           gap: '6px'
@@ -320,10 +340,14 @@ function renderBlocks(rawText, isStreaming = false) {
           margin: '6px 0',
           fontSize: '13px',
           lineHeight: '1.6',
-          color: isWarn ? '#fca5a5' : isTip ? '#6ee7b7' : '#bae6fd',
+          color: isWarn 
+            ? (activeIsLight ? '#991b1b' : '#fca5a5') 
+            : isTip 
+            ? (activeIsLight ? '#065f46' : '#6ee7b7') 
+            : (activeIsLight ? '#075985' : '#bae6fd'),
           boxShadow: '0 2px 8px rgba(0,0,0,0.2)'
         }}>
-          {parseInlineSpans(calloutText)}
+          {parseInlineSpans(calloutText, activeIsLight)}
         </div>
       );
       continue;
@@ -351,8 +375,8 @@ function renderBlocks(rawText, isStreaming = false) {
             }}>
               ✦
             </span>
-            <div style={{ flex: 1, color: '#f1f5f9' }}>
-              {parseInlineSpans(content)}
+            <div style={{ flex: 1, color: activeIsLight ? 'var(--text-primary, #0f172a)' : '#f1f5f9' }}>
+              {parseInlineSpans(content, activeIsLight)}
             </div>
           </div>
         );
@@ -391,8 +415,8 @@ function renderBlocks(rawText, isStreaming = false) {
             }}>
               {numSymbol}
             </span>
-            <div style={{ flex: 1, color: '#f1f5f9' }}>
-              {parseInlineSpans(content)}
+            <div style={{ flex: 1, color: activeIsLight ? 'var(--text-primary, #0f172a)' : '#f1f5f9' }}>
+              {parseInlineSpans(content, activeIsLight)}
             </div>
           </div>
         );
@@ -403,8 +427,8 @@ function renderBlocks(rawText, isStreaming = false) {
     // 9. Regular Paragraph
     if (line.trim().length > 0) {
       elements.push(
-        <div key={i} style={{ color: '#e2e8f0', fontSize: '13.5px', lineHeight: '1.68' }}>
-          {parseInlineSpans(line)}
+        <div key={i} style={{ color: activeIsLight ? 'var(--text-primary, #0f172a)' : '#e2e8f0', fontSize: '13.5px', lineHeight: '1.68' }}>
+          {parseInlineSpans(line, activeIsLight)}
         </div>
       );
     }
@@ -424,7 +448,7 @@ function renderBlocks(rawText, isStreaming = false) {
   return elements;
 }
 
-function parseInlineSpans(text) {
+function parseInlineSpans(text, activeIsLight = false) {
   if (!text) return text;
 
   // Split by inline code (`code`), bold (**bold**), or math expressions ($expr$)
@@ -438,9 +462,9 @@ function parseInlineSpans(text) {
       const code = part.slice(1, -1);
       return (
         <code key={idx} style={{
-          background: 'rgba(15, 23, 42, 0.9)',
-          color: '#38bdf8',
-          border: '1px solid rgba(56, 189, 248, 0.35)',
+          background: activeIsLight ? 'rgba(2, 132, 199, 0.08)' : 'rgba(15, 23, 42, 0.9)',
+          color: activeIsLight ? 'var(--accent-primary, #0284c7)' : '#38bdf8',
+          border: activeIsLight ? '1px solid rgba(2, 132, 199, 0.25)' : '1px solid rgba(56, 189, 248, 0.35)',
           borderRadius: '5px',
           padding: '2px 7px',
           fontFamily: '"JetBrains Mono", "Fira Code", Consolas, monospace',
@@ -460,9 +484,9 @@ function parseInlineSpans(text) {
       const math = part.slice(1, -1);
       return (
         <span key={idx} style={{
-          background: 'rgba(16, 185, 129, 0.16)',
-          color: '#34d399',
-          border: '1px solid rgba(16, 185, 129, 0.38)',
+          background: activeIsLight ? 'rgba(5, 150, 105, 0.1)' : 'rgba(16, 185, 129, 0.16)',
+          color: activeIsLight ? 'var(--success, #059669)' : '#34d399',
+          border: activeIsLight ? '1px solid rgba(5, 150, 105, 0.3)' : '1px solid rgba(16, 185, 129, 0.38)',
           borderRadius: '5px',
           padding: '1px 7px',
           fontFamily: '"JetBrains Mono", Consolas, monospace',
@@ -485,9 +509,9 @@ function parseInlineSpans(text) {
       if (/^(O\(.*\)|Time Complexity|Space Complexity|Optimal|PASSED|SUCCESS|BUY|TRUE)$/i.test(bold.trim())) {
         return (
           <span key={idx} style={{
-            background: 'rgba(16, 185, 129, 0.16)',
-            color: '#34d399',
-            border: '1px solid rgba(16, 185, 129, 0.38)',
+            background: activeIsLight ? 'rgba(5, 150, 105, 0.1)' : 'rgba(16, 185, 129, 0.16)',
+          color: activeIsLight ? 'var(--success, #059669)' : '#34d399',
+          border: activeIsLight ? '1px solid rgba(5, 150, 105, 0.3)' : '1px solid rgba(16, 185, 129, 0.38)',
             borderRadius: '5px',
             padding: '1px 7px',
             fontWeight: '800',
@@ -526,7 +550,7 @@ function parseInlineSpans(text) {
         return (
           <span key={idx} style={{
             background: 'rgba(245, 158, 11, 0.16)',
-            color: '#fbbf24',
+            color: 'var(--warning, #b45309)',
             border: '1px solid rgba(245, 158, 11, 0.38)',
             borderRadius: '5px',
             padding: '1px 7px',
@@ -544,9 +568,9 @@ function parseInlineSpans(text) {
       // Crisp high-contrast white for bold text
       return (
         <strong key={idx} style={{
-          color: '#ffffff',
+          color: activeIsLight ? 'var(--text-primary, #0f172a)' : '#ffffff',
           fontWeight: '700',
-          textShadow: '0 1px 2px rgba(0,0,0,0.5)'
+          textShadow: activeIsLight ? 'none' : '0 1px 2px rgba(0,0,0,0.5)'
         }}>
           {bold}
         </strong>

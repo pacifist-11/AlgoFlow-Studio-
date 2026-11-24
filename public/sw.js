@@ -1,10 +1,13 @@
 /* eslint-disable no-undef */
-const CACHE_NAME = 'algoflow-v5';
+const CACHE_NAME = 'algoflow-v6';
 const ASSETS = [
   '/',
   '/index.html',
   '/favicon.png',
   '/favicon.svg',
+  '/icon-192.png',
+  '/icon-512.png',
+  '/icon-maskable-512.png',
   '/manifest.json'
 ];
 

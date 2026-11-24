@@ -686,7 +686,7 @@ export default function WhyDSAMattersGuide({ initialTab = 'speedway' }) {
                 <span style={{ fontSize: '24px' }}>{cs.icon}</span>
                 <div>
                   <h4 style={{ margin: 0, fontSize: '16px', color: '#38bdf8' }}>{cs.title}</h4>
-                  <span style={{ fontSize: '11px', color: '#fbbf24', fontWeight: 'bold' }}>{cs.tech}</span>
+                  <span style={{ fontSize: '11px', color: 'var(--warning, #b45309)', fontWeight: 'bold' }}>{cs.tech}</span>
                 </div>
               </div>
               <p style={{ fontSize: '12.5px', color: '#cbd5e1', lineHeight: '1.5', margin: '0 0 10px 0' }}>
@@ -763,7 +763,7 @@ export default function WhyDSAMattersGuide({ initialTab = 'speedway' }) {
                 gap: '8px'
               }}>
                 <span style={{ fontSize: '12px', color: '#94a3b8' }}>Live Score:</span>
-                <strong style={{ fontSize: '14px', color: quizScore.correct === quizScore.answered && quizScore.answered > 0 ? '#34d399' : '#fbbf24' }}>
+                <strong style={{ fontSize: '14px', color: quizScore.correct === quizScore.answered && quizScore.answered > 0 ? '#34d399' : 'var(--warning, #b45309)' }}>
                   {quizScore.correct} / {activeQuestions.length}
                 </strong>
                 {quizScore.answered > 0 && (
