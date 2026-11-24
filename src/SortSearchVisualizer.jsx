@@ -682,7 +682,7 @@ const SortSearchVisualizer = ({ isActive = true, onBack, openSettings, initialTa
   }, [fontSize]);
 
   const [array, setArray] = useState([]);
-  const [visualizerStyle, setVisualizerStyle] = useState('classic'); // 'classic' or 'crane'
+  const [visualizerStyle, setVisualizerStyle] = useState(initialSort === 'Merge Sort' ? 'divide_conquer' : 'classic'); // 'classic', 'crane', or 'divide_conquer'
   const [initialArray, setInitialArray] = useState([]);
   const [timeline, setTimeline] = useState([]);
   const [currentStep, setCurrentStep] = useState(0);
@@ -2390,7 +2390,15 @@ const SortSearchVisualizer = ({ isActive = true, onBack, openSettings, initialTa
 
           {activeTab === 'Sort' ? (
             <>
-              <select className="styled-select" value={selectedSort} onChange={e => setSelectedSort(e.target.value)} disabled={isPlaying}>
+              <select className="styled-select" value={selectedSort} onChange={e => {
+                const nextSort = e.target.value;
+                setSelectedSort(nextSort);
+                if (nextSort === 'Merge Sort') {
+                  setVisualizerStyle('divide_conquer');
+                } else if (visualizerStyle === 'divide_conquer') {
+                  setVisualizerStyle('classic');
+                }
+              }} disabled={isPlaying}>
                 <option value="Bubble Sort">Bubble Sort</option>
                 <option value="Selection Sort">Selection Sort</option>
                 <option value="Insertion Sort">Insertion Sort</option>
@@ -2479,6 +2487,43 @@ const SortSearchVisualizer = ({ isActive = true, onBack, openSettings, initialTa
               </div>
             );
           })()}
+
+          {currentDisplayedAlgo === 'Merge Sort' && (
+            <div style={{ display: 'flex', justifyContent: 'center', marginBottom: '10px', gap: '8px' }}>
+              <button
+                className="btn btn-clear"
+                style={{
+                  padding: '4px 14px',
+                  fontSize: '0.8rem',
+                  borderRadius: '20px',
+                  background: visualizerStyle === 'divide_conquer' ? 'rgba(56, 189, 248, 0.2)' : 'rgba(255,255,255,0.04)',
+                  border: visualizerStyle === 'divide_conquer' ? '1.5px solid #38bdf8' : '1px solid var(--glass-border)',
+                  color: visualizerStyle === 'divide_conquer' ? '#38bdf8' : 'var(--text-secondary)',
+                  fontWeight: visualizerStyle === 'divide_conquer' ? 'bold' : 'normal',
+                  cursor: 'pointer'
+                }}
+                onClick={() => setVisualizerStyle('divide_conquer')}
+              >
+                🌳 Divide & Conquer Levels
+              </button>
+              <button
+                className="btn btn-clear"
+                style={{
+                  padding: '4px 14px',
+                  fontSize: '0.8rem',
+                  borderRadius: '20px',
+                  background: visualizerStyle === 'classic' ? 'rgba(56, 189, 248, 0.2)' : 'rgba(255,255,255,0.04)',
+                  border: visualizerStyle === 'classic' ? '1.5px solid #38bdf8' : '1px solid var(--glass-border)',
+                  color: visualizerStyle === 'classic' ? '#38bdf8' : 'var(--text-secondary)',
+                  fontWeight: visualizerStyle === 'classic' ? 'bold' : 'normal',
+                  cursor: 'pointer'
+                }}
+                onClick={() => setVisualizerStyle('classic')}
+              >
+                📊 Classic 2D Bars
+              </button>
+            </div>
+          )}
 
           {visualizerStyle === 'crane' ? (() => {
             const totalItems = Math.max(1, frame.arr?.length || 1);
