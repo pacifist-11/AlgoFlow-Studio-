@@ -374,7 +374,7 @@ const getBSTPositions = (arr, width, height) => {
 };
 
 const buildDivideConquerTree = (arr) => {
-  if (!arr || arr.length === 0) return { nodes: [], levels: [], maxDepth: 0 };
+  if (!arr || arr.length === 0) return { rootNode: null, nodes: [], levels: [], maxDepth: 0 };
   const nodes = [];
   const levels = [];
 
@@ -390,7 +390,9 @@ const buildDivideConquerTree = (arr) => {
       initialSub: arr.slice(l, r + 1),
       mid: Math.floor((l + r) / 2),
       isLeaf: l >= r,
-      children: []
+      children: [],
+      leftChild: null,
+      rightChild: null
     };
 
     if (!levels[depth]) levels[depth] = [];
@@ -401,13 +403,15 @@ const buildDivideConquerTree = (arr) => {
       const m = Math.floor((l + r) / 2);
       const leftChild = traverse(l, m, depth + 1, id);
       const rightChild = traverse(m + 1, r, depth + 1, id);
+      node.leftChild = leftChild;
+      node.rightChild = rightChild;
       node.children = [leftChild.id, rightChild.id];
     }
     return node;
   };
 
-  traverse(0, arr.length - 1, 0, null);
-  return { nodes, levels, maxDepth: levels.length - 1 };
+  const rootNode = traverse(0, arr.length - 1, 0, null);
+  return { rootNode, nodes, levels, maxDepth: levels.length - 1 };
 };
 
 const highlightLogText = (text) => {
@@ -1197,11 +1201,13 @@ const SortSearchVisualizer = ({ isActive = true, onBack, openSettings, initialTa
     let frames = [];
     const initialArr = [...array];
     let sortedRanges = [];
+    let dividedRanges = [];
 
     record(arr, -1, -1, -1, 'Starting Merge Sort (Divide & Conquer)', frames, {
       phase: 'init',
       initialArr,
-      sortedRanges: []
+      sortedRanges: [],
+      dividedRanges: []
     });
 
     const merge = (l, m, r, depth) => {
@@ -1223,6 +1229,7 @@ const SortSearchVisualizer = ({ isActive = true, onBack, openSettings, initialTa
         rightArr: [...R],
         mergedSoFar: [],
         sortedRanges: [...sortedRanges],
+        dividedRanges: [...dividedRanges],
         depth
       });
 
@@ -1242,6 +1249,7 @@ const SortSearchVisualizer = ({ isActive = true, onBack, openSettings, initialTa
           mergedSoFar: [...mergedSub],
           writeIndex: k,
           sortedRanges: [...sortedRanges],
+          dividedRanges: [...dividedRanges],
           depth
         });
 
@@ -1262,6 +1270,7 @@ const SortSearchVisualizer = ({ isActive = true, onBack, openSettings, initialTa
             mergedSoFar: [...mergedSub],
             writeIndex: k,
             sortedRanges: [...sortedRanges],
+            dividedRanges: [...dividedRanges],
             depth
           });
           i++;
@@ -1282,6 +1291,7 @@ const SortSearchVisualizer = ({ isActive = true, onBack, openSettings, initialTa
             mergedSoFar: [...mergedSub],
             writeIndex: k,
             sortedRanges: [...sortedRanges],
+            dividedRanges: [...dividedRanges],
             depth
           });
           j++;
@@ -1305,6 +1315,7 @@ const SortSearchVisualizer = ({ isActive = true, onBack, openSettings, initialTa
           mergedSoFar: [...mergedSub],
           writeIndex: k,
           sortedRanges: [...sortedRanges],
+          dividedRanges: [...dividedRanges],
           depth
         });
         i++; k++;
@@ -1326,6 +1337,7 @@ const SortSearchVisualizer = ({ isActive = true, onBack, openSettings, initialTa
           mergedSoFar: [...mergedSub],
           writeIndex: k,
           sortedRanges: [...sortedRanges],
+          dividedRanges: [...dividedRanges],
           depth
         });
         j++; k++;
@@ -1337,6 +1349,7 @@ const SortSearchVisualizer = ({ isActive = true, onBack, openSettings, initialTa
         initialArr,
         activeRange: [l, r],
         sortedRanges: [...sortedRanges],
+        dividedRanges: [...dividedRanges],
         mergedValues: arr.slice(l, r + 1),
         depth
       });
@@ -1350,12 +1363,14 @@ const SortSearchVisualizer = ({ isActive = true, onBack, openSettings, initialTa
           initialArr,
           activeRange: [l, r],
           sortedRanges: [...sortedRanges],
+          dividedRanges: [...dividedRanges],
           depth
         });
         return;
       }
 
       let m = Math.floor((l + r) / 2);
+      dividedRanges.push(`${l}-${r}`);
       record(arr, l, r, m, `DIVIDE: Splitting range [${l}..${r}] into [${l}..${m}] & [${m + 1}..${r}]`, frames, {
         phase: 'divide',
         initialArr,
@@ -1364,6 +1379,7 @@ const SortSearchVisualizer = ({ isActive = true, onBack, openSettings, initialTa
         rightRange: [m + 1, r],
         mid: m,
         sortedRanges: [...sortedRanges],
+        dividedRanges: [...dividedRanges],
         depth
       });
 
@@ -1376,7 +1392,8 @@ const SortSearchVisualizer = ({ isActive = true, onBack, openSettings, initialTa
     record(arr, -1, -1, -1, 'Merge Sort Complete! All levels combined.', frames, {
       phase: 'complete',
       initialArr,
-      sortedRanges: [...sortedRanges]
+      sortedRanges: [...sortedRanges],
+      dividedRanges: [...dividedRanges]
     });
     setTimeline(frames);
     setCurrentStep(0);
@@ -1809,13 +1826,276 @@ const SortSearchVisualizer = ({ isActive = true, onBack, openSettings, initialTa
       );
     }
 
-    const { levels, maxDepth } = buildDivideConquerTree(initialArr);
+    const { rootNode } = buildDivideConquerTree(initialArr);
     const activeRange = frame.activeRange;
     const leftRange = frame.leftRange;
     const rightRange = frame.rightRange;
     const phase = frame.phase || 'init';
     const sortedRanges = frame.sortedRanges || [];
+    const dividedRanges = frame.dividedRanges || [];
     const currentArr = frame.arr || initialArr;
+
+    const isMergingPhase = phase === 'merge_start' || phase === 'compare' || phase === 'place';
+
+    const renderDCNode = (node, isVisible = true) => {
+      if (!node) return null;
+
+      const rangeKey = `${node.l}-${node.r}`;
+      const isSorted = sortedRanges.includes(rangeKey) || phase === 'complete';
+      const isDivided = dividedRanges.includes(rangeKey) || phase === 'complete';
+      const isActive = activeRange && activeRange[0] === node.l && activeRange[1] === node.r;
+      const isLeftChild = leftRange && leftRange[0] === node.l && leftRange[1] === node.r;
+      const isRightChild = rightRange && rightRange[0] === node.l && rightRange[1] === node.r;
+      const isCurrentlyMergingParent = isActive && isMergingPhase;
+
+      // Determine what values to display inside this node
+      let displayVals = node.initialSub;
+      let mergedCount = 0;
+      if (isSorted) {
+        displayVals = currentArr.slice(node.l, node.r + 1);
+      } else if (isCurrentlyMergingParent) {
+        const soFar = frame.mergedSoFar || [];
+        mergedCount = soFar.length;
+        displayVals = Array.from({ length: node.len }, (_, idx) => (idx < soFar.length ? soFar[idx] : '?'));
+      }
+
+      // Styling based on state
+      let borderColor = 'rgba(255, 255, 255, 0.14)';
+      let bgColor = 'rgba(15, 23, 42, 0.55)';
+      let glow = 'none';
+      let badgeText = null;
+      let badgeColor = 'var(--text-secondary)';
+
+      if (isActive) {
+        if (phase === 'divide') {
+          borderColor = '#f59e0b';
+          bgColor = 'rgba(245, 158, 11, 0.16)';
+          glow = '0 0 18px rgba(245, 158, 11, 0.4)';
+          badgeText = '✂️ Splitting';
+          badgeColor = '#fbbf24';
+        } else if (phase === 'base') {
+          borderColor = '#38bdf8';
+          bgColor = 'rgba(56, 189, 248, 0.18)';
+          glow = '0 0 16px rgba(56, 189, 248, 0.45)';
+          badgeText = '🎯 Base (Size 1)';
+          badgeColor = '#38bdf8';
+        } else if (isMergingPhase) {
+          borderColor = '#c084fc';
+          bgColor = 'rgba(192, 132, 252, 0.18)';
+          glow = '0 0 20px rgba(192, 132, 252, 0.45)';
+          badgeText = '🔄 Merging';
+          badgeColor = '#e879f9';
+        } else if (phase === 'merged') {
+          borderColor = '#10b981';
+          bgColor = 'rgba(16, 185, 129, 0.2)';
+          glow = '0 0 18px rgba(16, 185, 129, 0.45)';
+          badgeText = '✓ Merged';
+          badgeColor = '#34d399';
+        }
+      } else if (isLeftChild && isMergingPhase) {
+        borderColor = '#f59e0b';
+        bgColor = 'rgba(245, 158, 11, 0.14)';
+        glow = '0 0 12px rgba(245, 158, 11, 0.25)';
+        badgeText = 'Left (i)';
+        badgeColor = '#fbbf24';
+      } else if (isRightChild && isMergingPhase) {
+        borderColor = '#60a5fa';
+        bgColor = 'rgba(96, 165, 250, 0.14)';
+        glow = '0 0 12px rgba(96, 165, 250, 0.25)';
+        badgeText = 'Right (j)';
+        badgeColor = '#60a5fa';
+      } else if (isSorted) {
+        borderColor = 'rgba(16, 185, 129, 0.5)';
+        bgColor = 'rgba(16, 185, 129, 0.08)';
+        badgeText = node.isLeaf ? '✓ Base' : '✓ Sorted';
+        badgeColor = '#34d399';
+      } else if (isDivided) {
+        borderColor = 'rgba(245, 158, 11, 0.3)';
+        bgColor = 'rgba(255, 255, 255, 0.03)';
+        badgeText = 'Split';
+        badgeColor = '#fbbf24';
+      }
+
+      // Connector line color
+      const branchColor =
+        isActive && phase === 'divide'
+          ? '#f59e0b'
+          : isCurrentlyMergingParent
+          ? '#c084fc'
+          : isSorted
+          ? 'rgba(16, 185, 129, 0.45)'
+          : isDivided
+          ? 'rgba(245, 158, 11, 0.35)'
+          : 'rgba(255, 255, 255, 0.12)';
+
+      const childrenVisible = isVisible && (isDivided || isSorted || phase === 'init' || phase === 'complete');
+
+      return (
+        <div
+          key={node.id}
+          style={{
+            display: 'flex',
+            flexDirection: 'column',
+            alignItems: 'center',
+            opacity: isVisible ? 1 : 0.32,
+            transition: 'opacity 0.25s ease'
+          }}
+        >
+          {/* Node Card */}
+          <div
+            style={{
+              background: bgColor,
+              border: `1.5px solid ${borderColor}`,
+              borderRadius: '10px',
+              padding: '5px 8px',
+              boxShadow: glow,
+              transition: 'all 0.25s ease',
+              display: 'flex',
+              flexDirection: 'column',
+              alignItems: 'center',
+              gap: '4px'
+            }}
+          >
+            {/* Top Meta Row */}
+            <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', width: '100%', gap: '6px' }}>
+              <span style={{ fontSize: '0.62rem', fontFamily: 'monospace', color: 'var(--text-secondary)', opacity: 0.85 }}>
+                L{node.depth}
+              </span>
+              {badgeText && (
+                <span style={{
+                  fontSize: '0.62rem',
+                  fontWeight: 'bold',
+                  color: badgeColor,
+                  background: 'rgba(0,0,0,0.4)',
+                  padding: '1px 5px',
+                  borderRadius: '4px',
+                  whiteSpace: 'nowrap'
+                }}>
+                  {badgeText}
+                </span>
+              )}
+            </div>
+
+            {/* Values Row */}
+            <div style={{ display: 'flex', gap: '3px', alignItems: 'center' }}>
+              {displayVals.map((val, cellIdx) => {
+                const isPlaceholder = val === '?';
+                const isJustPlaced = isCurrentlyMergingParent && cellIdx === mergedCount - 1 && phase === 'place';
+                const isAlreadyPlacedInMerge = isCurrentlyMergingParent && cellIdx < mergedCount;
+                const isCompareLeft = isLeftChild && isMergingPhase && frame.leftIdx === cellIdx && frame.leftIdx < (frame.leftArr?.length || 0);
+                const isCompareRight = isRightChild && isMergingPhase && frame.rightIdx === cellIdx && frame.rightIdx < (frame.rightArr?.length || 0);
+                const isConsumedLeft = isLeftChild && isMergingPhase && frame.leftIdx !== undefined && cellIdx < frame.leftIdx;
+                const isConsumedRight = isRightChild && isMergingPhase && frame.rightIdx !== undefined && cellIdx < frame.rightIdx;
+
+                let cellBg = isSorted ? 'rgba(16, 185, 129, 0.22)' : 'rgba(255, 255, 255, 0.08)';
+                let cellColor = isSorted ? '#34d399' : 'var(--text-primary)';
+                let cellBorder = '1px solid rgba(255,255,255,0.12)';
+
+                if (isPlaceholder) {
+                  cellBg = 'rgba(255, 255, 255, 0.02)';
+                  cellBorder = '1px dashed rgba(255,255,255,0.22)';
+                  cellColor = 'rgba(255,255,255,0.3)';
+                } else if (isJustPlaced) {
+                  cellBg = 'rgba(16, 185, 129, 0.55)';
+                  cellBorder = '2px solid #34d399';
+                  cellColor = '#fff';
+                } else if (isAlreadyPlacedInMerge) {
+                  cellBg = 'rgba(16, 185, 129, 0.28)';
+                  cellBorder = '1px solid rgba(52, 211, 153, 0.6)';
+                  cellColor = '#34d399';
+                } else if (isCompareLeft) {
+                  cellBg = 'rgba(245, 158, 11, 0.45)';
+                  cellBorder = '1.5px solid #fbbf24';
+                  cellColor = '#fff';
+                } else if (isCompareRight) {
+                  cellBg = 'rgba(96, 165, 250, 0.45)';
+                  cellBorder = '1.5px solid #60a5fa';
+                  cellColor = '#fff';
+                } else if (isConsumedLeft || isConsumedRight) {
+                  cellBg = 'rgba(255, 255, 255, 0.03)';
+                  cellColor = 'rgba(255, 255, 255, 0.25)';
+                }
+
+                return (
+                  <div
+                    key={cellIdx}
+                    style={{
+                      minWidth: '26px',
+                      height: '24px',
+                      padding: '0 4px',
+                      background: cellBg,
+                      border: cellBorder,
+                      borderRadius: '5px',
+                      display: 'flex',
+                      alignItems: 'center',
+                      justifyContent: 'center',
+                      fontWeight: 'bold',
+                      fontSize: '0.78rem',
+                      color: cellColor,
+                      transition: 'all 0.2s ease',
+                      position: 'relative'
+                    }}
+                  >
+                    {val}
+                    {isCompareLeft && (
+                      <span style={{ position: 'absolute', bottom: '-13px', fontSize: '0.58rem', color: '#fbbf24', fontWeight: 'bold' }}>
+                        i
+                      </span>
+                    )}
+                    {isCompareRight && (
+                      <span style={{ position: 'absolute', bottom: '-13px', fontSize: '0.58rem', color: '#60a5fa', fontWeight: 'bold' }}>
+                        j
+                      </span>
+                    )}
+                  </div>
+                );
+              })}
+            </div>
+          </div>
+
+          {/* Children Subtrees with Clean Split Connectors */}
+          {!node.isLeaf && (
+            <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', width: '100%' }}>
+              {/* Vertical stem from parent */}
+              <div style={{ width: '2px', height: '14px', background: branchColor, transition: 'background 0.25s ease' }} />
+
+              {/* Two branches */}
+              <div style={{ display: 'flex', alignItems: 'flex-start', justifyContent: 'center', gap: '14px', position: 'relative' }}>
+                {/* Left branch */}
+                <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', position: 'relative' }}>
+                  <div style={{
+                    position: 'absolute',
+                    top: 0,
+                    left: '50%',
+                    right: '-7px',
+                    height: '2px',
+                    background: branchColor,
+                    transition: 'background 0.25s ease'
+                  }} />
+                  <div style={{ width: '2px', height: '12px', background: branchColor, transition: 'background 0.25s ease' }} />
+                  {renderDCNode(node.leftChild, childrenVisible)}
+                </div>
+
+                {/* Right branch */}
+                <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', position: 'relative' }}>
+                  <div style={{
+                    position: 'absolute',
+                    top: 0,
+                    left: '-7px',
+                    right: '50%',
+                    height: '2px',
+                    background: branchColor,
+                    transition: 'background 0.25s ease'
+                  }} />
+                  <div style={{ width: '2px', height: '12px', background: branchColor, transition: 'background 0.25s ease' }} />
+                  {renderDCNode(node.rightChild, childrenVisible)}
+                </div>
+              </div>
+            </div>
+          )}
+        </div>
+      );
+    };
 
     return (
       <div style={{
@@ -1825,10 +2105,11 @@ const SortSearchVisualizer = ({ isActive = true, onBack, openSettings, initialTa
         height: '100%',
         overflowY: 'auto',
         overflowX: 'auto',
-        padding: '10px 14px',
-        userSelect: 'none'
+        padding: '8px 12px',
+        userSelect: 'none',
+        gap: '10px'
       }}>
-        {/* Phase Header Banner */}
+        {/* Top Phase & Legend Bar */}
         <div style={{
           display: 'flex',
           justifyContent: 'space-between',
@@ -1837,237 +2118,151 @@ const SortSearchVisualizer = ({ isActive = true, onBack, openSettings, initialTa
           background: 'rgba(0,0,0,0.35)',
           borderRadius: '10px',
           border: '1px solid var(--glass-border)',
-          marginBottom: '16px',
           flexWrap: 'wrap',
           gap: '8px',
           flexShrink: 0
         }}>
           <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
-            <span style={{ fontSize: '1.2rem' }}>
-              {phase === 'divide' ? '✂️' : (phase === 'base' ? '🎯' : (phase === 'merged' || phase === 'complete' ? '✅' : '🔄'))}
+            <span style={{ fontSize: '1.15rem' }}>
+              {phase === 'init' ? '🌳' : phase === 'divide' ? '✂️' : phase === 'base' ? '🎯' : (phase === 'merged' || phase === 'complete' ? '✅' : '🔄')}
             </span>
             <div>
-              <div style={{ fontSize: '0.84rem', fontWeight: 'bold', color: 'var(--text-primary)' }}>
-                {phase === 'divide' ? 'DIVIDE PHASE: Recursive Splitting into Halves' :
-                 phase === 'base' ? 'CONQUER: Base Case (Single element is sorted)' :
-                 phase === 'complete' ? 'COMPLETE: Merge Sort Finished (O(N log N))' :
-                 'COMBINE PHASE: Merging Two Sorted Subarrays'}
+              <div style={{ fontSize: '0.82rem', fontWeight: 'bold', color: 'var(--text-primary)' }}>
+                {phase === 'init' ? 'READY: Divide & Conquer Recursion Tree' :
+                 phase === 'divide' ? 'STEP 1 — DIVIDE: Splitting Subarray in Half' :
+                 phase === 'base' ? 'STEP 2 — BASE CASE: Size 1 is Already Sorted' :
+                 phase === 'complete' ? 'COMPLETE: All Subarrays Merged & Sorted!' :
+                 'STEP 3 — CONQUER & MERGE: Combining Two Sorted Halves'}
               </div>
-              <div style={{ fontSize: '0.74rem', color: 'var(--text-secondary)' }}>
-                {frame.msg || 'Merge Sort Divide & Conquer in progress'}
+              <div style={{ fontSize: '0.73rem', color: 'var(--text-secondary)' }}>
+                {frame.msg || 'Press Play or Next to step through splitting and merging'}
               </div>
             </div>
           </div>
 
-          {/* Legend */}
-          <div style={{ display: 'flex', gap: '10px', fontSize: '0.72rem', color: 'var(--text-secondary)', alignItems: 'center', flexWrap: 'wrap' }}>
+          <div style={{ display: 'flex', gap: '10px', fontSize: '0.7rem', color: 'var(--text-secondary)', alignItems: 'center', flexWrap: 'wrap' }}>
             <span style={{ display: 'flex', alignItems: 'center', gap: '4px' }}>
-              <span style={{ width: '8px', height: '8px', borderRadius: '50%', background: '#f59e0b', boxShadow: '0 0 6px #f59e0b' }}></span> Divide
+              <span style={{ width: '8px', height: '8px', borderRadius: '50%', background: '#f59e0b' }}></span> Divide
             </span>
             <span style={{ display: 'flex', alignItems: 'center', gap: '4px' }}>
-              <span style={{ width: '8px', height: '8px', borderRadius: '50%', background: '#38bdf8', boxShadow: '0 0 6px #38bdf8' }}></span> Base Case
+              <span style={{ width: '8px', height: '8px', borderRadius: '50%', background: '#38bdf8' }}></span> Base
             </span>
             <span style={{ display: 'flex', alignItems: 'center', gap: '4px' }}>
-              <span style={{ width: '8px', height: '8px', borderRadius: '50%', background: '#c084fc', boxShadow: '0 0 6px #c084fc' }}></span> Merging
+              <span style={{ width: '8px', height: '8px', borderRadius: '50%', background: '#c084fc' }}></span> Merging
             </span>
             <span style={{ display: 'flex', alignItems: 'center', gap: '4px' }}>
-              <span style={{ width: '8px', height: '8px', borderRadius: '50%', background: '#10b981', boxShadow: '0 0 6px #10b981' }}></span> Sorted
+              <span style={{ width: '8px', height: '8px', borderRadius: '50%', background: '#10b981' }}></span> Sorted
             </span>
           </div>
         </div>
 
-        {/* Tree Levels */}
-        <div style={{ display: 'flex', flexDirection: 'column', gap: '22px', flex: 1 }}>
-          {levels.map((levelNodes, d) => {
-            const isBaseLevel = d === maxDepth;
-            return (
-              <div key={d} style={{ display: 'flex', flexDirection: 'column', gap: '6px' }}>
-                {/* Level Title Badge */}
-                <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
-                  <span style={{
-                    fontSize: '0.75rem',
-                    fontWeight: '800',
-                    letterSpacing: '0.04em',
-                    textTransform: 'uppercase',
-                    color: isBaseLevel ? '#38bdf8' : (d === 0 ? '#a78bfa' : 'var(--text-secondary)'),
-                    background: 'rgba(255,255,255,0.04)',
-                    border: '1px solid var(--glass-border)',
-                    padding: '2px 8px',
-                    borderRadius: '12px'
-                  }}>
-                    {d === 0 ? 'Level 0: Root Array (Original)' : 
-                     isBaseLevel ? `Level ${d} (Base Cases): Subarrays of Size 1` : 
-                     `Level ${d}: Subarrays (Split ${d})`}
-                  </span>
-                  {d < maxDepth && (
-                    <span style={{ fontSize: '0.7rem', color: 'var(--text-secondary)', opacity: 0.7 }}>
-                      ⬇️ Splits into 2 halves
-                    </span>
-                  )}
-                </div>
+        {/* Active Step Spotlight (Makes what's happening crystal clear) */}
+        <div style={{
+          display: 'flex',
+          alignItems: 'center',
+          justifyContent: 'center',
+          padding: '8px 14px',
+          background: isMergingPhase
+            ? 'rgba(192, 132, 252, 0.1)'
+            : phase === 'divide'
+            ? 'rgba(245, 158, 11, 0.1)'
+            : phase === 'base'
+            ? 'rgba(56, 189, 248, 0.1)'
+            : 'rgba(16, 185, 129, 0.08)',
+          border: `1px solid ${
+            isMergingPhase ? 'rgba(192, 132, 252, 0.35)' : phase === 'divide' ? 'rgba(245, 158, 11, 0.35)' : phase === 'base' ? 'rgba(56, 189, 248, 0.35)' : 'rgba(16, 185, 129, 0.3)'
+          }`,
+          borderRadius: '10px',
+          flexWrap: 'wrap',
+          gap: '10px',
+          flexShrink: 0,
+          fontSize: '0.8rem'
+        }}>
+          {phase === 'divide' && activeRange && leftRange && rightRange && (
+            <>
+              <span style={{ color: '#fbbf24', fontWeight: 'bold' }}>
+                [{currentArr.slice(activeRange[0], activeRange[1] + 1).join(', ')}]
+              </span>
+              <span style={{ color: 'var(--text-secondary)' }}>splits into ➔</span>
+              <span style={{ background: 'rgba(245, 158, 11, 0.18)', border: '1px solid rgba(245, 158, 11, 0.4)', padding: '2px 8px', borderRadius: '6px', color: '#fde68a', fontWeight: 'bold' }}>
+                Left: [{currentArr.slice(leftRange[0], leftRange[1] + 1).join(', ')}]
+              </span>
+              <span style={{ background: 'rgba(96, 165, 250, 0.18)', border: '1px solid rgba(96, 165, 250, 0.4)', padding: '2px 8px', borderRadius: '6px', color: '#bfdbfe', fontWeight: 'bold' }}>
+                Right: [{currentArr.slice(rightRange[0], rightRange[1] + 1).join(', ')}]
+              </span>
+            </>
+          )}
 
-                {/* Subarray Cards in this Level */}
-                <div style={{
-                  display: 'flex',
-                  justifyContent: 'space-around',
-                  alignItems: 'center',
-                  gap: '12px',
-                  flexWrap: 'wrap',
-                  padding: '4px 0'
-                }}>
-                  {levelNodes.map(node => {
-                    const isSorted = sortedRanges.includes(`${node.l}-${node.r}`) || phase === 'complete';
-                    const isActive = activeRange && activeRange[0] === node.l && activeRange[1] === node.r;
-                    const isLeftChild = leftRange && leftRange[0] === node.l && leftRange[1] === node.r;
-                    const isRightChild = rightRange && rightRange[0] === node.l && rightRange[1] === node.r;
+          {phase === 'base' && activeRange && (
+            <span style={{ color: '#38bdf8', fontWeight: 'bold' }}>
+              🎯 Single element [{currentArr[activeRange[0]]}] cannot be split further — it is trivially sorted!
+            </span>
+          )}
 
-                    let displayVals = isSorted ? currentArr.slice(node.l, node.r + 1) : node.initialSub;
-
-                    let borderColor = 'var(--glass-border)';
-                    let bgColor = 'rgba(255, 255, 255, 0.03)';
-                    let glow = 'none';
-                    let tag = null;
-
-                    if (isActive) {
-                      if (phase === 'divide') {
-                        borderColor = '#f59e0b';
-                        bgColor = 'rgba(245, 158, 11, 0.16)';
-                        glow = '0 0 16px rgba(245, 158, 11, 0.4)';
-                        tag = `✂️ Splitting at mid=${node.mid}`;
-                      } else if (phase === 'base') {
-                        borderColor = '#38bdf8';
-                        bgColor = 'rgba(56, 189, 248, 0.18)';
-                        glow = '0 0 16px rgba(56, 189, 248, 0.4)';
-                        tag = '🎯 Base Case (Size 1)';
-                      } else if (phase === 'merge_start' || phase === 'compare' || phase === 'place') {
-                        borderColor = '#c084fc';
-                        bgColor = 'rgba(192, 132, 252, 0.18)';
-                        glow = '0 0 18px rgba(192, 132, 252, 0.45)';
-                        tag = '🔄 Merging';
-                      } else if (phase === 'merged') {
-                        borderColor = '#10b981';
-                        bgColor = 'rgba(16, 185, 129, 0.2)';
-                        glow = '0 0 18px rgba(16, 185, 129, 0.5)';
-                        tag = '✓ Merged & Sorted';
-                      }
-                    } else if (isLeftChild && (phase === 'compare' || phase === 'place' || phase === 'merge_start')) {
-                      borderColor = '#f59e0b';
-                      bgColor = 'rgba(245, 158, 11, 0.12)';
-                      tag = 'Left Subarray (i)';
-                    } else if (isRightChild && (phase === 'compare' || phase === 'place' || phase === 'merge_start')) {
-                      borderColor = '#60a5fa';
-                      bgColor = 'rgba(96, 165, 250, 0.12)';
-                      tag = 'Right Subarray (j)';
-                    } else if (isSorted) {
-                      borderColor = 'rgba(16, 185, 129, 0.45)';
-                      bgColor = 'rgba(16, 185, 129, 0.08)';
-                      tag = '✓ Sorted';
-                    }
-
-                    return (
-                      <div
-                        key={node.id}
-                        style={{
-                          background: bgColor,
-                          border: `1.5px solid ${borderColor}`,
-                          borderRadius: '10px',
-                          padding: '6px 10px',
-                          boxShadow: glow,
-                          transition: 'all 0.25s cubic-bezier(0.16, 1, 0.3, 1)',
-                          display: 'flex',
-                          flexDirection: 'column',
-                          alignItems: 'center',
-                          gap: '4px',
-                          minWidth: `${Math.max(node.len * 34, 58)}px`
-                        }}
-                      >
-                        {/* Header tag */}
-                        <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', width: '100%', gap: '6px' }}>
-                          <span style={{ fontSize: '0.68rem', fontFamily: 'monospace', color: 'var(--text-secondary)' }}>
-                            [{node.l}..{node.r}]
-                          </span>
-                          {tag && (
-                            <span style={{
-                              fontSize: '0.64rem',
-                              fontWeight: 'bold',
-                              color: isSorted ? '#34d399' : (isActive ? '#fbbf24' : 'var(--text-primary)'),
-                              background: 'rgba(0,0,0,0.35)',
-                              padding: '1px 5px',
-                              borderRadius: '4px'
-                            }}>
-                              {tag}
-                            </span>
-                          )}
-                        </div>
-
-                        {/* Subarray Values */}
-                        <div style={{ display: 'flex', gap: '3px', alignItems: 'center' }}>
-                          {displayVals.map((val, cellIdx) => {
-                            const globalIdx = node.l + cellIdx;
-                            const isCompareLeft = isLeftChild && frame.leftIdx === cellIdx;
-                            const isCompareRight = isRightChild && frame.rightIdx === cellIdx;
-                            const isPlaced = isActive && frame.writeIndex === globalIdx;
-
-                            let cellBg = isSorted ? 'rgba(16, 185, 129, 0.25)' : 'rgba(255, 255, 255, 0.08)';
-                            let cellColor = isSorted ? '#34d399' : 'var(--text-primary)';
-                            let cellBorder = '1px solid rgba(255,255,255,0.1)';
-
-                            if (isCompareLeft) {
-                              cellBg = 'rgba(245, 158, 11, 0.45)';
-                              cellBorder = '1.5px solid #fbbf24';
-                              cellColor = '#fff';
-                            } else if (isCompareRight) {
-                              cellBg = 'rgba(96, 165, 250, 0.45)';
-                              cellBorder = '1.5px solid #60a5fa';
-                              cellColor = '#fff';
-                            } else if (isPlaced) {
-                              cellBg = 'rgba(16, 185, 129, 0.5)';
-                              cellBorder = '2px solid #34d399';
-                              cellColor = '#fff';
-                            }
-
-                            return (
-                              <div
-                                key={cellIdx}
-                                style={{
-                                  minWidth: '28px',
-                                  height: '26px',
-                                  padding: '0 4px',
-                                  background: cellBg,
-                                  border: cellBorder,
-                                  borderRadius: '6px',
-                                  display: 'flex',
-                                  alignItems: 'center',
-                                  justifyContent: 'center',
-                                  fontWeight: 'bold',
-                                  fontSize: '0.82rem',
-                                  color: cellColor,
-                                  transition: 'all 0.2s ease',
-                                  position: 'relative'
-                                }}
-                              >
-                                {val}
-                                {isCompareLeft && (
-                                  <span style={{ position: 'absolute', top: '-14px', fontSize: '0.62rem', color: '#fbbf24', fontWeight: 'bold' }}>
-                                    ↑ i
-                                  </span>
-                                )}
-                                {isCompareRight && (
-                                  <span style={{ position: 'absolute', top: '-14px', fontSize: '0.62rem', color: '#60a5fa', fontWeight: 'bold' }}>
-                                    ↑ j
-                                  </span>
-                                )}
-                              </div>
-                            );
-                          })}
-                        </div>
-                      </div>
-                    );
-                  })}
-                </div>
+          {isMergingPhase && frame.leftArr && frame.rightArr && (
+            <>
+              <div style={{ display: 'flex', alignItems: 'center', gap: '4px' }}>
+                <span style={{ color: '#fbbf24', fontWeight: 'bold' }}>Left:</span>
+                {frame.leftArr.map((v, idx) => (
+                  <span key={idx} style={{
+                    padding: '2px 6px',
+                    borderRadius: '5px',
+                    fontWeight: 'bold',
+                    background: idx === frame.leftIdx ? '#f59e0b' : 'rgba(255,255,255,0.08)',
+                    color: idx === frame.leftIdx ? '#000' : (idx < (frame.leftIdx ?? 0) ? 'rgba(255,255,255,0.3)' : '#fff'),
+                    textDecoration: idx < (frame.leftIdx ?? 0) ? 'line-through' : 'none'
+                  }}>{v}</span>
+                ))}
               </div>
-            );
-          })}
+              <span style={{ color: 'var(--text-secondary)', fontWeight: 'bold' }}>vs</span>
+              <div style={{ display: 'flex', alignItems: 'center', gap: '4px' }}>
+                <span style={{ color: '#60a5fa', fontWeight: 'bold' }}>Right:</span>
+                {frame.rightArr.map((v, idx) => (
+                  <span key={idx} style={{
+                    padding: '2px 6px',
+                    borderRadius: '5px',
+                    fontWeight: 'bold',
+                    background: idx === frame.rightIdx ? '#60a5fa' : 'rgba(255,255,255,0.08)',
+                    color: idx === frame.rightIdx ? '#000' : (idx < (frame.rightIdx ?? 0) ? 'rgba(255,255,255,0.3)' : '#fff'),
+                    textDecoration: idx < (frame.rightIdx ?? 0) ? 'line-through' : 'none'
+                  }}>{v}</span>
+                ))}
+              </div>
+              <span style={{ color: 'var(--text-secondary)' }}>➔</span>
+              <div style={{ display: 'flex', alignItems: 'center', gap: '4px' }}>
+                <span style={{ color: '#34d399', fontWeight: 'bold' }}>Merged:</span>
+                <span style={{ background: 'rgba(16, 185, 129, 0.18)', border: '1px solid rgba(52, 211, 153, 0.4)', padding: '2px 8px', borderRadius: '6px', color: '#34d399', fontWeight: 'bold' }}>
+                  [{(frame.mergedSoFar || []).length > 0 ? frame.mergedSoFar.join(', ') : '...'}]
+                </span>
+              </div>
+            </>
+          )}
+
+          {phase === 'merged' && frame.mergedValues && (
+            <span style={{ color: '#34d399', fontWeight: 'bold' }}>
+              ✅ Combined sorted subarray: [{frame.mergedValues.join(', ')}]
+            </span>
+          )}
+
+          {(phase === 'init' || phase === 'complete') && (
+            <span style={{ color: phase === 'complete' ? '#34d399' : 'var(--text-secondary)', fontWeight: 600 }}>
+              {phase === 'complete'
+                ? `✅ Fully Sorted Array: [${currentArr.join(', ')}]`
+                : 'Top-down: Split arrays in half (L0 → L1 → L2...) • Bottom-up: Merge sorted halves back up'}
+            </span>
+          )}
+        </div>
+
+        {/* True Hierarchical Recursion Tree */}
+        <div style={{
+          flex: 1,
+          display: 'flex',
+          justifyContent: 'center',
+          alignItems: 'flex-start',
+          padding: '8px 4px 16px 4px',
+          minWidth: 'min-content'
+        }}>
+          {renderDCNode(rootNode, true)}
         </div>
       </div>
     );
